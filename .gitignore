@@ -104,3 +104,4 @@ venv.bak/
 .mypy_cache/
 
 build_notes.txt
+settings.json
