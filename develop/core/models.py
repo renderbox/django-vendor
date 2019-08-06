@@ -6,3 +6,5 @@ from vendor.models import ProductModelBase
 class Product(ProductModelBase):
     name = models.CharField(_("Name"), max_length=50)
 
+    def __str__(self):
+        return self.name

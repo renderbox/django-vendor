@@ -95,7 +95,10 @@ class Catalog(CreateUpdateModelBase):
     '''
     name = models.CharField(_("Name"), max_length=100, blank=False)
     slug = models.SlugField(_("Slug"))
-    site = models.ManyToManyField(Site, related_name='sites', help_text="Which site(s) is this inventory available to?")
+    site = models.ForeignKey(Site, related_name='catalog', on_delete=models.CASCADE, help_text="Which site is this inventory available to?")
+
+    def __str__(self):
+        return "{0} - {1}".format(self.site, self.name)
 
 
 class SalePrice(models.Model):
