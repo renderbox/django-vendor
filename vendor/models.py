@@ -109,7 +109,7 @@ class SalePrice(models.Model):
     item = models.ForeignKey(settings.PRODUCT_MODEL, verbose_name=_("Item"), on_delete=models.CASCADE, related_name="sale_price")
     price = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES)
-    start_date = models.DateTimeField(_("Start Date"), auto_now_add=True)
+    start_date = models.DateTimeField(_("Start Date"))
     end_date = models.DateTimeField(_("End Date"))
     priority = models.PositiveIntegerField(_("Priority"), help_text="Higher number overrides prices with lower numbners in the same date range.")
 
@@ -123,7 +123,12 @@ class Cart(models.Model):
     List of all the offerings the user is looking to purchase
     '''
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
-    items = models.ManyToManyField(settings.PRODUCT_MODEL, verbose_name=_("Items"))
+
+
+class CartItem(CreateUpdateModelBase):
+    cart = models.ForeignKey(Cart, null=True, on_delete=models.SET_NULL)
+    product = models.ForeignKey(settings.PRODUCT_MODEL, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(_("Quantity"), help_text="How many?")
     saved_for_later = models.BooleanField()
 
 
@@ -145,7 +150,7 @@ class Order(CreateUpdateModelBase):
     status = models.IntegerField(_("Status"))
 
 
-class Item(CreateUpdateModelBase):
+class OrderItem(CreateUpdateModelBase):
     '''
     A link for each item to a user after it's been purchased
     '''
