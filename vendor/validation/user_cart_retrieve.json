@@ -1,0 +1,20 @@
+{
+  "username": "testuser",
+  "order_items": [
+    {
+      "sku": "MWSHDGQN",
+      "name": "Test Product",
+      "price": "50.00",
+      "item_total": "50.00",
+      "quantity": 1
+    },
+    {
+      "sku": "MWSHDGQN",
+      "name": "Test Product2",
+      "price": "90.00",
+      "item_total": "90.00",
+      "quantity": 1
+    }
+  ],
+  "total": "140.00"
+}
