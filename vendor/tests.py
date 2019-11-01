@@ -3,7 +3,6 @@ import json
 import unittest
 
 from django.test import TestCase, Client, RequestFactory
-from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth.models import User
@@ -12,111 +11,15 @@ from vendor.models import Offer, Price, Invoice, OrderItem, Purchases
 from core.models import Product
 
 
-class DataTestMixin(object):
-    '''
-    Check the response data against validation JSON file
-    '''
+########################
+########################
+# API VIEW CLIENT TESTS
+########################
+########################
 
-    def load_data(self, path=None):
-        path_parts = path.split('/')
-        check_data_file = os.path.join(settings.BASE_DIR, *path_parts)
-        check_data = json.loads(open(check_data_file, 'r').read())
-        return check_data
-
-    def uri_check_against_data(self, client, target_uri, validation_data, method="get", response_code=200):
-        '''
-        Make sure the response is the expected data.
-        '''
-        try:
-            response = getattr(client, method)(target_uri)
-            content = json.loads(response.content)
-            self.assertEqual(response.status_code, response_code)     # 200 -> Return Response Code
-            self.assertEqual(validation_data, content)
-        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
-            print("")
-            print(response.data)
-            raise
-
-        return validation_data, response
-
-    def uri_check_keys(self, client, target_uri, validation_data, method="get", response_code=201, **kwargs):
-        '''
-        Make sure the response has the same keys as the expected data.
-        '''
-
-        try:
-            response = getattr(client, method)(target_uri, data=kwargs)
-            self.assertEqual(response.status_code, response_code)     # 201 -> Created Response Code
-            self.assertEqual(response.data.keys(), validation_data.keys())
-        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
-            print("")
-            print(response.data)
-            raise
-
-        return response
-
-    def uri_check_deleted(self, client, delete_uri, retrieve_uri):
-        '''
-        Make sure a given uri deletes the resource
-        '''
-
-        try:
-            response = self.client.delete(delete_uri)
-            self.assertEqual(response.status_code, 204)     # 204 -> Return Response Code
-        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
-            print("")
-            print(delete_uri)
-            print(response.data)
-            raise
-
-        # Confirm it is deleted...
-        try:
-            response = self.client.get(retrieve_uri)
-            self.assertEqual(response.status_code, 404)     # 404 -> Return Response Code
-        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
-            print("")
-            print(retrieve_uri)
-            print(response.data)
-            raise
-
-
-##################
-# View Level Tests
-##################
-
-# class FactoryTests(TestCase):
-#     factory = RequestFactory()
-#
-#     #TestCases for CART
-#
-#     def test_add_to_cart(self):
-#         request = self.factory.post('/add-to-cart/1J0RO6LH/', data={})
-#         self.assertEqual(request.method, "POST")
-#
-#
-#     def test_retreive_cart(self):
-#         request = self.factory.get('/retrieve-cart/1J0RO6LH/')
-#         assert(request.content_type == "application/octet-stream")
-#         assert(request.method == "GET")
-#
-#
-#     def test_remove_item_from_cart(self):
-#         request = self.factory.put('/remove-item-from-cart/1J0RO6LH/', data={})
-#         self.assertEqual(request.method, "PUT")
-#
-#     def test_remove_single_item_from_cart(self):
-#         request = self.factory.put('/remove-single-item-from-cart/1J0RO6LH/', data={})
-#         self.assertEqual(request.method, "PUT")
-#
-#
-#     def test_delete_cart(self):
-#         request = self.factory.delete('/delete-cart/1J0RO6LH/')
-#         assert(request.method == "DELETE")
-
-
-###################
-# CART CLIENT TEST
-###################
+####################
+# CART CLIENT TESTS
+####################
 
 ##############
 # ADD TO CART
@@ -497,18 +400,15 @@ class RetrieveCartClientTest(DataTestMixin, TestCase):
                   "sku": "MWSHDGQN",
                   "name": "Test Product",
                   "price": "50.00",
-                  "item_total": "50.00",
                   "quantity": 1
                 },
                 {
                   "sku": "MWSHDGQN",
                   "name": "Test Product2",
                   "price": "90.00",
-                  "item_total": "180.00",
                   "quantity": 1
                 }
-              ],
-              "total": "230.00"
+              ]
             }
 
         uri = reverse('vendor-user-cart-retrieve-api')
@@ -541,6 +441,246 @@ class RetrieveCartClientTest(DataTestMixin, TestCase):
             print(response)
             raise
 
+
+#########################
+# RETRIEVE ORDER SUMMARY
+#########################
+
+class RetrieveOrderSummaryClientTest(DataTestMixin, TestCase):
+    '''
+    Tests for retrieving order summary
+    '''
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create(username='testuser', password='12345')
+        self.product = Product.objects.create(name = "Test Product")
+        self.product2 = Product.objects.create(name = "Test Product2")
+
+    def test_cart_retrieve(self):
+        '''
+        Test for retrieving a cart for the user
+        '''
+
+        self.client.force_login(self.user)
+
+        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+
+        invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
+
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+
+        offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
+        price2 = offer2.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+
+        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, price = price2, quantity = 2)
+
+        check_data = {
+              "username": "testuser",
+              "order_items": [
+                {
+                  "sku": "MWSHDGQN",
+                  "name": "Test Product",
+                  "price": "50.00",
+                  "item_total": "50.00",
+                  "quantity": 1
+                },
+                {
+                  "sku": "MWSHDGQN",
+                  "name": "Test Product2",
+                  "price": "90.00",
+                  "item_total": "180.00",
+                  "quantity": 1
+                }
+              ],
+              "total": "230.00"
+            }
+
+        uri = reverse('vendor-order-summary-retrieve-api')
+        response = self.client.get(uri)
+
+        try:
+            self.assertEqual(response.status_code, 200)     # 200 -> Return Response Code
+            self.assertEqual(response.data.keys(), check_data.keys())
+            self.assertEqual(response.data["order_items"][0].keys(), check_data["order_items"][0].keys())
+
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
+            print("")
+            print(response)
+            print(response.data)
+            raise
+
+
+    def test_order_summary_retrieve_fail(self):
+        self.client.force_login(self.user)
+        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+
+        uri = reverse('vendor-order-summary-retrieve-api')
+        response = self.client.get(uri)
+
+        try:
+            self.assertEqual(response.status_code, 404)     # 404 -> Return Response Code
+
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
+            print("")
+            print(response)
+            raise
+
+
+##############
+# DELETE CART
+##############
+
+class DeleteCartClientTest(TestCase):
+    '''
+    Test for deleting a cart
+    '''
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create(username="testuser", password='12345')
+        self.product = Product.objects.create(name = "Test Product")
+        self.product2 = Product.objects.create(name = "Test Product2")
+
+    def test_user_cart_delete(self):
+        self.client.force_login(self.user)
+        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+
+        invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
+
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+
+        offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
+        price2 = offer2.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+
+        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, price = price2, quantity = 2)
+
+        uri = reverse('vendor-user-cart-delete-api')
+
+        response = self.client.delete(uri)
+
+        try:
+            self.assertEqual(response.status_code, 200)     # 200 -> Return Response Code
+            self.assertEqual(Invoice.objects.all().count(), 0)
+            self.assertEqual(OrderItem.objects.all().count(), 0)
+
+        except:
+            print("")
+            print(response)
+            raise
+
+
+    def test_user_cart_delete_fail(self):
+        self.client.force_login(self.user)
+        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+
+        invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
+
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+
+        offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
+        price2 = offer2.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+
+        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, price = price2, quantity = 2)
+
+        invoice.status = 1
+        invoice.save()
+
+        uri = reverse('vendor-user-cart-delete-api')
+
+        response = self.client.delete(uri)
+
+        try:
+            self.assertEqual(response.status_code, 400)     # 200 -> Return Response Code
+            self.assertEqual(Invoice.objects.all().count(), 1)
+            self.assertEqual(OrderItem.objects.all().count(), 2)
+
+        except:
+            print("")
+            print(response)
+            raise
+
+
+########################
+# PURCHASES CLIENT TEST
+########################
+
+#####################
+# RETRIEVE PURCHASES
+#####################
+
+class RetrievePurchasesClientTest(TestCase):
+    '''
+    Test for retrieve user purchases
+    '''
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create(username='testuser', password='12345')
+        self.product = Product.objects.create(name = "Test Product")
+        self.product2 = Product.objects.create(name = "Test Product2")
+
+    def test_user_purchase_retrieve(self):
+        self.client.force_login(self.user)
+        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+
+        invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
+
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+
+        offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
+        price2 = offer2.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+
+        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, price = price2, quantity = 2)
+
+        purchase_1 = Purchases.objects.create(user = self.user, order_item = orderitem, product = self.product)
+
+        purchase_2 = Purchases.objects.create(user = self.user, order_item = orderitem2, product = self.product2)
+
+        check_data = [
+            {
+                "sku": "JOS45RB1",
+                "name": "Test Product",
+                "price": "50.00",
+                "quantity": 1,
+                "start_date": None,
+                "end_date": None,
+                "status": 0
+            },
+            {
+                "sku": "JOS45RB1",
+                "name": "Test Product2",
+                "price": "90.00",
+                "quantity": 2,
+                "start_date": None,
+                "end_date": None,
+                "status": 0
+            }
+        ]
+
+        uri = reverse('vendor-purchases-retrieve-api')
+
+        response = self.client.get(uri)
+
+        try:
+            self.assertEqual(response.status_code, 200)     # 200 -> Return Response Code
+            self.assertEqual(response.data[0].keys(), check_data[0].keys())
+
+        except:
+            print("")
+            print(response.data)
+            raise
+
+
+#####################
+#####################
+# MODEL CLIENT TESTS
+#####################
+#####################
 
 ###################
 # OFFER MODEL TEST

@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from vendor.models import Offer, Price, Invoice, OrderItem
+from vendor.models import Offer, Price, Invoice, OrderItem, Purchases
 
 # from vendor.models import SampleModel
 # from vendor.api.serializers import SampleModelSerializer
@@ -133,6 +133,83 @@ class RemoveFromCartAPIView(APIView):
 
 
 class RetrieveCartAPIView(APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        invoice = Invoice.objects.filter(user = request.user, status = 0)
+
+        if invoice.exists():
+            data = {}
+            total = 0
+
+            data['username'] = request.user.username
+
+            invoice_qs = invoice[0]
+
+            order_items = invoice_qs.order.all()
+
+            data['order_items'] = []
+
+            for items in order_items:
+                item = {}
+                item['sku'] = items.offer.sku
+                item['name'] = items.offer.product.name
+                item['price'] = items.price.cost
+                # item['item_total'] = items.total()
+                item['quantity'] = items.quantity
+
+                data['order_items'].append(item)
+
+                # total += item['item_total']
+
+            # data['total'] = total
+
+            return Response(data, status=status.HTTP_200_OK)
+
+        else:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class DeleteCartAPIView(APIView):
+
+    def delete(self, request, *args, **kwargs):
+
+        invoice = Invoice.objects.filter(user = request.user, status = 0)
+
+        if invoice:
+            invoice[0].order.all().delete()
+            invoice[0].delete()
+
+            return Response(status = status.HTTP_200_OK)
+
+        else:
+            return Response(status = status.HTTP_400_BAD_REQUEST)
+
+
+class RetrievePurchasesAPIView(APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        purchases = Purchases.objects.filter(user = request.user)
+
+        purchase_list = []
+
+        for items in purchases:
+            data = {}
+            data['sku'] = items.order_item.offer.sku
+            data['name'] = items.order_item.offer.name
+            data['price'] = items.order_item.price.cost
+            data['quantity'] = items.order_item.quantity
+            data['start_date'] = items.start_date
+            data['end_date'] = items.end_date
+            data['status'] = items.status
+
+            purchase_list.append(data)
+
+        return Response(purchase_list, status = status.HTTP_200_OK)
+
+
+class RetrieveOrderSummaryAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
 

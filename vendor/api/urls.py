@@ -9,5 +9,8 @@ urlpatterns = [
     path('update/quantity/<str:sku>/increase/', views.IncreaseItemQuantityCartAPIView.as_view(), name='increase-item-quantity-api'),
     path('removefromcart/<str:sku>/', views.RemoveFromCartAPIView.as_view(), name='remove-from-cart-api'),
     path('retrieve/cart/', views.RetrieveCartAPIView.as_view(), name='vendor-user-cart-retrieve-api'),
+    path('delete/cart/', views.DeleteCartAPIView.as_view(), name='vendor-user-cart-delete-api'),
+    path('retrieve/purchases/', views.RetrievePurchasesAPIView.as_view(), name='vendor-purchases-retrieve-api'),
+    path('retrieve/order/summary/', views.RetrieveOrderSummaryAPIView.as_view(), name='vendor-order-summary-retrieve-api'),
 
 ]
