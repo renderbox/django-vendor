@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from vendor.models import Offer, Price, Invoice, OrderItem, Purchases
+from vendor.models import Offer, Price, Invoice, OrderItem, Purchase
 
 # from vendor.models import SampleModel
 # from vendor.api.serializers import SampleModelSerializer
@@ -155,14 +155,11 @@ class RetrieveCartAPIView(APIView):
                 item['sku'] = items.offer.sku
                 item['name'] = items.offer.product.name
                 item['price'] = items.price.cost
-                # item['item_total'] = items.total()
                 item['quantity'] = items.quantity
 
                 data['order_items'].append(item)
 
-                # total += item['item_total']
-
-            # data['total'] = total
+            data['item_count'] = order_items.count()
 
             return Response(data, status=status.HTTP_200_OK)
 
@@ -190,7 +187,7 @@ class RetrievePurchasesAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
 
-        purchases = Purchases.objects.filter(user = request.user)
+        purchases = Purchase.objects.filter(user = request.user)
 
         purchase_list = []
 

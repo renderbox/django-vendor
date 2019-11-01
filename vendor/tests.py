@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth.models import User
 
-from vendor.models import Offer, Price, Invoice, OrderItem, Purchases
+from vendor.models import Offer, Price, Invoice, OrderItem, Purchase
 from core.models import Product
 
 
@@ -363,7 +363,7 @@ class IncreaseItemQuantityTest(TestCase):
 # RETRIEVE CART
 #################
 
-class RetrieveCartClientTest(DataTestMixin, TestCase):
+class RetrieveCartClientTest(TestCase):
     '''
     Tests for Cart Functionality
     '''
@@ -408,7 +408,8 @@ class RetrieveCartClientTest(DataTestMixin, TestCase):
                   "price": "90.00",
                   "quantity": 1
                 }
-              ]
+              ],
+              "item_count": 2
             }
 
         uri = reverse('vendor-user-cart-retrieve-api')
@@ -446,7 +447,7 @@ class RetrieveCartClientTest(DataTestMixin, TestCase):
 # RETRIEVE ORDER SUMMARY
 #########################
 
-class RetrieveOrderSummaryClientTest(DataTestMixin, TestCase):
+class RetrieveOrderSummaryClientTest(TestCase):
     '''
     Tests for retrieving order summary
     '''
@@ -637,9 +638,9 @@ class RetrievePurchasesClientTest(TestCase):
 
         orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, price = price2, quantity = 2)
 
-        purchase_1 = Purchases.objects.create(user = self.user, order_item = orderitem, product = self.product)
+        purchase_1 = Purchase.objects.create(user = self.user, order_item = orderitem, product = self.product)
 
-        purchase_2 = Purchases.objects.create(user = self.user, order_item = orderitem2, product = self.product2)
+        purchase_2 = Purchase.objects.create(user = self.user, order_item = orderitem2, product = self.product2)
 
         check_data = [
             {

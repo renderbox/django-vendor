@@ -33,7 +33,7 @@ CURRENCIES = {  'usd': {
 clist = list(CURRENCIES.keys())
 clist.sort()
 CURRENCY_CHOICES = tuple([(item, CURRENCIES[item]['name']) for item in clist])        #(('usd', _('US Dollar')),)
-ORDER_STATS_CHOICES = ((0, _("Cart")), (10, _("Processing")), (20, _("Complete")) )
+ORDER_STATUS_CHOICES = ((0, _("Cart")), (10, _("Processing")), (20, _("Complete")) )
 LICENSE_TYPE_CHOICES = ((0, _("Perpetual")), (10, _("Subscription")) )
 PURCHASE_STATUS_CHOICES = ((0, _("Active")), (10, _("Expired")), (20, _("Cancelled")), (30, _("Refunded")) )
 
@@ -163,7 +163,7 @@ class Invoice(CreateUpdateModelBase):
     A Cart that forms the list of itmes purchased.
     '''
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), null=True, on_delete=models.SET_NULL)
-    status = models.IntegerField(_("Status"), choices=ORDER_STATS_CHOICES, default=0)
+    status = models.IntegerField(_("Status"), choices=ORDER_STATUS_CHOICES, default=0)
     ordered_date = models.DateField(_("Ordered Date"))
 
     def __str__(self):
@@ -190,7 +190,7 @@ class OrderItem(CreateUpdateModelBase):
         return "%s - %s" % (self.invoice.user.username, self.offer.product.name)
 
 
-class Purchases(CreateUpdateModelBase):
+class Purchase(CreateUpdateModelBase):
     '''
     A link for all the purchases a user has made. Contains subscription start and end date.
     '''
@@ -204,7 +204,7 @@ class Purchases(CreateUpdateModelBase):
     status = models.IntegerField(_("Status"), choices=PURCHASE_STATUS_CHOICES, default=0)
 
     def __str__(self):
-        return "%s - %s - %s" % (self.user.username, self.order_item, self.created.strftime('%Y-%m-%d %H:%M'))
+        return "%s - %s - %s" % (self.user.username, self.product.name, self.created.strftime('%Y-%m-%d %H:%M'))
 
 
 class CustomerProfile(CreateUpdateModelBase):

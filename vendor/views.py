@@ -7,7 +7,7 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
 
-from vendor.models import Offer, OrderItem, Invoice, Price, Purchases
+from vendor.models import Offer, OrderItem, Invoice, Price, Purchase
 
 
 class VendorIndexView(TemplateView):
@@ -151,30 +151,10 @@ class RetrieveCartView(DetailView):
     def get_queryset(self):
         invoice =  self.model.objects.get(user = self.request.user, status = 0)
         return invoice
-		# if invoice.exists():
-		#     return invoice
-		# else:
-		# 	messages.info(request, "You do not have an active order")
-        #     return redirect("vendor:vendor_index")
 
-    # def get_context_data(self, **kwargs):
-    #
-    #     if invoice.exists():
-    #
-    #         invoice = self.get_queryset()[0]
-    #
-    #         total = 0
-    #
-    #         order_items = invoice_qs.order.all()
-    #
-    #         context['items'] = order_items
-    #
-    #         for items in order_items:
-    #             total += items.total()
-    #
-    #         context['total'] = total
-    #
-    #         return context
+    def get_context_data(self, **kwargs):
+        context['item_count'] = self.get_queryset().order.all().count()
+        return context
 
 
 class DeleteCartView(DeleteView):
@@ -197,7 +177,7 @@ class DeleteCartView(DeleteView):
 
 
 class RetrievePurchasesView(ListView):
-    model = Purchases
+    model = Purchase
 
     def get_queryset(self):
         return self.model.objects.filter(user = self.request.user)
