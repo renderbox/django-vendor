@@ -56,7 +56,7 @@ class AddToCartClientTest(TestCase):
             self.assertEqual(new_invoice, 1)
             self.assertEqual(orderitem, 1)
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response.data)
             raise
@@ -81,7 +81,7 @@ class AddToCartClientTest(TestCase):
             self.assertEqual(orderitem, 0)
             self.assertEqual(new_orderitem, 1)
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response.data)
             raise
@@ -106,7 +106,7 @@ class AddToCartClientTest(TestCase):
             self.assertEqual(orderitem.quantity, 1)
             self.assertGreater(OrderItem.objects.get(offer = offer, invoice = invoice).quantity, 1)
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response.data)
             raise
@@ -145,7 +145,7 @@ class RemoveItemFromCartClientTest(TestCase):
             self.assertEqual(response.status_code, 200)     # 200 -> Created Response Code
             self.assertEqual(order, 0)
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response.data)
             raise
@@ -166,7 +166,7 @@ class RemoveItemFromCartClientTest(TestCase):
         try:
             self.assertEqual(response.status_code, 404)     # 404 -> Created Response Code
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response.data)
             raise
@@ -186,7 +186,7 @@ class RemoveItemFromCartClientTest(TestCase):
         try:
             self.assertEqual(response.status_code, 400)     # 404 -> Created Response Code
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response.data)
             raise
@@ -230,7 +230,7 @@ class DecreaseItemQuantityClientTest(TestCase):
             self.assertEqual(quantity, 2)
             self.assertLess(OrderItem.objects.get(offer = offer, invoice = invoice).quantity, quantity)
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response.data)
             raise
@@ -250,7 +250,7 @@ class DecreaseItemQuantityClientTest(TestCase):
         try:
             self.assertEqual(response.status_code, 400)     # 400 -> Created Response Code
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response.data)
             raise
@@ -271,7 +271,7 @@ class DecreaseItemQuantityClientTest(TestCase):
         try:
             self.assertEqual(response.status_code, 404)     # 404 -> Created Response Code
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response.data)
             raise
@@ -313,7 +313,7 @@ class IncreaseItemQuantityTest(TestCase):
             self.assertEqual(response.status_code, 200)     # 200 -> Created Response Code
             self.assertGreater(updated_quantity, quantity)
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response.data)
             raise
@@ -332,7 +332,7 @@ class IncreaseItemQuantityTest(TestCase):
         try:
             self.assertEqual(response.status_code, 400)     # 400 -> Created Response Code
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response.data)
             raise
@@ -353,7 +353,7 @@ class IncreaseItemQuantityTest(TestCase):
         try:
             self.assertEqual(response.status_code, 404)     # 404 -> Created Response Code
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response.data)
             raise
@@ -419,6 +419,7 @@ class RetrieveCartClientTest(TestCase):
             self.assertEqual(response.status_code, 200)     # 200 -> Return Response Code
             self.assertEqual(response.data.keys(), check_data.keys())
             self.assertEqual(response.data["order_items"][0].keys(), check_data["order_items"][0].keys())
+            self.assertEqual(response.data["item_count"], invoice.order.all().count())
 
         except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
@@ -428,6 +429,10 @@ class RetrieveCartClientTest(TestCase):
 
 
     def test_cart_retrieve_fail(self):
+        '''
+        Test for retrieving a cart when there is no active cart for the user
+        '''
+
         self.client.force_login(self.user)
         offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
 
@@ -458,9 +463,9 @@ class RetrieveOrderSummaryClientTest(TestCase):
         self.product = Product.objects.create(name = "Test Product")
         self.product2 = Product.objects.create(name = "Test Product2")
 
-    def test_cart_retrieve(self):
+    def test_order_summary_retrieve(self):
         '''
-        Test for retrieving a cart for the user
+        Test for retrieving order summary for the user
         '''
 
         self.client.force_login(self.user)
@@ -514,6 +519,10 @@ class RetrieveOrderSummaryClientTest(TestCase):
 
 
     def test_order_summary_retrieve_fail(self):
+        '''
+        Test for retrieving order summary for the user when there is no active cart
+        '''
+
         self.client.force_login(self.user)
         offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
 
@@ -545,6 +554,10 @@ class DeleteCartClientTest(TestCase):
         self.product2 = Product.objects.create(name = "Test Product2")
 
     def test_user_cart_delete(self):
+        '''
+        Test for deleting a cart
+        '''
+
         self.client.force_login(self.user)
         offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
         price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
@@ -567,13 +580,17 @@ class DeleteCartClientTest(TestCase):
             self.assertEqual(Invoice.objects.all().count(), 0)
             self.assertEqual(OrderItem.objects.all().count(), 0)
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response)
             raise
 
 
     def test_user_cart_delete_fail(self):
+        '''
+        Test for deleting a cart when there is no active cart for the user
+        '''
+
         self.client.force_login(self.user)
         offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
         price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
@@ -599,7 +616,7 @@ class DeleteCartClientTest(TestCase):
             self.assertEqual(Invoice.objects.all().count(), 1)
             self.assertEqual(OrderItem.objects.all().count(), 2)
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response)
             raise
@@ -625,6 +642,10 @@ class RetrievePurchasesClientTest(TestCase):
         self.product2 = Product.objects.create(name = "Test Product2")
 
     def test_user_purchase_retrieve(self):
+        '''
+        Test for retrieving user purchases
+        '''
+
         self.client.force_login(self.user)
         offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
         price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
@@ -671,7 +692,7 @@ class RetrievePurchasesClientTest(TestCase):
             self.assertEqual(response.status_code, 200)     # 200 -> Return Response Code
             self.assertEqual(response.data[0].keys(), check_data[0].keys())
 
-        except:
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
             print(response.data)
             raise
@@ -768,7 +789,7 @@ class OrderItemModelTest(TestCase):
 
     def test_order_item_total_retrieve(self):
         '''
-        Test for OrderItem Total retrieval based on the price and  quantity
+        Test for retrieving OrderItem total based on the price and  quantity
         '''
 
         offer = Offer.objects.create(product=self.product, msrp = 80)
