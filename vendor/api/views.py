@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from vendor.models import Offer, Price, Invoice, OrderItem, Purchase
+from .serializers import AddToCartSerializer
 
 # from vendor.models import SampleModel
 # from vendor.api.serializers import SampleModelSerializer
@@ -17,10 +18,17 @@ from vendor.models import Offer, Price, Invoice, OrderItem, Purchase
 #     serializer_class = SampleModelSerializer
 
 
-class AddToCartAPIView(APIView):
+class AddToCartAPIView(generics.CreateAPIView):
+    serializer_class = AddToCartSerializer
 
-    def post(self, request, sku, *args, **kwargs):
-        offer = Offer.objects.get(sku = sku)
+    def post(self, request, *args, **kwargs):
+
+        serializer = self.serializer_class(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        
+        offer = Offer.objects.get(sku = request.data.get("offer"))
 
         invoice = Invoice.objects.filter(user = request.user, status = 0)
 
@@ -29,7 +37,7 @@ class AddToCartAPIView(APIView):
         # check if there is an invoice with status= cart for the user
         if invoice.exists():
             invoice_qs = invoice[0]
-            order_item = invoice_qs.order.filter(offer__sku = sku)
+            order_item = invoice_qs.order.filter(offer__sku = request.data.get("offer"))
 
             # check if the order_item is there in the invoice, if yes increase the quantity
             if order_item.exists():
@@ -55,7 +63,7 @@ class AddToCartAPIView(APIView):
 class IncreaseItemQuantityCartAPIView(APIView):
 
     def patch(self, request, sku, *args, **kwargs):
-        offer = Offer.objects.get(sku = sku)
+        # offer = Offer.objects.get(sku = sku)
 
         invoice = Invoice.objects.filter(user = request.user, status = 0)
 
@@ -80,7 +88,7 @@ class IncreaseItemQuantityCartAPIView(APIView):
 class RemoveSingleItemFromCartAPIView(APIView):
 
     def patch(self, request, sku, *args, **kwargs):
-        offer = Offer.objects.get(sku = sku)
+        # offer = Offer.objects.get(sku = sku)
 
         invoice = Invoice.objects.filter(user = request.user, status = 0)
 
@@ -110,7 +118,7 @@ class RemoveSingleItemFromCartAPIView(APIView):
 class RemoveFromCartAPIView(APIView):
 
     def patch(self, request, sku, *args, **kwargs):
-        offer = Offer.objects.get(sku = sku)
+        # offer = Offer.objects.get(sku = sku)
 
         invoice = Invoice.objects.filter(user = request.user, status = 0)
 

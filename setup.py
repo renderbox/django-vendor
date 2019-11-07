@@ -40,6 +40,7 @@ setup(
     install_requires=[
         'Django>=2.2,<2.3',
         'djangorestframework',
+        'django-crispy-forms',
     ],
     extras_require={
         'dev': [],

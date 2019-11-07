@@ -1,0 +1,33 @@
+<div class="container-fluid">
+    <nav aria-label="breadcrumb">
+        <!-- <ol class="breadcrumb"> -->
+        {% if invoice %}
+        <h1>Cart </h1>
+        <!-- </ol> -->
+    </nav>
+    {%if object_list %}
+    <table class="table", border = 1>
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Cost</th>
+        </tr>
+        {% for items in object_list %}
+        <tr>
+            <td>{{ items.offer.product.name }}</td>
+            <td>{{ items.quantity }}</td>
+            <td>{{ items.price.cost }}</td>
+            <td><a class="text-danger" href="{% url 'remove_from_cart' items.offer.sku %}">Remove item</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+    <h2>Total number of cart items: {{item_count}}</h2>
+    <h2><a class="text-danger" href="{% url 'vendor-order-summary-retrieve' %}">Checkout</a></h2>
+    {% else %}
+    <h2>No items in the cart </h2>
+    {% endif %}
+    {% else %}
+    <h1>No active Cart </h1>
+    {% endif %}
+    <a class="text-danger" href="{% url 'add_to_cart' %}">Add item</a>
+</div>

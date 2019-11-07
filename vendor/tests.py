@@ -44,8 +44,12 @@ class AddToCartClientTest(TestCase):
         offer = Offer.objects.create(product = self.product)
         invoice = Invoice.objects.filter(user = self.user, status = 0).count()
 
-        uri = reverse('vendor-add-to-cart-api', kwargs={'sku': offer.sku})
-        response = self.client.post(uri)
+        data = {
+            "offer": offer.sku
+        }
+
+        uri = reverse('vendor-add-to-cart-api')
+        response = self.client.post(uri, data)
 
         new_invoice = Invoice.objects.filter(user = self.user, status = 0).count()
         orderitem = OrderItem.objects.filter(offer = offer).count()
@@ -71,8 +75,12 @@ class AddToCartClientTest(TestCase):
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
         orderitem = OrderItem.objects.filter(offer = offer, invoice = invoice).count()
 
-        uri = reverse('vendor-add-to-cart-api', kwargs={'sku': offer.sku})
-        response = self.client.post(uri)
+        data = {
+            "offer": offer.sku
+        }
+
+        uri = reverse('vendor-add-to-cart-api')
+        response = self.client.post(uri, data)
 
         new_orderitem = OrderItem.objects.filter(offer = offer, invoice = invoice).count()
 
@@ -98,8 +106,12 @@ class AddToCartClientTest(TestCase):
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
         orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
 
-        uri = reverse('vendor-add-to-cart-api', kwargs={'sku': offer.sku})
-        response = self.client.post(uri)
+        data = {
+            "offer": offer.sku
+        }
+
+        uri = reverse('vendor-add-to-cart-api')
+        response = self.client.post(uri, data)
 
         try:
             self.assertEqual(response.status_code, 200)     # 200 -> Created Response Code
@@ -216,9 +228,13 @@ class DecreaseItemQuantityClientTest(TestCase):
         price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
         orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+        
+        data = {
+            "offer": offer.sku
+        }
 
-        increase_item_quantity_uri = reverse('vendor-add-to-cart-api', kwargs={'sku': offer.sku})
-        cart_response = self.client.post(increase_item_quantity_uri)
+        increase_item_quantity_uri = reverse('vendor-add-to-cart-api')
+        cart_response = self.client.post(increase_item_quantity_uri, data)
 
         quantity = OrderItem.objects.get(offer = offer, invoice = invoice).quantity
 

@@ -6,5 +6,14 @@
 
 from rest_framework import serializers, fields
 
-# from vendor.models import *
+from vendor.models import Offer, Price, Purchase, Invoice, OrderItem
+from core.models import Product
+
+
+class AddToCartSerializer(serializers.ModelSerializer):
+    offer = serializers.SlugRelatedField(slug_field='sku', queryset=Offer.objects.all())
+
+    class Meta:
+        model = OrderItem
+        fields = ('offer',)
 
