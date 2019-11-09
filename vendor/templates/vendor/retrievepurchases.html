@@ -1,0 +1,33 @@
+{% extends "vendor/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+        <nav aria-label="breadcrumb">
+            <!-- <ol class="breadcrumb"> -->
+            <h1>Purchases</h1>
+            <!-- </ol> -->
+        </nav>
+        <table class="table", border = "1">
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+
+            </tr>
+            {% for items in object_list %}
+            <tr>
+                <td>{{ items.product.name }}</td>
+                <td>{{ items.order_item.quantity }}</td>
+                <td>{{ items.order_item.price.cost }}</td>
+                <td>{{ items.start_date }}</td>
+                <td>{{ items.end_date }}</td>
+                <td>{{ items.get_status_display }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+       
+    </div>
+ {% endblock %}   

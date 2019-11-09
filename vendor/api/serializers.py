@@ -17,3 +17,10 @@ class AddToCartSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ('offer',)
 
+
+class RefundRequestSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Purchase
+        fields = ('order_item',)
+

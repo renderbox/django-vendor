@@ -128,3 +128,7 @@ STATIC_URL = '/static/'
 PRODUCT_MODEL = 'core.Product'
 
 SITE_ID = int(os.getenv('SITE_ID', '1'))
+
+STRIPE_SECRET_KEY = 'sk_test_5BMQo1fYiJBYYLPZzpys5Qvu00jdgJIgrR'
+STRIPE_PUBLISHABLE_KEY = 'pk_test_AK9K4g2MYeQdMq2Au649oUtl00rDPX0mzB'
+

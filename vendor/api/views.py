@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from vendor.models import Offer, Price, Invoice, OrderItem, Purchase
-from .serializers import AddToCartSerializer
+from .serializers import AddToCartSerializer, RefundRequestSerializer
 
 # from vendor.models import SampleModel
 # from vendor.api.serializers import SampleModelSerializer
@@ -207,7 +207,7 @@ class RetrievePurchasesAPIView(APIView):
             data['quantity'] = items.order_item.quantity
             data['start_date'] = items.start_date
             data['end_date'] = items.end_date
-            data['status'] = items.status
+            data['status'] = items.get_status_display()
 
             purchase_list.append(data)
 
@@ -250,3 +250,66 @@ class RetrieveOrderSummaryAPIView(APIView):
 
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class PaymentProcessingAPIView(APIView):
+
+    def post(self, request, *args, **kwargs):
+
+        invoice = Invoice.objects.filter(user = request.user, status = 0)
+
+        if invoice.exists():
+
+            invoice_qs = invoice[0]
+
+            order_items = invoice_qs.order.all()
+
+            invoice.update(status = 20)
+
+            for items in order_items:
+                Purchase.objects.create(order_item = items, product = items.offer.product, user = request.user)
+
+            data = {}
+            total = 0
+
+            data['username'] = request.user.username
+
+            data['order_items'] = []
+
+            for items in order_items:
+                item = {}
+                item['sku'] = items.offer.sku
+                item['name'] = items.offer.product.name
+                item['price'] = items.price.cost
+                item['item_total'] = items.total()
+                item['quantity'] = items.quantity
+
+                data['order_items'].append(item)
+
+                total += item['item_total']
+
+            data['total'] = total
+
+            return Response(data, status=status.HTTP_200_OK)
+
+        else:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class RefundRequestAPIView(generics.CreateAPIView):
+    serializer_class = RefundRequestSerializer
+
+    def post(self, request, *args, **kwargs):
+
+        serializer = self.serializer_class(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        order_item = OrderItem.objects.get(id = request.data.get("order_item"))
+
+        # Cannot request a refund for items having passed the end-date
+
+        purchase = Purchase.objects.filter(user = request.user, order_item = order_item).update(status = 20)
+
+        return Response(status=status.HTTP_200_OK)

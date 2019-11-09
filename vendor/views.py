@@ -3,6 +3,7 @@ from django.db.models import F
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.urls import reverse, reverse_lazy
+from django.conf import settings
 
 from django.views import View
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
@@ -11,7 +12,9 @@ from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
 
 from vendor.models import Offer, OrderItem, Invoice, Price, Purchase
-from vendor.forms import AddToCartForm
+from vendor.forms import AddToCartForm, PaymentForm
+
+import stripe
 
 
 class VendorIndexView(TemplateView):
@@ -70,7 +73,6 @@ class AddToCartView(CreateView):
 
 class RemoveFromCartView(DeleteView):
     model = OrderItem
-    template_name = "vendor/removeitem.html"
     success_url = reverse_lazy('vendor-user-cart-retrieve')
 
     def get_object(self, queryset=None):
@@ -195,6 +197,7 @@ class DeleteCartView(DeleteView):
 
 class RetrievePurchasesView(ListView):
     model = Purchase
+    template_name = "vendor/retrievepurchases.html"
 
     def get_queryset(self):
         return self.model.objects.filter(user = self.request.user)
@@ -219,5 +222,40 @@ class RetrieveOrderSummaryView(ListView):
 
         context['item_count'] = count
         context['order_total'] = total
+        context['key'] = settings.STRIPE_PUBLISHABLE_KEY
         
         return context
+
+
+class PaymentProcessingView(View):
+
+    def post(self, *args, **kwargs):
+        stripe.api_key = 'sk_test_5BMQo1fYiJBYYLPZzpys5Qvu00jdgJIgrR'
+        invoice = Invoice.objects.get(user = self.request.user, status = 0)
+
+        total = 0
+        
+        order_items = invoice.order.all()
+
+        for item in order_items:
+            total += item.total()
+        
+        charge = stripe.Charge.create(
+            amount=int(total),
+            currency='usd',
+            description='A Django charge',
+            source=self.request.POST['stripeToken']
+        )
+
+        invoice.status = 20 
+        invoice.save() 
+
+        for items in order_items:
+            Purchase.objects.create(order_item = items, product = items.offer.product, user = self.request.user)
+            
+        messages.success(self.request, "Your order was successful!")
+        return redirect(reverse_lazy('vendor-user-purchases-retrieve'))
+
+   
+
+  

@@ -11,3 +11,8 @@ class AddToCartForm(forms.ModelForm):
     class Meta:
         model = OrderItem
         fields = ['offer',]
+
+
+class PaymentForm(forms.Form):
+    stripeToken = forms.CharField(required=False)
+    

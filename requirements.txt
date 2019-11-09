@@ -4,3 +4,4 @@ djangorestframework==3.10.2
 pytz==2019.2
 sqlparse==0.3.0
 django-crispy-forms==1.7.2
+stripe==2.39.0

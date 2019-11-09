@@ -148,7 +148,7 @@ class RemoveItemFromCartClientTest(TestCase):
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
         orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
 
-        uri = reverse('remove-from-cart-api', kwargs={'sku': offer.sku})
+        uri = reverse('vendor-remove-from-cart-api', kwargs={'sku': offer.sku})
         response = self.client.patch(uri)
 
         order = OrderItem.objects.filter(offer = offer, invoice = invoice).count()
@@ -172,7 +172,7 @@ class RemoveItemFromCartClientTest(TestCase):
         offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
 
-        uri = reverse('remove-from-cart-api', kwargs={'sku': offer.sku})
+        uri = reverse('vendor-remove-from-cart-api', kwargs={'sku': offer.sku})
         response = self.client.patch(uri)
 
         try:
@@ -192,7 +192,7 @@ class RemoveItemFromCartClientTest(TestCase):
         self.client.force_login(self.user)
         offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
 
-        uri = reverse('remove-from-cart-api', kwargs={'sku': offer.sku})
+        uri = reverse('vendor-remove-from-cart-api', kwargs={'sku': offer.sku})
         response = self.client.patch(uri)
 
         try:
@@ -238,7 +238,7 @@ class DecreaseItemQuantityClientTest(TestCase):
 
         quantity = OrderItem.objects.get(offer = offer, invoice = invoice).quantity
 
-        uri = reverse('remove-single-item-from-cart-api', kwargs={'sku': offer.sku})
+        uri = reverse('vendor-remove-single-item-from-cart-api', kwargs={'sku': offer.sku})
         response = self.client.patch(uri)
 
         try:
@@ -260,7 +260,7 @@ class DecreaseItemQuantityClientTest(TestCase):
         self.client.force_login(self.user)
         offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
 
-        uri = reverse('remove-single-item-from-cart-api', kwargs={'sku': offer.sku})
+        uri = reverse('vendor-remove-single-item-from-cart-api', kwargs={'sku': offer.sku})
         response = self.client.patch(uri)
 
         try:
@@ -281,7 +281,7 @@ class DecreaseItemQuantityClientTest(TestCase):
         offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
 
-        uri = reverse('remove-single-item-from-cart-api', kwargs={'sku': offer.sku})
+        uri = reverse('vendor-remove-single-item-from-cart-api', kwargs={'sku': offer.sku})
         response = self.client.patch(uri)
 
         try:
@@ -320,7 +320,7 @@ class IncreaseItemQuantityTest(TestCase):
 
         quantity = OrderItem.objects.get(offer = offer, invoice = invoice).quantity
 
-        uri = reverse('increase-item-quantity-api', kwargs={'sku': offer.sku})
+        uri = reverse('vendor-increase-item-quantity-api', kwargs={'sku': offer.sku})
         response = self.client.patch(uri)
 
         updated_quantity = OrderItem.objects.get(offer = offer, invoice = invoice).quantity
@@ -342,7 +342,7 @@ class IncreaseItemQuantityTest(TestCase):
         self.client.force_login(self.user)
         offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
 
-        uri = reverse('increase-item-quantity-api', kwargs={'sku': offer.sku})
+        uri = reverse('vendor-increase-item-quantity-api', kwargs={'sku': offer.sku})
         response = self.client.patch(uri)
 
         try:
@@ -363,7 +363,7 @@ class IncreaseItemQuantityTest(TestCase):
         offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
 
-        uri = reverse('increase-item-quantity-api', kwargs={'sku': offer.sku})
+        uri = reverse('vendor-increase-item-quantity-api', kwargs={'sku': offer.sku})
         response = self.client.patch(uri)
 
         try:
@@ -712,6 +712,105 @@ class RetrievePurchasesClientTest(TestCase):
             print("")
             print(response.data)
             raise
+
+
+#####################
+# PAYMENT PROCESSING
+#####################
+
+class PaymentProcessingTest(TestCase):
+    '''
+    Tests for Payment Proccessing
+    '''
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create(username='testuser', password='12345')
+        self.product = Product.objects.create(name = "Test Product")
+
+    def test_payment_process(self):
+        
+        self.client.force_login(self.user)
+        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+
+        uri = reverse('vendor-payment-processing-api')
+        response = self.client.post(uri)
+
+        purchases = Purchase.objects.filter(user = self.user)
+        invoice_completed = Invoice.objects.get(id = invoice.id)
+        
+        try:
+            self.assertEqual(response.status_code, 200)     # 200 -> Created Response Code
+            self.assertEqual(invoice_completed.status, 20)
+            self.assertEqual(purchases.count(), 1)
+
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
+            print("")
+            print(response.data)
+            raise
+
+
+#####################
+# REFUND CLIENT TEST
+#####################
+
+class RefundClientTest(TestCase):
+    '''
+    Tests for refund endpoints
+    '''
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create(username='testuser', password='12345')
+        self.product = Product.objects.create(name = "Test Product")
+
+    def test_refund_request(self):
+        '''
+        Tests for requesting a refund
+        '''
+
+        self.client.force_login(self.user)
+
+        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+
+        uri = reverse('vendor-payment-processing-api')
+        response = self.client.post(uri)
+
+        refund_uri = reverse('vendor-refund-requesting-api')
+
+        data = {
+            "order_item": orderitem.id
+        }
+
+        refund_response = self.client.post(refund_uri, data)
+
+        purchases = Purchase.objects.get(user = self.user, order_item = orderitem)
+        
+        try:
+            self.assertEqual(refund_response.status_code, 200)     # 200 -> Created Response Code
+            self.assertEqual(purchases.status, 20)
+
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
+            print("")
+            print(refund_response.data)
+            raise
+
+
+    def test_refund_issue(self):
+        '''
+        Tests for issuing a refund
+        '''
+
+        pass
+
+        
+
 
 
 #####################
