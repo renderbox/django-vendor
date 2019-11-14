@@ -4,7 +4,7 @@ from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 
-from .models import OrderItem
+from .models import OrderItem, Refund
 
 
 class AddToCartForm(forms.ModelForm):
@@ -15,4 +15,10 @@ class AddToCartForm(forms.ModelForm):
 
 class PaymentForm(forms.Form):
     stripeToken = forms.CharField(required=False)
+
+
+class RequestRefundForm(forms.ModelForm):
+    class Meta:
+        model = Refund
+        fields = ['reason']
     

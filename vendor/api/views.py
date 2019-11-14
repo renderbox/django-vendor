@@ -6,8 +6,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from vendor.models import Offer, Price, Invoice, OrderItem, Purchase
-from .serializers import AddToCartSerializer, RefundRequestSerializer
+from vendor.models import Offer, Price, Invoice, OrderItem, Purchase, Refund
+from .serializers import AddToCartSerializer, RefundRequestSerializer, RefundIssueSerializer
 
 # from vendor.models import SampleModel
 # from vendor.api.serializers import SampleModelSerializer
@@ -306,10 +306,40 @@ class RefundRequestAPIView(generics.CreateAPIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
 
-        order_item = OrderItem.objects.get(id = request.data.get("order_item"))
+        purchase = Purchase.objects.get(id = request.data.get("purchase"))
+        reason = request.data.get("reason")
+        
+        refund = Refund.objects.filter(user = request.user, purchase = purchase)
 
-        # Cannot request a refund for items having passed the end-date
+        if not refund:
+            Refund.objects.create(purchase = purchase, reason = reason, user = request.user)
 
-        purchase = Purchase.objects.filter(user = request.user, order_item = order_item).update(status = 20)
+            # todo: Cannot request a refund for items having passed the end-date
+
+            purchase.status = 20
+            purchase.save()
+
+            return Response(status=status.HTTP_200_OK)
+
+        else:
+            return Response("Refund already requested", status=status.HTTP_200_OK)
+
+
+class RefundIssueAPIView(APIView):
+
+    def patch(self, request, id,  *args, **kwargs):
+
+        refund = Refund.objects.get(id = id)        
+        refund.accepted = True
+        refund.save()
+
+        purchase = refund.purchase
+        purchase.status = 30
+        purchase.save()
 
         return Response(status=status.HTTP_200_OK)
+
+
+
+        
+

@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth.models import User
 
-from vendor.models import Offer, Price, Invoice, OrderItem, Purchase
+from vendor.models import Offer, Price, Invoice, OrderItem, Purchase, Refund
 from core.models import Product
 
 
@@ -782,19 +782,20 @@ class RefundClientTest(TestCase):
         uri = reverse('vendor-payment-processing-api')
         response = self.client.post(uri)
 
+        purchase = Purchase.objects.get(user = self.user, order_item = orderitem)
+
         refund_uri = reverse('vendor-refund-requesting-api')
 
         data = {
-            "order_item": orderitem.id
+            "purchase": purchase.id,
+            "reason": "wrong description"
         }
 
         refund_response = self.client.post(refund_uri, data)
 
-        purchases = Purchase.objects.get(user = self.user, order_item = orderitem)
-        
         try:
             self.assertEqual(refund_response.status_code, 200)     # 200 -> Created Response Code
-            self.assertEqual(purchases.status, 20)
+            self.assertEqual(Purchase.objects.get(user = self.user, order_item = orderitem).status, 20)
 
         except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
@@ -807,10 +808,42 @@ class RefundClientTest(TestCase):
         Tests for issuing a refund
         '''
 
-        pass
+        self.client.force_login(self.user)
 
-        
+        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
 
+        uri = reverse('vendor-payment-processing-api')
+        response = self.client.post(uri)
+
+        purchase = Purchase.objects.get(user = self.user, order_item = orderitem)
+
+        refund_uri = reverse('vendor-refund-requesting-api')
+
+        data = {
+            "purchase": purchase.id,
+            "reason": "wrong description"
+        }
+
+        refund_response = self.client.post(refund_uri, data)
+
+        refund = Refund.objects.get(purchase = purchase)
+
+        refund_issue_uri = reverse('vendor-refund-issue-api', kwargs={'id': refund.id})
+
+        refund_issue_response = self.client.patch(refund_issue_uri)
+
+        try:
+            self.assertEqual(refund_response.status_code, 200)     # 200 -> Created Response Code
+            self.assertEqual(Purchase.objects.get(user = self.user, order_item = orderitem).status, 30)
+            self.assertEqual(Refund.objects.get(purchase = purchase).accepted, True)
+
+        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
+            print("")
+            print(refund_issue_response.data)
+            raise
 
 
 #####################

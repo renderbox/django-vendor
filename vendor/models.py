@@ -11,6 +11,7 @@ from django.utils.translation import ugettext as _
 from django.urls import reverse
 from django.contrib.sites.models import Site
 from django.db.models.signals import post_save
+from jsonfield import JSONField
 
 
 #############
@@ -165,6 +166,7 @@ class Invoice(CreateUpdateModelBase):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), null=True, on_delete=models.SET_NULL)
     status = models.IntegerField(_("Status"), choices=ORDER_STATUS_CHOICES, default=0)
     ordered_date = models.DateField(_("Ordered Date"))
+    attrs = JSONField(_("attrs"), blank=True, null=True)
 
     def __str__(self):
         return "%s - (%s)" % (self.user.username, self.created.strftime('%Y-%m-%d %H:%M'))
@@ -202,7 +204,7 @@ class Purchase(CreateUpdateModelBase):
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True)
     auto_renew = models.BooleanField(_("Auto Renew"), default=False)
     status = models.IntegerField(_("Status"), choices=PURCHASE_STATUS_CHOICES, default=0)
-
+    
     def __str__(self):
         return "%s - %s - %s" % (self.user.username, self.product.name, self.created.strftime('%Y-%m-%d %H:%M'))
 
@@ -214,11 +216,18 @@ class CustomerProfile(CreateUpdateModelBase):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), null=True, on_delete=models.SET_NULL)
     currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES)
+    attrs = JSONField(_("attrs"), blank=True, null=True)
 
     def __str__(self):
         return "%s" % (self.user.username)
 
 
+class Refund(CreateUpdateModelBase):
+    
+    purchase = models.ForeignKey('vendor.Purchase', verbose_name=_("Purchase"), on_delete=models.CASCADE, related_name="refunds")
+    reason = models.CharField(_("Reason"), max_length=400)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), null=True, on_delete=models.SET_NULL)
+    accepted = models.BooleanField(_("Accepted"), default=False)
 
 # class Library(CreateUpdateModelBase):
 #     '''

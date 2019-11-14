@@ -11,8 +11,8 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
 
-from vendor.models import Offer, OrderItem, Invoice, Price, Purchase
-from vendor.forms import AddToCartForm, PaymentForm
+from vendor.models import Offer, OrderItem, Invoice, Price, Purchase, Refund, CustomerProfile
+from vendor.forms import AddToCartForm, PaymentForm, RequestRefundForm
 
 import stripe
 
@@ -25,7 +25,7 @@ class AddToCartView(CreateView):
     model = OrderItem
     form_class = AddToCartForm
     template_name = "vendor/addtocart.html"
-    # success_url = reverse_lazy('add_to_cart')
+    success_url = reverse_lazy('vendor-user-cart-retrieve')
 
     def get_object(self, queryset=None):
         self.offer = self.request.POST.get('offer')
@@ -49,7 +49,7 @@ class AddToCartView(CreateView):
             if order_item.exists():
                 order_item.update(quantity=F('quantity')+1)
                 messages.info(self.request, "This item quantity was updated.")
-                return redirect(reverse_lazy('vendor-user-cart-retrieve'))
+                return redirect(self.success_url)
 
             # Create an order_item object for the invoice
             else:
@@ -59,7 +59,7 @@ class AddToCartView(CreateView):
                     price=price
                 )
                 messages.info(self.request, "This item was added to your cart.")
-                return redirect(reverse_lazy('vendor-user-cart-retrieve'))
+                return redirect(self.success_url)
 
         # Create a invoice object with status = cart
         else:
@@ -68,7 +68,7 @@ class AddToCartView(CreateView):
 
             order_item = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
             messages.info(self.request, "This item was added to your cart.")
-            return redirect(reverse_lazy('vendor-user-cart-retrieve'))
+            return redirect(self.success_url)
 
 
 class RemoveFromCartView(DeleteView):
@@ -83,69 +83,7 @@ class RemoveFromCartView(DeleteView):
 
         self.get_object().delete()
         messages.info(request, "This item removed from your cart")
-        return redirect(reverse_lazy('vendor-user-cart-retrieve'))
-
-
-class RemoveSingleItemFromCartView(UpdateView):
-
-    def update(request, sku):
-        offer = get_object_or_404(Offer, sku=sku)
-
-        invoice = Invoice.objects.filter(user = request.user, status = 0)
-
-        if invoice.exists():
-
-            invoice_qs = invoice[0]
-
-            order_item = invoice_qs.order.filter(offer__sku = sku)
-
-            # check if the order_item is there in the invoice, if yes delete the order_item object
-            if order_item.exists():
-                if order_item[0].quantity > 1:
-                    order_item.update(quantity=F('quantity')-1)
-                    messages.info(request, "The quantity of the item reduced from your cart")
-
-                else:
-                    order_item[0].delete()
-                    messages.info(request, "This item removed from your cart")
-
-                return redirect("vendor:vendor_index")
-
-            else:
-                messages.info(request, "This item was not in your cart.")
-                return redirect("vendor:vendor_index")
-
-        else:
-            messages.info(request, "You do not have an active order")
-            return redirect("vendor:vendor_index")
-
-
-class IncreaseItemQuantityCartView(UpdateView):
-
-    def update(request, sku):
-        offer = get_object_or_404(Offer, sku=sku)
-
-        invoice = Invoice.objects.filter(user = request.user, status = 0)
-
-        if invoice.exist():
-
-            invoice_qs = invoice[0]
-
-            order_item = invoice_qs.order.filter(offer__sku = sku)
-
-            if order_item.exists():
-                order_item.update(quantity=F('quantity')+1)
-                messages.info(request, "The quantity of the item increased in your cart")
-
-                return redirect("vendor:vendor_index")
-
-            else:
-                messages.info(request, "This item was not in your cart.")
-                return redirect("vendor:vendor_index")
-
-        else:
-            messages.info(request, "You do not have an active order")
-            return redirect("vendor:vendor_index")
+        return redirect(self.success_url)
 
 
 class RetrieveCartView(ListView):
@@ -222,6 +160,7 @@ class RetrieveOrderSummaryView(ListView):
 
         context['item_count'] = count
         context['order_total'] = total
+        context['amount'] = total * 100
         context['key'] = settings.STRIPE_PUBLISHABLE_KEY
         
         return context
@@ -230,7 +169,9 @@ class RetrieveOrderSummaryView(ListView):
 class PaymentProcessingView(View):
 
     def post(self, *args, **kwargs):
-        stripe.api_key = 'sk_test_5BMQo1fYiJBYYLPZzpys5Qvu00jdgJIgrR'
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        token = self.request.POST['stripeToken']
+
         invoice = Invoice.objects.get(user = self.request.user, status = 0)
 
         total = 0
@@ -239,22 +180,173 @@ class PaymentProcessingView(View):
 
         for item in order_items:
             total += item.total()
+
+        try:
+            customer_profile = CustomerProfile.objects.get(user = self.request.user)
         
+        except:
+            customer_profile = CustomerProfile.objects.create(user = self.request.user, currency = 'usd', attrs = {})
+        
+        stripe_customer_id = customer_profile.attrs.get('stripe_customer_id', None)
+
+        if stripe_customer_id != '' and stripe_customer_id is not None:
+                    customer = stripe.Customer.retrieve(
+                        stripe_customer_id)
+
+        else:
+            customer = stripe.Customer.create(
+                email=self.request.user.email,
+                card=token
+            )
+            customer_profile.attrs['stripe_customer_id'] = customer['id']
+            customer_profile.save()
+     
         charge = stripe.Charge.create(
-            amount=int(total),
+            amount=int(total * 100),
             currency='usd',
-            description='A Django charge',
-            source=self.request.POST['stripeToken']
+            description='TrainingCamp Charge',
+            customer=customer.id,
+            metadata={'invoice_id': invoice.id},
         )
 
         invoice.status = 20 
+        invoice.attrs = {'charge': charge.id}
         invoice.save() 
 
         for items in order_items:
             Purchase.objects.create(order_item = items, product = items.offer.product, user = self.request.user)
-            
+        
         messages.success(self.request, "Your order was successful!")
         return redirect(reverse_lazy('vendor-user-purchases-retrieve'))
+
+       
+class RequestRefundView(CreateView):
+    model = Refund
+    form_class = RequestRefundForm
+    template_name = "vendor/requestrefund.html"
+
+    def get_object(self, queryset=None):
+        self.purchase = Purchase.objects.get(id=self.kwargs['id'])
+        return self.purchase
+
+    def form_valid(self,form):
+
+        purchase = self.get_object()
+
+        reason = self.request.POST.get('reason')
+
+        Refund.objects.create(purchase = purchase, reason = reason, user = self.request.user)
+
+        purchase.status = 20 
+        purchase.save()
+
+        messages.info(self.request, "Refund request created")
+        return redirect(reverse_lazy('vendor-user-purchases-retrieve'))
+
+
+class RetrieveRefundRequestsView(ListView):
+    model = Refund 
+    template_name = "vendor/refundrequests.html"
+
+    def get_queryset(self):
+        return self.model.objects.all()
+
+
+class IssueRefundView(CreateView):
+    model = Refund 
+    success_url = reverse_lazy('vendor-retrieve-refund-requests')
+
+    def get_queryset(self):
+        return self.model.objects.get(id = self.kwargs['id'])
+
+    def post(self, request, *args, **kwargs):
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        
+        refund = self.get_queryset()
+        purchase = refund.purchase
+
+        invoice = purchase.order_item.invoice 
+
+        charge = invoice.attrs['charge']
+
+        stripe.Refund.create(
+            charge=charge, amount = int(purchase.order_item.price.cost * 100))
+
+        refund.accepted = True
+        refund.save()
+
+        purchase.status = 30
+        purchase.save()
+
+        messages.info(request, "Refund was issued")
+
+        return redirect(reverse_lazy('vendor-retrieve-refund-requests'))
+
+
+class RemoveSingleItemFromCartView(UpdateView):
+
+    def update(request, sku):
+        offer = get_object_or_404(Offer, sku=sku)
+
+        invoice = Invoice.objects.filter(user = request.user, status = 0)
+
+        if invoice.exists():
+
+            invoice_qs = invoice[0]
+
+            order_item = invoice_qs.order.filter(offer__sku = sku)
+
+            # check if the order_item is there in the invoice, if yes delete the order_item object
+            if order_item.exists():
+                if order_item[0].quantity > 1:
+                    order_item.update(quantity=F('quantity')-1)
+                    messages.info(request, "The quantity of the item reduced from your cart")
+
+                else:
+                    order_item[0].delete()
+                    messages.info(request, "This item removed from your cart")
+
+                return redirect("vendor:vendor_index")
+
+            else:
+                messages.info(request, "This item was not in your cart.")
+                return redirect("vendor:vendor_index")
+
+        else:
+            messages.info(request, "You do not have an active order")
+            return redirect("vendor:vendor_index")
+
+
+class IncreaseItemQuantityCartView(UpdateView):
+
+    def update(request, sku):
+        offer = get_object_or_404(Offer, sku=sku)
+
+        invoice = Invoice.objects.filter(user = request.user, status = 0)
+
+        if invoice.exist():
+
+            invoice_qs = invoice[0]
+
+            order_item = invoice_qs.order.filter(offer__sku = sku)
+
+            if order_item.exists():
+                order_item.update(quantity=F('quantity')+1)
+                messages.info(request, "The quantity of the item increased in your cart")
+
+                return redirect("vendor:vendor_index")
+
+            else:
+                messages.info(request, "This item was not in your cart.")
+                return redirect("vendor:vendor_index")
+
+        else:
+            messages.info(request, "You do not have an active order")
+            return redirect("vendor:vendor_index")
+
+        
+
+
 
    
 

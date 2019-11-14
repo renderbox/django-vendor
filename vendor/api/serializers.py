@@ -6,7 +6,7 @@
 
 from rest_framework import serializers, fields
 
-from vendor.models import Offer, Price, Purchase, Invoice, OrderItem
+from vendor.models import Offer, Price, Purchase, Invoice, OrderItem, Refund
 from core.models import Product
 
 
@@ -19,8 +19,16 @@ class AddToCartSerializer(serializers.ModelSerializer):
 
 
 class RefundRequestSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
-        model = Purchase
-        fields = ('order_item',)
+        model = Refund
+        fields = ('purchase', 'reason')
+
+
+class RefundIssueSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Refund
+        fields = ('purchase', 'reason', 'accepted')
+        read_only_fields = ('purchase', 'reason', 'accepted')
 

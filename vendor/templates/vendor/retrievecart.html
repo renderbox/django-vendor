@@ -20,7 +20,7 @@
             <td>{{ items.offer.product.name }}</td>
             <td>{{ items.quantity }}</td>
             <td>{{ items.price.cost }}</td>
-            <td><form class="p-5 form" method="post" action="{% url 'vendor_remove_from_cart' items.offer.sku %}">{% csrf_token %}
+            <td><form class="p-5 form" method="post" action="{% url 'vendor-remove-from-cart' items.offer.sku %}">{% csrf_token %}
                     <input class="btn btn-danger" type="submit" value="Remove item">
                 </form></td>
         </tr>
@@ -34,6 +34,6 @@
     {% else %}
     <h1>No active Cart </h1>
     {% endif %}
-    <a class="text-danger" href="{% url 'vendor_add_to_cart' %}">Add item</a>
+    <a class="text-danger" href="{% url 'vendor-add-to-cart' %}">Add item</a>
 </div>
 {% endblock %}

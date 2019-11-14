@@ -14,5 +14,5 @@ urlpatterns = [
     path('retrieve/order/summary/', views.RetrieveOrderSummaryAPIView.as_view(), name='vendor-order-summary-retrieve-api'),
     path('payment/processing/', views.PaymentProcessingAPIView.as_view(), name='vendor-payment-processing-api'),
     path('refund/request/', views.RefundRequestAPIView.as_view(), name='vendor-refund-requesting-api'),
-    path('refund/issue/', views.RefundIssueAPIView.as_view(), name='vendor-refund-issue-api'),
+    path('refund/issue/<int:id>/', views.RefundIssueAPIView.as_view(), name='vendor-refund-issue-api'),
 ]
