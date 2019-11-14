@@ -41,6 +41,8 @@ setup(
         'Django>=2.2,<2.3',
         'djangorestframework',
         'django-crispy-forms',
+        'stripe',
+        'jsonfield',
     ],
     extras_require={
         'dev': [],

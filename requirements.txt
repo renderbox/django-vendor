@@ -1,7 +1,12 @@
+certifi==2019.9.11
+chardet==3.0.4
 Django==2.2.7
+django-crispy-forms==1.8.0
 djangorestframework==3.10.3
-pytz==2019.3
-sqlparse==0.3.0
-django-crispy-forms==1.7.2
-stripe==2.39.0
+idna==2.8
 jsonfield==2.0.2
+pytz==2019.3
+requests==2.22.0
+sqlparse==0.3.0
+stripe==2.40.0
+urllib3==1.25.7
