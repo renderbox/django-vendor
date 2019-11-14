@@ -18,10 +18,6 @@ from vendor.forms import AddToCartForm, PaymentForm, RequestRefundForm
 import stripe
 
 
-class VendorIndexView(TemplateView):
-    template_name = "base.html"
-
-
 class AddToCartView(CreateView):
     model = OrderItem
     form_class = AddToCartForm

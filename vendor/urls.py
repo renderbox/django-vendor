@@ -3,7 +3,6 @@ from django.urls import path
 from vendor import views
 
 urlpatterns = [
-    path("", views.VendorIndexView.as_view(), name="vendor_index"),
     path('add-to-cart/', views.AddToCartView.as_view(), name="vendor-add-to-cart"),
     path('update/quantity/<str:sku>/increase/', views.IncreaseItemQuantityCartView.as_view(), name='vendor_increase-item-quantity'),
     path('update/quantity/<str:sku>/decrease/', views.RemoveSingleItemFromCartView.as_view(), name='vendor_remove-single-item-from-cart'),
