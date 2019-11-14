@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.urls import reverse, reverse_lazy
 from django.conf import settings
+from django.utils.translation import ugettext as _
 
 from django.views import View
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
@@ -18,7 +19,7 @@ import stripe
 
 
 class VendorIndexView(TemplateView):
-    template_name = "vendor/index.html"
+    template_name = "base.html"
 
 
 class AddToCartView(CreateView):
@@ -48,7 +49,7 @@ class AddToCartView(CreateView):
             # check if the order_item is there in the invoice, if yes increase the quantity
             if order_item.exists():
                 order_item.update(quantity=F('quantity')+1)
-                messages.info(self.request, "This item quantity was updated.")
+                messages.info(self.request, _("Item quantity was updated."))
                 return redirect(self.success_url)
 
             # Create an order_item object for the invoice
@@ -58,7 +59,7 @@ class AddToCartView(CreateView):
                     offer=offer,
                     price=price
                 )
-                messages.info(self.request, "This item was added to your cart.")
+                messages.info(self.request, _("Item added to cart."))
                 return redirect(self.success_url)
 
         # Create a invoice object with status = cart
@@ -67,7 +68,7 @@ class AddToCartView(CreateView):
             invoice = Invoice.objects.create(user=self.request.user, ordered_date=ordered_date)
 
             order_item = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
-            messages.info(self.request, "This item was added to your cart.")
+            messages.info(self.request, _("Item added to cart."))
             return redirect(self.success_url)
 
 
@@ -82,7 +83,7 @@ class RemoveFromCartView(DeleteView):
     def delete(self, request, *args, **kwargs):
 
         self.get_object().delete()
-        messages.info(request, "This item removed from your cart")
+        messages.info(request, _("Item removed from cart"))
         return redirect(self.success_url)
 
 
@@ -146,7 +147,7 @@ class RetrieveOrderSummaryView(ListView):
     template_name = "vendor/ordersummary.html"
 
     def get_queryset(self):
-        invoice = self.model.objects.get(user = self.request.user, status = OrderStatus.CART)
+        invoice = self.model.objects.get(user = self.request.user, status=OrderStatus.CART.value)
         return invoice.order.all()
 
     def get_context_data(self, **kwargs):
@@ -172,7 +173,7 @@ class PaymentProcessingView(View):
         stripe.api_key = settings.STRIPE_SECRET_KEY
         token = self.request.POST['stripeToken']
 
-        invoice = Invoice.objects.get(user = self.request.user, status = OrderStatus.CART)
+        invoice = Invoice.objects.get(user = self.request.user, status=OrderStatus.CART.value)
 
         total = 0
         
@@ -204,19 +205,19 @@ class PaymentProcessingView(View):
         charge = stripe.Charge.create(
             amount=int(total * 100),
             currency='usd',
-            description='TrainingCamp Charge',
+            description='TrainingCamp Charge',      # todo: this need to be set relative to the offer item.
             customer=customer.id,
             metadata={'invoice_id': invoice.id},
         )
 
-        invoice.status = OrderStatus.COMPLETE 
+        invoice.status = OrderStatus.COMPLETE.value
         invoice.attrs = {'charge': charge.id}
-        invoice.save() 
+        invoice.save()
 
         for items in order_items:
             Purchase.objects.create(order_item = items, product = items.offer.product, user = self.request.user)
         
-        messages.success(self.request, "Your order was successful!")
+        messages.success(self.request, _("Your order was successful!"))
         return redirect(reverse_lazy('vendor-user-purchases-retrieve'))
 
        
@@ -237,10 +238,10 @@ class RequestRefundView(CreateView):
 
         Refund.objects.create(purchase = purchase, reason = reason, user = self.request.user)
 
-        purchase.status = PurchaseStatus.CANCELED 
+        purchase.status = PurchaseStatus.CANCELED.value
         purchase.save()
 
-        messages.info(self.request, "Refund request created")
+        messages.info(self.request, _("Refund request created"))
         return redirect(reverse_lazy('vendor-user-purchases-retrieve'))
 
 
@@ -275,10 +276,10 @@ class IssueRefundView(CreateView):
         refund.accepted = True
         refund.save()
 
-        purchase.status = PurchaseStatus.REFUNDED
+        purchase.status = PurchaseStatus.REFUNDED.value
         purchase.save()
 
-        messages.info(request, "Refund was issued")
+        messages.info(request, _("Refund was issued"))
 
         return redirect(reverse_lazy('vendor-retrieve-refund-requests'))
 
@@ -288,7 +289,7 @@ class RemoveSingleItemFromCartView(UpdateView):
     def update(request, sku):
         offer = get_object_or_404(Offer, sku=sku)
 
-        invoice = Invoice.objects.filter(user = request.user, status = OrderStatus.CART)
+        invoice = Invoice.objects.filter(user = request.user, status=OrderStatus.CART.value)
 
         if invoice.exists():
 
@@ -300,20 +301,20 @@ class RemoveSingleItemFromCartView(UpdateView):
             if order_item.exists():
                 if order_item[0].quantity > 1:
                     order_item.update(quantity=F('quantity')-1)
-                    messages.info(request, "The quantity of the item reduced from your cart")
+                    messages.info(request, _("The quantity of the item reduced from your cart"))
 
                 else:
                     order_item[0].delete()
-                    messages.info(request, "This item removed from your cart")
+                    messages.info(request, _("This item removed from your cart"))
 
                 return redirect("vendor:vendor_index")
 
             else:
-                messages.info(request, "This item was not in your cart.")
+                messages.info(request, _("This item was not in your cart."))
                 return redirect("vendor:vendor_index")
 
         else:
-            messages.info(request, "You do not have an active order")
+            messages.info(request, _("You do not have an active order"))
             return redirect("vendor:vendor_index")
 
 
@@ -322,7 +323,7 @@ class IncreaseItemQuantityCartView(UpdateView):
     def update(request, sku):
         offer = get_object_or_404(Offer, sku=sku)
 
-        invoice = Invoice.objects.filter(user = request.user, status = OrderStatus.CART)
+        invoice = Invoice.objects.filter(user = request.user, status=OrderStatus.CART.value)
 
         if invoice.exist():
 

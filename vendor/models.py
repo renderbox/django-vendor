@@ -24,11 +24,13 @@ class OrderStatus(Enum):
     COMPLETE = 20
 
 class PurchaseStatus(Enum):
-    ACTIVE = 0
-    EXPIRED = 10
-    CANCELED = 20
-    REFUNDED = 30
-    COMPLETE = 40
+    QUEUED = 0
+    ACTIVE = 10
+    EXPIRED = 20
+    CANCELED = 30
+    REFUNDED = 40
+    COMPLETE = 50
+
 
 
 #############
@@ -52,17 +54,18 @@ clist = list(CURRENCIES.keys())
 clist.sort()
 CURRENCY_CHOICES = tuple([(item, CURRENCIES[item]['name']) for item in clist])        #(('usd', _('US Dollar')),)
 ORDER_STATUS_CHOICES = (
-                (OrderStatus.CART, _("Cart")), 
-                (OrderStatus.PROCESSING, _("Processing")), 
-                (OrderStatus.COMPLETE, _("Complete")) 
+                (OrderStatus.CART.value, _("Cart")), 
+                (OrderStatus.PROCESSING.value, _("Processing")), 
+                (OrderStatus.COMPLETE.value, _("Complete")) 
             )
 LICENSE_TYPE_CHOICES = ((0, _("Perpetual")), (10, _("Subscription")) )
 PURCHASE_STATUS_CHOICES = (
-                (PurchaseStatus.ACTIVE, _("Active")), 
-                (PurchaseStatus.EXPIRED, _("Expired")), 
-                (PurchaseStatus.CANCELED, _("Canceled")), 
-                (PurchaseStatus.REFUNDED, _("Refunded")), 
-                (PurchaseStatus.COMPLETE, _("Completed")) 
+                (PurchaseStatus.QUEUED.value, _("Queued")), 
+                (PurchaseStatus.ACTIVE.value, _("Active")), 
+                (PurchaseStatus.EXPIRED.value, _("Expired")), 
+                (PurchaseStatus.CANCELED.value, _("Canceled")), 
+                (PurchaseStatus.REFUNDED.value, _("Refunded")), 
+                (PurchaseStatus.COMPLETE.value, _("Completed")) 
             )
 
 ############
