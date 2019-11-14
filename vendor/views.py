@@ -11,7 +11,7 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
 
-from vendor.models import Offer, OrderItem, Invoice, Price, Purchase, Refund, CustomerProfile
+from vendor.models import Offer, OrderItem, Invoice, Price, Purchase, Refund, CustomerProfile, PurchaseStatus, OrderStatus
 from vendor.forms import AddToCartForm, PaymentForm, RequestRefundForm
 
 import stripe
@@ -146,7 +146,7 @@ class RetrieveOrderSummaryView(ListView):
     template_name = "vendor/ordersummary.html"
 
     def get_queryset(self):
-        invoice = self.model.objects.get(user = self.request.user, status = 0)
+        invoice = self.model.objects.get(user = self.request.user, status = OrderStatus.CART)
         return invoice.order.all()
 
     def get_context_data(self, **kwargs):
@@ -172,7 +172,7 @@ class PaymentProcessingView(View):
         stripe.api_key = settings.STRIPE_SECRET_KEY
         token = self.request.POST['stripeToken']
 
-        invoice = Invoice.objects.get(user = self.request.user, status = 0)
+        invoice = Invoice.objects.get(user = self.request.user, status = OrderStatus.CART)
 
         total = 0
         
@@ -209,7 +209,7 @@ class PaymentProcessingView(View):
             metadata={'invoice_id': invoice.id},
         )
 
-        invoice.status = 20 
+        invoice.status = OrderStatus.COMPLETE 
         invoice.attrs = {'charge': charge.id}
         invoice.save() 
 
@@ -237,7 +237,7 @@ class RequestRefundView(CreateView):
 
         Refund.objects.create(purchase = purchase, reason = reason, user = self.request.user)
 
-        purchase.status = 20 
+        purchase.status = PurchaseStatus.CANCELED 
         purchase.save()
 
         messages.info(self.request, "Refund request created")
@@ -275,7 +275,7 @@ class IssueRefundView(CreateView):
         refund.accepted = True
         refund.save()
 
-        purchase.status = 30
+        purchase.status = PurchaseStatus.REFUNDED
         purchase.save()
 
         messages.info(request, "Refund was issued")
@@ -288,7 +288,7 @@ class RemoveSingleItemFromCartView(UpdateView):
     def update(request, sku):
         offer = get_object_or_404(Offer, sku=sku)
 
-        invoice = Invoice.objects.filter(user = request.user, status = 0)
+        invoice = Invoice.objects.filter(user = request.user, status = OrderStatus.CART)
 
         if invoice.exists():
 
@@ -322,7 +322,7 @@ class IncreaseItemQuantityCartView(UpdateView):
     def update(request, sku):
         offer = get_object_or_404(Offer, sku=sku)
 
-        invoice = Invoice.objects.filter(user = request.user, status = 0)
+        invoice = Invoice.objects.filter(user = request.user, status = OrderStatus.CART)
 
         if invoice.exist():
 
