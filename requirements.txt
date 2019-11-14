@@ -1,7 +1,6 @@
-Django==2.2.4
--e git+git@github.com:renderbox/django-vendor.git@c277f12d13da85c2315c4ef492e80e2fdecf57d4#egg=django_vendor
-djangorestframework==3.10.2
-pytz==2019.2
+Django==2.2.7
+djangorestframework==3.10.3
+pytz==2019.3
 sqlparse==0.3.0
 django-crispy-forms==1.7.2
 stripe==2.39.0

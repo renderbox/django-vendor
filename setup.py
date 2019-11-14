@@ -56,7 +56,7 @@ setup(
             'Sphinx',
             'sphinx-bootstrap-theme',
             'sphinx-rtd-theme',
-            'sphinx-js',
+            # 'sphinx-js',
         ],
     }
 )
