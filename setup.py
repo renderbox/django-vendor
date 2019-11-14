@@ -41,13 +41,16 @@ setup(
         'Django>=2.2,<2.3',
         'djangorestframework',
         'django-crispy-forms',
-        'stripe',
         'jsonfield',
     ],
     extras_require={
         'dev': [
             'django-allauth',
-        ],
+            'django-autoslug',
+            ],
+        'stripe': [             # Packages needed for Stripe
+            'stripe',
+            ],
         'test': [],
         'prod': [],
         'build': [
@@ -60,7 +63,6 @@ setup(
             'Sphinx',
             'sphinx-bootstrap-theme',
             'sphinx-rtd-theme',
-            # 'sphinx-js',
         ],
     }
 )
