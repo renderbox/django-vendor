@@ -26,17 +26,21 @@
                 <td>{{ items.start_date }}</td>
                 <td>{{ items.end_date }}</td>
                 <td>{{ items.get_status_display }}</td>
-                {% if items.status == 0 %}
+                {% if items.status == 0 or items.status == 10 %}
                     <td><form class="p-5 form" method="post" action="{% url 'vendor-request-refund' items.id %}">{% csrf_token %}
                             <input class="btn btn-danger" type="submit" value="Request Refund"></form></td>
                 
-                {% elif items.status == 20 %}
+                {% elif items.status == 30 %}
                     <td><form class="p-5 form" method="post" action="#">{% csrf_token %}
                             <input class="btn btn-danger" type="submit" value="Refund Requested" disabled></form></td>
 
-                {% elif items.status == 30 %}
+                {% elif items.status == 40 %}
                 <td><form class="p-5 form" method="post" action="#">{% csrf_token %}
-                        <input class="btn btn-danger" type="submit" value="Refunded" disabled></form></td>
+                        <input class="btn btn-danger" type="submit" value="Refund Issued" disabled></form></td>
+
+                {% else %}
+                <td><form class="p-5 form" method="post" action="{% url 'vendor-request-refund' items.id %}">{% csrf_token %}
+                        <input class="btn btn-danger" type="submit" value="Request Refund" disabled ></form></td>
 
                 {% endif %}
                         

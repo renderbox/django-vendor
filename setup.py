@@ -45,7 +45,9 @@ setup(
         'jsonfield',
     ],
     extras_require={
-        'dev': [],
+        'dev': [
+            'django-allauth',
+        ],
         'test': [],
         'prod': [],
         'build': [

@@ -2,6 +2,7 @@ from django.utils import timezone
 from django.db.models import F
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse, reverse_lazy
 from django.conf import settings
 from django.utils.translation import ugettext as _
@@ -18,7 +19,7 @@ from vendor.forms import AddToCartForm, PaymentForm, RequestRefundForm
 import stripe
 
 
-class AddToCartView(CreateView):
+class AddToCartView(LoginRequiredMixin, CreateView):
     model = OrderItem
     form_class = AddToCartForm
     template_name = "vendor/addtocart.html"
@@ -68,22 +69,22 @@ class AddToCartView(CreateView):
             return redirect(self.success_url)
 
 
-class RemoveFromCartView(DeleteView):
+class RemoveFromCartView(LoginRequiredMixin, DeleteView):
     model = OrderItem
+    template_name = "vendor/removeitem.html"
     success_url = reverse_lazy('vendor-user-cart-retrieve')
 
     def get_object(self, queryset=None):
         invoice = Invoice.objects.get(user = self.request.user, status = 0)
         return invoice.order.get(offer__sku = self.kwargs['sku'])
 
-    def delete(self, request, *args, **kwargs):
-
+    def form_valid(self, form):
         self.get_object().delete()
-        messages.info(request, _("Item removed from cart"))
+        messages.info(self.request, _("Item removed from cart"))
         return redirect(self.success_url)
 
 
-class RetrieveCartView(ListView):
+class RetrieveCartView(LoginRequiredMixin, ListView):
     model = Invoice
     template_name = "vendor/retrievecart.html"
 
@@ -111,7 +112,7 @@ class RetrieveCartView(ListView):
         return context
         
 
-class DeleteCartView(DeleteView):
+class DeleteCartView(LoginRequiredMixin, DeleteView):
     model = Invoice
 
     def delete(request):
@@ -130,15 +131,30 @@ class DeleteCartView(DeleteView):
             return redirect("vendor:vendor_index")
 
 
-class RetrievePurchasesView(ListView):
+class RetrievePurchasesView(LoginRequiredMixin, ListView):
     model = Purchase
     template_name = "vendor/retrievepurchases.html"
 
     def get_queryset(self):
         return self.model.objects.filter(user = self.request.user)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        for item in self.get_queryset():
+            if item.status == PurchaseStatus.ACTIVE or item.status == PurchaseStatus.QUEUED:
+                context['refund'] = "Request Refund"
 
-class RetrieveOrderSummaryView(ListView):
+            elif item.status == PurchaseStatus.CANCELED:
+                context['refund'] = "Refund Requested"
+
+            elif item.status == PurchaseStatus.REFUNDED:
+                context['refund'] = "Refund Issued"
+
+            return context
+
+  
+class RetrieveOrderSummaryView(LoginRequiredMixin, ListView):
     model = Invoice
     template_name = "vendor/ordersummary.html"
 
@@ -163,7 +179,7 @@ class RetrieveOrderSummaryView(ListView):
         return context
 
 
-class PaymentProcessingView(View):
+class PaymentProcessingView(LoginRequiredMixin, View):
 
     def post(self, *args, **kwargs):
         stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -217,7 +233,7 @@ class PaymentProcessingView(View):
         return redirect(reverse_lazy('vendor-user-purchases-retrieve'))
 
        
-class RequestRefundView(CreateView):
+class RequestRefundView(LoginRequiredMixin, CreateView):
     model = Refund
     form_class = RequestRefundForm
     template_name = "vendor/requestrefund.html"
@@ -241,7 +257,7 @@ class RequestRefundView(CreateView):
         return redirect(reverse_lazy('vendor-user-purchases-retrieve'))
 
 
-class RetrieveRefundRequestsView(ListView):
+class RetrieveRefundRequestsView(LoginRequiredMixin, ListView):
     model = Refund 
     template_name = "vendor/refundrequests.html"
 
@@ -249,7 +265,7 @@ class RetrieveRefundRequestsView(ListView):
         return self.model.objects.all()
 
 
-class IssueRefundView(CreateView):
+class IssueRefundView(LoginRequiredMixin, CreateView):
     model = Refund 
     success_url = reverse_lazy('vendor-retrieve-refund-requests')
 
@@ -280,7 +296,7 @@ class IssueRefundView(CreateView):
         return redirect(reverse_lazy('vendor-retrieve-refund-requests'))
 
 
-class RemoveSingleItemFromCartView(UpdateView):
+class RemoveSingleItemFromCartView(LoginRequiredMixin, UpdateView):
 
     def update(request, sku):
         offer = get_object_or_404(Offer, sku=sku)
@@ -314,7 +330,7 @@ class RemoveSingleItemFromCartView(UpdateView):
             return redirect("vendor:vendor_index")
 
 
-class IncreaseItemQuantityCartView(UpdateView):
+class IncreaseItemQuantityCartView(LoginRequiredMixin, UpdateView):
 
     def update(request, sku):
         offer = get_object_or_404(Offer, sku=sku)

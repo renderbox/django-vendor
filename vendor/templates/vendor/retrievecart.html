@@ -14,15 +14,15 @@
             <th>Product</th>
             <th>Quantity</th>
             <th>Cost</th>
+            <th></th>
         </tr>
         {% for items in object_list %}
         <tr>
             <td>{{ items.offer.product.name }}</td>
             <td>{{ items.quantity }}</td>
             <td>{{ items.price.cost }}</td>
-            <td><form class="p-5 form" method="post" action="{% url 'vendor-remove-from-cart' items.offer.sku %}">{% csrf_token %}
-                    <input class="btn btn-danger" type="submit" value="Remove item">
-                </form></td>
+            <td><a class="text-danger" href="{% url 'vendor-remove-from-cart' items.offer.sku %}">Remove Item</a></td>
+            
         </tr>
         {% endfor %}
     </table>
