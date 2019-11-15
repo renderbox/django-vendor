@@ -26,7 +26,12 @@
                 {% for items in object_list %}
                 <tr>
                     <td>{{ items.offer.product.name }}</td>
-                    <td>{{ items.quantity }}</td>
+                    <td>
+                        <form action="{% url 'vendor-cart-item-quantity-edit' items.id %}" method=POST>{% csrf_token %}
+                                <div class="col-2">
+                                <input class="form-control" type="number" value={{items.quantity}} id="quantity", name="quantity" onChange="this.form.submit()">
+                                </div>
+                          </form></td>
                     <td>{{ items.price|localize }}</td>
                     <td>{{ items.total|localize }}</td>
                     <td><a class="text-danger" href="{% url 'vendor-remove-from-cart' items.offer.sku %}">Remove Item</a></td>

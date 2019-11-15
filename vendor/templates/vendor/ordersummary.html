@@ -11,14 +11,14 @@
             <tr>
                 <th>Product</th>
                 <th>Quantity</th>
+                <th>Per Item Cost</th>
                 <th>Cost</th>
-                <th>Item Total</th>
             </tr>
             {% for items in object_list %}
             <tr>
                 <td>{{ items.offer.product.name }}</td>
                 <td>{{ items.quantity }}</td>
-                <td>{{ items.price.cost }}</td>
+                <td>{{ items.price }}</td>
                 <td>{{ items.total }}</td>
             </tr>
             {% endfor %}
