@@ -110,7 +110,6 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
 
 class RetrieveCartView(LoginRequiredMixin, ListView):
     model = Invoice
-    template_name = "vendor/retrievecart.html"
 
     def get_queryset(self):
         invoice = self.model.objects.filter(user = self.request.user, status=OrderStatus.CART.value).first()

@@ -32,8 +32,6 @@ class PurchaseStatus(Enum):
     REFUNDED = 40
     COMPLETE = 50
 
-
-
 #############
 # CURRENCIES
 #############
@@ -165,22 +163,6 @@ class Offer(CreateUpdateModelBase):
     def add_to_cart_link(self):
         return reverse("vendor-new-add-to-cart", kwargs={"sku":self.sku})
 
-#     def save(self, *args, **kwargs):
-#         offer = super().save(*args, **kwargs)
-#
-# #Use Signal if not self.sale_price.all().count():
-#
-#         if self.sale_price.all().count() == 0:
-#             Price.objects.create(
-#                 offer=self,
-#                 cost=self.msrp,
-#                 currency = self.currency,
-#                 start_date = timezone.now(),
-#                 priority = 1
-#             )
-
-post_save.connect(create_price_object, sender=Offer, dispatch_uid="create_price_object")
-
 
 #########
 # PRICE
@@ -300,3 +282,10 @@ class Refund(CreateUpdateModelBase):
 
 # class GiftCode(models.Model):
 #     pass
+
+
+############
+# SIGNALS
+############
+
+post_save.connect(create_price_object, sender=Offer, dispatch_uid="create_price_object")
