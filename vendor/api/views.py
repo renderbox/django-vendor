@@ -37,7 +37,7 @@ class AddToCartAPIView(generics.CreateAPIView):
         # check if there is an invoice with status= cart for the user
         if invoice.exists():
             invoice_qs = invoice[0]
-            order_item = invoice_qs.order.filter(offer__sku = request.data.get("offer"))
+            order_item = invoice_qs.order_items.filter(offer__sku = request.data.get("offer"))
 
             # check if the order_item is there in the invoice, if yes increase the quantity
             if order_item.exists():
@@ -71,7 +71,7 @@ class IncreaseItemQuantityCartAPIView(APIView):
 
             invoice_qs = invoice[0]
 
-            order_item = invoice_qs.order.filter(offer__sku = sku)
+            order_item = invoice_qs.order_items.filter(offer__sku = sku)
 
             # check if the order_item is there in the invoice, if yes decrease the quantity of order_item object
             if order_item.exists():
@@ -96,7 +96,7 @@ class RemoveSingleItemFromCartAPIView(APIView):
 
             invoice_qs = invoice[0]
 
-            order_item = invoice_qs.order.filter(offer__sku = sku)
+            order_item = invoice_qs.order_items.filter(offer__sku = sku)
 
             # check if the order_item is there in the invoice, if yes decrease the quantity of order_item object
             if order_item.exists():
@@ -126,7 +126,7 @@ class RemoveFromCartAPIView(APIView):
 
             invoice_qs = invoice[0]
 
-            order_item = invoice_qs.order.filter(offer__sku = sku)
+            order_item = invoice_qs.order_items.filter(offer__sku = sku)
 
             # check if the order_item is there in the invoice, if yes delete the order_item object
             if order_item.exists():
@@ -154,7 +154,7 @@ class RetrieveCartAPIView(APIView):
 
             invoice_qs = invoice[0]
 
-            order_items = invoice_qs.order.all()
+            order_items = invoice_qs.order_items.all()
 
             data['order_items'] = []
 
@@ -182,7 +182,7 @@ class DeleteCartAPIView(APIView):
         invoice = Invoice.objects.filter(user = request.user, status = 0)
 
         if invoice:
-            invoice[0].order.all().delete()
+            invoice[0].order_items.all().delete()
             invoice[0].delete()
 
             return Response(status = status.HTTP_200_OK)
@@ -228,7 +228,7 @@ class RetrieveOrderSummaryAPIView(APIView):
 
             invoice_qs = invoice[0]
 
-            order_items = invoice_qs.order.all()
+            order_items = invoice_qs.order_items.all()
 
             data['order_items'] = []
 
@@ -262,7 +262,7 @@ class PaymentProcessingAPIView(APIView):
 
             invoice_qs = invoice[0]
 
-            order_items = invoice_qs.order.all()
+            order_items = invoice_qs.order_items.all()
 
             invoice.update(status = 20)
 

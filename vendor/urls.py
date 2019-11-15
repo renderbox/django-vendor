@@ -4,6 +4,7 @@ from vendor import views
 
 urlpatterns = [
     path('add-to-cart/', views.AddToCartView.as_view(), name="vendor-add-to-cart"),
+    path('add-to-cart/<str:sku>/', views.NewAddToCartView.as_view(), name="vendor-new-add-to-cart"),
     path('update/quantity/<str:sku>/increase/', views.IncreaseItemQuantityCartView.as_view(), name='vendor_increase-item-quantity'),
     path('update/quantity/<str:sku>/decrease/', views.RemoveSingleItemFromCartView.as_view(), name='vendor_remove-single-item-from-cart'),
     path('removefromcart/<str:sku>/', views.RemoveFromCartView.as_view(), name="vendor-remove-from-cart"),

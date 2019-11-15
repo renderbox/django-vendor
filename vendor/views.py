@@ -14,34 +14,58 @@ from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
 
 from vendor.models import Offer, OrderItem, Invoice, Price, Purchase, Refund, CustomerProfile, PurchaseStatus, OrderStatus
-from vendor.forms import AddToCartForm, PaymentForm, RequestRefundForm
+from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
 
 import stripe
+
+class NewAddToCartView(CreateView):
+    model = OrderItem
+    form_class = AddToCartModelForm                                                         # todo: Move to a regular Form from a ModelForm since the advantages of the ModelForm are not used...
+    success_url = reverse_lazy('vendor-user-cart-retrieve')
+
+    def form_valid(self, form):
+
+        invoice, invoice_created = self.request.user.invoice_set.get_or_create(status=OrderStatus.CART.value)   # todo: Need to see if there is a way to make sure there is a cart and handle the theoretical case of multiples (thought it should be a 'singleton').
+
+        quantity = form.instance.quantity                                                               # How many?
+        offer = Offer.objects.get( sku=self.kwargs['sku'] )                                             # SKU is in the URL...
+
+        order_item, created = invoice.order_items.get_or_create(offer=offer)                            # Get or Create an order item with the matching values
+
+        if not created:                                                                                 # Add the quantity if it already exists
+            order_item.quantity += quantity
+        else:                                                                                           # Set the value if it does not
+            order_item.quantity = quantity
+
+        order_item.save()
+        messages.info(self.request, _("Item added to cart."))
+
+        return redirect(self.success_url)
 
 
 class AddToCartView(LoginRequiredMixin, CreateView):
     model = OrderItem
-    form_class = AddToCartForm
-    template_name = "vendor/addtocart.html"
+    form_class = AddToCartModelForm
     success_url = reverse_lazy('vendor-user-cart-retrieve')
 
-    def get_object(self, queryset=None):
-        self.offer = self.request.POST.get('offer')
-        return self.offer
+    # def get_object(self, queryset=None):
+    #     self.offer = self.request.POST.get('offer')         # todo: This is meant to return a model object, not a string...
+    #     return self.offer
 
     def form_valid(self,form):
-        offer = Offer.objects.get(id = self.get_object()) 
+        # offer = Offer.objects.get(id = self.get_object()) 
+        offer = Offer.objects.get(sku=self.request.POST.get('offer') ) 
     
-        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        price = offer.current_price() #sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
 
-        invoice = Invoice.objects.filter(user = self.request.user, status = 0)
+        invoice = Invoice.objects.filter(user = self.request.user, status=OrderStatus.CART.value)
 
         # check if there is an invoice with status= cart for the user
         if invoice.exists():
 
             invoice_qs = invoice[0]
 
-            order_item = invoice_qs.order.filter(offer__sku = offer.sku)
+            order_item = invoice_qs.order_items.filter(offer__sku = offer.sku)
 
             # check if the order_item is there in the invoice, if yes increase the quantity
             if order_item.exists():
@@ -51,7 +75,7 @@ class AddToCartView(LoginRequiredMixin, CreateView):
 
             # Create an order_item object for the invoice
             else:
-                order_item = OrderItem.objects.create(
+                order_item = self.model.objects.create(
                     invoice = invoice_qs,
                     offer=offer,
                     price=price
@@ -75,8 +99,8 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('vendor-user-cart-retrieve')
 
     def get_object(self, queryset=None):
-        invoice = Invoice.objects.get(user = self.request.user, status = 0)
-        return invoice.order.get(offer__sku = self.kwargs['sku'])
+        invoice = Invoice.objects.get(user = self.request.user, status=OrderStatus.CART.value)
+        return invoice.order_items.get(offer__sku = self.kwargs['sku'])
 
     def form_valid(self, form):
         self.get_object().delete()
@@ -89,17 +113,16 @@ class RetrieveCartView(LoginRequiredMixin, ListView):
     template_name = "vendor/retrievecart.html"
 
     def get_queryset(self):
-        invoice = self.model.objects.filter(user = self.request.user, status = 0)
+        invoice = self.model.objects.filter(user = self.request.user, status=OrderStatus.CART.value).first()
         if invoice:
-            invoice_qs = invoice[0]
-            return invoice_qs.order.all()
+            return invoice.order_items.all()
 
         return None
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         count = 0
-        invoice = self.model.objects.filter(user = self.request.user, status = 0)
+        invoice = self.model.objects.filter(user = self.request.user, status=OrderStatus.CART.value)
         if invoice:
             context['invoice'] = True
 
@@ -120,7 +143,7 @@ class DeleteCartView(LoginRequiredMixin, DeleteView):
         invoice = self.model.filter(user = request.user, status = 0)
 
         if invoice:
-            invoice[0].order.all().delete()
+            invoice[0].order_items.all().delete()
             invoice[0].delete()
 
             messages.info(request, "User Cart deleted.")
@@ -160,7 +183,7 @@ class RetrieveOrderSummaryView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         invoice = self.model.objects.get(user = self.request.user, status=OrderStatus.CART.value)
-        return invoice.order.all()
+        return invoice.order_items.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -189,7 +212,7 @@ class PaymentProcessingView(LoginRequiredMixin, View):
 
         total = 0
         
-        order_items = invoice.order.all()
+        order_items = invoice.order_items.all()
 
         for item in order_items:
             total += item.total()
@@ -307,7 +330,7 @@ class RemoveSingleItemFromCartView(LoginRequiredMixin, UpdateView):
 
             invoice_qs = invoice[0]
 
-            order_item = invoice_qs.order.filter(offer__sku = sku)
+            order_item = invoice_qs.order_items.filter(offer__sku = sku)
 
             # check if the order_item is there in the invoice, if yes delete the order_item object
             if order_item.exists():
@@ -341,7 +364,7 @@ class IncreaseItemQuantityCartView(LoginRequiredMixin, UpdateView):
 
             invoice_qs = invoice[0]
 
-            order_item = invoice_qs.order.filter(offer__sku = sku)
+            order_item = invoice_qs.order_items.filter(offer__sku = sku)
 
             if order_item.exists():
                 order_item.update(quantity=F('quantity')+1)

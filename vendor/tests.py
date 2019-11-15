@@ -397,17 +397,11 @@ class RetrieveCartClientTest(TestCase):
 
         self.client.force_login(self.user)
 
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
-        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
-
+        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)     # todo: use fixtures
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
-
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
-
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
         offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
-        price2 = offer2.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
-
-        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, price = price2, quantity = 2)
+        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, quantity = 2)
 
         check_data = {
               "username": "testuser",
@@ -435,7 +429,7 @@ class RetrieveCartClientTest(TestCase):
             self.assertEqual(response.status_code, 200)     # 200 -> Return Response Code
             self.assertEqual(response.data.keys(), check_data.keys())
             self.assertEqual(response.data["order_items"][0].keys(), check_data["order_items"][0].keys())
-            self.assertEqual(response.data["item_count"], invoice.order.all().count())
+            self.assertEqual(response.data["item_count"], invoice.order_items.all().count())
 
         except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
@@ -491,12 +485,12 @@ class RetrieveOrderSummaryClientTest(TestCase):
 
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
 
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
 
         offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
         price2 = offer2.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
 
-        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, price = price2, quantity = 2)
+        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, quantity = 2)
 
         check_data = {
               "username": "testuser",
@@ -663,17 +657,17 @@ class RetrievePurchasesClientTest(TestCase):
         '''
 
         self.client.force_login(self.user)
+
         offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
         price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
 
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
-
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
 
         offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
         price2 = offer2.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
 
-        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, price = price2, quantity = 2)
+        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, quantity = 2)
 
         purchase_1 = Purchase.objects.create(user = self.user, order_item = orderitem, product = self.product)
 

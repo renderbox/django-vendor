@@ -143,11 +143,11 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-PRODUCT_MODEL = 'core.Product'
-
 SITE_ID = int(os.getenv('SITE_ID', '1'))
 
+# Django Vendor Settings
+PRODUCT_MODEL = 'core.Product'
+
+# Stripe Settings
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
-
-

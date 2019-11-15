@@ -1,1 +1,13 @@
 {% extends "base.html" %}
+
+
+{% block content %}
+<h2>Items</h2>
+
+<ul>
+    {% for item in object_list %}
+    <li>ITEM: {{ item.name }} -> <a href="{{item.add_to_cart_link}}">Buy</a></li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

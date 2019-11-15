@@ -7,10 +7,14 @@ from crispy_forms.layout import Submit
 from .models import OrderItem, Refund
 
 
-class AddToCartForm(forms.ModelForm):
+class AddToCartModelForm(forms.ModelForm):
+
     class Meta:
         model = OrderItem
-        fields = ['offer',]
+        fields = ['quantity']
+
+class AddToCartForm(forms.Form):
+    quantity = forms.IntegerField(required=True, initial=1)
 
 
 class PaymentForm(forms.Form):
