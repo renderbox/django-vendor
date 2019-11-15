@@ -38,7 +38,7 @@ class NewAddToCartView(CreateView):
             order_item.quantity = quantity
 
         order_item.save()
-        messages.info(self.request, _("Item added to cart."))
+        messages.info(self.request, "\"{}\"".format( order_item.product_name ) + _(" added to cart."))
 
         return redirect(self.success_url)
 
@@ -191,7 +191,7 @@ class RetrieveOrderSummaryView(LoginRequiredMixin, ListView):
     
         for item in self.get_queryset():
             count +=  item.quantity
-            total += item.total()
+            total += item.total
 
         context['item_count'] = count
         context['order_total'] = total

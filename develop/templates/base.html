@@ -20,9 +20,18 @@
   <header>
     <!-- Fixed navbar -->
     <nav class="navbar navbar-expand-md navbar-dark bg-dark d-flex flex-row justify-content-between">
-      <div class="logo" style="color:white">Django Vendor</div>
+      <a class="navbar-brand" href="/">Django Vendor</a>
     </nav>
   </header>
+
+  {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-dismissible {% if message.tags %} alert-{{ message.tags }}{% endif %}">
+          <a class="close" data-dismiss="alert">×</a>
+          {{ message }}
+      </div>
+      {% endfor %}
+  {% endif %}
 
   {% block content %}
   Vendor Base HTML Template

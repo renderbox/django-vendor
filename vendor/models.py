@@ -184,7 +184,6 @@ class Price(models.Model):
     def price_display(self):
         return "$%s" % self.cost
 
-
     def __str__(self):
         return "%s: $%d" % (self.offer.name, self.cost)
 
@@ -208,7 +207,7 @@ class OrderItem(CreateUpdateModelBase):
     '''
     invoice = models.ForeignKey(Invoice, verbose_name=_("Invoice"), on_delete=models.CASCADE, related_name="order_items")
     offer = models.ForeignKey('vendor.Offer', verbose_name=_("Offer"), on_delete=models.CASCADE, related_name="items")
-    # price_paid = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)    # This is blank until a purchase is made.
+    # price_paid = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)                              # This is blank until a purchase is made? or should it be included in the reciept?
     # currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES)
     # fullfilled = models.BooleanField(default=False)
     quantity = models.IntegerField(_("Quantity"), default=1)
@@ -224,8 +223,16 @@ class OrderItem(CreateUpdateModelBase):
     def price(self):
         return self.offer.current_price()
 
+    @property
+    def total(self):
+        return self.price * self.quantity
 
-class Purchase(CreateUpdateModelBase):
+    @property
+    def product_name(self):
+        return self.offer.product.name
+
+
+class Purchase(CreateUpdateModelBase):          # todo: Rename to Reciept?
     '''
     A link for all the purchases a user has made. Contains subscription start and end date.
     '''
@@ -237,7 +244,10 @@ class Purchase(CreateUpdateModelBase):
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True)
     auto_renew = models.BooleanField(_("Auto Renew"), default=False)
     status = models.IntegerField(_("Status"), choices=PURCHASE_STATUS_CHOICES, default=0)
-    
+
+    class Meta:
+        verbose_name_plural = "purchases"
+
     def __str__(self):
         return "%s - %s - %s" % (self.user.username, self.product.name, self.created.strftime('%Y-%m-%d %H:%M'))
 
