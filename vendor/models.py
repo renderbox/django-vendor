@@ -194,7 +194,7 @@ class Invoice(CreateUpdateModelBase):
     '''
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), null=True, on_delete=models.SET_NULL)
     status = models.IntegerField(_("Status"), choices=ORDER_STATUS_CHOICES, default=0)
-    ordered_date = models.DateField(_("Ordered Date"))
+    ordered_date = models.DateField(_("Ordered Date"), null=True)
     attrs = JSONField(_("attrs"), blank=True, null=True)
 
     def __str__(self):
