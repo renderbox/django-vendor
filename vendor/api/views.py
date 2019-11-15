@@ -6,16 +6,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from vendor.models import Offer, Price, Invoice, OrderItem, Purchase, Refund
+from vendor.models import Offer, Price, Invoice, OrderItem, Purchase, Refund, OrderStatus, PurchaseStatus
 from .serializers import AddToCartSerializer, RefundRequestSerializer, RefundIssueSerializer
 
-# from vendor.models import SampleModel
-# from vendor.api.serializers import SampleModelSerializer
-
-
-# class SampleModelListAPIView(generics.ListAPIView):
-#     queryset = SampleModel.objects.filter(enabled=True)
-#     serializer_class = SampleModelSerializer
 
 
 class AddToCartAPIView(generics.CreateAPIView):
@@ -143,7 +136,7 @@ class RetrieveCartAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
 
-        invoice = Invoice.objects.filter(user = request.user, status = 0)
+        invoice = Invoice.objects.filter(user=request.user, status=OrderStatus.CART.value)
 
         if invoice.exists():
             data = {}
@@ -178,16 +171,14 @@ class DeleteCartAPIView(APIView):
 
     def delete(self, request, *args, **kwargs):
 
-        invoice = Invoice.objects.filter(user = request.user, status = 0)
+        invoice, invoice_created = self.request.user.invoice_set.get_or_create(status=OrderStatus.CART.value)       # To make sure there is only one.
 
-        if invoice:
-            invoice[0].order_items.all().delete()
-            invoice[0].delete()
+        if not invoice_created:
+            invoice.order_items.all().delete()
 
-            return Response(status = status.HTTP_200_OK)
-
-        else:
-            return Response(status = status.HTTP_400_BAD_REQUEST)
+        return Response(status = status.HTTP_200_OK)
+        # else:
+        #     return Response(status = status.HTTP_400_BAD_REQUEST)
 
 
 class RetrievePurchasesAPIView(APIView):

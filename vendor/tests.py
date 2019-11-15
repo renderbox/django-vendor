@@ -139,8 +139,8 @@ class RemoveItemFromCartClientTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create(username='testuser', password='12345')
-        self.product = Product.objects.create(name = "Test Product")
+        self.user = User.objects.get(pk=2)
+        self.product = Product.objects.get(pk=4)
 
     def test_remove_item_from_cart(self):
         '''
@@ -221,8 +221,8 @@ class DecreaseItemQuantityClientTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create(username='testuser', password='12345')
-        self.product = Product.objects.create(name = "Test Product")
+        self.user = User.objects.get(pk=2)
+        self.product = Product.objects.get(pk=4)
 
     def test_decrease_quantity_from_cart(self):
         '''
@@ -311,8 +311,8 @@ class IncreaseItemQuantityTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create(username='testuser', password='12345')
-        self.product = Product.objects.create(name = "Test Product")
+        self.user = User.objects.get(pk=2)
+        self.product = Product.objects.get(pk=4)
 
     def test_increase_item_quantity(self):
         '''
@@ -394,9 +394,9 @@ class RetrieveCartClientTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create(username='testuser', password='12345')
-        self.product = Product.objects.create(name = "Test Product")
-        self.product2 = Product.objects.create(name = "Test Product2")
+        self.user = User.objects.get(pk=2)
+        self.product = Product.objects.get(pk=4)
+        self.product2 = Product.objects.get(pk=3)
 
     def test_cart_retrieve(self):
         '''
@@ -479,9 +479,9 @@ class RetrieveOrderSummaryClientTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create(username='testuser', password='12345')
-        self.product = Product.objects.create(name = "Test Product")
-        self.product2 = Product.objects.create(name = "Test Product2")
+        self.user = User.objects.get(pk=2)
+        self.product = Product.objects.get(pk=4)
+        self.product2 = Product.objects.get(pk=3)
 
     def test_order_summary_retrieve(self):
         '''
@@ -571,25 +571,25 @@ class DeleteCartClientTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create(username="testuser", password='12345')
-        self.product = Product.objects.create(name = "Test Product")
-        self.product2 = Product.objects.create(name = "Test Product2")
+        self.user = User.objects.get(pk=2)
+        self.product = Product.objects.get(pk=4)
+        self.product2 = Product.objects.get(pk=3)
 
     def test_user_cart_delete(self):
         '''
-        Test for deleting a cart
+        Test for deleting a cart contents.
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.get(pk=2)
+        # offer = Offer.objects.get(pk=2)
 
-        invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
+        # invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
 
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
+        # orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
 
-        offer2 = Offer.objects.get(pk=3)
+        # offer2 = Offer.objects.get(pk=3)
 
-        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, quantity = 2)
+        # orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, quantity = 2)
 
         uri = reverse('vendor-user-cart-delete-api')
 
@@ -597,46 +597,10 @@ class DeleteCartClientTest(TestCase):
 
         try:
             self.assertEqual(response.status_code, 200)     # 200 -> Return Response Code
-            self.assertEqual(Invoice.objects.all().count(), 0)
-            self.assertEqual(OrderItem.objects.all().count(), 0)
+            self.assertEqual(Invoice.objects.all().filter(status=0).count(), 2)      # There should be 3 carts
+            
+            # Check the cart to see that it's empty
 
-        except:     # Only print results if there is an error, but continue to raise the error for the testing tool
-            print("")
-            print(response)
-            raise
-
-
-    def test_user_cart_delete_fail(self):
-        '''
-        Test for deleting a cart when there is no active cart for the user
-        '''
-
-        self.client.force_login(self.user)
-        offer = Offer.objects.get(pk=2)
-        # price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
-
-        invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
-
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
-
-        # offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
-        offer2 = Offer.objects.get(pk=3)
-
-        # price2 = offer2.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
-
-        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, quantity = 2)
-
-        invoice.status = 1
-        invoice.save()
-
-        uri = reverse('vendor-user-cart-delete-api')
-
-        response = self.client.delete(uri)
-
-        try:
-            self.assertEqual(response.status_code, 400)     # 200 -> Return Response Code
-            self.assertEqual(Invoice.objects.all().count(), 1)          # todo: need to rework to have more proper context
-            self.assertEqual(OrderItem.objects.all().count(), 2)        # todo: need to rework to have more proper context
 
         except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
@@ -661,9 +625,9 @@ class RetrievePurchasesClientTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create(username='testuser', password='12345')
-        self.product = Product.objects.create(name = "Test Product")
-        self.product2 = Product.objects.create(name = "Test Product2")
+        self.user = User.objects.get(pk=2)
+        self.product = Product.objects.get(pk=4)
+        self.product2 = Product.objects.get(pk=3)
 
     def test_user_purchase_retrieve(self):
         '''
@@ -672,14 +636,14 @@ class RetrievePurchasesClientTest(TestCase):
 
         self.client.force_login(self.user)
 
+        # todo: refactor to come from the fixtures...
+
         offer = Offer.objects.get(pk=2)
 
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
         orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
 
         offer2 = Offer.objects.get(pk=3)
-
-        # offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
 
         orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, quantity = 2)
 
@@ -735,8 +699,8 @@ class PaymentProcessingTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create(username='testuser', password='12345')
-        self.product = Product.objects.create(name = "Test Product")
+        self.user = User.objects.get(pk=2)
+        self.product = Product.objects.get(pk=4)
 
     def test_payment_process(self):
         
@@ -775,8 +739,8 @@ class RefundClientTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create(username='testuser', password='12345')
-        self.product = Product.objects.create(name = "Test Product")
+        self.user = User.objects.get(pk=2)
+        self.product = Product.objects.get(pk=4)
 
     def test_refund_request(self):
         '''
@@ -874,7 +838,7 @@ class OfferModelTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.product = Product.objects.create(name = "Test Product")
+        self.product = Product.objects.get(pk=4)
 
 
     def test_price_object_created(self):
@@ -949,8 +913,8 @@ class OrderItemModelTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create(username='testuser', password='12345')
-        self.product = Product.objects.create(name = "Test Product")
+        self.user = User.objects.get(pk=2)
+        self.product = Product.objects.get(pk=4)
 
     def test_order_item_total_retrieve(self):
         '''
