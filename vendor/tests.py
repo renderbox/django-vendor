@@ -30,10 +30,12 @@ class AddToCartClientTest(TestCase):
     Tests for AddToCart Functionality
     '''
 
+    fixtures = ['unittest']
+
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create(username='testuser', password='12345')
-        self.product = Product.objects.create(name = "Test Product")
+        self.user = User.objects.get(pk=2)
+        self.product = Product.objects.get(pk=4)
 
     def test_add_to_cart_create_invoice(self):
         '''
@@ -72,6 +74,8 @@ class AddToCartClientTest(TestCase):
         '''
         self.client.force_login(self.user)
         offer = Offer.objects.create(product = self.product)
+
+        # offer = Offer.objects.create(product = self.product)
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
         orderitem = OrderItem.objects.filter(offer = offer, invoice = invoice).count()
 
@@ -101,22 +105,21 @@ class AddToCartClientTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
-        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
-        invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+        offer = Offer.objects.get(pk=2)
+        invoice = Invoice.objects.create(user=self.user, ordered_date=timezone.now())
+        orderitem = OrderItem.objects.create(invoice=invoice, offer=offer)
 
         data = {
             "offer": offer.sku
         }
 
-        uri = reverse('vendor-add-to-cart-api')
+        uri = reverse('vendor-add-to-cart-api')             # Add the offer to the current user's cart
         response = self.client.post(uri, data)
 
         try:
             self.assertEqual(response.status_code, 200)     # 200 -> Created Response Code
             self.assertEqual(orderitem.quantity, 1)
-            self.assertGreater(OrderItem.objects.get(offer = offer, invoice = invoice).quantity, 1)
+            self.assertGreater(OrderItem.objects.get(offer=offer, invoice=invoice).quantity, 1)
 
         except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
@@ -132,6 +135,8 @@ class RemoveItemFromCartClientTest(TestCase):
     Tests for Cart Functionality
     '''
 
+    fixtures = ['unittest']
+
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create(username='testuser', password='12345')
@@ -143,10 +148,9 @@ class RemoveItemFromCartClientTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
-        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        offer = Offer.objects.get(pk=2)
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
 
         uri = reverse('vendor-remove-from-cart-api', kwargs={'sku': offer.sku})
         response = self.client.patch(uri)
@@ -169,7 +173,7 @@ class RemoveItemFromCartClientTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        offer = Offer.objects.get(pk=2)
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
 
         uri = reverse('vendor-remove-from-cart-api', kwargs={'sku': offer.sku})
@@ -190,7 +194,7 @@ class RemoveItemFromCartClientTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        offer = Offer.objects.get(pk=2)
 
         uri = reverse('vendor-remove-from-cart-api', kwargs={'sku': offer.sku})
         response = self.client.patch(uri)
@@ -213,6 +217,8 @@ class DecreaseItemQuantityClientTest(TestCase):
     Tests for Cart Functionality
     '''
 
+    fixtures = ['unittest']
+
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create(username='testuser', password='12345')
@@ -224,10 +230,9 @@ class DecreaseItemQuantityClientTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
-        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        offer = Offer.objects.get(pk=2)
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
         
         data = {
             "offer": offer.sku
@@ -258,7 +263,7 @@ class DecreaseItemQuantityClientTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        offer = Offer.objects.get(pk=2)
 
         uri = reverse('vendor-remove-single-item-from-cart-api', kwargs={'sku': offer.sku})
         response = self.client.patch(uri)
@@ -278,7 +283,7 @@ class DecreaseItemQuantityClientTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        offer = Offer.objects.get(pk=2)
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
 
         uri = reverse('vendor-remove-single-item-from-cart-api', kwargs={'sku': offer.sku})
@@ -302,6 +307,8 @@ class IncreaseItemQuantityTest(TestCase):
     Tests for Cart Functionality
     '''
 
+    fixtures = ['unittest']
+
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create(username='testuser', password='12345')
@@ -313,10 +320,9 @@ class IncreaseItemQuantityTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
-        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        offer = Offer.objects.get(pk=2)
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
 
         quantity = OrderItem.objects.get(offer = offer, invoice = invoice).quantity
 
@@ -340,7 +346,7 @@ class IncreaseItemQuantityTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        offer = Offer.objects.get(pk=2)
 
         uri = reverse('vendor-increase-item-quantity-api', kwargs={'sku': offer.sku})
         response = self.client.patch(uri)
@@ -360,7 +366,7 @@ class IncreaseItemQuantityTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        offer = Offer.objects.get(pk=2)
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
 
         uri = reverse('vendor-increase-item-quantity-api', kwargs={'sku': offer.sku})
@@ -384,6 +390,8 @@ class RetrieveCartClientTest(TestCase):
     Tests for Cart Functionality
     '''
 
+    fixtures = ['unittest']
+
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create(username='testuser', password='12345')
@@ -397,7 +405,7 @@ class RetrieveCartClientTest(TestCase):
 
         self.client.force_login(self.user)
 
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)     # todo: use fixtures
+        offer = Offer.objects.get(pk=2)     # todo: use fixtures
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
         orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
         offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
@@ -444,7 +452,7 @@ class RetrieveCartClientTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        offer = Offer.objects.get(pk=2)
 
         uri = reverse('vendor-user-cart-retrieve-api')
         response = self.client.get(uri)
@@ -467,6 +475,8 @@ class RetrieveOrderSummaryClientTest(TestCase):
     Tests for retrieving order summary
     '''
 
+    fixtures = ['unittest']
+
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create(username='testuser', password='12345')
@@ -480,7 +490,7 @@ class RetrieveOrderSummaryClientTest(TestCase):
 
         self.client.force_login(self.user)
 
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        offer = Offer.objects.get(pk=2)
         price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
 
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
@@ -534,7 +544,7 @@ class RetrieveOrderSummaryClientTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
+        offer = Offer.objects.get(pk=2)
 
         uri = reverse('vendor-order-summary-retrieve-api')
         response = self.client.get(uri)
@@ -557,6 +567,8 @@ class DeleteCartClientTest(TestCase):
     Test for deleting a cart
     '''
 
+    fixtures = ['unittest']
+
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create(username="testuser", password='12345')
@@ -569,17 +581,15 @@ class DeleteCartClientTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
-        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        offer = Offer.objects.get(pk=2)
 
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
 
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
 
-        offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
-        price2 = offer2.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        offer2 = Offer.objects.get(pk=3)
 
-        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, price = price2, quantity = 2)
+        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, quantity = 2)
 
         uri = reverse('vendor-user-cart-delete-api')
 
@@ -602,17 +612,19 @@ class DeleteCartClientTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
-        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        offer = Offer.objects.get(pk=2)
+        # price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
 
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
 
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
 
-        offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
-        price2 = offer2.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        # offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
+        offer2 = Offer.objects.get(pk=3)
 
-        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, price = price2, quantity = 2)
+        # price2 = offer2.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+
+        orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, quantity = 2)
 
         invoice.status = 1
         invoice.save()
@@ -623,8 +635,8 @@ class DeleteCartClientTest(TestCase):
 
         try:
             self.assertEqual(response.status_code, 400)     # 200 -> Return Response Code
-            self.assertEqual(Invoice.objects.all().count(), 1)
-            self.assertEqual(OrderItem.objects.all().count(), 2)
+            self.assertEqual(Invoice.objects.all().count(), 1)          # todo: need to rework to have more proper context
+            self.assertEqual(OrderItem.objects.all().count(), 2)        # todo: need to rework to have more proper context
 
         except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
@@ -645,6 +657,8 @@ class RetrievePurchasesClientTest(TestCase):
     Test for retrieve user purchases
     '''
 
+    fixtures = ['unittest']
+
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create(username='testuser', password='12345')
@@ -658,14 +672,14 @@ class RetrievePurchasesClientTest(TestCase):
 
         self.client.force_login(self.user)
 
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
-        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        offer = Offer.objects.get(pk=2)
 
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
         orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
 
-        offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
-        price2 = offer2.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        offer2 = Offer.objects.get(pk=3)
+
+        # offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
 
         orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, quantity = 2)
 
@@ -717,6 +731,8 @@ class PaymentProcessingTest(TestCase):
     Tests for Payment Proccessing
     '''
 
+    fixtures = ['unittest']
+
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create(username='testuser', password='12345')
@@ -725,10 +741,9 @@ class PaymentProcessingTest(TestCase):
     def test_payment_process(self):
         
         self.client.force_login(self.user)
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
-        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        offer = Offer.objects.get(pk=2)
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
 
         uri = reverse('vendor-payment-processing-api')
         response = self.client.post(uri)
@@ -756,6 +771,8 @@ class RefundClientTest(TestCase):
     Tests for refund endpoints
     '''
 
+    fixtures = ['unittest']
+
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create(username='testuser', password='12345')
@@ -768,10 +785,9 @@ class RefundClientTest(TestCase):
 
         self.client.force_login(self.user)
 
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
-        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        offer = Offer.objects.get(pk=2)
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
 
         uri = reverse('vendor-payment-processing-api')
         response = self.client.post(uri)
@@ -804,10 +820,9 @@ class RefundClientTest(TestCase):
 
         self.client.force_login(self.user)
 
-        offer = Offer.objects.create(product = self.product, name = self.product.name, msrp = 50.0)
-        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        offer = Offer.objects.get(pk=2)
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
 
         uri = reverse('vendor-payment-processing-api')
         response = self.client.post(uri)
@@ -855,6 +870,8 @@ class OfferModelTest(TestCase):
     Test for Offer Model Test
     '''
 
+    fixtures = ['unittest']
+
     def setUp(self):
         self.client = Client()
         self.product = Product.objects.create(name = "Test Product")
@@ -898,6 +915,8 @@ class PriceModelTest(TestCase):
     Test for Price Model Test
     '''
 
+    # fixtures = ['unittest']
+
     def setUp(self):
         pass
 
@@ -910,6 +929,8 @@ class InvoiceModelTest(TestCase):
     '''
     Test for Invoice Model Test
     '''
+
+    # fixtures = ['unittest']
 
     def setUp(self):
         pass
@@ -924,6 +945,8 @@ class OrderItemModelTest(TestCase):
     Test for OrderItem Model Test
     '''
 
+    fixtures = ['unittest']
+
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create(username='testuser', password='12345')
@@ -934,17 +957,16 @@ class OrderItemModelTest(TestCase):
         Test for retrieving OrderItem total based on the price and  quantity
         '''
 
-        offer = Offer.objects.create(product=self.product, msrp = 80)
-        price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+        offer = Offer.objects.get(pk=2)
         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
-        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+        orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
 
         try:
-            self.assertEqual(orderitem.total(), (price.cost * orderitem.quantity))
+            self.assertEqual(orderitem.total, (orderitem.price * orderitem.quantity))
 
         except:     # Only print results if there is an error, but continue to raise the error for the testing tool
             print("")
-            print(orderitem.price.all())
+            # print(orderitem.price.all())
             print(orderitem.quantity)
             raise
 
@@ -957,6 +979,8 @@ class PurchasesModelTest(TestCase):
     '''
     Test for Purchases Model Test
     '''
+
+    # fixtures = ['unittest']
 
     def setUp(self):
         pass

@@ -47,8 +47,7 @@ class AddToCartAPIView(generics.CreateAPIView):
             else:
                 order_item = OrderItem.objects.create(
                     invoice = invoice_qs,
-                    offer=offer,
-                    price=price
+                    offer=offer
                 )
                 return Response(status=status.HTTP_200_OK)
 
@@ -56,7 +55,7 @@ class AddToCartAPIView(generics.CreateAPIView):
             ordered_date = timezone.now()
             invoice = Invoice.objects.create(user=request.user, ordered_date=ordered_date)
 
-            order_item = OrderItem.objects.create(invoice = invoice, offer = offer, price = price)
+            order_item = OrderItem.objects.create(invoice = invoice, offer = offer)
             return Response(status=status.HTTP_200_OK)
 
 
@@ -162,7 +161,7 @@ class RetrieveCartAPIView(APIView):
                 item = {}
                 item['sku'] = items.offer.sku
                 item['name'] = items.offer.product.name
-                item['price'] = items.price.cost
+                item['price'] = items.price
                 item['quantity'] = items.quantity
 
                 data['order_items'].append(item)
@@ -193,21 +192,19 @@ class DeleteCartAPIView(APIView):
 
 class RetrievePurchasesAPIView(APIView):
 
-    def get(self, request, *args, **kwargs):
-
-        purchases = Purchase.objects.filter(user = request.user)
+    def get(self, request, *args, **kwargs):        # todo: replace with Seriealizer?
 
         purchase_list = []
 
-        for items in purchases:
+        for item in Purchase.objects.filter(user=request.user):
             data = {}
-            data['sku'] = items.order_item.offer.sku
-            data['name'] = items.order_item.offer.name
-            data['price'] = items.order_item.price.cost
-            data['quantity'] = items.order_item.quantity
-            data['start_date'] = items.start_date
-            data['end_date'] = items.end_date
-            data['status'] = items.get_status_display()
+            data['sku'] = item.order_item.offer.sku
+            data['name'] = item.order_item.offer.name
+            data['price'] = item.order_item.price
+            data['quantity'] = item.order_item.quantity
+            data['start_date'] = item.start_date
+            data['end_date'] = item.end_date
+            data['status'] = item.get_status_display()
 
             purchase_list.append(data)
 
@@ -228,17 +225,15 @@ class RetrieveOrderSummaryAPIView(APIView):
 
             invoice_qs = invoice[0]
 
-            order_items = invoice_qs.order_items.all()
-
             data['order_items'] = []
 
-            for items in order_items:
+            for order_item in invoice_qs.order_items.all():
                 item = {}
-                item['sku'] = items.offer.sku
-                item['name'] = items.offer.product.name
-                item['price'] = items.price.cost
-                item['item_total'] = items.total()
-                item['quantity'] = items.quantity
+                item['sku'] = order_item.offer.sku
+                item['name'] = order_item.offer.product.name
+                item['price'] = order_item.price
+                item['item_total'] = order_item.total
+                item['quantity'] = order_item.quantity
 
                 data['order_items'].append(item)
 
@@ -280,8 +275,8 @@ class PaymentProcessingAPIView(APIView):
                 item = {}
                 item['sku'] = items.offer.sku
                 item['name'] = items.offer.product.name
-                item['price'] = items.price.cost
-                item['item_total'] = items.total()
+                item['price'] = items.price
+                item['item_total'] = items.total
                 item['quantity'] = items.quantity
 
                 data['order_items'].append(item)

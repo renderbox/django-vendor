@@ -1,0 +1,231 @@
+[
+{
+    "model": "sites.site",
+    "pk": 1,
+    "fields": {
+        "domain": "example.com",
+        "name": "example.com"
+    }
+},
+{
+    "model": "core.product",
+    "pk": 1,
+    "fields": {
+        "name": "Air Jordans",
+        "slug": "slug"
+    }
+},
+{
+    "model": "core.product",
+    "pk": 2,
+    "fields": {
+        "name": "Hair Gel",
+        "slug": "hair-gel"
+    }
+},
+{
+    "model": "core.product",
+    "pk": 3,
+    "fields": {
+        "name": "Tiffany Lamp",
+        "slug": "tiffany-lamp"
+    }
+},
+{
+    "model": "core.product",
+    "pk": 4,
+    "fields": {
+        "name": "Test Product",
+        "slug": "test-product"
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 1,
+    "fields": {
+        "created": "2019-11-14T18:43:25.721Z",
+        "updated": "2019-11-14T18:43:25.721Z",
+        "sku": "LDTOG62N",
+        "uuid": "6bd42794-e036-47d4-b587-977b20b8360d",
+        "name": "Shoes",
+        "product": 1,
+        "msrp": "5000.00",
+        "currency": "usd",
+        "available": true,
+        "license_type": 0
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 2,
+    "fields": {
+        "created": "2019-11-14T23:36:16.071Z",
+        "updated": "2019-11-14T23:36:16.071Z",
+        "sku": "AD5QL4UC",
+        "uuid": "f0324a62-eff2-45c0-819f-535eea2402ec",
+        "name": "Lamp",
+        "product": 3,
+        "msrp": "50.00",
+        "currency": "usd",
+        "available": true,
+        "license_type": 0
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 3,
+    "fields": {
+        "created": "2019-11-15T18:27:16.704Z",
+        "updated": "2019-11-15T18:27:16.704Z",
+        "sku": "OGHNW9EX",
+        "uuid": "f6436dd1-71ba-4dd6-be79-0b4e2bfd7875",
+        "name": "Test Product",
+        "product": 4,
+        "msrp": "50.00",
+        "currency": "",
+        "available": false,
+        "license_type": 0
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 1,
+    "fields": {
+        "offer": 1,
+        "cost": "5000.00",
+        "currency": "usd",
+        "start_date": "2019-11-14T18:43:25.724Z",
+        "end_date": "2019-11-24T18:43:25.724Z",
+        "priority": 1
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 2,
+    "fields": {
+        "offer": 2,
+        "cost": "50.00",
+        "currency": "usd",
+        "start_date": "2019-11-14T23:36:16.073Z",
+        "end_date": "2019-11-24T23:36:16.073Z",
+        "priority": 1
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 3,
+    "fields": {
+        "offer": 2,
+        "cost": "50.00",
+        "currency": "usd",
+        "start_date": "2019-11-08T23:35:51Z",
+        "end_date": "2019-11-24T23:35:53Z",
+        "priority": 0
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 4,
+    "fields": {
+        "offer": 3,
+        "cost": "50.00",
+        "currency": "",
+        "start_date": "2019-11-15T18:27:16.708Z",
+        "end_date": "2019-11-25T18:27:16.708Z",
+        "priority": 1
+    }
+},
+{
+    "model": "vendor.orderitem",
+    "pk": 8,
+    "fields": {
+        "created": "2019-11-15T01:38:58.329Z",
+        "updated": "2019-11-15T01:56:57.892Z",
+        "invoice": 1,
+        "offer": 2,
+        "quantity": 1
+    }
+},
+{
+    "model": "vendor.orderitem",
+    "pk": 9,
+    "fields": {
+        "created": "2019-11-15T01:41:03.509Z",
+        "updated": "2019-11-15T01:41:03.511Z",
+        "invoice": 1,
+        "offer": 1,
+        "quantity": 1
+    }
+},
+{
+    "model": "vendor.orderitem",
+    "pk": 10,
+    "fields": {
+        "created": "2019-11-15T18:29:59.545Z",
+        "updated": "2019-11-15T18:29:59.545Z",
+        "invoice": 2,
+        "offer": 3,
+        "quantity": 1
+    }
+},
+{
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+        "password": "pbkdf2_sha256$150000$yUkNuu034MK7$d3I29Pd/EJ+kfnre+i31kX8tBaovGizw6WosUTNi5Mo=",
+        "last_login": "2019-11-14T18:41:34.011Z",
+        "is_superuser": true,
+        "username": "gviklund",
+        "first_name": "",
+        "last_name": "",
+        "email": "renderbox@gmail.com",
+        "is_staff": true,
+        "is_active": true,
+        "date_joined": "2019-11-14T18:35:39.938Z",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "auth.user",
+    "pk": 2,
+    "fields": {
+        "password": "pbkdf2_sha256$150000$tdXWrWpVrlTi$GTySjA16IOeYVzFpKMo1Iueq3BXbERSJC4sf7OYqwLY=",
+        "last_login": null,
+        "is_superuser": true,
+        "username": "demouser",
+        "first_name": "",
+        "last_name": "",
+        "email": "user@example.com",
+        "is_staff": true,
+        "is_active": true,
+        "date_joined": "2019-11-15T18:35:16.612Z",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "vendor.invoice",
+    "pk": 1,
+    "fields": {
+        "created": "2019-11-14T18:43:33.937Z",
+        "updated": "2019-11-15T01:56:57.891Z",
+        "user": 1,
+        "status": 0,
+        "ordered_date": "2019-11-14",
+        "attrs": null
+    }
+},
+{
+    "model": "vendor.invoice",
+    "pk": 2,
+    "fields": {
+        "created": "2019-11-15T18:28:53.959Z",
+        "updated": "2019-11-15T18:28:53.959Z",
+        "user": 1,
+        "status": 0,
+        "ordered_date": "2019-11-15",
+        "attrs": null
+    }
+}
+]
