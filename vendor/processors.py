@@ -16,5 +16,9 @@ class PaymentProcessorBase():
         self.status = PurchaseStatus.ACTIVE
 
 
+class DummyProcessor(PaymentProcessorBase):
+    pass
+
+
 class StripeProcessor(PaymentProcessorBase):
     pass
