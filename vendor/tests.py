@@ -581,18 +581,8 @@ class DeleteCartClientTest(TestCase):
         '''
 
         self.client.force_login(self.user)
-        # offer = Offer.objects.get(pk=2)
-
-        # invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
-
-        # orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
-
-        # offer2 = Offer.objects.get(pk=3)
-
-        # orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, quantity = 2)
-
+        
         uri = reverse('vendor-user-cart-delete-api')
-
         response = self.client.delete(uri)
 
         try:
