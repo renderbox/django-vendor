@@ -38,15 +38,14 @@ setup(
     include_package_data=True,
     python_requires=">=3.6",
     install_requires=[
-        'Django>=2.2,<2.3',
-        'djangorestframework',
-        'django-crispy-forms',
+        'Django>=2.2',
         'jsonfield',
     ],
     extras_require={
         'dev': [
+            'django-crispy-forms',
             'django-allauth',
-            'django-autoslug',
+            'stripe',
             ],
         'stripe': [             # Packages needed for Stripe
             'stripe',
@@ -61,7 +60,6 @@ setup(
         'docs': [
             'coverage',
             'Sphinx',
-            'sphinx-bootstrap-theme',
             'sphinx-rtd-theme',
         ],
     }

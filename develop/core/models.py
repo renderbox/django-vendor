@@ -1,7 +1,8 @@
 from django.utils.translation import ugettext as _
 from django.db import models
-from vendor.models import Offer
-from autoslug import AutoSlugField
+
+from django.utils.text import slugify
+
 
 ##########
 # PRODUCT
@@ -9,7 +10,11 @@ from autoslug import AutoSlugField
 
 class Product(models.Model):
     name = models.CharField(_("Name"), max_length=50)
-    slug = AutoSlugField(_("Slug"), populate_from='name')
+    slug = models.SlugField(_("Slug"), blank=True, null=True)
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
