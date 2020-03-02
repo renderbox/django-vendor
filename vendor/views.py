@@ -18,6 +18,19 @@ from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, Request
 
 import stripe
 
+
+class CartView(LoginRequiredMixin, DetailView):
+    pass
+
+
+class AddToCartView(LoginRequiredMixin, CreateView):
+    pass
+
+    # GET THE INVOICE THAT IS IN CART MODE (By Site & User)
+
+    # ON SUCCESS, REDIRECT TO CART...
+
+
 # class NewAddToCartView(CreateView):
 #     model = OrderItem
 #     form_class = AddToCartModelForm                                                         # todo: Move to a regular Form from a ModelForm since the advantages of the ModelForm are not used...
