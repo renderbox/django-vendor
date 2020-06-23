@@ -13,10 +13,10 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
 
-from vendor.models import ProductOffer, OrderItem, Invoice #Price, Purchase, Refund, CustomerProfile, PurchaseStatus, OrderStatus
+from vendor.models import Offer, OrderItem, Invoice #Price, Purchase, Refund, CustomerProfile, PurchaseStatus, OrderStatus
 from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
 
-import stripe
+# import stripe     -> Need to be loaded via a processor
 
 
 class CartView(LoginRequiredMixin, DetailView):

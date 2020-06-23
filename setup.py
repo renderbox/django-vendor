@@ -40,6 +40,7 @@ setup(
     install_requires=[
         'Django>=2.2',
         'jsonfield',
+        'pycountry',
     ],
     extras_require={
         'dev': [

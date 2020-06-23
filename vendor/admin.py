@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from vendor.models import ProductOffer, Invoice, OrderItem
+from vendor.models import Offer, Invoice, OrderItem
 
 ###############
 # INLINES
@@ -14,7 +14,7 @@ class OrderItemInline(admin.TabularInline):
 # MODEL ADMINS
 ###############
 
-class ProductOfferAdmin(admin.ModelAdmin):
+class OfferAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid',)
 
 
@@ -27,7 +27,7 @@ class InvoiceAdmin(admin.ModelAdmin):
 # REGISTRATION
 ###############
 
-admin.site.register(ProductOffer, ProductOfferAdmin)
+admin.site.register(Offer, OfferAdmin)
 admin.site.register(Invoice, InvoiceAdmin)
 
 
