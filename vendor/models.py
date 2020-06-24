@@ -21,19 +21,19 @@ from jsonfield import JSONField
 # https://en.wikipedia.org/wiki/ISO_4217
 CURRENCY_CHOICES = [(int(cur.numeric), cur.name) for cur in pycountry.currencies]
 
-ORDER_STATUS_CHOICES = (
+INVOICE_STATUS_CHOICES = (
                 (0, _("Cart")), 
-                (10, _("Pending")), 
+                (10, _("Queued")), 
                 (20, _("Processing")), 
                 (30, _("Failed")), 
                 (40, _("Complete")) 
             )
 
-LICENSE_TYPE_CHOICES = ((0, _("Perpetual")), (10, _("Subscription")) )
+LICENSE_TYPE_CHOICES = ((0, _("Perpetual")), (10, _("Subscription")), (20, _("One-Time Use")) )
 
 PURCHASE_STATUS_CHOICES = (
                 (0, _("Queued")), 
-                (10, _("Active")), 
+                (10, _("Processing")), 
                 (20, _("Expired")), 
                 (30, _("Hold")), 
                 (40, _("Canceled")), 
@@ -66,7 +66,7 @@ def generate_sku():
 
 
 ##################
-# ABSTRACT MODELS
+# BASE MODELS
 ##################
 
 class CreateUpdateModelBase(models.Model):
@@ -86,13 +86,21 @@ class ProductBase(CreateUpdateModelBase):
     name = models.CharField(_("Name"), max_length=80, blank=True)
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="products")                      # For multi-site support
     slug = models.SlugField(_("Slug"), blank=True, null=True)   # Gets set in the save
-    available = models.BooleanField(_("Available"), default=False, help_text="Is this currently available?")
+    available = models.BooleanField(_("Available"), default=False, help_text="Is this currently available?")                        # This can be forced to be unavailable if there is no prices attached.
     description = models.TextField()
     msrp = JSONField(_("MSRP"))     # MSRP in various currencies
     classification = models.ManyToManyField("vendor.ProductClassifier")        # What taxes can apply to this item
 
     class Meta:
         abstract = True
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)  # Have to make this unique
+        super().save(*args, **kwargs)
+
 
 #########
 # MIXINS
@@ -119,13 +127,22 @@ class ProductBase(CreateUpdateModelBase):
 #     region_name = models.CharField()
 
 
+#####################
+# Product Classifier
+#####################
+
 class ProductClassifier(models.Model):
     '''
-    This for things like "Digital Goods", "Furniture" or "Food" which may or may not be taxable depending on the location.  These are determined by the manager of all sites.
+    This for things like "Digital Goods", "Furniture" or "Food" which may or
+    may not be taxable depending on the location.  These are determined by the
+    manager of all sites.
     '''
     name = models.CharField(_("Name"), max_length=80, blank=True)
     taxable = models.BooleanField()
     # info = models.ManyToManyField("vendor.TaxInfo")                 # Which taxes is this subject to and where.  This is for a more complex tax setup
+
+    def __str__(self):
+        return self.name
 
     class Meta:
         verbose_name = _("Product Classifier")
@@ -145,8 +162,10 @@ class Offer(CreateUpdateModelBase):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)                                # Used to track the product
     slug = models.SlugField(_("Slug"), blank=True, null=True)                                               # Gets set in the save, has to be unique
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="product_offers")                      # For multi-site support
-    products = models.ManyToManyField(settings.PRODUCT_MODEL)                                               # MTM to support bundling/packages
-    start_date = models.DateTimeField(_("Start Date"), help_text="What date should this offer start to be available?")
+    name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
+    product = models.ForeignKey(settings.PRODUCT_MODEL, on_delete=models.CASCADE, related_name="offers", blank=True, null=True)
+    bundle = models.ManyToManyField(settings.PRODUCT_MODEL, related_name="bundles", blank=True, null=True)  # Used in the case of a bundles/packages.  Bundles override individual products
+    start_date = models.DateTimeField(_("Start Date"), help_text="What date should this offer become available?")
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="Expiration Date?")
     terms =  models.IntegerField(_("Terms"), default=0, choices=TERM_CHOICES)
     term_details = JSONField(_("Details"))
@@ -160,15 +179,15 @@ class Offer(CreateUpdateModelBase):
     def __str__(self):
         return self.name
 
-    def current_price(self):
-        '''
-        Check if there are any price options active, otherwise use msrp.
-        '''
-        try:
-            price = self.sale_price.filter( start_date__lte=timezone.now(), end_date__gte=timezone.now() ).order_by('priority').first().cost
-            return price
-        except:
-            return self.msrp
+    # def current_price(self):
+    #     '''
+    #     Check if there are any price options active, otherwise use msrp.
+    #     '''
+    #     try:
+    #         price = self.sale_price.filter( start_date__lte=timezone.now(), end_date__gte=timezone.now() ).order_by('priority').first().cost
+    #         return price
+    #     except:
+    #         return self.msrp
 
     # def add_to_cart_link(self):
         # return reverse("vendor-new-add-to-cart", kwargs={"sku":self.sku})
@@ -177,14 +196,12 @@ class Offer(CreateUpdateModelBase):
         # return reverse("vendor-remove-from-cart", kwargs={"sku":self.sku})
 
     def save(self, *args, **kwargs):
-
         if not self.name:      
-            self.name = self.product.name       # has to be unique in slug
+            self.name = self.product.name
 
-        self.slug = slugify(self.name)
-
+        self.slug = slugify(self.name)       # TODO: unique slug
         super().save(*args, **kwargs)
-
+    
 
 class Price(models.Model):
     offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name="prices")
@@ -197,6 +214,9 @@ class Price(models.Model):
     class Meta:
         verbose_name = _("Price")
         verbose_name_plural = _("Prices")
+
+    def __str__(self):
+        return "{} for {}:{}".format(self.offer.name, self.currency, self.cost)
 
 
 class CustomerProfile(CreateUpdateModelBase):
@@ -211,6 +231,9 @@ class CustomerProfile(CreateUpdateModelBase):
         verbose_name = _("Customer Profile")
         verbose_name_plural = _("Customer Profiles")
 
+    def __str__(self):
+        return "{} Customer Profile".format(self.user.username)
+
 
 class Invoice(CreateUpdateModelBase):
     '''
@@ -218,7 +241,7 @@ class Invoice(CreateUpdateModelBase):
     '''
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="invoices")                      # For multi-site support
-    status = models.IntegerField(_("Status"), choices=ORDER_STATUS_CHOICES, default=0)
+    status = models.IntegerField(_("Status"), choices=INVOICE_STATUS_CHOICES, default=0)
     customer_notes = models.TextField()
     vendor_notes = models.TextField()
     ordered_date = models.DateField(_("Ordered Date"), null=True)               # When was the purchase made?
@@ -227,8 +250,12 @@ class Invoice(CreateUpdateModelBase):
     tax = models.FloatField(blank=True, null=True)
     total = models.FloatField(blank=True, null=True)
 
+    class Meta:
+        verbose_name = _("Invoice")
+        verbose_name_plural = _("Invoices")
+
     def __str__(self):
-        return "%s - (%s)" % (self.profile.user.username, self.created.strftime('%Y-%m-%d %H:%M'))
+        return "%s Invoice (%s)" % (self.profile.user.username, self.created.strftime('%Y-%m-%d %H:%M'))
 
 
 class OrderItem(CreateUpdateModelBase):
@@ -239,23 +266,27 @@ class OrderItem(CreateUpdateModelBase):
     offer = models.ForeignKey(Offer, verbose_name=_("Offer"), on_delete=models.CASCADE, related_name="order_items")
     quantity = models.IntegerField(_("Quantity"), default=1)
 
-    def total(self):
-        return self.quantity * self.price.cost
+    class Meta:
+        verbose_name = _("Order Item")
+        verbose_name_plural = _("Order Items")
 
     def __str__(self):
-        return "%s - %s" % (self.invoice.user.username, self.offer.name)
+        return "%s - %s" % (self.invoice.profile.user.username, self.offer.name)
 
-    @property
-    def price(self):
-        return self.offer.current_price()
+    # def total(self):
+    #     return self.quantity * self.price.cost
 
-    @property
-    def total(self):
-        return self.price * self.quantity
+    # @property
+    # def price(self):
+    #     return self.offer.current_price()
 
-    @property
-    def product_name(self):
-        return self.offer.product.name
+    # @property
+    # def total(self):
+    #     return self.price * self.quantity
+
+    # @property
+    # def product_name(self):
+    #     return self.offer.product.name
 
 
 class Reciept(CreateUpdateModelBase):
@@ -273,15 +304,23 @@ class Reciept(CreateUpdateModelBase):
     status = models.IntegerField(_("Status"), choices=PURCHASE_STATUS_CHOICES, default=0)       # Fulfilled, Refund
 
     class Meta:
-        verbose_name_plural = "purchases"
+        verbose_name = _("Reciept")
+        verbose_name_plural = _("Reciepts")
 
     def __str__(self):
-        return "%s - %s - %s" % (self.profile.user.username, self.product.name, self.created.strftime('%Y-%m-%d %H:%M'))
+        return "%s - %s - %s" % (self.profile.user.username, self.order_item.offer.name, self.created.strftime('%Y-%m-%d %H:%M'))
 
 
 class Wishlist(models.Model):
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Purchase Profile"), null=True, on_delete=models.CASCADE, related_name="wishlists")
     name = models.CharField(_("Name"), max_length=100, blank=False)
+
+    class Meta:
+        verbose_name = _("Wishlist")
+        verbose_name_plural = _("Wishlists")
+
+    def __str__(self):
+        return self.name
 
 
 class WishlistItem(CreateUpdateModelBase):
@@ -291,6 +330,13 @@ class WishlistItem(CreateUpdateModelBase):
     wishlist = models.ForeignKey(Wishlist, verbose_name=_("Wishlist"), on_delete=models.CASCADE, related_name="wishlist_items")
     offer = models.ForeignKey(Offer, verbose_name=_("Offer"), on_delete=models.CASCADE, related_name="wishlist_items")
 
+    class Meta:
+        verbose_name = _("Wishlist Item")
+        verbose_name_plural = _("Wishlist Items")
+        # TODO: Unique Name Per User
+
+    def __str__(self):
+        return "({}) {}: {}".format(self.wishlist.profile.user.username, self.wishlist.name, self.offer.name)
 
 # class Discount(models.Model):
 #     pass
