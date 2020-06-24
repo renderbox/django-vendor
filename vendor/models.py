@@ -292,10 +292,12 @@ class OrderItem(CreateUpdateModelBase):
 class Reciept(CreateUpdateModelBase):
     '''
     A link for all the purchases a user has made. Contains subscription start and end date.
+    This is generated for each item a user purchases so it can be checked in other code.
     '''
 
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Purchase Profile"), null=True, on_delete=models.CASCADE, related_name="reciepts")
     order_item = models.ForeignKey('vendor.OrderItem', verbose_name=_("Order Item"), on_delete=models.CASCADE, related_name="reciepts")
+    product = models.ForeignKey(settings.PRODUCT_MODEL, on_delete=models.CASCADE, related_name="reciepts", blank=True, null=True)           # Goal is to make it easier to check to see if a user owns the product.
     start_date = models.DateTimeField(_("Start Date"), blank=True, null=True)
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True)
     auto_renew = models.BooleanField(_("Auto Renew"), default=False)        # For subscriptions
@@ -337,6 +339,7 @@ class WishlistItem(CreateUpdateModelBase):
 
     def __str__(self):
         return "({}) {}: {}".format(self.wishlist.profile.user.username, self.wishlist.name, self.offer.name)
+
 
 # class Discount(models.Model):
 #     pass
