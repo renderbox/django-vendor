@@ -235,6 +235,10 @@ class CustomerProfile(CreateUpdateModelBase):
         return "{} Customer Profile".format(self.user.username)
 
 
+class Address(models.Model):
+    profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
+
+
 class Invoice(CreateUpdateModelBase):
     '''
     An invoice starts off as a Cart until it is puchased, then it becomes an Invoice.
@@ -250,12 +254,20 @@ class Invoice(CreateUpdateModelBase):
     tax = models.FloatField(blank=True, null=True)
     total = models.FloatField(blank=True, null=True)
 
+    shipping_address = models.ForeignKey(Address, verbose_name=_("invoices"), on_delete=models.CASCADE)
+
     class Meta:
         verbose_name = _("Invoice")
         verbose_name_plural = _("Invoices")
 
     def __str__(self):
         return "%s Invoice (%s)" % (self.profile.user.username, self.created.strftime('%Y-%m-%d %H:%M'))
+
+    def get_amount(self):
+        '''
+        returns the total as a float in the given currency
+        '''
+        return 10.55
 
 
 class OrderItem(CreateUpdateModelBase):
@@ -289,6 +301,18 @@ class OrderItem(CreateUpdateModelBase):
     #     return self.offer.product.name
 
 
+class Payment(models.Model):
+    invoice = models.ForeignKey(Invoice, verbose_name=_("Invoice"), on_delete=models.CASCADE, related_name="order_items")
+    created = models.DateTimeField("date created", auto_now_add=True)
+    transaction = models.CharField(_("Transaction ID"), max_length=50)
+    provider = models.CharField(_("Payment Provider"), max_length=16)
+    amount = models.FloatField(_("Amount"))
+    profile = models.ForeignKey(CustomerProfile, verbose_name=_("Purchase Profile"), blank=True, null=True, on_delete=models.SET_NULL, related_name="payments")
+    # billing_address = models.ForeignKey(Address, verbose_name=_("payments"), on_delete=models.CASCADE)
+    result = models.TextField(_("Result"), blank=True, null=True)
+    success = models.BooleanField(_("Successful"), default=False)
+
+
 class Reciept(CreateUpdateModelBase):
     '''
     A link for all the purchases a user has made. Contains subscription start and end date.
@@ -304,7 +328,6 @@ class Reciept(CreateUpdateModelBase):
     vendor_notes = models.TextField()
     transaction = models.CharField(_("Transaction"), max_length=80)
     status = models.IntegerField(_("Status"), choices=PURCHASE_STATUS_CHOICES, default=0)       # Fulfilled, Refund
-
     class Meta:
         verbose_name = _("Reciept")
         verbose_name_plural = _("Reciepts")

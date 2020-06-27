@@ -1,5 +1,6 @@
-asgiref==3.2.3
-Django==3.0.3
+asgiref==3.2.10
+Django==3.0.7
 jsonfield==3.1.0
-pytz==2019.3
+pycountry==19.8.18
+pytz==2020.1
 sqlparse==0.3.1
