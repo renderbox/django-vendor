@@ -5,8 +5,6 @@ import stripe
 
 from .models import PurchaseStatus, Payment
 
-stripe.api_key = settings.
-
 class PaymentProcessorBase():
     '''
     Setup the core functionality for all processors.
@@ -28,6 +26,9 @@ class DummyProcessor(PaymentProcessorBase):
 
 
 class StripeProcessor(PaymentProcessorBase):
+
+    def __init__(self):
+        stripe.api_key = settings.STRIPE_PUBLISHABLE_KEY    # TODO: This should work, but may not the best way to do this
 
     def process_payment(self, invoice, token):
         

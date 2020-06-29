@@ -29,7 +29,7 @@ INVOICE_STATUS_CHOICES = (
                 (40, _("Complete")) 
             )
 
-LICENSE_TYPE_CHOICES = ((0, _("Perpetual")), (10, _("Subscription")), (20, _("One-Time Use")) )
+TERM_CHOICES = ((0, _("Perpetual")), (10, _("Subscription")), (20, _("One-Time Use")) )
 
 PURCHASE_STATUS_CHOICES = (
                 (0, _("Queued")), 
@@ -163,8 +163,8 @@ class Offer(CreateUpdateModelBase):
     slug = models.SlugField(_("Slug"), blank=True, null=True)                                               # Gets set in the save, has to be unique
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="product_offers")                      # For multi-site support
     name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
-    product = models.ForeignKey(settings.PRODUCT_MODEL, on_delete=models.CASCADE, related_name="offers", blank=True, null=True)
-    bundle = models.ManyToManyField(settings.PRODUCT_MODEL, related_name="bundles", blank=True, null=True)  # Used in the case of a bundles/packages.  Bundles override individual products
+    product = models.ForeignKey(settings.PRODUCT_MODEL, on_delete=models.CASCADE, related_name="offers", blank=True, null=True)         # TODO: Combine with bundle field?
+    bundle = models.ManyToManyField(settings.PRODUCT_MODEL, related_name="bundles", blank=True)  # Used in the case of a bundles/packages.  Bundles override individual products
     start_date = models.DateTimeField(_("Start Date"), help_text="What date should this offer become available?")
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="Expiration Date?")
     terms =  models.IntegerField(_("Terms"), default=0, choices=TERM_CHOICES)
@@ -236,7 +236,7 @@ class CustomerProfile(CreateUpdateModelBase):
 
 
 class Address(models.Model):
-    profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
+    profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="addresses")
 
 
 class Invoice(CreateUpdateModelBase):
@@ -249,10 +249,10 @@ class Invoice(CreateUpdateModelBase):
     customer_notes = models.TextField()
     vendor_notes = models.TextField()
     ordered_date = models.DateField(_("Ordered Date"), null=True)               # When was the purchase made?
-    currency = models.IntegerField(_("Currency"), choices=CURRENCY_CHOICES)     # ISO 4217 Standard codes
     subtotal = models.FloatField(default=0.0)
     tax = models.FloatField(blank=True, null=True)
     total = models.FloatField(blank=True, null=True)
+    currency = models.IntegerField(_("Currency"), choices=CURRENCY_CHOICES)     # ISO 4217 Standard codes
 
     shipping_address = models.ForeignKey(Address, verbose_name=_("invoices"), on_delete=models.CASCADE)
 
@@ -263,7 +263,7 @@ class Invoice(CreateUpdateModelBase):
     def __str__(self):
         return "%s Invoice (%s)" % (self.profile.user.username, self.created.strftime('%Y-%m-%d %H:%M'))
 
-    def get_amount(self):
+    def get_total(self):
         '''
         returns the total as a float in the given currency
         '''
@@ -302,7 +302,14 @@ class OrderItem(CreateUpdateModelBase):
 
 
 class Payment(models.Model):
-    invoice = models.ForeignKey(Invoice, verbose_name=_("Invoice"), on_delete=models.CASCADE, related_name="order_items")
+    '''
+    Payments
+    - Payments are typically from a Credit Card, PayPal or ACH
+    - Multiple Payments can be applied to an invoice
+    - Gift cards can be used as payments
+    - Discounts are Payment credits
+    '''
+    invoice = models.ForeignKey(Invoice, verbose_name=_("Invoice"), on_delete=models.CASCADE, related_name="payments")
     created = models.DateTimeField("date created", auto_now_add=True)
     transaction = models.CharField(_("Transaction ID"), max_length=50)
     provider = models.CharField(_("Payment Provider"), max_length=16)

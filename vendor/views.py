@@ -16,19 +16,54 @@ from django.views.generic import TemplateView
 from vendor.models import Offer, OrderItem, Invoice #Price, Purchase, Refund, CustomerProfile, PurchaseStatus, OrderStatus
 from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
 
-# import stripe     -> Need to be loaded via a processor
+import stripe     #TODO: Need to be moved to a payment processor
+stripe.api_key = settings.STRIPE_PUBLISHABLE_KEY
 
 
 class CartView(LoginRequiredMixin, DetailView):
+    '''
+    View items in the cart
+    '''
     pass
 
 
 class AddToCartView(LoginRequiredMixin, CreateView):
+    '''
+    Create an order item and add it to the order
+    '''
     pass
 
     # GET THE INVOICE THAT IS IN CART MODE (By Site & User)
 
     # ON SUCCESS, REDIRECT TO CART...
+
+
+class RemoveFromCartView(LoginRequiredMixin, DeleteView):
+    '''
+    Reduce the count of items from the cart and delete the order item if you reach 0
+    '''
+    pass
+
+
+# class PaymentView(LoginRequiredMixin, TemplateView):
+class CheckoutView(TemplateView):
+    '''
+    Review items and submit Payment
+    '''
+    template_name = ""
+
+    def post(self, *args, **kwargs):
+        order = Invoice.objects.get(user=self.request.user, status=0)                       # TODO: Get the Invoice from the URL
+        token = self.request.POST.get("stripeToken")
+
+        stripe.Charge.create(
+            amount=2000,
+            currency="usd",
+            source=token,
+            description="Test Charge",
+        )
+
+
 
 
 # class NewAddToCartView(CreateView):
