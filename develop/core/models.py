@@ -28,7 +28,6 @@ class Product(ProductBase):
     An Example Product use for Development
     '''
     name = models.CharField(_("Name"), max_length=80, blank=True)
-    catalog = models.ForeignKey(Catalog, on_delete=models.CASCADE, related_name="products")
 
 
 

@@ -4,10 +4,20 @@
 {% block content %}
 <h2>Items</h2>
 
-<ul>
+  <div class="card-deck mb-3 text-center">
+
     {% for item in object_list %}
-    <li>ITEM: {{ item.name }} -> <a href="{{item.add_to_cart_link}}">Buy</a></li>
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header">
+        <h4 class="my-0 font-weight-normal">{{ item.name }}</h4>
+      </div>
+      <div class="card-body">
+        Product Description
+        <a href="{{ item.add_to_cart_link }}" class="btn btn-lg btn-block btn-outline-primary">Add to Cart</a>
+      </div>
+    </div>
     {% endfor %}
-</ul>
+
+  </div>
 
 {% endblock %}

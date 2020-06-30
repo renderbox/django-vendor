@@ -87,9 +87,9 @@ class ProductBase(CreateUpdateModelBase):
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="products")                      # For multi-site support
     slug = models.SlugField(_("Slug"), blank=True, null=True)   # Gets set in the save
     available = models.BooleanField(_("Available"), default=False, help_text="Is this currently available?")                        # This can be forced to be unavailable if there is no prices attached.
-    description = models.TextField()
-    msrp = JSONField(_("MSRP"))     # MSRP in various currencies
-    classification = models.ManyToManyField("vendor.ProductClassifier")        # What taxes can apply to this item
+    description = models.TextField(blank=True, null=True)
+    msrp = JSONField(_("MSRP"), default=dict, blank=True, null=True)     # MSRP in various currencies
+    classification = models.ManyToManyField("vendor.ProductClassifier", blank=True)        # What taxes can apply to this item
 
     class Meta:
         abstract = True
@@ -168,8 +168,8 @@ class Offer(CreateUpdateModelBase):
     start_date = models.DateTimeField(_("Start Date"), help_text="What date should this offer become available?")
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="Expiration Date?")
     terms =  models.IntegerField(_("Terms"), default=0, choices=TERM_CHOICES)
-    term_details = JSONField(_("Details"))
-    term_start_date = models.DateTimeField(_("Term Start Date"), help_text="When is this product available to use?") # Useful for Event Tickets or Pre-Orders
+    term_details = JSONField(_("Details"), default=dict, blank=True, null=True)
+    term_start_date = models.DateTimeField(_("Term Start Date"), help_text="When is this product available to use?", blank=True, null=True) # Useful for Event Tickets or Pre-Orders
     available = models.BooleanField(_("Available"), default=False, help_text="Is this currently available?")
 
     class Meta:
@@ -179,18 +179,30 @@ class Offer(CreateUpdateModelBase):
     def __str__(self):
         return self.name
 
-    # def current_price(self):
-    #     '''
-    #     Check if there are any price options active, otherwise use msrp.
-    #     '''
-    #     try:
-    #         price = self.sale_price.filter( start_date__lte=timezone.now(), end_date__gte=timezone.now() ).order_by('priority').first().cost
-    #         return price
-    #     except:
-    #         return self.msrp
+    def current_price(self):
+        '''
+        Check if there are any price options active, otherwise use msrp.
+        '''
+        return self.prices.order_by('priority').first().cost
 
-    # def add_to_cart_link(self):
-        # return reverse("vendor-new-add-to-cart", kwargs={"sku":self.sku})
+        # TODO: Need to be updated with a query that takes into account date ranges
+
+        # try:
+        #     price = self.sale_price.filter( start_date__lte=timezone.now(), end_date__gte=timezone.now() ).order_by('priority').first().cost
+        # except:
+        #     try:
+        #         price = self.sale_price.filter( start_date__lte=timezone.now()).order_by('priority').first().cost
+        #     except:
+        #         pass
+
+        # return price
+
+
+    # def current_price(self):
+    #     return 20.00
+
+    def add_to_cart_link(self):
+        return reverse("vendor:add-to-cart", kwargs={"slug":self.slug})
 
     # def remove_from_cart_link(self):
         # return reverse("vendor-remove-from-cart", kwargs={"sku":self.sku})
@@ -209,7 +221,13 @@ class Price(models.Model):
     currency = models.IntegerField(_("Currency"), choices=CURRENCY_CHOICES)  # ISO 4217 Standard codes
     start_date = models.DateTimeField(_("Start Date"), help_text="When should the price first become available?")
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="When should the price expire?")
-    priority = models.IntegerField(_("Priority"), help_text="Higher number takes priority")
+    priority = models.IntegerField(_("Priority"), help_text="Higher number takes priority", blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.priority:       # TODO: Add check to see if this is the only price on the offer, then let it be 0.  If not, might need to do some assumptions to guess what it should be.
+            self.priority = 0
+
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = _("Price")
@@ -226,6 +244,7 @@ class CustomerProfile(CreateUpdateModelBase):
     '''
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), null=True, on_delete=models.SET_NULL, related_name="customer_profile")
     currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES)      # USer's default currency
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="customer_profile")                      # For multi-site support
 
     class Meta:
         verbose_name = _("Customer Profile")
@@ -233,6 +252,10 @@ class CustomerProfile(CreateUpdateModelBase):
 
     def __str__(self):
         return "{} Customer Profile".format(self.user.username)
+
+    def get_cart(self):
+        cart, created = self.invoices.get_or_create(status=0)
+        return cart
 
 
 class Address(models.Model):
@@ -249,12 +272,12 @@ class Invoice(CreateUpdateModelBase):
     customer_notes = models.TextField()
     vendor_notes = models.TextField()
     ordered_date = models.DateField(_("Ordered Date"), null=True)               # When was the purchase made?
-    subtotal = models.FloatField(default=0.0)
-    tax = models.FloatField(blank=True, null=True)
-    total = models.FloatField(blank=True, null=True)
-    currency = models.IntegerField(_("Currency"), choices=CURRENCY_CHOICES)     # ISO 4217 Standard codes
-
-    shipping_address = models.ForeignKey(Address, verbose_name=_("invoices"), on_delete=models.CASCADE)
+    subtotal = models.FloatField(default=0.0)                                   
+    tax = models.FloatField(blank=True, null=True)                              # Set on checkout
+    shipping = models.FloatField(blank=True, null=True)                         # Set on checkout
+    total = models.FloatField(blank=True, null=True)                            # Set on purchase
+    currency = models.IntegerField(_("Currency"), choices=CURRENCY_CHOICES, blank=True, null=True)     # ISO 4217 Standard codes
+    shipping_address = models.ForeignKey(Address, verbose_name=_("invoices"), on_delete=models.CASCADE, blank=True, null=True)
 
     class Meta:
         verbose_name = _("Invoice")
@@ -263,11 +286,29 @@ class Invoice(CreateUpdateModelBase):
     def __str__(self):
         return "%s Invoice (%s)" % (self.profile.user.username, self.created.strftime('%Y-%m-%d %H:%M'))
 
-    def get_total(self):
-        '''
-        returns the total as a float in the given currency
-        '''
-        return 10.55
+    def add_offer(self, offer):
+        order_item, created = self.order_items.get_or_create(offer=offer)
+
+        if not created:
+            order_item.quantity += 1
+            order_item.save()
+
+        self.set_totals()
+        self.save()
+        return order_item
+
+    def set_totals(self):
+        self.subtotal = sum([item.total for item in self.order_items.all() ])
+
+        if self.shipping_address:
+            # Calcuated based on location
+            self.shipping = 6.95
+            self.tax = self.subtotal * 0.1
+            self.total = self.subtotal + self.tax + self.shipping
+        else:
+            self.shipping = None
+            self.tax = None
+            self.total = None
 
 
 class OrderItem(CreateUpdateModelBase):
@@ -285,20 +326,17 @@ class OrderItem(CreateUpdateModelBase):
     def __str__(self):
         return "%s - %s" % (self.invoice.profile.user.username, self.offer.name)
 
-    # def total(self):
-    #     return self.quantity * self.price.cost
+    @property
+    def total(self):
+        return self.quantity * self.price
 
-    # @property
-    # def price(self):
-    #     return self.offer.current_price()
+    @property
+    def price(self):
+        return self.offer.current_price()
 
-    # @property
-    # def total(self):
-    #     return self.price * self.quantity
-
-    # @property
-    # def product_name(self):
-    #     return self.offer.product.name
+    @property
+    def name(self):
+        return self.offer.product.name
 
 
 class Payment(models.Model):

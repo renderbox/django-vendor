@@ -2,9 +2,12 @@ from django.urls import path
 
 from vendor import views
 
+app_name = "vendor"
+
 urlpatterns = [
-    # path('add-to-cart/', views.AddToCartView.as_view(), name="vendor-add-to-cart"),
-    path('add-to-cart/<str:slug>/<uuid:uuid>/', views.AddToCartView.as_view(), name="vendor-add-to-cart"),
+    path('cart/', views.CartView.as_view(), name="cart"),
+    path('add-to-cart/<slug:slug>/', views.AddToCartView.as_view(), name="add-to-cart"),
+    # path('add-to-cart/<str:slug>/<uuid:uuid>/', views.AddToCartView.as_view(), name="vendor-add-to-cart"),
     # path('cart-item/edit/<int:id>/', views.CartItemQuantityEditView.as_view(), name='vendor-cart-item-quantity-edit'),
     # path('removefromcart/<str:sku>/', views.RemoveFromCartView.as_view(), name="vendor-remove-from-cart"),
     # path('retrieve/cart/', views.RetrieveCartView.as_view(), name='vendor-user-cart-retrieve'),
@@ -17,4 +20,5 @@ urlpatterns = [
     # path('request/refund/<int:id>/', views.RequestRefundView.as_view(), name='vendor-request-refund'),
     # path('retrieve/refund/requests/', views.RetrieveRefundRequestsView.as_view(), name='vendor-retrieve-refund-requests'),
     # path('issue/refund/<int:id>/', views.IssueRefundView.as_view(), name='vendor-issue-refund'),
+    path('checkout/', views.CheckoutView.as_view(), name="checkout"),
 ]

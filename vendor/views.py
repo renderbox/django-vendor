@@ -13,7 +13,7 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
 
-from vendor.models import Offer, OrderItem, Invoice #Price, Purchase, Refund, CustomerProfile, PurchaseStatus, OrderStatus
+from vendor.models import Offer, OrderItem, Invoice, Payment #Price, Purchase, Refund, CustomerProfile, PurchaseStatus, OrderStatus
 from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
 
 import stripe     #TODO: Need to be moved to a payment processor
@@ -24,18 +24,27 @@ class CartView(LoginRequiredMixin, DetailView):
     '''
     View items in the cart
     '''
-    pass
+    model = Invoice
+
+    def get_object(self):
+        profile, created = self.request.user.customer_profile.get_or_create(site=settings.SITE_ID)
+        return profile.get_cart()
 
 
-class AddToCartView(LoginRequiredMixin, CreateView):
+class AddToCartView(LoginRequiredMixin, TemplateView):
     '''
     Create an order item and add it to the order
     '''
-    pass
 
-    # GET THE INVOICE THAT IS IN CART MODE (By Site & User)
+    def get(self, *args, **kwargs):
+        offer = Offer.objects.get(slug=self.kwargs["slug"])
+        profile, created = self.request.user.customer_profile.get_or_create(site=settings.SITE_ID)      # Make sure they have a cart
+        cart = profile.get_cart()
 
-    # ON SUCCESS, REDIRECT TO CART...
+        cart.add_offer(offer)
+
+        return redirect('vendor:cart')      # Redirect to cart on success
+
 
 
 class RemoveFromCartView(LoginRequiredMixin, DeleteView):
@@ -50,18 +59,27 @@ class CheckoutView(TemplateView):
     '''
     Review items and submit Payment
     '''
-    template_name = ""
+    template_name = "vendor/checkout.html"
+
+    # GET returns the invoice with the items and the estimated totals.
 
     def post(self, *args, **kwargs):
         order = Invoice.objects.get(user=self.request.user, status=0)                       # TODO: Get the Invoice from the URL
         token = self.request.POST.get("stripeToken")
+        amount = order.get_total() * 100
+        currency = order.currency
+
+        description = "Invoice #{} for ... in the amount of {}".format(order.pk, amount)
 
         stripe.Charge.create(
-            amount=2000,
-            currency="usd",
+            amount=amount,
+            currency=currency,
             source=token,
-            description="Test Charge",
+            description=description,
         )
+
+        order.status = 20
+
 
 
 
