@@ -51,7 +51,10 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
     '''
     Reduce the count of items from the cart and delete the order item if you reach 0
     '''
-    pass
+    def get(self, *args, **kwargs):
+        offer = Offer.objects.get(slug=self.kwargs["slug"])
+        cart.remove_offer(offer)
+        return redirect('vendor:cart')      # Redirect to cart on success
 
 
 # class PaymentView(LoginRequiredMixin, TemplateView):

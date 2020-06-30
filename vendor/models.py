@@ -297,6 +297,19 @@ class Invoice(CreateUpdateModelBase):
         self.save()
         return order_item
 
+
+    def remove_offer(self, offer):
+        order_item = self.order_items.get(offer=offer)
+
+        if not created:
+            order_item.quantity += 1
+            order_item.save()
+
+        self.set_totals()
+        self.save()
+        return order_item
+
+
     def set_totals(self):
         self.subtotal = sum([item.total for item in self.order_items.all() ])
 
