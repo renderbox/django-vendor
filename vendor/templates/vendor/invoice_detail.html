@@ -21,7 +21,7 @@
       <th scope="row">{{ forloop.counter }}</th>
       <td>{{item.name}}</td>
       <td>${{item.price|floatformat:2}}</td>
-      <td>{{item.quantity}}</td>
+      <td>{{item.quantity}} <a class="btn btn-success" href="{{ item.offer.remove_from_cart_link }}">remove</a></td>
       <td>${{item.total|floatformat:2}}</td>
     </tr>
     {% endfor %}

@@ -6,10 +6,9 @@ app_name = "vendor"
 
 urlpatterns = [
     path('cart/', views.CartView.as_view(), name="cart"),
-    path('add-to-cart/<slug:slug>/', views.AddToCartView.as_view(), name="add-to-cart"),
-    # path('add-to-cart/<str:slug>/<uuid:uuid>/', views.AddToCartView.as_view(), name="vendor-add-to-cart"),
+    path('cart/add/<slug:slug>/', views.AddToCartView.as_view(), name="add-to-cart"),
+    path('cart/remove/<slug:slug>/', views.RemoveFromCartView.as_view(), name="remove-from-cart"),
     # path('cart-item/edit/<int:id>/', views.CartItemQuantityEditView.as_view(), name='vendor-cart-item-quantity-edit'),
-    # path('removefromcart/<str:sku>/', views.RemoveFromCartView.as_view(), name="vendor-remove-from-cart"),
     # path('retrieve/cart/', views.RetrieveCartView.as_view(), name='vendor-user-cart-retrieve'),
     # path('delete/cart/<int:id>/', views.DeleteCartView.as_view(), name='vendor-user-cart-delete'),
     # path('retrieve/order/<int:id>/', views.RetrieveOrderView.as_view(), name='vendor-user-order-retrieve'),

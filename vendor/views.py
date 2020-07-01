@@ -36,11 +36,11 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
     Create an order item and add it to the order
     '''
 
-    def get(self, *args, **kwargs):
+    def get(self, *args, **kwargs):         # TODO: Move to POST
         offer = Offer.objects.get(slug=self.kwargs["slug"])
         profile, created = self.request.user.customer_profile.get_or_create(site=settings.SITE_ID)      # Make sure they have a cart
-        cart = profile.get_cart()
 
+        cart = profile.get_cart()
         cart.add_offer(offer)
 
         return redirect('vendor:cart')      # Redirect to cart on success
@@ -51,9 +51,13 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
     '''
     Reduce the count of items from the cart and delete the order item if you reach 0
     '''
-    def get(self, *args, **kwargs):
+    def get(self, *args, **kwargs):         # TODO: Move to POST
         offer = Offer.objects.get(slug=self.kwargs["slug"])
+
+        profile = self.request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
+        cart = profile.get_cart()
         cart.remove_offer(offer)
+
         return redirect('vendor:cart')      # Redirect to cart on success
 
 

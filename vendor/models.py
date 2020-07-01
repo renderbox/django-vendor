@@ -204,8 +204,8 @@ class Offer(CreateUpdateModelBase):
     def add_to_cart_link(self):
         return reverse("vendor:add-to-cart", kwargs={"slug":self.slug})
 
-    # def remove_from_cart_link(self):
-        # return reverse("vendor-remove-from-cart", kwargs={"sku":self.sku})
+    def remove_from_cart_link(self):
+        return reverse("vendor:remove-from-cart", kwargs={"slug":self.slug})
 
     def save(self, *args, **kwargs):
         if not self.name:      
@@ -297,18 +297,22 @@ class Invoice(CreateUpdateModelBase):
         self.save()
         return order_item
 
-
     def remove_offer(self, offer):
-        order_item = self.order_items.get(offer=offer)
+        try:
+            order_item = self.order_items.get(offer=offer)      # Get the order item if it's present
+        except:
+            return 0
 
-        if not created:
-            order_item.quantity += 1
+        order_item.quantity -= 1
+        
+        if order_item.quantity == 0:
+            order_item.delete()
+        else:
             order_item.save()
 
         self.set_totals()
         self.save()
         return order_item
-
 
     def set_totals(self):
         self.subtotal = sum([item.total for item in self.order_items.all() ])
