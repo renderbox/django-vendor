@@ -3,27 +3,39 @@
 
 {% block extra_css %}
     {% comment %} <link rel="stylesheet" href="{% static 'css/global.css' %}" /> {% endcomment %}
+    <link rel="stylesheet" href="{% static 'css/stripe.css' %}" />
 {% endblock %}
 
 {% block extra_head_js %}
-    <script src="https://js.stripe.com/v3/"></script>
-    {% comment %} <script src="{% static 'js/client.js' %}" defer></script> {% endcomment %}
 {% endblock %}
 
 {% block content %}
 
 <h2>Checkout</h2>
 
+<script>
+  var stripe = Stripe('pk_test_51Gx4h1JjRkl6Em6f9NLaLN2rHBzjmF9EytSZX9xNyVuKuaud0jmKcl97i8FThsaqSLB81hIjgzWHggDqFo25Xceu00Q626doG8');
+  var elements = stripe.elements();
+</script>
 
-<form id="payment-form">
-  <div id="card-element">
-    <!-- Elements will create input elements here -->
+<script src="https://js.stripe.com/v3/"></script>
+
+<form action="/charge" method="post" id="payment-form">
+  <div class="form-row">
+
+    <label for="card-element">
+    </label>
+
+    <div id="card-element">
+      <!-- A Stripe Element will be inserted here. -->
+    </div>
+
+    <!-- Used to display form errors. -->
+    <div id="card-errors" role="alert"></div>
+
   </div>
 
-  <!-- We'll put the error messages in this element -->
-  <div id="card-errors" role="alert"></div>
-
-  <button id="submit">Pay</button>
+  <button id="card-button" data-secret="{{ client_secret }}">Submit Payment</button>
 </form>
 
 {% comment %} <input id="card-name" type="text">
@@ -82,16 +94,41 @@
 
 {% comment %} <a href="{% url 'vendor:purchase' %}" class="btn btn-success">Purchase</a> {% endcomment %}
 {% comment %} <a href="#" class="btn btn-success">Purchase</a> {% endcomment %}
+<script src="{% static 'js/script.js' %}" defer></script>
+<script src="{% static 'js/client.js' %}" defer></script>
+
 
 {% endblock %}
 
 
 
 {% block extra_js %}
+
+
+    {% comment %} <script src="https://js.stripe.com/v3/"></script> {% endcomment %}
+    {% comment %} <script src="{% static 'js/script.js' %}"></script> {% endcomment %}
+
+
 <script>
+
+cardElement.on('change', function(event) {
+  var displayError = document.getElementById('card-errors');
+  if (event.error) {
+    displayError.textContent = event.error.message;
+  } else {
+    displayError.textContent = '';
+  }
+});
+
+</script>
+
+{% comment %} <script src="{% static 'js/client.js' %}" defer></script> {% endcomment %}
+
+
+{% comment %} <script>
 // Set your publishable key: remember to change this to your live publishable key in production
 // See your keys here: https://dashboard.stripe.com/account/apikeys
 var stripe = Stripe('pk_test_51Gx4h1JjRkl6Em6f9NLaLN2rHBzjmF9EytSZX9xNyVuKuaud0jmKcl97i8FThsaqSLB81hIjgzWHggDqFo25Xceu00Q626doG8');
 var elements = stripe.elements();
-</script>
+</script> {% endcomment %}
 {% endblock %}
