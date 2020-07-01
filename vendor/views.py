@@ -18,7 +18,7 @@ from vendor.models import Offer, OrderItem, Invoice, Payment #Price, Purchase, R
 from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
 
 import stripe     #TODO: Need to be moved to a payment processor
-stripe.api_key = settings.STRIPE_PUBLISHABLE_KEY
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 class CartView(LoginRequiredMixin, DetailView):
@@ -77,8 +77,8 @@ class CheckoutView(TemplateView):
 
         # Create the Intent
         intent = stripe.PaymentIntent.create(
-            amount=order.total * 100,
-            currency=order.currency,
+            amount=int(order.total * 100),
+            currency=order.currency,        # "usd"
             # Verify your integration in this guide by including this parameter
             metadata={'integration_check': 'accept_a_payment'},
         )
@@ -89,7 +89,7 @@ class CheckoutView(TemplateView):
     def post(self, request, *args, **kwargs):
         order = Invoice.objects.get(user=self.request.user, status=0)                       # TODO: Get the Invoice from the URL
         token = request.POST.get("stripeToken")
-        amount = order.total * 100
+        amount= int(order.total * 100)
         currency = order.currency
 
         description = "Invoice #{} for ... in the amount of {}".format(order.pk, amount)

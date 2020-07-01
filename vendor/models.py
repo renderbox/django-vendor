@@ -19,7 +19,8 @@ from jsonfield import JSONField
 ##########
 
 # https://en.wikipedia.org/wiki/ISO_4217
-CURRENCY_CHOICES = [(int(cur.numeric), cur.name) for cur in pycountry.currencies]
+# CURRENCY_CHOICES = [(int(cur.numeric), cur.name) for cur in pycountry.currencies]
+CURRENCY_CHOICES = [('usd', 'US Dollar')]
 
 INVOICE_STATUS_CHOICES = (
                 (0, _("Cart")), 
@@ -218,7 +219,7 @@ class Offer(CreateUpdateModelBase):
 class Price(models.Model):
     offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name="prices")
     cost = models.FloatField()
-    currency = models.IntegerField(_("Currency"), choices=CURRENCY_CHOICES)  # ISO 4217 Standard codes
+    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=settings.DEFAULT_CURRENCY)      # USer's default currency
     start_date = models.DateTimeField(_("Start Date"), help_text="When should the price first become available?")
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="When should the price expire?")
     priority = models.IntegerField(_("Priority"), help_text="Higher number takes priority", blank=True, null=True)
@@ -243,7 +244,7 @@ class CustomerProfile(CreateUpdateModelBase):
     This is what the Invoices are attached to.  This is abstracted from the user model directly do it can be mre flexible in the future.
     '''
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), null=True, on_delete=models.SET_NULL, related_name="customer_profile")
-    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES)      # USer's default currency
+    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=settings.DEFAULT_CURRENCY)      # USer's default currency
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="customer_profile")                      # For multi-site support
 
     class Meta:
@@ -269,15 +270,15 @@ class Invoice(CreateUpdateModelBase):
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="invoices")                      # For multi-site support
     status = models.IntegerField(_("Status"), choices=INVOICE_STATUS_CHOICES, default=0)
-    customer_notes = models.TextField()
-    vendor_notes = models.TextField()
-    ordered_date = models.DateField(_("Ordered Date"), null=True)               # When was the purchase made?
+    customer_notes = models.TextField(blank=True, null=True)
+    vendor_notes = models.TextField(blank=True, null=True)
+    ordered_date = models.DateTimeField(_("Ordered Date"), blank=True, null=True)               # When was the purchase made?
     subtotal = models.FloatField(default=0.0)                                   
     tax = models.FloatField(blank=True, null=True)                              # Set on checkout
     shipping = models.FloatField(blank=True, null=True)                         # Set on checkout
     total = models.FloatField(blank=True, null=True)                            # Set on purchase
-    currency = models.IntegerField(_("Currency"), choices=CURRENCY_CHOICES, blank=True, null=True)     # ISO 4217 Standard codes
-    shipping_address = models.ForeignKey(Address, verbose_name=_("invoices"), on_delete=models.CASCADE, blank=True, null=True)
+    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=settings.DEFAULT_CURRENCY)      # USer's default currency # ISO 4217 Standard 3 char codes
+    shipping_address = models.ForeignKey(Address, verbose_name=_("Shipping Address"), on_delete=models.CASCADE, blank=True, null=True)
 
     class Meta:
         verbose_name = _("Invoice")
@@ -324,7 +325,7 @@ class Invoice(CreateUpdateModelBase):
         '''
         Based on the Shipping Address
         '''
-        self.tax = self.subtotal * 0.1
+        self.tax = round(self.subtotal * 0.1, 2)
 
     def update_totals(self):
         self.subtotal = sum([item.total for item in self.order_items.all() ])
@@ -332,6 +333,12 @@ class Invoice(CreateUpdateModelBase):
         self.calculate_shipping()
         self.calculate_tax()
         self.total = self.subtotal + self.tax + self.shipping
+
+
+    # def save(self):
+    #     pass
+    # DEFAULT_CURRENCY
+
 
 
 class OrderItem(CreateUpdateModelBase):
