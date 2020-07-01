@@ -70,6 +70,7 @@ class CheckoutView(TemplateView):
 
     # GET returns the invoice with the items and the estimated totals.
 
+
     def post(self, *args, **kwargs):
         order = Invoice.objects.get(user=self.request.user, status=0)                       # TODO: Get the Invoice from the URL
         token = self.request.POST.get("stripeToken")

@@ -1,9 +1,33 @@
 {% extends "vendor/base.html" %}
+{% load static %}
 
+{% block extra_css %}
+    {% comment %} <link rel="stylesheet" href="{% static 'css/global.css' %}" /> {% endcomment %}
+{% endblock %}
+
+{% block extra_head_js %}
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="{% static 'js/client.js' %}" defer></script>
+{% endblock %}
 
 {% block content %}
 
 <h2>Checkout</h2>
+
+<!-- Display a payment form -->
+<form id="payment-form">
+  <div id="card-element"><!--Stripe.js injects the Card Element--></div>
+  <button id="submit">
+    <div class="spinner hidden" id="spinner"></div>
+    <span id="button-text">Pay</span>
+  </button>
+  <p id="card-error" role="alert"></p>
+  <p class="result-message hidden">
+    Payment succeeded, see the result in your <a href="" target="_blank">Stripe dashboard.</a> Refresh the page to pay again.
+  </p>
+</form>
+
+
 
 {% comment %} <table class="table table-bordered">
   <thead>
@@ -52,7 +76,7 @@
 </table> {% endcomment %}
 
 {% comment %} <a href="{% url 'vendor:purchase' %}" class="btn btn-success">Purchase</a> {% endcomment %}
-<a href="#" class="btn btn-success">Purchase</a>
+{% comment %} <a href="#" class="btn btn-success">Purchase</a> {% endcomment %}
 
 {% endblock %}
 
