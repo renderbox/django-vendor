@@ -28,7 +28,7 @@ class DummyProcessor(PaymentProcessorBase):
 class StripeProcessor(PaymentProcessorBase):
 
     def __init__(self):
-        stripe.api_key = settings.STRIPE_PUBLISHABLE_KEY    # TODO: This should work, but may not the best way to do this
+        stripe.api_key = settings.STRIPE_TEST_PUBLIC_KEY    # TODO: This should work, but may not the best way to do this
 
     def process_payment(self, invoice, token):
         

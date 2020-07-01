@@ -49,7 +49,7 @@ setup(
             'stripe',
             ],
         'stripe': [             # Packages needed for Stripe
-            'stripe',
+            'stripe>=2.48.0,<3.0',
             ],
         'test': [],
         'prod': [],

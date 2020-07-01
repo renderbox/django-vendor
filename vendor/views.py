@@ -18,7 +18,7 @@ from vendor.models import Offer, OrderItem, Invoice, Payment #Price, Purchase, R
 from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
 
 import stripe     #TODO: Need to be moved to a payment processor
-stripe.api_key = settings.STRIPE_SECRET_KEY
+stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
 
 
 class CartView(LoginRequiredMixin, DetailView):
@@ -44,6 +44,8 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
         cart = profile.get_cart()
         cart.add_offer(offer)
 
+        messages.info(self.request, _("Added item to cart."))
+
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
@@ -58,6 +60,8 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
         profile = self.request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
         cart = profile.get_cart()
         cart.remove_offer(offer)
+
+        messages.info(self.request, _("Removed item from cart."))
 
         return redirect('vendor:cart')      # Redirect to cart on success
 
@@ -80,7 +84,7 @@ class CheckoutView(TemplateView):
             amount=int(order.total * 100),
             currency=order.currency,        # "usd"
             # Verify your integration in this guide by including this parameter
-            metadata={'integration_check': 'accept_a_payment'},
+            metadata={'integration_check': 'accept_a_payment', 'order_id':str(order.pk)},
         )
 
         return render(request, self.template_name, {'client_secret': intent.client_secret})
@@ -271,7 +275,7 @@ class CheckoutView(TemplateView):
 #         context['item_count'] = count
 #         context['order_total'] = total
 #         context['amount'] = total * 100
-#         context['key'] = settings.STRIPE_PUBLISHABLE_KEY
+#         context['key'] = settings.STRIPE_TEST_PUBLIC_KEY
         
 #         return context
 
@@ -279,7 +283,7 @@ class CheckoutView(TemplateView):
 # class PaymentProcessingView(LoginRequiredMixin, View):
 
 #     def post(self, *args, **kwargs):
-#         stripe.api_key = settings.STRIPE_SECRET_KEY
+#         stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
 #         token = self.request.POST['stripeToken']
 
 #         invoice = Invoice.objects.get(user = self.request.user, status=OrderStatus.CART.value)
@@ -407,7 +411,7 @@ class CheckoutView(TemplateView):
 #         return self.model.objects.get(id = self.kwargs['id'])
 
 #     def post(self, request, *args, **kwargs):
-#         stripe.api_key = settings.STRIPE_SECRET_KEY
+#         stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
         
 #         refund = self.get_queryset()
 #         purchase = refund.purchase
