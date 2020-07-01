@@ -7,26 +7,31 @@
 
 {% block extra_head_js %}
     <script src="https://js.stripe.com/v3/"></script>
-    <script src="{% static 'js/client.js' %}" defer></script>
+    {% comment %} <script src="{% static 'js/client.js' %}" defer></script> {% endcomment %}
 {% endblock %}
 
 {% block content %}
 
 <h2>Checkout</h2>
 
-<!-- Display a payment form -->
+
 <form id="payment-form">
-  <div id="card-element"><!--Stripe.js injects the Card Element--></div>
-  <button id="submit">
-    <div class="spinner hidden" id="spinner"></div>
-    <span id="button-text">Pay</span>
-  </button>
-  <p id="card-error" role="alert"></p>
-  <p class="result-message hidden">
-    Payment succeeded, see the result in your <a href="" target="_blank">Stripe dashboard.</a> Refresh the page to pay again.
-  </p>
+  <div id="card-element">
+    <!-- Elements will create input elements here -->
+  </div>
+
+  <!-- We'll put the error messages in this element -->
+  <div id="card-errors" role="alert"></div>
+
+  <button id="submit">Pay</button>
 </form>
 
+{% comment %} <input id="card-name" type="text">
+<!-- placeholder for Elements -->
+<div id="card-element"></div>
+<button id="card-button" data-secret="{{ client_secret }}">
+  Submit Payment
+</button> {% endcomment %}
 
 
 {% comment %} <table class="table table-bordered">
@@ -80,3 +85,13 @@
 
 {% endblock %}
 
+
+
+{% block extra_js %}
+<script>
+// Set your publishable key: remember to change this to your live publishable key in production
+// See your keys here: https://dashboard.stripe.com/account/apikeys
+var stripe = Stripe('pk_test_51Gx4h1JjRkl6Em6f9NLaLN2rHBzjmF9EytSZX9xNyVuKuaud0jmKcl97i8FThsaqSLB81hIjgzWHggDqFo25Xceu00Q626doG8');
+var elements = stripe.elements();
+</script>
+{% endblock %}

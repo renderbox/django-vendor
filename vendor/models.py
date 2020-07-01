@@ -293,7 +293,7 @@ class Invoice(CreateUpdateModelBase):
             order_item.quantity += 1
             order_item.save()
 
-        self.set_totals()
+        self.update_totals()
         self.save()
         return order_item
 
@@ -304,28 +304,34 @@ class Invoice(CreateUpdateModelBase):
             return 0
 
         order_item.quantity -= 1
-        
+
         if order_item.quantity == 0:
             order_item.delete()
         else:
             order_item.save()
 
-        self.set_totals()
+        self.update_totals()
         self.save()
         return order_item
 
-    def set_totals(self):
+    def calculate_shipping(self):
+        '''
+        Based on the Shipping Address
+        '''
+        self.shipping = 6.95
+
+    def calculate_tax(self):
+        '''
+        Based on the Shipping Address
+        '''
+        self.tax = self.subtotal * 0.1
+
+    def update_totals(self):
         self.subtotal = sum([item.total for item in self.order_items.all() ])
 
-        if self.shipping_address:
-            # Calcuated based on location
-            self.shipping = 6.95
-            self.tax = self.subtotal * 0.1
-            self.total = self.subtotal + self.tax + self.shipping
-        else:
-            self.shipping = None
-            self.tax = None
-            self.total = None
+        self.calculate_shipping()
+        self.calculate_tax()
+        self.total = self.subtotal + self.tax + self.shipping
 
 
 class OrderItem(CreateUpdateModelBase):

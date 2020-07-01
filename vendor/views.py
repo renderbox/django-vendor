@@ -12,6 +12,7 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
+from django.http import HttpResponse
 
 from vendor.models import Offer, OrderItem, Invoice, Payment #Price, Purchase, Refund, CustomerProfile, PurchaseStatus, OrderStatus
 from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
@@ -70,11 +71,25 @@ class CheckoutView(TemplateView):
 
     # GET returns the invoice with the items and the estimated totals.
 
+    def get(self, request, *args, **kwargs):
+        profile = self.request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
+        order = Invoice.objects.get(profile=profile, status=0)
 
-    def post(self, *args, **kwargs):
+        # Create the Intent
+        intent = stripe.PaymentIntent.create(
+            amount=order.total * 100,
+            currency=order.currency,
+            # Verify your integration in this guide by including this parameter
+            metadata={'integration_check': 'accept_a_payment'},
+        )
+
+        return render(request, self.template_name, {'client_secret': intent.client_secret})
+        
+
+    def post(self, request, *args, **kwargs):
         order = Invoice.objects.get(user=self.request.user, status=0)                       # TODO: Get the Invoice from the URL
-        token = self.request.POST.get("stripeToken")
-        amount = order.get_total() * 100
+        token = request.POST.get("stripeToken")
+        amount = order.total * 100
         currency = order.currency
 
         description = "Invoice #{} for ... in the amount of {}".format(order.pk, amount)
