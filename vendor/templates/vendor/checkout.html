@@ -11,10 +11,13 @@
   <script src="https://js.stripe.com/v3/"></script>
 
   <script>
-    var stripe = Stripe('pk_test_51Gx4h1JjRkl6Em6f9NLaLN2rHBzjmF9EytSZX9xNyVuKuaud0jmKcl97i8FThsaqSLB81hIjgzWHggDqFo25Xceu00Q626doG8');
+    var stripe = Stripe('{{ pub_key }}');
     var elements = stripe.elements();
+    console.log("Local Vars Loaded!");
   </script>
 {% endblock %}
+
+
 
 
 {% block content %}
@@ -23,9 +26,6 @@
 <div class="col-4">
 
 <h2>Checkout</h2>
-
-
-
 
 {% comment %} <form action="/charge" method="post" id="payment-form">
   <div class="form-row">

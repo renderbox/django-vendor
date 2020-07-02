@@ -87,7 +87,7 @@ class CheckoutView(TemplateView):
             metadata={'integration_check': 'accept_a_payment', 'order_id':str(order.pk)},
         )
 
-        return render(request, self.template_name, {'client_secret': intent.client_secret})
+        return render(request, self.template_name, {'client_secret': intent.client_secret, 'pub_key': settings.STRIPE_TEST_PUBLIC_KEY})
         
 
     def post(self, request, *args, **kwargs):
