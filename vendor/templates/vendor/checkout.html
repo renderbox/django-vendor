@@ -6,21 +6,28 @@
     <link rel="stylesheet" href="{% static 'css/stripe.css' %}" />
 {% endblock %}
 
+
 {% block extra_head_js %}
+  <script src="https://js.stripe.com/v3/"></script>
+
+  <script>
+    var stripe = Stripe('pk_test_51Gx4h1JjRkl6Em6f9NLaLN2rHBzjmF9EytSZX9xNyVuKuaud0jmKcl97i8FThsaqSLB81hIjgzWHggDqFo25Xceu00Q626doG8');
+    var elements = stripe.elements();
+  </script>
 {% endblock %}
+
 
 {% block content %}
 
+<div class="row justify-content-md-center">
+<div class="col-4">
+
 <h2>Checkout</h2>
 
-<script>
-  var stripe = Stripe('pk_test_51Gx4h1JjRkl6Em6f9NLaLN2rHBzjmF9EytSZX9xNyVuKuaud0jmKcl97i8FThsaqSLB81hIjgzWHggDqFo25Xceu00Q626doG8');
-  var elements = stripe.elements();
-</script>
 
-<script src="https://js.stripe.com/v3/"></script>
 
-<form action="/charge" method="post" id="payment-form">
+
+{% comment %} <form action="/charge" method="post" id="payment-form">
   <div class="form-row">
 
     <label for="card-element">
@@ -36,15 +43,23 @@
   </div>
 
   <button id="card-button" data-secret="{{ client_secret }}">Submit Payment</button>
+</form> {% endcomment %}
+
+<form action="/charge" method="post" id="payment-form">
+  {% comment %} <input id="card-name" type="text"> {% endcomment %}
+  <!-- placeholder for Elements -->
+  <label for="card-element">Card</label>
+  <div id="card-element"></div>
+  <div id="card-errors" role="alert"></div>
+  <button id="card-button" class="btn btn-success btn-block" data-secret="{{ client_secret }}">
+    Submit Payment
+  </button>
 </form>
 
-{% comment %} <input id="card-name" type="text">
-<!-- placeholder for Elements -->
-<div id="card-element"></div>
-<button id="card-button" data-secret="{{ client_secret }}">
-  Submit Payment
-</button> {% endcomment %}
 
+</div>
+
+</div>
 
 {% comment %} <table class="table table-bordered">
   <thead>
