@@ -260,6 +260,7 @@ class CustomerProfile(CreateUpdateModelBase):
 
 
 class Address(models.Model):
+    name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="addresses")
 
 
@@ -383,7 +384,7 @@ class Payment(models.Model):
     provider = models.CharField(_("Payment Provider"), max_length=16)
     amount = models.FloatField(_("Amount"))
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Purchase Profile"), blank=True, null=True, on_delete=models.SET_NULL, related_name="payments")
-    # billing_address = models.ForeignKey(Address, verbose_name=_("payments"), on_delete=models.CASCADE)
+    billing_address = models.ForeignKey(Address, verbose_name=_("payments"), on_delete=models.CASCADE, blank=True, null=True)
     result = models.TextField(_("Result"), blank=True, null=True)
     success = models.BooleanField(_("Successful"), default=False)
 

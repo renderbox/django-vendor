@@ -76,8 +76,10 @@ class CheckoutView(TemplateView):
     # GET returns the invoice with the items and the estimated totals.
 
     def get(self, request, *args, **kwargs):
-        profile = self.request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
+        profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
         order = Invoice.objects.get(profile=profile, status=0)
+
+        # TODO: Add to a 
 
         # Create the Intent
         intent = stripe.PaymentIntent.create(
@@ -91,21 +93,26 @@ class CheckoutView(TemplateView):
         
 
     def post(self, request, *args, **kwargs):
-        order = Invoice.objects.get(user=self.request.user, status=0)                       # TODO: Get the Invoice from the URL
+        print(request)
+        print(request.POST)
+        print(request.headers)
+        profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
+        order = Invoice.objects.get(profile=profile, status=0)
         token = request.POST.get("stripeToken")
-        amount= int(order.total * 100)
-        currency = order.currency
 
-        description = "Invoice #{} for ... in the amount of {}".format(order.pk, amount)
+        # amount= int(order.total * 100)
+        # currency = order.currency
 
-        stripe.Charge.create(
-            amount=amount,
-            currency=currency,
-            source=token,
-            description=description,
-        )
+        # description = "Invoice #{} for ... in the amount of {}".format(order.pk, amount)
 
-        order.status = 20
+        # # stripe.Charge.create(
+        # #     amount=amount,
+        # #     currency=currency,
+        # #     source=token,
+        # #     description=description,
+        # # )
+
+        # order.status = 20
 
 
 
