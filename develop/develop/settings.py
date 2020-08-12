@@ -153,7 +153,7 @@ STATICFILES_DIRS = [
 SITE_ID = int(os.getenv('SITE_ID', '1'))
 
 # Django Vendor Settings
-PRODUCT_MODEL = 'core.Product'
+VENDOR_PRODUCT_MODEL = 'core.Product'
 VENDOR_PAYMENT_PROCESSOR = "authorizenet.AuthorizeNetProcessor"
 DEFAULT_CURRENCY = "usd"
 
@@ -161,5 +161,3 @@ DEFAULT_CURRENCY = "usd"
 STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY")
 STRIPE_TEST_PUBLIC_KEY = os.getenv("STRIPE_TEST_PUBLIC_KEY")
 STRIPE_LIVE_MODE = False
-
-

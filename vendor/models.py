@@ -157,7 +157,7 @@ class ProductClassifier(models.Model):
 
 class Offer(CreateUpdateModelBase):
     '''
-    Offer attaches to a record from the designated PRODUCT_MODEL.  
+    Offer attaches to a record from the designated VENDOR_PRODUCT_MODEL.  
     This is so more than one offer can be made per product, with different 
     priorities.
     '''
@@ -165,8 +165,8 @@ class Offer(CreateUpdateModelBase):
     slug = models.SlugField(_("Slug"), blank=True, null=True)                                               # Gets set in the save, has to be unique
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="product_offers")                      # For multi-site support
     name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
-    product = models.ForeignKey(settings.PRODUCT_MODEL, on_delete=models.CASCADE, related_name="offers", blank=True, null=True)         # TODO: Combine with bundle field?
-    bundle = models.ManyToManyField(settings.PRODUCT_MODEL, related_name="bundles", blank=True)  # Used in the case of a bundles/packages.  Bundles override individual products
+    product = models.ForeignKey(settings.VENDOR_PRODUCT_MODEL, on_delete=models.CASCADE, related_name="offers", blank=True, null=True)         # TODO: Combine with bundle field?
+    bundle = models.ManyToManyField(settings.VENDOR_PRODUCT_MODEL, related_name="bundles", blank=True)  # Used in the case of a bundles/packages.  Bundles override individual products
     start_date = models.DateTimeField(_("Start Date"), help_text="What date should this offer become available?")
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="Expiration Date?")
     terms =  models.IntegerField(_("Terms"), default=0, choices=TERM_CHOICES)
@@ -400,7 +400,7 @@ class Reciept(CreateUpdateModelBase):
 
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Purchase Profile"), null=True, on_delete=models.CASCADE, related_name="reciepts")
     order_item = models.ForeignKey('vendor.OrderItem', verbose_name=_("Order Item"), on_delete=models.CASCADE, related_name="reciepts")
-    product = models.ForeignKey(settings.PRODUCT_MODEL, on_delete=models.CASCADE, related_name="reciepts", blank=True, null=True)           # Goal is to make it easier to check to see if a user owns the product.
+    product = models.ForeignKey(settings.VENDOR_PRODUCT_MODEL, on_delete=models.CASCADE, related_name="reciepts", blank=True, null=True)           # Goal is to make it easier to check to see if a user owns the product.
     start_date = models.DateTimeField(_("Start Date"), blank=True, null=True)
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True)
     auto_renew = models.BooleanField(_("Auto Renew"), default=False)        # For subscriptions
