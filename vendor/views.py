@@ -16,10 +16,8 @@ from django.http import HttpResponse
 
 from vendor.models import Offer, OrderItem, Invoice, Payment #Price, Purchase, Refund, CustomerProfile, PurchaseStatus, OrderStatus
 from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
-from vendor.processors import StripeProcessor
+from vendor.processors.stripe import StripeProcessor
 
-# import stripe     #TODO: Need to be moved to a payment processor
-stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
 payment_processor = StripeProcessor()               # Stripe Processor being used for now
 
 class CartView(LoginRequiredMixin, DetailView):

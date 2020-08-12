@@ -1,84 +1,12 @@
-# Payment Processors
+"""
+Payment processor for Stripe.
+"""
 from django.conf import settings
 
 import stripe
 
-from .models import PurchaseStatus, Payment
+from .base import PaymentProcessorBase
 
-class PaymentProcessorBase():
-    '''
-    Setup the core functionality for all processors.
-
-    '''
-    status = None
-    invoice = None
-
-    def set_invoice(self, invoice):
-        self.invoice = invoice
-
-    def amount(self):   # Retrieves the total amount from the invoice
-        return 1.00
-
-    def get_checkout_context(self, order, **kwargs):
-        '''
-        The Order plus any additional values to include in the payment record.
-        '''
-        pass
-
-    def get_head_javascript(self):
-        '''
-        Scripts that are expected to show in the top of the template.
-        '''
-        pass
-
-    def get_javascript(self):
-        '''
-        Scripts added to the bottom of the page in the normal js location.
-        '''
-        pass
-
-    def get_template(self):
-        '''
-        Unique partial template for the processor
-        '''
-        pass
-
-    def pre_authorization(self):
-        '''
-        Called before the authorization begins.
-        '''
-        pass
-
-    def authorize(self):
-        '''
-        Called to handle the authorization.
-        '''
-        pass
-
-    def capture(self):
-        '''
-        Called to handle the capture.  (some gateways handle this at the same time as authorize() )
-        '''
-        pass
-
-    def settlement(self):
-        pass
-
-    def set_amount(self, amount):
-        self.status = PurchaseStatus.QUEUED
-
-    def process_payment(self, invoice):
-        self.status = PurchaseStatus.ACTIVE
-        # Returns a Payment model with a result
-
-
-class DummyProcessor(PaymentProcessorBase):
-    pass
-    # def process_payment(self, invoice):
-
-
-class AuthorizeDotNetProcessor(PaymentProcessorBase):
-    pass
 
 class StripeProcessor(PaymentProcessorBase):
 
@@ -103,20 +31,14 @@ class StripeProcessor(PaymentProcessorBase):
 
     def process_payment(self, invoice, token):
         
-        amount = invoice.get_amount()
-
-        payment = Payment()
-        payment.profile = invoice.profile
-        payment.amount = amount
-        payment.provider = "stripe"
-        payment.invoice = invoice
+        payment = self.get_payment_model(invoice)
 
         try:
             # Use Stripe's library to make requests...
             # All necessary chage information should come from the invoice
             charge = stripe.Charge.create(
                 amount = amount,
-                currency = invoice.currency
+                currency = invoice.currency,
                 source = token
             )
 
@@ -172,3 +94,4 @@ class StripeProcessor(PaymentProcessorBase):
         # invoice.save()
 
         return payment
+
