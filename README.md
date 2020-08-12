@@ -21,6 +21,11 @@ To install the project, all you need to do is check out the project and run the 
 pip install -r requirements.txt
 ```
 
+For developers, you'll need to also include a couple of dependencies that are only used in develop mode.  Run this from the root level of the project.
+
+```bash
+pip install -e .[dev]
+```
 
 To run the project, go into the develop folder:
 
