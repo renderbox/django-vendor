@@ -154,7 +154,7 @@ SITE_ID = int(os.getenv('SITE_ID', '1'))
 
 # Django Vendor Settings
 PRODUCT_MODEL = 'core.Product'
-VENDOR_PAYMENT_PROCESSOR = "authorizedotnet.AuthorizeDotNetProcessor"
+VENDOR_PAYMENT_PROCESSOR = "authorizenet.AuthorizeNetProcessor"
 DEFAULT_CURRENCY = "usd"
 
 # Stripe Settings
