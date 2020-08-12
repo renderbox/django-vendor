@@ -1,6 +1,8 @@
 """
 Payment processor for Stripe.
 """
+from copy import deepcopy
+
 from django.conf import settings
 
 import stripe
