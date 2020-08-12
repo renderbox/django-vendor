@@ -19,6 +19,12 @@ class PaymentProcessorBase():
     def amount(self):   # Retrieves the total amount from the invoice
         return 1.00
 
+    def get_checkout_context(self, order, **kwargs):
+        '''
+        The Order plus any additional values to include in the payment record.
+        '''
+        pass
+
     def get_head_javascript(self):
         '''
         Scripts that are expected to show in the top of the template.
@@ -78,6 +84,22 @@ class StripeProcessor(PaymentProcessorBase):
 
     def __init__(self):
         stripe.api_key = settings.STRIPE_TEST_PUBLIC_KEY    # TODO: This should work, but may not the best way to do this
+
+    def get_checkout_context(self, order, **kwargs):
+        '''
+        The Order plus any additional values to include in the payment record.
+        '''
+        metadata = deepcopy(kwargs)
+        metadata['integration_check'] = 'accept_a_payment'
+        metadata['order_id'] = str(order.pk)
+
+        intent = stripe.PaymentIntent.create(
+            amount=int(order.total * 100),  # Amount in pennies so it can be an int() rather than a float
+            currency=order.currency,        # "usd"
+            metadata=metadata,
+        )
+
+        return {'client_secret': intent.client_secret, 'pub_key': settings.STRIPE_TEST_PUBLIC_KEY}
 
     def process_payment(self, invoice, token):
         

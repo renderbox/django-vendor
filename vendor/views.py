@@ -16,10 +16,11 @@ from django.http import HttpResponse
 
 from vendor.models import Offer, OrderItem, Invoice, Payment #Price, Purchase, Refund, CustomerProfile, PurchaseStatus, OrderStatus
 from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
+from vendor.processors import StripeProcessor
 
-import stripe     #TODO: Need to be moved to a payment processor
+# import stripe     #TODO: Need to be moved to a payment processor
 stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
-
+payment_processor = StripeProcessor()               # Stripe Processor being used for now
 
 class CartView(LoginRequiredMixin, DetailView):
     '''
@@ -79,19 +80,10 @@ class CheckoutView(TemplateView):
         profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
         order = Invoice.objects.get(profile=profile, status=0)
 
+        request_ctx = payment_processor.get_checkout_context(order, customer_id=str(request.user.pk))
 
-        # TODO: Add to a 
+        return render(request, self.template_name, request_ctx)
 
-        # Create the Intent
-        intent = stripe.PaymentIntent.create(
-            amount=int(order.total * 100),
-            currency=order.currency,        # "usd"
-            # Verify your integration in this guide by including this parameter
-            metadata={'integration_check': 'accept_a_payment', 'order_id':str(order.pk), 'customer_id':str(request.user.pk)},
-        )
-
-        return render(request, self.template_name, {'client_secret': intent.client_secret, 'pub_key': settings.STRIPE_TEST_PUBLIC_KEY})
-        
 
     def post(self, request, *args, **kwargs):
         print(request)

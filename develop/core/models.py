@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.sites.models import Site
 from django.conf import settings
 
-from vendor.models import ProductBase
+from vendor.models import ProductModelBase
 
 ##########
 # CATALOG
@@ -23,7 +23,7 @@ class Catalog(models.Model):
 # PRODUCT
 ##########
 
-class Product(ProductBase):
+class Product(ProductModelBase):
     '''
     An Example Product use for Development
     '''
