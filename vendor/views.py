@@ -79,6 +79,7 @@ class CheckoutView(TemplateView):
         profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
         order = Invoice.objects.get(profile=profile, status=0)
 
+
         # TODO: Add to a 
 
         # Create the Intent
@@ -86,7 +87,7 @@ class CheckoutView(TemplateView):
             amount=int(order.total * 100),
             currency=order.currency,        # "usd"
             # Verify your integration in this guide by including this parameter
-            metadata={'integration_check': 'accept_a_payment', 'order_id':str(order.pk)},
+            metadata={'integration_check': 'accept_a_payment', 'order_id':str(order.pk), 'customer_id':str(request.user.pk)},
         )
 
         return render(request, self.template_name, {'client_secret': intent.client_secret, 'pub_key': settings.STRIPE_TEST_PUBLIC_KEY})

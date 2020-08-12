@@ -46,7 +46,6 @@ setup(
         'dev': [
             'django-crispy-forms',
             'django-allauth',
-            'stripe',
             ],
         'stripe': [             # Packages needed for Stripe
             'stripe>=2.48.0,<3.0',
@@ -56,7 +55,6 @@ setup(
         'build': [
             'setuptools',
             'wheel',
-            'twine',
         ],
         'docs': [
             'coverage',

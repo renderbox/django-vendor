@@ -11,6 +11,52 @@ class PaymentProcessorBase():
 
     '''
     status = None
+    invoice = None
+
+    def set_invoice(self, invoice):
+        self.invoice = invoice
+
+    def amount(self):   # Retrieves the total amount from the invoice
+        return 1.00
+
+    def get_head_javascript(self):
+        '''
+        Scripts that are expected to show in the top of the template.
+        '''
+        pass
+
+    def get_javascript(self):
+        '''
+        Scripts added to the bottom of the page in the normal js location.
+        '''
+        pass
+
+    def get_template(self):
+        '''
+        Unique partial template for the processor
+        '''
+        pass
+
+    def pre_authorization(self):
+        '''
+        Called before the authorization begins.
+        '''
+        pass
+
+    def authorize(self):
+        '''
+        Called to handle the authorization.
+        '''
+        pass
+
+    def capture(self):
+        '''
+        Called to handle the capture.  (some gateways handle this at the same time as authorize() )
+        '''
+        pass
+
+    def settlement(self):
+        pass
 
     def set_amount(self, amount):
         self.status = PurchaseStatus.QUEUED
@@ -24,6 +70,9 @@ class DummyProcessor(PaymentProcessorBase):
     pass
     # def process_payment(self, invoice):
 
+
+class AuthorizeDotNetProcessor(PaymentProcessorBase):
+    pass
 
 class StripeProcessor(PaymentProcessorBase):
 

@@ -20,6 +20,7 @@ from jsonfield import JSONField
 
 # https://en.wikipedia.org/wiki/ISO_4217
 # CURRENCY_CHOICES = [(int(cur.numeric), cur.name) for cur in pycountry.currencies]
+# TODO: Moved to Django Enums/Choice objects
 CURRENCY_CHOICES = [('usd', 'US Dollar')]
 
 INVOICE_STATUS_CHOICES = (
@@ -78,7 +79,7 @@ class CreateUpdateModelBase(models.Model):
         abstract = True
 
 
-class ProductBase(CreateUpdateModelBase):
+class ProductModelBase(CreateUpdateModelBase):
     '''
     This is the base class that all Products should inherit from.
     '''
@@ -280,6 +281,8 @@ class Invoice(CreateUpdateModelBase):
     total = models.FloatField(blank=True, null=True)                            # Set on purchase
     currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=settings.DEFAULT_CURRENCY)      # USer's default currency # ISO 4217 Standard 3 char codes
     shipping_address = models.ForeignKey(Address, verbose_name=_("Shipping Address"), on_delete=models.CASCADE, blank=True, null=True)
+    # paid = models.BooleanField(_("Paid"))                 # May be Useful for quick filtering on invoices that are outstanding
+    # paid_date = models.DateTimeField(_("Payment Date"))
 
     class Meta:
         verbose_name = _("Invoice")
