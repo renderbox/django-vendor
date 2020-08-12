@@ -344,7 +344,6 @@ class Invoice(CreateUpdateModelBase):
     # DEFAULT_CURRENCY
 
 
-
 class OrderItem(CreateUpdateModelBase):
     '''
     A link for each item to a user after it's been purchased

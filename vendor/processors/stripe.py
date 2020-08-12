@@ -15,21 +15,21 @@ class StripeProcessor(PaymentProcessorBase):
     def __init__(self):
         stripe.api_key = settings.STRIPE_TEST_PUBLIC_KEY    # TODO: This should work, but may not the best way to do this
 
-    def get_checkout_context(self, order, **kwargs):
+    def get_checkout_context(self, invoice, **kwargs):
         '''
-        The Order plus any additional values to include in the payment record.
+        The Invoice plus any additional values to include in the payment record.
         '''
         metadata = deepcopy(kwargs)
         metadata['integration_check'] = 'accept_a_payment'
-        metadata['order_id'] = str(order.pk)
+        metadata['order_id'] = str(invoice.pk)
 
         intent = stripe.PaymentIntent.create(
-            amount=int(order.total * 100),  # Amount in pennies so it can be an int() rather than a float
-            currency=order.currency,        # "usd"
+            amount=int(invoice.total * 100),  # Amount in pennies so it can be an int() rather than a float
+            currency=invoice.currency,        # "usd"
             metadata=metadata,
         )
 
-        return {'client_secret': intent.client_secret, 'pub_key': settings.STRIPE_TEST_PUBLIC_KEY}
+        return {'client_secret': intent.client_secret, 'pub_key': settings.STRIPE_TEST_PUBLIC_KEY, 'invoice':invoice}
 
     def process_payment(self, invoice, token):
         

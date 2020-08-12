@@ -78,9 +78,10 @@ class CheckoutView(TemplateView):
         profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
         order = Invoice.objects.get(profile=profile, status=0)
 
-        request_ctx = payment_processor.get_checkout_context(order, customer_id=str(request.user.pk))
+        ctx = payment_processor.get_checkout_context(order, customer_id=str(request.user.pk))
+        print(ctx)
 
-        return render(request, self.template_name, request_ctx)
+        return render(request, self.template_name, ctx)
 
 
     def post(self, request, *args, **kwargs):
