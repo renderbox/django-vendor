@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 
 file_path = path.abspath(path.dirname(__file__))
 
-with open(path.join(file_path, 'README.rst'), encoding='utf-8') as f:
+with open(path.join(file_path, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 package_metadata = {
