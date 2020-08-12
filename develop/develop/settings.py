@@ -27,7 +27,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -155,10 +154,12 @@ SITE_ID = int(os.getenv('SITE_ID', '1'))
 
 # Django Vendor Settings
 PRODUCT_MODEL = 'core.Product'
+VENDOR_PAYMENT_PROCESSOR = "authorizedotnet.AuthorizeDotNetProcessor"
+DEFAULT_CURRENCY = "usd"
 
 # Stripe Settings
 STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY")
 STRIPE_TEST_PUBLIC_KEY = os.getenv("STRIPE_TEST_PUBLIC_KEY")
 STRIPE_LIVE_MODE = False
-DEFAULT_CURRENCY = "usd"
+
 

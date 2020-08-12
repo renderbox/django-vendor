@@ -17,9 +17,10 @@ from django.http import HttpResponse
 from vendor.models import Offer, OrderItem, Invoice, Payment #Price, Purchase, Refund, CustomerProfile, PurchaseStatus, OrderStatus
 from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
 # from vendor.processors.stripe import StripeProcessor
-from vendor.processors.authorizedotnet import AuthorizeDotNetProcessor
+# from vendor.processors.authorizedotnet import AuthorizeDotNetProcessor
+from vendor.processors import PaymentProcessor
 
-payment_processor = AuthorizeDotNetProcessor()               # Stripe Processor being used for now
+payment_processor = PaymentProcessor()               # Stripe Processor being used for now
 
 class CartView(LoginRequiredMixin, DetailView):
     '''
