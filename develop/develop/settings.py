@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'address',
     'core',
     'vendor',
     'crispy_forms',
@@ -161,3 +162,5 @@ DEFAULT_CURRENCY = "usd"
 STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY")
 STRIPE_TEST_PUBLIC_KEY = os.getenv("STRIPE_TEST_PUBLIC_KEY")
 STRIPE_LIVE_MODE = False
+
+# GOOGLE_API_KEY = 'AIzaSyD--your-google-maps-key-SjQBE'

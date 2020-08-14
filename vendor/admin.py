@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from vendor.models import ProductClassifier, Offer, Price, CustomerProfile, \
+from vendor.models import TaxClassifier, Offer, Price, CustomerProfile, \
                     Invoice, OrderItem, Reciept, Wishlist, WishlistItem
 
 ###############
@@ -40,7 +40,7 @@ class WishlistItemInline(admin.TabularInline):
 # MODEL ADMINS
 ###############
 
-class ProductClassifierAdmin(admin.ModelAdmin):
+class TaxClassifierAdmin(admin.ModelAdmin):
     pass
 
 
@@ -74,7 +74,7 @@ class WishlistAdmin(admin.ModelAdmin):
 # REGISTRATION
 ###############
 
-admin.site.register(ProductClassifier, ProductClassifierAdmin)
+admin.site.register(TaxClassifier, TaxClassifierAdmin)
 admin.site.register(CustomerProfile, CustomerProfileAdmin)
 admin.site.register(Offer, OfferAdmin)
 admin.site.register(Invoice, InvoiceAdmin)

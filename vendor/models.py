@@ -1,7 +1,7 @@
 import uuid
 import random
 import string
-import pycountry
+# import pycountry
 
 from django.utils import timezone
 from django.conf import settings
@@ -11,8 +11,9 @@ from django.urls import reverse
 from django.contrib.sites.models import Site
 from django.db.models.signals import post_save
 from django.utils.text import slugify
+from django.contrib.postgres.fields import JSONField
 
-from jsonfield import JSONField
+from address.models import AddressField
 
 ##########
 # CHOICES
@@ -90,8 +91,8 @@ class ProductModelBase(CreateUpdateModelBase):
     slug = models.SlugField(_("Slug"), blank=True, null=True)   # Gets set in the save
     available = models.BooleanField(_("Available"), default=False, help_text="Is this currently available?")                        # This can be forced to be unavailable if there is no prices attached.
     description = models.TextField(blank=True, null=True)
-    msrp = JSONField(_("MSRP"), default=dict, blank=True, null=True)     # MSRP in various currencies
-    classification = models.ManyToManyField("vendor.ProductClassifier", blank=True)        # What taxes can apply to this item
+    meta = JSONField(_("Meta"), default=dict, blank=True, null=True)                        # allows for things like a MSRP in multiple currencies
+    classification = models.ManyToManyField("vendor.TaxClassifier", blank=True)         # What taxes can apply to this item
 
     class Meta:
         abstract = True
@@ -130,10 +131,10 @@ class ProductModelBase(CreateUpdateModelBase):
 
 
 #####################
-# Product Classifier
+# Tax Classifier
 #####################
 
-class ProductClassifier(models.Model):
+class TaxClassifier(models.Model):
     '''
     This for things like "Digital Goods", "Furniture" or "Food" which may or
     may not be taxable depending on the location.  These are determined by the
@@ -245,7 +246,7 @@ class CustomerProfile(CreateUpdateModelBase):
     This is what the Invoices are attached to.  This is abstracted from the user model directly do it can be mre flexible in the future.
     '''
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), null=True, on_delete=models.SET_NULL, related_name="customer_profile")
-    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=settings.DEFAULT_CURRENCY)      # USer's default currency
+    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=settings.DEFAULT_CURRENCY)      # User's default currency
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="customer_profile")                      # For multi-site support
 
     class Meta:
@@ -263,6 +264,7 @@ class CustomerProfile(CreateUpdateModelBase):
 class Address(models.Model):
     name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="addresses")
+    address = AddressField()
 
 
 class Invoice(CreateUpdateModelBase):

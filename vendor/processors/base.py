@@ -24,11 +24,11 @@ class PaymentProcessorBase():
     def amount(self):   # Retrieves the total amount from the invoice
         return 1.00
 
-    def get_checkout_context(self, order, **kwargs):
-        """
-        The Order plus any additional values to include in the payment record.
-        """
-        return {}
+    def get_checkout_context(self, invoice, **kwargs):
+        '''
+        The Invoice plus any additional values to include in the payment record.
+        '''
+        return {'invoice':invoice}
 
     def get_head_javascript(self):
         """

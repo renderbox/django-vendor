@@ -39,11 +39,11 @@ setup(
     python_requires=">=3.6",
     install_requires=[
         'Django>=2.2',
-        'jsonfield',
-        'pycountry',
+        'django-address',
     ],
     extras_require={
         'dev': [
+            'psycopg2-binary',
             'django-crispy-forms',
             'django-allauth',
             ],
