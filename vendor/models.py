@@ -11,7 +11,6 @@ from django.urls import reverse
 from django.contrib.sites.models import Site
 from django.db.models.signals import post_save
 from django.utils.text import slugify
-from django.contrib.postgres.fields import JSONField
 
 from address.models import AddressField
 
@@ -91,7 +90,7 @@ class ProductModelBase(CreateUpdateModelBase):
     slug = models.SlugField(_("Slug"), blank=True, null=True)   # Gets set in the save
     available = models.BooleanField(_("Available"), default=False, help_text="Is this currently available?")                        # This can be forced to be unavailable if there is no prices attached.
     description = models.TextField(blank=True, null=True)
-    meta = JSONField(_("Meta"), default=dict, blank=True, null=True)                        # allows for things like a MSRP in multiple currencies
+    meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)                        # allows for things like a MSRP in multiple currencies
     classification = models.ManyToManyField("vendor.TaxClassifier", blank=True)         # What taxes can apply to this item
 
     class Meta:
@@ -171,7 +170,7 @@ class Offer(CreateUpdateModelBase):
     start_date = models.DateTimeField(_("Start Date"), help_text="What date should this offer become available?")
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="Expiration Date?")
     terms =  models.IntegerField(_("Terms"), default=0, choices=TERM_CHOICES)
-    term_details = JSONField(_("Details"), default=dict, blank=True, null=True)
+    term_details = models.JSONField(_("Details"), default=dict, blank=True, null=True)
     term_start_date = models.DateTimeField(_("Term Start Date"), help_text="When is this product available to use?", blank=True, null=True) # Useful for Event Tickets or Pre-Orders
     available = models.BooleanField(_("Available"), default=False, help_text="Is this currently available?")
 
