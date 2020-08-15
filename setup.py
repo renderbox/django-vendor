@@ -38,11 +38,12 @@ setup(
     include_package_data=True,
     python_requires=">=3.6",
     install_requires=[
-        'Django>=2.2',
+        'Django>=3.0, <3.2',
         'django-address',
     ],
     extras_require={
         'dev': [
+            'dj-database-url',
             'psycopg2-binary',
             'django-crispy-forms',
             'django-allauth',
