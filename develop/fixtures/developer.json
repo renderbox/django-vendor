@@ -27,7 +27,7 @@
         "slug": "mouse-t-shirt",
         "available": false,
         "description": "Powerful T-Shirt",
-        "msrp": "{}",
+        "meta": "{}",
         "name": "Mouse T-Shirt",
         "classification": []
     }
@@ -44,7 +44,7 @@
         "slug": "wheel-of-cheddar",
         "available": false,
         "description": "This is a food item",
-        "msrp": "{}",
+        "meta": "{}",
         "name": "Wheel of Cheddar",
         "classification": []
     }
@@ -61,7 +61,7 @@
         "slug": "hamster-wheel",
         "available": false,
         "description": "",
-        "msrp": "{}",
+        "meta": "{}",
         "name": "Hamster Wheel",
         "classification": []
     }

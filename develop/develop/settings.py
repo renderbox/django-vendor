@@ -121,7 +121,9 @@ ACCOUNT_EMAIL_REQUIRED = True
 
 LOGIN_REDIRECT_URL = "/vendor/add-to-cart/"
 
-
+FIXTURE_DIRS = (
+   os.path.join(BASE_DIR, 'fixtures'),
+)
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
