@@ -154,7 +154,7 @@ class Offer(CreateUpdateModelBase):
     bundle = models.ManyToManyField(settings.VENDOR_PRODUCT_MODEL, related_name="bundles", blank=True)  # Used in the case of a bundles/packages.  Bundles override individual products
     start_date = models.DateTimeField(_("Start Date"), help_text="What date should this offer become available?")
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="Expiration Date?")
-    terms =  models.IntegerField(_("Terms"), default=0, choices=TermType.choises)
+    terms =  models.IntegerField(_("Terms"), default=0, choices=TermType.choices)
     term_details = models.JSONField(_("Details"), default=dict, blank=True, null=True)
     term_start_date = models.DateTimeField(_("Term Start Date"), help_text="When is this product available to use?", blank=True, null=True) # Useful for Event Tickets or Pre-Orders
     available = models.BooleanField(_("Available"), default=False, help_text="Is this currently available?")
@@ -255,7 +255,7 @@ class Invoice(CreateUpdateModelBase):
     '''
     An invoice starts off as a Cart until it is puchased, then it becomes an Invoice.
     '''
-    class InvoiceStatus(models.IntergerChoices):
+    class InvoiceStatus(models.IntegerChoices):
                 CART = 0, _("Cart")
                 QUEUED = 10, _("Queued")
                 PROCESSING = 20, _("Processing")
