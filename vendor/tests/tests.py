@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth.models import User
 
-from vendor.models import Offer, Price, Invoice, OrderItem, Purchase, Refund
+from vendor.models import Offer, Price, Invoice, OrderItem, Refund
 from core.models import Product
 
 
