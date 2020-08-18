@@ -1,0 +1,38 @@
+[
+    {
+        "model": "auth.user",
+        "pk": 1,
+        "fields": {
+            "password": "pbkdf2_sha256$150000$yUkNuu034MK7$d3I29Pd/EJ+kfnre+i31kX8tBaovGizw6WosUTNi5Mo=",
+            "last_login": "2019-11-14T18:41:34.011Z",
+            "is_superuser": true,
+            "username": "gviklund",
+            "first_name": "",
+            "last_name": "",
+            "email": "renderbox@gmail.com",
+            "is_staff": true,
+            "is_active": true,
+            "date_joined": "2019-11-14T18:35:39.938Z",
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 2,
+        "fields": {
+            "password": "pbkdf2_sha256$150000$tdXWrWpVrlTi$GTySjA16IOeYVzFpKMo1Iueq3BXbERSJC4sf7OYqwLY=",
+            "last_login": null,
+            "is_superuser": true,
+            "username": "demouser",
+            "first_name": "",
+            "last_name": "",
+            "email": "user@example.com",
+            "is_staff": true,
+            "is_active": true,
+            "date_joined": "2019-11-15T18:35:16.612Z",
+            "groups": [],
+            "user_permissions": []
+        }
+    }
+]

@@ -1,0 +1,50 @@
+[
+    {
+        "model": "vendor.offer",
+        "pk": 1,
+        "fields": {
+            "created": "2019-11-14T18:43:25.721Z",
+            "updated": "2019-11-14T18:43:25.721Z",
+            "sku": "LDTOG62N",
+            "uuid": "6bd42794-e036-47d4-b587-977b20b8360d",
+            "name": "Shoes",
+            "product": 1,
+            "msrp": "5000.00",
+            "currency": "usd",
+            "available": true,
+            "license_type": 0
+        }
+    },
+    {
+        "model": "vendor.offer",
+        "pk": 2,
+        "fields": {
+            "created": "2019-11-14T23:36:16.071Z",
+            "updated": "2019-11-14T23:36:16.071Z",
+            "sku": "AD5QL4UC",
+            "uuid": "f0324a62-eff2-45c0-819f-535eea2402ec",
+            "name": "Lamp",
+            "product": 3,
+            "msrp": "50.00",
+            "currency": "usd",
+            "available": true,
+            "license_type": 0
+        }
+    },
+    {
+        "model": "vendor.offer",
+        "pk": 3,
+        "fields": {
+            "created": "2019-11-15T18:27:16.704Z",
+            "updated": "2019-11-15T18:27:16.704Z",
+            "sku": "OGHNW9EX",
+            "uuid": "f6436dd1-71ba-4dd6-be79-0b4e2bfd7875",
+            "name": "Test Product",
+            "product": 4,
+            "msrp": "50.00",
+            "currency": "",
+            "available": false,
+            "license_type": 0
+        }
+    }
+]

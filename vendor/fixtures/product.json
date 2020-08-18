@@ -1,0 +1,34 @@
+[
+    {
+        "model": "core.product",
+        "pk": 1,
+        "fields": {
+            "name": "Air Jordans",
+            "slug": "slug"
+        }
+    },
+    {
+        "model": "core.product",
+        "pk": 2,
+        "fields": {
+            "name": "Hair Gel",
+            "slug": "hair-gel"
+        }
+    },
+    {
+        "model": "core.product",
+        "pk": 3,
+        "fields": {
+            "name": "Tiffany Lamp",
+            "slug": "tiffany-lamp"
+        }
+    },
+    {
+        "model": "core.product",
+        "pk": 4,
+        "fields": {
+            "name": "Test Product",
+            "slug": "test-product"
+        }
+    }
+]
