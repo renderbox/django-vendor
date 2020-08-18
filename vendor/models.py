@@ -89,7 +89,7 @@ class ProductModelBase(CreateUpdateModelBase):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)                                           # Used to track the product
     name = models.CharField(_("Name"), max_length=80, blank=True)
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="products")        # For multi-site support
-    slug = AutoSlugField(populate_from='name')                                                                         # Gets set in the save
+    slug = AutoSlugField(populate_from=lambda instance: instance.name, unique_with=['site__id'], slugify=lambda value: value.replace(' ','-'))                                                                         # Gets set in the save
     available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))        # This can be forced to be unavailable if there is no prices attached.
     description = models.TextField(blank=True, null=True)
     meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)                                            # allows for things like a MSRP in multiple currencies
