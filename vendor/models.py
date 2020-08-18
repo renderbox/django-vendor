@@ -71,7 +71,7 @@ class ProductModelBase(CreateUpdateModelBase):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)                                           # Used to track the product
     name = models.CharField(_("Name"), max_length=80, blank=True)
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="products")        # For multi-site support
-    slug = AutoSlugField(populate_from=lambda instance: instance.name, unique_with='site__id')                                                                         # Gets set in the save
+    slug = AutoSlugField(populate_from='name', unique_with='site__id')                                                                         # Gets set in the save
     available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))        # This can be forced to be unavailable if there is no prices attached.
     description = models.TextField(blank=True, null=True)
     meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)                                            # allows for things like a MSRP in multiple currencies
@@ -147,7 +147,7 @@ class Offer(CreateUpdateModelBase):
         ONE_TIME_USER = 20, _("One-Time Use")
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)                                # Used to track the product
-    # slug = models.SlugField(_("Slug"), blank=True, null=True)                                               # Gets set in the save, has to be unique
+    slug = AutoSlugField(populate_from='name', unique_with='site__id')                                               # SEO friendly 
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="product_offers")                      # For multi-site support
     name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
     product = models.ForeignKey(settings.VENDOR_PRODUCT_MODEL, on_delete=models.CASCADE, related_name="offers", blank=True, null=True)         # TODO: Combine with bundle field?
