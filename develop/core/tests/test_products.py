@@ -60,3 +60,9 @@ class ClientProductTests(TestCase):
 
     def test_client_delete_product(self):
         raise NotImplementedError
+
+    def test_client_uplaod_csv_product(self):
+        raise NotImplementedError
+    
+    def test_client_downlaod_csv_product(self):
+        raise NotImplementedError
