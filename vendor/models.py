@@ -25,32 +25,14 @@ from autoslug import AutoSlugField
 # TODO: Moved to Django Enums/Choice objects
 CURRENCY_CHOICES = [('usd', 'US Dollar')]
 
-INVOICE_STATUS_CHOICES = (
-                (0, _("Cart")), 
-                (10, _("Queued")), 
-                (20, _("Processing")), 
-                (30, _("Failed")), 
-                (40, _("Complete")) 
-            )
 
-TERM_CHOICES = ((0, _("Perpetual")), (10, _("Subscription")), (20, _("One-Time Use")) )
 
-PURCHASE_STATUS_CHOICES = (
-                (0, _("Queued")), 
-                (10, _("Processing")), 
-                (20, _("Expired")), 
-                (30, _("Hold")), 
-                (40, _("Canceled")), 
-                (50, _("Refunded")), 
-                (60, _("Completed")) 
-            )
-
-REGION_TYPE_CHOICES = (
-                (0, _("Country")), 
-                (10, _("State/Province")), 
-                (20, _("County")), 
-                (30, _("City")), 
-            )
+# REGION_TYPE_CHOICES = (
+#                 (0, _("Country")), 
+#                 (10, _("State/Province")), 
+#                 (20, _("County")), 
+#                 (30, _("City")), 
+#             )
 
 
 ############
@@ -89,7 +71,7 @@ class ProductModelBase(CreateUpdateModelBase):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)                                           # Used to track the product
     name = models.CharField(_("Name"), max_length=80, blank=True)
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="products")        # For multi-site support
-    slug = AutoSlugField(populate_from=lambda instance: instance.name, unique_with=['site__id'], slugify=lambda value: value.replace(' ','-'))                                                                         # Gets set in the save
+    slug = AutoSlugField(populate_from=lambda instance: instance.name, unique_with='site__id')                                                                         # Gets set in the save
     available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))        # This can be forced to be unavailable if there is no prices attached.
     description = models.TextField(blank=True, null=True)
     meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)                                            # allows for things like a MSRP in multiple currencies
@@ -159,15 +141,20 @@ class Offer(CreateUpdateModelBase):
     This is so more than one offer can be made per product, with different 
     priorities.
     '''
+    class TermType(models.IntegerChoices):
+        PERPETUAL = 0, _("Perpetual")
+        SUBSCRIPTION = 10, _("Subscription")
+        ONE_TIME_USER = 20, _("One-Time Use")
+
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)                                # Used to track the product
-    slug = models.SlugField(_("Slug"), blank=True, null=True)                                               # Gets set in the save, has to be unique
+    # slug = models.SlugField(_("Slug"), blank=True, null=True)                                               # Gets set in the save, has to be unique
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="product_offers")                      # For multi-site support
     name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
     product = models.ForeignKey(settings.VENDOR_PRODUCT_MODEL, on_delete=models.CASCADE, related_name="offers", blank=True, null=True)         # TODO: Combine with bundle field?
     bundle = models.ManyToManyField(settings.VENDOR_PRODUCT_MODEL, related_name="bundles", blank=True)  # Used in the case of a bundles/packages.  Bundles override individual products
     start_date = models.DateTimeField(_("Start Date"), help_text="What date should this offer become available?")
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="Expiration Date?")
-    terms =  models.IntegerField(_("Terms"), default=0, choices=TERM_CHOICES)
+    terms =  models.IntegerField(_("Terms"), default=0, choices=TermType.choises)
     term_details = models.JSONField(_("Details"), default=dict, blank=True, null=True)
     term_start_date = models.DateTimeField(_("Term Start Date"), help_text="When is this product available to use?", blank=True, null=True) # Useful for Event Tickets or Pre-Orders
     available = models.BooleanField(_("Available"), default=False, help_text="Is this currently available?")
@@ -268,9 +255,16 @@ class Invoice(CreateUpdateModelBase):
     '''
     An invoice starts off as a Cart until it is puchased, then it becomes an Invoice.
     '''
+    class InvoiceStatus(models.IntergerChoices):
+                CART = 0, _("Cart")
+                QUEUED = 10, _("Queued")
+                PROCESSING = 20, _("Processing")
+                FAILED = 30, _("Failed")
+                COMPLETE = 40, _("Complete")
+
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="invoices")                      # For multi-site support
-    status = models.IntegerField(_("Status"), choices=INVOICE_STATUS_CHOICES, default=0)
+    status = models.IntegerField(_("Status"), choices=InvoiceStatus.choices, default=0)
     customer_notes = models.TextField(blank=True, null=True)
     vendor_notes = models.TextField(blank=True, null=True)
     ordered_date = models.DateTimeField(_("Ordered Date"), blank=True, null=True)               # When was the purchase made?
@@ -395,7 +389,14 @@ class Reciept(CreateUpdateModelBase):
     A link for all the purchases a user has made. Contains subscription start and end date.
     This is generated for each item a user purchases so it can be checked in other code.
     '''
-
+    class RecieptStatus(models.IntegerChoices):
+        QUEUED = 0, _("Queued") 
+        PROCESSING = 10, _("Processing")
+        EXPIRED = 20, _("Expired")
+        HOLD = 30, _("Hold")
+        CANCELED = 40, _("Canceled") 
+        REFUNDED = 50, _("Refunded") 
+        COMPLETED = 60, _("Completed")
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Purchase Profile"), null=True, on_delete=models.CASCADE, related_name="reciepts")
     order_item = models.ForeignKey('vendor.OrderItem', verbose_name=_("Order Item"), on_delete=models.CASCADE, related_name="reciepts")
     product = models.ForeignKey(settings.VENDOR_PRODUCT_MODEL, on_delete=models.CASCADE, related_name="reciepts", blank=True, null=True)           # Goal is to make it easier to check to see if a user owns the product.
@@ -404,7 +405,7 @@ class Reciept(CreateUpdateModelBase):
     auto_renew = models.BooleanField(_("Auto Renew"), default=False)        # For subscriptions
     vendor_notes = models.TextField()
     transaction = models.CharField(_("Transaction"), max_length=80)
-    status = models.IntegerField(_("Status"), choices=PURCHASE_STATUS_CHOICES, default=0)       # Fulfilled, Refund
+    status = models.IntegerField(_("Status"), choices=RecieptStatus.choices, default=0)       # Fulfilled, Refund
     class Meta:
         verbose_name = _("Reciept")
         verbose_name_plural = _("Reciepts")
