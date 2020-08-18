@@ -34,5 +34,16 @@
             "groups": [],
             "user_permissions": []
         }
+    },
+    {
+        "model": "vendor.customerprofile",
+        "pk": 1,
+        "fields": {
+            "created": "2020-06-30T01:15:00.350Z",
+            "updated": "2020-06-30T01:15:00.350Z",
+            "user": 1,
+            "currency": "",
+            "site": 1
+        }
     }
 ]

@@ -1,34 +1,54 @@
 [
+
     {
         "model": "core.product",
         "pk": 1,
         "fields": {
-            "name": "Air Jordans",
-            "slug": "slug"
+            "created": "2020-06-30T00:48:03.710Z",
+            "updated": "2020-06-30T00:48:03.710Z",
+            "sku": null,
+            "uuid": "188e45aa-0fdf-4877-ba84-f4c39c0fc41b",
+            "site": 1,
+            "slug": "mouse-t-shirt",
+            "available": false,
+            "description": "Powerful T-Shirt",
+            "meta": "{}",
+            "name": "Mouse T-Shirt",
+            "classification": []
         }
     },
     {
         "model": "core.product",
         "pk": 2,
         "fields": {
-            "name": "Hair Gel",
-            "slug": "hair-gel"
+            "created": "2020-06-30T02:32:37.655Z",
+            "updated": "2020-06-30T02:33:10.492Z",
+            "sku": null,
+            "uuid": "3faee1ef-1611-44d3-8e96-e98535fa00e8",
+            "site": 1,
+            "slug": "wheel-of-cheddar",
+            "available": false,
+            "description": "This is a food item",
+            "meta": "{}",
+            "name": "Wheel of Cheddar",
+            "classification": []
         }
     },
     {
         "model": "core.product",
         "pk": 3,
         "fields": {
-            "name": "Tiffany Lamp",
-            "slug": "tiffany-lamp"
-        }
-    },
-    {
-        "model": "core.product",
-        "pk": 4,
-        "fields": {
-            "name": "Test Product",
-            "slug": "test-product"
+            "created": "2020-06-30T02:33:35.109Z",
+            "updated": "2020-06-30T02:33:35.109Z",
+            "sku": null,
+            "uuid": "def0d4f5-fd8f-4aa4-b25a-c043a846a732",
+            "site": 1,
+            "slug": "hamster-wheel",
+            "available": false,
+            "description": "",
+            "meta": "{}",
+            "name": "Hamster Wheel",
+            "classification": []
         }
     }
 ]
