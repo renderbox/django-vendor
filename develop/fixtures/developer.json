@@ -132,7 +132,7 @@
     "fields": {
         "offer": 1,
         "cost": 19.99,
-        "currency": "840",
+        "currency": 840,
         "start_date": "2020-06-30T00:55:21Z",
         "end_date": null,
         "priority": 0
@@ -144,7 +144,7 @@
     "fields": {
         "offer": 2,
         "cost": 75.0,
-        "currency": "840",
+        "currency": 392,
         "start_date": "2020-06-30T02:34:56Z",
         "end_date": null,
         "priority": 0
@@ -156,7 +156,7 @@
     "fields": {
         "offer": 3,
         "cost": 25.0,
-        "currency": "840",
+        "currency": 484,
         "start_date": "2020-06-30T02:38:30Z",
         "end_date": null,
         "priority": 0
@@ -169,7 +169,7 @@
         "created": "2020-06-30T01:15:00.350Z",
         "updated": "2020-06-30T01:15:00.350Z",
         "user": 1,
-        "currency": "",
+        "currency": 840,
         "site": 1
     }
 },
@@ -189,7 +189,7 @@
         "tax": 36.5,
         "shipping": 6.95,
         "total": 408.43,
-        "currency": "usd",
+        "currency": 840,
         "shipping_address": null
     }
 },
