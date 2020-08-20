@@ -13,6 +13,8 @@ import os
 from pathlib import Path
 import dj_database_url
 
+from iso4217 import Currency
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
@@ -48,6 +50,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'iso4217'
 ]
 
 MIDDLEWARE = [
@@ -169,7 +172,7 @@ STATICFILES_DIRS = [
 # Django Vendor Settings
 VENDOR_PRODUCT_MODEL = 'core.Product'
 VENDOR_PAYMENT_PROCESSOR = "authorizenet.AuthorizeNetProcessor"
-DEFAULT_CURRENCY = "usd"
+DEFAULT_CURRENCY = (Currency.usd.number, Currency.usd.value)
 
 # Stripe Settings
 STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY")
