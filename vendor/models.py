@@ -206,13 +206,14 @@ class Offer(CreateUpdateModelBase):
                     price_before_tax = self.prices.filter(start_date__lte=now, end_date__gte=now).order_by('priority').last().cost
                 else:                                                           # Return acording to start date and priority
                     price_before_tax = self.prices.filter(start_date__lte=now).order_by('priority').last().cost
-            else:                                                           # Only future start date. Default to MSRP
+            else:                
+                # TODO: need to validate if it is a bundle                        # Only future start date. Default to MSRP
                 if self.product.meta:
                     price_before_tax = float(self.product.meta.split(',')[1]) # TODO: Implement MSRP from product with country code 
                 else:                    
                     raise FieldError(_("There is no price set on Offer or MSRP on Product"))
         
-        # price_after_tax = price_before_tax * self.product.tax_classifier.tax_rule.tax   TODO: implement tax_classifier and tax rule
+        # price_after_tax = price_before_tax * self.product.tax_classifier.tax_rule.tax   TODO: implement tax_classifier and tax rule and bundle
         price_after_tax = price_before_tax
         
         return price_after_tax
@@ -310,7 +311,7 @@ class Invoice(CreateUpdateModelBase):
 
     def add_offer(self, offer):
         order_item, created = self.order_items.get_or_create(offer=offer)
-
+        # make sure the invoice pk is also in the OriderItem
         if not created:
             order_item.quantity += 1
             order_item.save()
@@ -386,6 +387,7 @@ class OrderItem(CreateUpdateModelBase):
 
     @property
     def name(self):
+        # TODO: What if it is an Bundle
         return self.offer.product.name
 
 
@@ -423,7 +425,7 @@ class Reciept(CreateUpdateModelBase):
         COMPLETED = 60, _("Completed")
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Purchase Profile"), null=True, on_delete=models.CASCADE, related_name="reciepts")
     order_item = models.ForeignKey('vendor.OrderItem', verbose_name=_("Order Item"), on_delete=models.CASCADE, related_name="reciepts")
-    product = models.ForeignKey(settings.VENDOR_PRODUCT_MODEL, on_delete=models.CASCADE, related_name="reciepts", blank=True, null=True)           # Goal is to make it easier to check to see if a user owns the product.
+    product = models.ForeignKey(settings.VENDOR_PRODUCT_MODEL, on_delete=models.CASCADE, related_name="reciepts", blank=True, null=True)           # TODO:  Goal is to make it easier to check to see if a user owns the product. WHAT IF IT IS A BUNDLE
     start_date = models.DateTimeField(_("Start Date"), blank=True, null=True)
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True)
     auto_renew = models.BooleanField(_("Auto Renew"), default=False)        # For subscriptions
