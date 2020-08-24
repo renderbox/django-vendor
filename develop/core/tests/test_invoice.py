@@ -17,6 +17,8 @@ class ModelInvoiceTests(TestCase):
         self.new_invoice = Invoice(profile=CustomerProfile.objects.get(pk=1))
         self.new_invoice.save()
 
+        self.shirt_offer = Offer.objects.get(pk=1)
+        self.hamster = Offer.objects.get(pk=3)
         self.mug_offer = Offer.objects.get(pk=4)
 
     def test_add_offer(self):
@@ -34,7 +36,6 @@ class ModelInvoiceTests(TestCase):
         self.existing_invoice.remove_offer(Offer.objects.get(pk=3))
 
         self.assertEquals(OrderItem.objects.filter(invoice=self.existing_invoice).count(), 2)
-        pass
 
     def test_update_totals(self):
         self.existing_invoice.update_totals()
@@ -51,6 +52,29 @@ class ModelInvoiceTests(TestCase):
         self.assertEquals(start_total, 365.18)
         self.assertEquals(add_mug_total, 386.3)
         self.assertEquals(remove_shirt_total, 366.31)
+
+    def test_add_quantity(self):
+        start_quantity = self.existing_invoice.order_items.filter(offer=self.shirt_offer).first().quantity
+        self.existing_invoice.add_offer(self.shirt_offer)
+        end_quantity = self.existing_invoice.order_items.filter(offer=self.shirt_offer).first().quantity
+        
+        self.assertNotEquals(start_quantity, end_quantity)
+
+    def test_remove_quantity(self):
+        start_quantity = self.existing_invoice.order_items.filter(offer=self.shirt_offer).first().quantity
+        self.existing_invoice.remove_offer(self.shirt_offer)
+        end_quantity = self.existing_invoice.order_items.filter(offer=self.shirt_offer).first().quantity
+
+        self.assertNotEquals(start_quantity, end_quantity)
+
+    def test_remove_quantity_zero(self):
+        start_quantity = self.existing_invoice.order_items.filter(offer=self.hamster).first().quantity
+        self.existing_invoice.remove_offer(self.hamster)
+        end_quantity = self.existing_invoice.order_items.filter(offer=self.hamster).count()
+
+        self.assertNotEquals(start_quantity, end_quantity)
+
+    
 
 
 class ViewInvoiceTests(TestCase):
