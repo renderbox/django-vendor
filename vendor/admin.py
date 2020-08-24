@@ -1,3 +1,6 @@
+from django import forms
+from django.apps import apps
+from django.conf import settings
 from django.contrib import admin
 
 from vendor.models import TaxClassifier, Offer, Price, CustomerProfile, \
@@ -51,14 +54,28 @@ class CustomerProfileAdmin(admin.ModelAdmin):
         WishlistInline,
     ]
 
+class OfferAdminForm(forms.ModelForm):
+    
+    def clean_name(self):
+        product_model = apps.get_model(settings.VENDOR_PRODUCT_MODEL)
+        name = self.cleaned_data['name']
+        bundle = self.data.getlist('bundle')
+        
+        if len(self.data.getlist('bundle')) == 1:
+            return product_model.objects.get(pk=bundle[0]).name
+        else:
+            return "Bundle: " + ",".join( [ qs.name for qs in product_model.objects.filter(pk__in=bundle) ] )
 
 class OfferAdmin(admin.ModelAdmin):
+    # TODO: Only show active Product in new Offers or change Offers
     readonly_fields = ('uuid',)
     inlines = [
         PriceInline,
     ]
+    form = OfferAdminForm
 
 
+      
 class InvoiceAdmin(admin.ModelAdmin):
     inlines = [
         OrderItemInline,
