@@ -4,12 +4,12 @@ from django.test import TestCase, Client
 from django.urls import reverse
 
 from core.models import Product
-from vendor.models import Offer, Price
+from vendor.models import Offer, Price, OrderItem
 
 
 class ModelOfferTests(TestCase):
 
-    fixtures = ['site', 'product', 'price', 'offer']
+    fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'invoice']
 
     def setUp(self):
         pass
@@ -30,6 +30,19 @@ class ModelOfferTests(TestCase):
     def test_save_fail_no_price_set(self):
         # TODO: Implement Tests
         pass
+
+    def test_add_offer_to_cart_slug(self):
+        mug_offer = Offer.objects.get(pk=4)
+        slug = mug_offer.add_to_cart_link()
+        self.assertEquals(slug,'/sales/cart/add/' + mug_offer.slug + '/')
+
+
+
+    def test_remove_offer_to_cart_slug(self):
+        mug_offer = Offer.objects.get(pk=4)
+        slug = mug_offer.remove_from_cart_link()
+        self.assertEquals(slug,'/sales/cart/remove/' + mug_offer.slug + '/')
+    
 
     def test_get_current_price_is_msrp(self):
         offer = Offer.objects.get(pk=4)
@@ -63,7 +76,7 @@ class ViewOfferTests(TestCase):
         pass
 
     def test_valid_add_to_cart_offer(self):
-        offer
+        # TODO: Implement Tests
         pass
 
     def test_valid_remove_to_cart_offer(self):
