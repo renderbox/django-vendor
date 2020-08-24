@@ -37,6 +37,7 @@ class ModelInvoiceTests(TestCase):
         pass
 
     def test_update_totals(self):
+        self.existing_invoice.update_totals()
         start_total = self.existing_invoice.total
 
         self.existing_invoice.add_offer(Offer.objects.get(pk=4))
@@ -47,9 +48,9 @@ class ModelInvoiceTests(TestCase):
         self.existing_invoice.update_totals()
         remove_shirt_total = self.existing_invoice.total
 
-        self.assertEquals(start_total, 0)
-        self.assertEquals(add_mug_total, 0)
-        self.assertEquals(remove_shirt_total, 0)
+        self.assertEquals(start_total, 365.18)
+        self.assertEquals(add_mug_total, 386.3)
+        self.assertEquals(remove_shirt_total, 366.31)
 
 
 class ViewInvoiceTests(TestCase):

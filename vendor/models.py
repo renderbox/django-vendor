@@ -289,7 +289,7 @@ class Invoice(CreateUpdateModelBase):
 
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="invoices")                      # For multi-site support
-    status = models.IntegerField(_("Status"), choices=InvoiceStatus.choices, default=Invoice.InvoiceStatus.CART)
+    status = models.IntegerField(_("Status"), choices=InvoiceStatus.choices, default=InvoiceStatus.CART)
     customer_notes = models.TextField(blank=True, null=True)
     vendor_notes = models.TextField(blank=True, null=True)
     ordered_date = models.DateTimeField(_("Ordered Date"), blank=True, null=True)               # When was the purchase made?
@@ -297,7 +297,7 @@ class Invoice(CreateUpdateModelBase):
     tax = models.FloatField(blank=True, null=True)                              # Set on checkout
     shipping = models.FloatField(blank=True, null=True)                         # Set on checkout
     total = models.FloatField(blank=True, null=True)                            # Set on purchase
-    currency = models.CharField(_("Currency"), max_length=4, choices=[(c.name, c.value) for c in Currency ], default=settings.DEFAULT_CURRENCY)      # USer's default currency
+    currency = models.CharField(_("Currency"), max_length=4, choices=[(c.name, c.value) for c in Currency ], default=settings.DEFAULT_CURRENCY)      # User's default currency
     shipping_address = models.ForeignKey(Address, verbose_name=_("Shipping Address"), on_delete=models.CASCADE, blank=True, null=True)
     # paid = models.BooleanField(_("Paid"))                 # May be Useful for quick filtering on invoices that are outstanding
     # paid_date = models.DateTimeField(_("Payment Date"))
