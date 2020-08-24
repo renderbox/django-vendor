@@ -1,21 +1,22 @@
-import uuid
+import copy
 import random
 import string
+import uuid
 # import pycountry
 
-from django.utils import timezone
 from django.conf import settings
-from django.db import models
-from django.utils.translation import ugettext as _
-from django.urls import reverse
 from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
+from django.db import models
 from django.db.models.signals import post_save
+from django.urls import reverse
+from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.translation import ugettext as _
 
 from address.models import AddressField
 from autoslug import AutoSlugField
 from iso4217 import Currency
-
 
 ##########
 # CHOICES
@@ -69,6 +70,22 @@ class CreateUpdateModelBase(models.Model):
     class Meta:
         abstract = True
 
+# TODO: Validate multiple msrp lines
+def validate_msrp_format(value):
+    msrp = []
+    if not value:
+        return None
+
+    msrp = value.split(',')
+
+    if len(msrp) != 2 or not msrp:
+        raise ValidationError(_("Invalid MSRP Value"), params={'value': value})
+    
+    if not msrp[0] or not msrp[1]:
+        raise ValidationError(_("Invalid MSRP Value"), params={'value': value})
+
+    if not msrp[0].lower() in Currency.__dict__:
+        raise ValidationError(_("Invalid MSRP Value"), params={'value': value})
 
 class ProductModelBase(CreateUpdateModelBase):
     '''
@@ -81,7 +98,7 @@ class ProductModelBase(CreateUpdateModelBase):
     slug = AutoSlugField(populate_from='name', unique_with='site__id')                                                                         # Gets set in the save
     available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))        # This can be forced to be unavailable if there is no prices attached.
     description = models.TextField(blank=True, null=True)
-    meta = models.CharField(_("Meta"), max_length=150, blank=True, null=True)                                          # allows for things like a MSRP in multiple currencies. Not JSONField to force a db
+    meta = models.CharField(_("Meta"), max_length=150, validators=[validate_msrp_format], blank=True, null=True, help_text=_("Eg: USD,10.99\n(iso4217 Country Code), (MSRP Price)"))                                          # allows for things like a MSRP in multiple currencies. Not JSONField to force a db
     classification = models.ManyToManyField("vendor.TaxClassifier", blank=True)                                        # What taxes can apply to this item
 
     class Meta:
@@ -90,6 +107,7 @@ class ProductModelBase(CreateUpdateModelBase):
     def __str__(self):
         return self.name
 
+    # TODO: ADD trigger when object becomes unavailable to disable offer if it exisits. 
 
 #########
 # MIXINS
@@ -158,7 +176,7 @@ class Offer(CreateUpdateModelBase):
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="product_offers")                      # For multi-site support
     name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
     product = models.ForeignKey(settings.VENDOR_PRODUCT_MODEL, on_delete=models.CASCADE, related_name="offers", blank=True, null=True)         # TODO: Combine with bundle field?
-    bundle = models.ManyToManyField(settings.VENDOR_PRODUCT_MODEL, related_name="bundles", blank=True)  # Used in the case of a bundles/packages.  Bundles override individual products
+    bundle = models.ManyToManyField(settings.VENDOR_PRODUCT_MODEL, related_name="bundles", blank=False)  # Used in the case of a bundles/packages.  Bundles override individual products
     start_date = models.DateTimeField(_("Start Date"), help_text="What date should this offer become available?")
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="Expiration Date?")
     terms =  models.IntegerField(_("Terms"), default=0, choices=TermType.choices)
@@ -180,8 +198,8 @@ class Offer(CreateUpdateModelBase):
         now = timezone.now()
         price_before_tax, price_after_tax = 0, 0
         
-        if self.prices:                                                         # Check if offer has prices
-            price_before_tax = 0 # TODO: Implement MSRP from product                        # No prices default to product MSRP
+        if self.prices.all().count() == 0:                                                         # Check if offer has prices
+            price_before_tax = float(self.product.meta.split(',')[1])# TODO: Implement MSRP from product/bundles                        # No prices default to product MSRP
         else:
             if self.prices.filter(start_date__lte=now):                         # Check if offer start date is less than or equal to now
                 if self.prices.filter(start_date__lte=now, end_date__gte=now):  # Check if is between two start and end date. return depending on priority
@@ -189,13 +207,15 @@ class Offer(CreateUpdateModelBase):
                 else:                                                           # Return acording to start date and priority
                     price_before_tax = self.prices.filter(start_date__lte=now).order_by('priority').last().cost
             else:                                                           # Only future start date. Default to MSRP
-                price_before_tax = 0 # TODO: Implement MSRP from product
+                if self.product.meta:
+                    price_before_tax = float(self.product.meta.split(',')[1]) # TODO: Implement MSRP from product with country code 
+                else:                    
+                    raise FieldError(_("There is no price set on Offer or MSRP on Product"))
         
         # price_after_tax = price_before_tax * self.product.tax_classifier.tax_rule.tax   TODO: implement tax_classifier and tax rule
         price_after_tax = price_before_tax
         
         return price_after_tax
-        
 
     def add_to_cart_link(self):
         return reverse("vendor:add-to-cart", kwargs={"slug":self.slug})
@@ -203,18 +223,11 @@ class Offer(CreateUpdateModelBase):
     def remove_from_cart_link(self):
         return reverse("vendor:remove-from-cart", kwargs={"slug":self.slug})
 
-    def save(self, *args, **kwargs):
-        if not self.name:      
-            self.name = self.product.name
-
-        self.slug = slugify(self.name)       # TODO: unique slug
-        super().save(*args, **kwargs)
-    
 
 class Price(models.Model):
     offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name="prices")
-    cost = models.FloatField()
-    currency = models.IntegerField(_("Currency"), choices=[(c.number, c.value) for c in Currency ], default=settings.DEFAULT_CURRENCY)
+    cost = models.FloatField(blank=True, null=True)
+    currency = models.CharField(_("Currency"), max_length=4, choices=[(c.name, c.value) for c in Currency ], default=settings.DEFAULT_CURRENCY)
     start_date = models.DateTimeField(_("Start Date"), help_text="When should the price first become available?")
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="When should the price expire?")
     priority = models.IntegerField(_("Priority"), help_text="Higher number takes priority", blank=True, null=True)
@@ -230,7 +243,7 @@ class Price(models.Model):
         verbose_name_plural = _("Prices")
 
     def __str__(self):
-        return "{} for {}:{}".format(self.offer.name, self.currency, self.cost)
+        return "{} for {}:{}".format(self.offer.name, Currency[self.currency].value, self.cost)
 
 
 class CustomerProfile(CreateUpdateModelBase):
@@ -239,7 +252,7 @@ class CustomerProfile(CreateUpdateModelBase):
     This is what the Invoices are attached to.  This is abstracted from the user model directly do it can be mre flexible in the future.
     '''
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), null=True, on_delete=models.SET_NULL, related_name="customer_profile")
-    currency = models.IntegerField(_("Currency"), choices=[(c.number, c.value) for c in Currency ], default=settings.DEFAULT_CURRENCY)      # User's default currency
+    currency = models.CharField(_("Currency"), max_length=4, choices=[(c.name, c.value) for c in Currency ], default=settings.DEFAULT_CURRENCY)      # User's default currency
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="customer_profile")                      # For multi-site support
 
     class Meta:
@@ -250,7 +263,7 @@ class CustomerProfile(CreateUpdateModelBase):
         return "{} Customer Profile".format(self.user.username)
 
     def get_cart(self):
-        cart, created = self.invoices.get_or_create(status=0)
+        cart, created = self.invoices.get_or_create(status=Invoice.InvoiceStatus.CART)
         return cart
 
 
@@ -275,7 +288,7 @@ class Invoice(CreateUpdateModelBase):
 
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="invoices")                      # For multi-site support
-    status = models.IntegerField(_("Status"), choices=InvoiceStatus.choices, default=0)
+    status = models.IntegerField(_("Status"), choices=InvoiceStatus.choices, default=Invoice.InvoiceStatus.CART)
     customer_notes = models.TextField(blank=True, null=True)
     vendor_notes = models.TextField(blank=True, null=True)
     ordered_date = models.DateTimeField(_("Ordered Date"), blank=True, null=True)               # When was the purchase made?
@@ -283,7 +296,7 @@ class Invoice(CreateUpdateModelBase):
     tax = models.FloatField(blank=True, null=True)                              # Set on checkout
     shipping = models.FloatField(blank=True, null=True)                         # Set on checkout
     total = models.FloatField(blank=True, null=True)                            # Set on purchase
-    currency = models.IntegerField(_("Currency"), choices=[(c.number, c.value) for c in Currency ], default=settings.DEFAULT_CURRENCY)      # USer's default currency
+    currency = models.CharField(_("Currency"), max_length=4, choices=[(c.name, c.value) for c in Currency ], default=settings.DEFAULT_CURRENCY)      # USer's default currency
     shipping_address = models.ForeignKey(Address, verbose_name=_("Shipping Address"), on_delete=models.CASCADE, blank=True, null=True)
     # paid = models.BooleanField(_("Paid"))                 # May be Useful for quick filtering on invoices that are outstanding
     # paid_date = models.DateTimeField(_("Payment Date"))

@@ -83,7 +83,7 @@
         "term_details": null,
         "term_start_date": "2020-06-30T00:53:31Z",
         "available": false,
-        "bundle": []
+        "bundle": [1]
     }
 },
 {
@@ -103,7 +103,7 @@
         "term_details": "{}",
         "term_start_date": null,
         "available": false,
-        "bundle": []
+        "bundle": [2]
     }
 },
 {
@@ -123,7 +123,7 @@
         "term_details": "{}",
         "term_start_date": null,
         "available": false,
-        "bundle": []
+        "bundle": [2]
     }
 },
 {
@@ -132,7 +132,7 @@
     "fields": {
         "offer": 1,
         "cost": 19.99,
-        "currency": 840,
+        "currency": "usd",
         "start_date": "2020-06-30T00:55:21Z",
         "end_date": null,
         "priority": 0
@@ -144,7 +144,7 @@
     "fields": {
         "offer": 2,
         "cost": 75.0,
-        "currency": 392,
+        "currency": "jpy",
         "start_date": "2020-06-30T02:34:56Z",
         "end_date": null,
         "priority": 0
@@ -169,7 +169,7 @@
         "created": "2020-06-30T01:15:00.350Z",
         "updated": "2020-06-30T01:15:00.350Z",
         "user": 1,
-        "currency": 840,
+        "currency": "mxn",
         "site": 1
     }
 },
@@ -189,7 +189,7 @@
         "tax": 36.5,
         "shipping": 6.95,
         "total": 408.43,
-        "currency": 840,
+        "currency": "jpy",
         "shipping_address": null
     }
 },

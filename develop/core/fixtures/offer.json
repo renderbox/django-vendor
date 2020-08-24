@@ -16,7 +16,7 @@
             "term_details": null,
             "term_start_date": "2020-06-30T00:53:31Z",
             "available": false,
-            "bundle": []
+            "bundle": [1]
         }
     },
     {
@@ -36,7 +36,7 @@
             "term_details": "{}",
             "term_start_date": null,
             "available": false,
-            "bundle": []
+            "bundle": [2]
         }
     },
     {
@@ -56,7 +56,27 @@
             "term_details": "{}",
             "term_start_date": null,
             "available": false,
-            "bundle": []
+            "bundle": [3]
+        }
+    },
+    {
+        "model": "vendor.offer",
+        "pk": 4,
+        "fields": {
+            "created": "2020-06-30T02:38:17.762Z",
+            "updated": "2020-06-30T02:38:35.045Z",
+            "uuid": "ceda0d8a-0ddf-440b-8804-eddc2800493b",
+            "slug": "hulk-mug",
+            "site": 1,
+            "name": "Hulk Mug",
+            "product": 4,
+            "start_date": "2020-06-30T02:38:16Z",
+            "end_date": null,
+            "terms": 0,
+            "term_details": "{}",
+            "term_start_date": null,
+            "available": false,
+            "bundle": [4]
         }
     }
 ]

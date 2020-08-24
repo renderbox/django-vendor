@@ -36,7 +36,7 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
     Create an order item and add it to the order
     '''
 
-    def get(self, *args, **kwargs):         # TODO: Move to POST
+    def post(self, *args, **kwargs):         # TODO: Move to POST
         offer = Offer.objects.get(slug=self.kwargs["slug"])
         profile, created = self.request.user.customer_profile.get_or_create(site=settings.SITE_ID)      # Make sure they have a cart
 
@@ -107,8 +107,8 @@ class CheckoutView(TemplateView):
         # order.status = 20
 
 
-
-
+class InvoicesView(ListView):
+    pass
 
 # class NewAddToCartView(CreateView):
 #     model = OrderItem

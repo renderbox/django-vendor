@@ -10,9 +10,9 @@
             "uuid": "188e45aa-0fdf-4877-ba84-f4c39c0fc41b",
             "site": 1,
             "slug": "mouse-t-shirt",
-            "available": false,
+            "available": true,
             "description": "Powerful T-Shirt",
-            "meta": "{}",
+            "meta": "USD,9.99",
             "name": "Mouse T-Shirt",
             "classification": []
         }
@@ -29,7 +29,7 @@
             "slug": "wheel-of-cheddar",
             "available": false,
             "description": "This is a food item",
-            "meta": "{}",
+            "meta": "JPY,6.66",
             "name": "Wheel of Cheddar",
             "classification": []
         }
@@ -46,8 +46,25 @@
             "slug": "hamster-wheel",
             "available": false,
             "description": "",
-            "meta": "{}",
+            "meta": "MXN,21.12",
             "name": "Hamster Wheel",
+            "classification": []
+        }
+    },
+    {
+        "model": "core.product",
+        "pk": 4,
+        "fields": {
+            "created": "2020-06-30T02:33:35.109Z",
+            "updated": "2020-06-30T02:33:35.109Z",
+            "sku": null,
+            "uuid": "defdd4f5-fd8f-4aa4-b25a-c043a846a732",
+            "site": 1,
+            "slug": "hulk-mug",
+            "available": false,
+            "description": "",
+            "meta": "MXN,21.12",
+            "name": "Hulk Mug",
             "classification": []
         }
     }

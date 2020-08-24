@@ -5,7 +5,7 @@
     "fields": {
         "offer": 1,
         "cost": 19.99,
-        "currency": "840",
+        "currency": "usd",
         "start_date": "2020-06-30T00:55:21Z",
         "end_date": null,
         "priority": 0
@@ -17,7 +17,7 @@
     "fields": {
         "offer": 2,
         "cost": 75.0,
-        "currency": "840",
+        "currency": "jpy",
         "start_date": "2020-06-30T02:34:56Z",
         "end_date": null,
         "priority": 0
@@ -29,10 +29,34 @@
     "fields": {
         "offer": 3,
         "cost": 25.0,
-        "currency": "840",
-        "start_date": "2020-06-30T02:38:30Z",
+        "currency": "mxn",
+        "start_date": "2120-06-30T02:38:30Z",
         "end_date": null,
         "priority": 0
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 4,
+    "fields": {
+        "offer": 3,
+        "cost": 25.1,
+        "currency": "mxn",
+        "start_date": "2000-06-30T02:38:30Z",
+        "end_date": "2120-06-30T02:38:30Z",
+        "priority": 1
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 5,
+    "fields": {
+        "offer": 3,
+        "cost": 25.2,
+        "currency": "mxn",
+        "start_date": "2000-06-30T02:38:30Z",
+        "end_date": "2120-06-30T02:38:30Z",
+        "priority": 2
     }
 }
 ]
