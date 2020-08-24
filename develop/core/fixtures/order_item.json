@@ -1,0 +1,35 @@
+[
+    {
+        "model": "vendor.orderitem",
+        "pk": 2,
+        "fields": {
+            "created": "2020-06-30T02:38:46.707Z",
+            "updated": "2020-08-12T19:32:32.901Z",
+            "invoice": 1,
+            "offer": 2,
+            "quantity": 4
+        }
+    },
+    {
+        "model": "vendor.orderitem",
+        "pk": 3,
+        "fields": {
+            "created": "2020-06-30T03:01:12.555Z",
+            "updated": "2020-07-02T01:14:47.468Z",
+            "invoice": 1,
+            "offer": 3,
+            "quantity": 1
+        }
+    },
+    {
+        "model": "vendor.orderitem",
+        "pk": 5,
+        "fields": {
+            "created": "2020-07-01T05:32:28.668Z",
+            "updated": "2020-08-12T19:32:27.435Z",
+            "invoice": 1,
+            "offer": 1,
+            "quantity": 2
+        }
+    }
+]

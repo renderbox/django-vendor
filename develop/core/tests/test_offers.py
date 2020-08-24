@@ -63,7 +63,7 @@ class ViewOfferTests(TestCase):
         pass
 
     def test_valid_add_to_cart_offer(self):
-        # TODO: Implement Tests
+        offer
         pass
 
     def test_valid_remove_to_cart_offer(self):
