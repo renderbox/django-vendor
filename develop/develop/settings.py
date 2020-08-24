@@ -172,7 +172,7 @@ STATICFILES_DIRS = [
 # Django Vendor Settings
 VENDOR_PRODUCT_MODEL = 'core.Product'
 VENDOR_PAYMENT_PROCESSOR = "authorizenet.AuthorizeNetProcessor"
-DEFAULT_CURRENCY = (Currency.usd.name, Currency.usd.value)
+DEFAULT_CURRENCY = Currency.usd.name
 
 # Stripe Settings
 STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY")

@@ -4,43 +4,48 @@ from django.test import TestCase, Client
 from django.urls import reverse
 
 from core.models import Product
-from vendor.models import Offer, Price, Invoice, OrderItem, Reciept
+from vendor.models import Offer, Price, Invoice, OrderItem, Reciept, CustomerProfile
 
 
 class ModelInvoiceTests(TestCase):
 
+    fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'invoice']
+
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
-        self.new_invoice = Invoice(profile=1)
+        
+        self.new_invoice = Invoice(profile=CustomerProfile.objects.get(pk=1))
+        self.new_invoice.save()
+
         self.mug_offer = Offer.objects.get(pk=4)
 
     def test_add_offer(self):
-        self.existing_invoice.add_offer(Offer.objects.get(pk=4)
+        self.existing_invoice.add_offer(Offer.objects.get(pk=4))
         self.new_invoice.add_offer(self.mug_offer)
 
-        self.assertNotNone(self.OrderItems.objects.get(pk=self.new_invoice.pk))
-        self.assertEquals(OrderItems.objects.filter(invoice=self.existing_invoice).count(), 4)
+        self.assertIsNotNone(OrderItem.objects.get(invoice=self.new_invoice))
+        self.assertEquals(OrderItem.objects.filter(invoice=self.existing_invoice).count(), 4)
 
     def test_fail_add_unavailable_offer(self):
         # TODO: Implement Tests
         pass
 
     def test_remove_offer(self):
-        self.existing_invoice.remove_offer(Offer.objects.get(pk=3)
+        self.existing_invoice.remove_offer(Offer.objects.get(pk=3))
 
-        self.assertEquals(OrderItems.objects.filter(invoice=self.existing_invoice).count(), 2)
+        self.assertEquals(OrderItem.objects.filter(invoice=self.existing_invoice).count(), 2)
         pass
 
     def test_update_totals(self):
         start_total = self.existing_invoice.total
 
-        self.existing_invoice.add_offer(Offer.objects.get(pk=4)
+        self.existing_invoice.add_offer(Offer.objects.get(pk=4))
         self.existing_invoice.update_totals()
-        add_mug_total = self.existing_invoice.total()
+        add_mug_total = self.existing_invoice.total
 
-        self.existing_invoice.remove_offer(Offer.objects.get(pk=1)
+        self.existing_invoice.remove_offer(Offer.objects.get(pk=1))
         self.existing_invoice.update_totals()
-        remove_shirt_total = self.existing_invoice.total()
+        remove_shirt_total = self.existing_invoice.total
 
         self.assertEquals(start_total, 0)
         self.assertEquals(add_mug_total, 0)
