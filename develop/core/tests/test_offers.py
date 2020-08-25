@@ -36,14 +36,11 @@ class ModelOfferTests(TestCase):
         slug = mug_offer.add_to_cart_link()
         self.assertEquals(slug,'/sales/cart/add/' + mug_offer.slug + '/')
 
-
-
     def test_remove_offer_to_cart_slug(self):
         mug_offer = Offer.objects.get(pk=4)
         slug = mug_offer.remove_from_cart_link()
         self.assertEquals(slug,'/sales/cart/remove/' + mug_offer.slug + '/')
     
-
     def test_get_current_price_is_msrp(self):
         offer = Offer.objects.get(pk=4)
         price = offer.current_price()
@@ -64,8 +61,33 @@ class ModelOfferTests(TestCase):
 
 class ViewOfferTests(TestCase):
     
+    fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'invoice']
+    
     def setUp(self):
-        pass
+        self.client = Client()
+        self.user = User.objects.get(pk=1)
+        self.client.force_login(self.user)
+
+        self.mug_offer = Offer.objects.get(pk=4)
+        self.shirt_offer = Offer.objects.get(pk=1)
+
+    def test_check_add_cart_link_status_code(self):
+        url = self.mug_offer.add_to_cart_link()
+
+        response = self.client.post(url)
+
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(response.url, reverse('vendor:cart'))
+        
+    
+    def test_check_remove_from_cart_link_request(self):
+        url = self.shirt_offer.remove_from_cart_link()
+
+        response = self.client.post(url)
+
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(response.url, reverse('vendor:cart'))
+    
 
     def test_view_only_available_offers(self):
         # TODO: Implement Tests
@@ -83,6 +105,9 @@ class ViewOfferTests(TestCase):
         # TODO: Implement Tests
         pass
     
+    def test_create_profile_invoice_order_item_add_offer(self):
+        
+        pass
 
     
     

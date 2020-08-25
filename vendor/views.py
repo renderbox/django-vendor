@@ -53,7 +53,7 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
     '''
     Reduce the count of items from the cart and delete the order item if you reach 0
     '''
-    def get(self, *args, **kwargs):         # TODO: Move to POST
+    def post(self, *args, **kwargs):         # TODO: Move to POST
         offer = Offer.objects.get(slug=self.kwargs["slug"])
 
         profile = self.request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
