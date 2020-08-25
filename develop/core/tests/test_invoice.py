@@ -76,23 +76,26 @@ class ModelInvoiceTests(TestCase):
 
 
 class ViewInvoiceTests(TestCase):
+
+    fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'invoice']
     
     def setUp(self):
         self.client = Client()
         self.user = User.objects.get(pk=1)
         self.client.force_login(self.user)
-
-        self.new_invoice = Invoice(profile=1)
+        
+        self.mug_offer = Offer.objects.get(pk=4)
+        self.shirt_offer = Offer.objects.get(pk=1)
 
 
     def test_view_cart_status_code(self):
-        url = revers('cart')
+        url = reverse('vendor:cart')
 
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200)
 
     def test_view_cart_status_code_redirect_add_offer(self):
-        
+        # TODO: Implement Tests
         pass
 
     def test_view_cart_status_code_redirect_remove_offer(self):

@@ -26,13 +26,15 @@ class ModelProductTests(TestCase):
         self.new_product.save()
 
         self.assertTrue(self.new_product.pk)
-
+        
     def test_unique_sku(self):
         product_a = Product()
+        product_a.name = 'a'
         product_a.sku = 'a'
         product_a.save()
 
         product_b = Product()
+        product_b.name = 'a'
         product_b.sku = 'a'
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
