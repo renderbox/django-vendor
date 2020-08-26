@@ -174,9 +174,14 @@ VENDOR_PRODUCT_MODEL = 'core.Product'
 VENDOR_PAYMENT_PROCESSOR = "authorizenet.AuthorizeNetProcessor"
 DEFAULT_CURRENCY = Currency.usd.name
 
+# Authorize.Net Settings:
+AUTHORIZE_NET_API_ID = os.getenv("AUTHORIZE_NET_API_ID")
+AUTHORIZE_NET_TRANSACTION_KEY = os.getenv("AUTHORIZE_NET_TRANSACTION_KEY")
+AUTHORIZE_NET_KEY = os.getenv("AUTHORIZE_NET_KEY")
+
 # Stripe Settings
 STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY")
 STRIPE_TEST_PUBLIC_KEY = os.getenv("STRIPE_TEST_PUBLIC_KEY")
 STRIPE_LIVE_MODE = False
 
-# GOOGLE_API_KEY = 'AIzaSyD--your-google-maps-key-SjQBE'
+GOOGLE_API_KEY = 'AIzaSyByzwpjfYDlvYnwc02QzqBYIpAVRg9l4lk'

@@ -28,5 +28,7 @@ jobs:
     - name: Run Tests
       run: |
         cd develop
-        python manage.py test vendor
+        python manage.py test
+      env: 
+        DJANGO_DEBUG: 1
       

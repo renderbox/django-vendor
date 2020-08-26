@@ -6,6 +6,7 @@
 
 Django App Toolkit for selling digital and physical goods online.
 
+The philosophy is "Cart to Reciept".  What you put in the cart and what you do after the purchase is up to you.  The app is opinionated within scope.
 
 Goals of the project:
 - Drop in to existing Django Sites without requiring changes to how Django works (flow, not fight)

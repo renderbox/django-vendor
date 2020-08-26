@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib import admin
 
 from vendor.models import TaxClassifier, Offer, Price, CustomerProfile, \
-                    Invoice, OrderItem, Reciept, Wishlist, WishlistItem
+                    Invoice, OrderItem, Reciept, Wishlist, WishlistItem, Address
 
 ###############
 # INLINES
@@ -96,5 +96,6 @@ admin.site.register(CustomerProfile, CustomerProfileAdmin)
 admin.site.register(Offer, OfferAdmin)
 admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(Wishlist, WishlistAdmin)
+admin.site.register(Address)
 
 
