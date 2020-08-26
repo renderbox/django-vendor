@@ -38,9 +38,8 @@ package_metadata = {
 }
 
 setup(
-    **package_metadata,
     packages=find_packages(),
-    package_data={'vendor': ['*.html']},
+    package_data={'vendor': ['templates/vendor/*.html']},
     include_package_data=True,
     python_requires=">=3.6",
     install_requires=[
@@ -78,5 +77,6 @@ setup(
             'recommonmark',
             'rstcheck',
         ],
-    }
+    },
+    **package_metadata
 )
