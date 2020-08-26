@@ -42,6 +42,9 @@ def generate_sku():
 ##################
 
 class CreateUpdateModelBase(models.Model):
+    '''
+    This is a shared models base that provides created & updated timestamp fields
+    '''
     created = models.DateTimeField("date created", auto_now_add=True)
     updated = models.DateTimeField("last updated", auto_now=True)
 
@@ -50,6 +53,9 @@ class CreateUpdateModelBase(models.Model):
 
 # TODO: Validate multiple msrp lines
 def validate_msrp_format(value):
+    """
+    This is a validator function used to validate an MSRP value added to the Product.
+    """
     msrp = []
     if not value:
         return None
@@ -120,7 +126,10 @@ class TaxClassifier(models.Model):
     '''
     This for things like "Digital Goods", "Furniture" or "Food" which may or
     may not be taxable depending on the location.  These are determined by the
-    manager of all sites.
+    manager of all sites.  
+    
+    These classifiers will retain certian provider specific codes that are used
+    to help calculate the tax liability in the sale.
     '''
     name = models.CharField(_("Name"), max_length=80, blank=True)
     taxable = models.BooleanField()
@@ -247,16 +256,26 @@ class CustomerProfile(CreateUpdateModelBase):
 
 
 class Address(models.Model):
-    """
-    Potential Format to use.
+    """Address model for use in purchasing.
 
-    Frau                [title]
-    Mag. Maria Muster   [recipient]
-    Gartenweg 8         [address1]
-                        [address2]
-    Rafing              [locality]
-    3741 PULKAU         [postal code]
-    AUSTRIA             [country]
+    Example:
+        Potential Format to use.
+
+        Frau                [title]
+        Mag. Maria Muster   [recipient]
+        Gartenweg 8         [address1]
+                            [address2]
+        Rafing              [locality]
+        3741 PULKAU         [postal code]
+        AUSTRIA             [country]
+
+    Args:
+        name (int): The name of the address to use
+        profile (CustomerProfile): Foreign Key connection to the Customer Profile
+        address (Address): Special Address fields
+
+    Returns:
+        Address(): Returns an instance of the Address model
     """
     name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="addresses")
