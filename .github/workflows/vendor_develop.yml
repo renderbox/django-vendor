@@ -5,8 +5,8 @@ on:
     branches: [ develop ]
 
 jobs:
-  build:
 
+  test:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
@@ -30,4 +30,4 @@ jobs:
         python manage.py test
       env: 
         DJANGO_DEBUG: 1
-      
+        DATABASE_URL: postgres://django:password@localhost:5432/vendor
