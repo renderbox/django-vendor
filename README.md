@@ -1,3 +1,7 @@
+![Django Vendor CI](https://github.com/renderbox/django-vendor/workflows/Django%20Vendor%20CI/badge.svg?branch=master)
+
+![Django Vendor Develop](https://github.com/renderbox/django-vendor/workflows/Django%20Vendor%20Develop/badge.svg?branch=develop)
+
 # Django Vendor
 
 Django App Toolkit for selling digital and physical goods online.

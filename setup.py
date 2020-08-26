@@ -48,6 +48,7 @@ setup(
         'django-address',
         'django-autoslug',
         'django-extensions',
+        'iso4217',
     ],
     extras_require={
         'dev': [
