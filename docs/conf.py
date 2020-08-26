@@ -9,10 +9,14 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+
+import os
+import sys
+import django
+
+sys.path.insert(0, os.path.abspath('../develop'))
+os.environ['DJANGO_SETTINGS_MODULE'] = 'develop.settings'
+django.setup()
 
 
 # -- Project information -----------------------------------------------------
@@ -33,6 +37,9 @@ release = '0.1.0'
 extensions = [
     'sphinx_rtd_theme',
     'recommonmark',
+    'sphinx.ext.autodoc', 
+    'sphinx.ext.coverage', 
+    'sphinx.ext.napoleon',
 ]
 
 source_suffix = {

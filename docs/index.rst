@@ -10,6 +10,10 @@ Welcome to Django Vendor's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   modules/about.rst
+   modules/installation.rst
+   modules/models.rst
+   modules/views.rst
 
 
 Indices and tables
