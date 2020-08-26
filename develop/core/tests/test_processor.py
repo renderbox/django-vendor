@@ -119,7 +119,7 @@ class AuthorizeNetProcessorTests(TestCase):
         pass
 
     def test_get_checkout_context(self):
-        # TODO: Implement Test
+        card_transaction = 
         pass
     
     def test_auth_capture_transaction_success(self):

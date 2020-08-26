@@ -412,6 +412,7 @@ class Reciept(CreateUpdateModelBase):
         CANCELED = 40, _("Canceled") 
         REFUNDED = 50, _("Refunded") 
         COMPLETED = 60, _("Completed")
+        
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Purchase Profile"), null=True, on_delete=models.CASCADE, related_name="reciepts")
     order_item = models.ForeignKey('vendor.OrderItem', verbose_name=_("Order Item"), on_delete=models.CASCADE, related_name="reciepts")
     product = models.ForeignKey(settings.VENDOR_PRODUCT_MODEL, on_delete=models.CASCADE, related_name="reciepts", blank=True, null=True)           # TODO:  Goal is to make it easier to check to see if a user owns the product. WHAT IF IT IS A BUNDLE

@@ -94,6 +94,10 @@ class ViewInvoiceTests(TestCase):
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200)
 
+    def test_view_cart_no_shipping_address(self):
+        # TODO: Implement Test
+        pass
+
     def test_view_cart_status_code_redirect_add_offer(self):
         # TODO: Implement Tests
         pass
