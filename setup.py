@@ -7,10 +7,16 @@
 from os import path
 from setuptools import setup, find_packages
 
-file_path = path.abspath(path.dirname(__file__))
+readme_file = path.join(path.dirname(path.abspath(__file__)), 'README.md')
 
-with open(path.join(file_path, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+try:
+    from m2r import parse_from_file
+    long_description = parse_from_file(readme_file)     # Convert the file to RST for PyPI
+except ImportError:
+    # m2r may not be installed in user environment
+    with open(readme_file) as f:
+        long_description = f.read()
+
 
 package_metadata = {
     'name': 'django-vendor',
@@ -18,7 +24,7 @@ package_metadata = {
     'description': 'Django App Toolkit for selling digital and physical goods online.',
     'long_description': long_description,
     'url': 'https://github.com/renderbox/django-vendor/',
-    'author': 'Grant Viklund',
+    'author': 'Grant Viklund, Roberto Himmelbauer',
     'author_email': 'renderbox@gmail.com',
     'license': 'MIT license',
     'classifiers': [
@@ -38,8 +44,11 @@ setup(
     include_package_data=True,
     python_requires=">=3.6",
     install_requires=[
-        'Django>=3.0, <3.2',
+        'Django>=3.1, <3.2',
         'django-address',
+        'django-autoslug',
+        'django-extensions',
+        'iso4217',
     ],
     extras_require={
         'dev': [
@@ -51,16 +60,23 @@ setup(
         'stripe': [             # Packages needed for Stripe
             'stripe>=2.48.0,<3.0',
             ],
+        'authorizenet': [
+            'authorizenet',
+        ],
         'test': [],
         'prod': [],
         'build': [
             'setuptools',
             'wheel',
+            'twine',
+            'm2r',
         ],
         'docs': [
             'coverage',
             'Sphinx',
             'sphinx-rtd-theme',
+            'recommonmark',
+            'rstcheck',
         ],
     }
 )

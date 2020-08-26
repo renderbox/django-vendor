@@ -1,5 +1,8 @@
-Django Vendor
-=============
+![Django Vendor CI](https://github.com/renderbox/django-vendor/workflows/Django%20Vendor%20CI/badge.svg?branch=master)
+
+![Django Vendor Develop](https://github.com/renderbox/django-vendor/workflows/Django%20Vendor%20Develop/badge.svg?branch=develop)
+
+# Django Vendor
 
 Django App Toolkit for selling digital and physical goods online.
 
@@ -10,8 +13,7 @@ Goals of the project:
 - BYOPM, Bring Your Own Product Model.  Subclass your Product Model off of our base model and add whatever you want.  You are responsible for things like Catalogs and Presenting products to the user, we handle the purchasing of the products and generate a reciept you can look for.
 
 
-For Developers
---------------
+## For Developers
 
 *NOTE: It is reconmended that you first setup a virtual environment.*
 
