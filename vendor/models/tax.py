@@ -1,22 +1,5 @@
-# import copy
-# import random
-# import string
-# import uuid
-# # import pycountry
-
-# from django.conf import settings
-# from django.contrib.sites.models import Site
-# from django.core.exceptions import ValidationError
 from django.db import models
-# from django.db.models.signals import post_save
-# from django.urls import reverse
-# from django.utils import timezone
-# from django.utils.text import slugify
 from django.utils.translation import ugettext as _
-
-# from address.models import AddressField
-# from autoslug import AutoSlugField
-# from iso4217 import Currency
 
 #####################
 # TAX CLASSIFIER

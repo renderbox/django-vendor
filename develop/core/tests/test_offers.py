@@ -74,7 +74,7 @@ class ViewOfferTests(TestCase):
     def test_check_add_cart_link_status_code(self):
         url = self.mug_offer.add_to_cart_link()
 
-        response = self.client.post(url)
+        response = self.client.get(url)
 
         self.assertEquals(response.status_code, 302)
         self.assertEquals(response.url, reverse('vendor:cart'))
@@ -83,7 +83,7 @@ class ViewOfferTests(TestCase):
     def test_check_remove_from_cart_link_request(self):
         url = self.shirt_offer.remove_from_cart_link()
 
-        response = self.client.post(url)
+        response = self.client.get(url)
 
         self.assertEquals(response.status_code, 302)
         self.assertEquals(response.url, reverse('vendor:cart'))

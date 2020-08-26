@@ -1,4 +1,3 @@
-
 from iso4217 import Currency
 
 ###########
