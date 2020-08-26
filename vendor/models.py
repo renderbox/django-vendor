@@ -2,8 +2,6 @@ import copy
 import random
 import string
 import uuid
-# import pycountry
-
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
@@ -21,26 +19,6 @@ from iso4217 import Currency
 ##########
 # CHOICES
 ##########
-
-
-##########
-# NestedModels
-##########
-
-# class MSRP(NestedModel):
-#     pass
-
-
-# https://en.wikipedia.org/wiki/ISO_4217
-# CurrencyChoices.choices = [(int(cur.numeric), cur.name) for cur in pycountry.currencies]
-# TODO: Moved to Django Enums/Choice objects
-
-# REGION_TYPE_CHOICES = (
-#                 (0, _("Country")), 
-#                 (10, _("State/Province")), 
-#                 (20, _("County")), 
-#                 (30, _("City")), 
-#             )
 
 
 ############
