@@ -1,4 +1,4 @@
-
+from .utils import generate_sku
 from .validator import validate_msrp_format
 
 from .base import ProductModelBase
@@ -11,4 +11,4 @@ from .price import Price
 from .profile import CustomerProfile
 from .reciept import Reciept
 from .tax import TaxClassifier
-from .wishlist import WishList, WishlistItem
+from .wishlist import Wishlist, WishlistItem

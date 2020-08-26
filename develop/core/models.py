@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.sites.models import Site
 from django.conf import settings
 
-from vendor.models import ProductModelBase
+from vendor.models.base import ProductModelBase
 
 ##########
 # CATALOG
