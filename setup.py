@@ -20,7 +20,7 @@ except ImportError:
 
 package_metadata = {
     'name': 'django-vendor',
-    'version': '0.1.0',
+    'version': '0.1.1',
     'description': 'Django App Toolkit for selling digital and physical goods online.',
     'long_description': long_description,
     'url': 'https://github.com/renderbox/django-vendor/',

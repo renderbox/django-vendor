@@ -26,7 +26,7 @@ copyright = '2020, Grant Viklund/Whitemoon Labs'
 author = 'Grant Viklund, Roberto Himmelbauer'
 
 # The full version, including alpha/beta/rc tags
-version = release = '0.1.0'
+version = release = '0.1.1'
 
 
 # -- General configuration ---------------------------------------------------
