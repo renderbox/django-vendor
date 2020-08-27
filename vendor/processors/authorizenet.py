@@ -9,46 +9,54 @@ from decimal import *
 from django.conf import settings
 
 class AuthorizeNetProcessor(PaymentProcessorBase):
+    AUTHORIZE_CAPUTRE_TRANSACTION = "authCaptureTransaction"
+    
+    API_ENDPOINTS = [
+        AUTHORIZE_CAPUTRE_TRANSACTION
+    ]
 
     def __init__(self):
         self.merchantAuth = apicontractsv1.merchantAuthenticationType()
-        self.merchantAuth.name = settings.AUTHORIZE_NET_API_ID
-        self.merchantAuth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY
 
     def get_checkout_context(self, invoice, **kwargs):
         '''
         The Invoice plus any additional values to include in the payment record.
         '''
-        pass
+        self.merchantAuth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY#'4tbEK65FB8Tht59Y'
+        self.merchantAuth.name = settings.AUTHORIZE_NET_API_ID #'79MvGs6X3P'
 
-    def auth_capture(self, invoice, kwargs):
+    def auth_capture(self, invoice, card, address, kwargs):
+        if not self.merchantAuth.name or not self.merchantAuth.transactionKey:
+            return "error", False
 
         creditCard = apicontractsv1.creditCardType()
 
-        creditCard.cardNumber = "4111111111111111"
-        creditCard.expirationDate = "2020-12"
-        creditCard.cardCode = "999"
+        creditCard.cardNumber = str(card.data['card-card_number'])
+        creditCard.expirationDate = str("-".join([card.data['card-expire_year'],card.data['card-expire_month']]))
+        creditCard.cardCode = str(card.data['card-cvv_number'])
 
         payment = apicontractsv1.paymentType()
         payment.creditCard = creditCard
 
         transactionrequest = apicontractsv1.transactionRequestType()
-        transactionrequest.transactionType = "authCaptureTransaction"
-        transactionrequest.amount = Decimal('1.55')
+        transactionrequest.transactionType = AUTHORIZE_CAPUTRE_TRANSACTION
+        transactionrequest.amount = Decimal(invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
         transactionrequest.payment = payment
 
 
         createtransactionrequest = apicontractsv1.createTransactionRequest()
         createtransactionrequest.merchantAuthentication = self.merchantAuth
-        createtransactionrequest.refId = "123456"
+        createtransactionrequest.refId = str("-".join([str(invoice.profile.pk), str(settings.SITE_ID), str(invoice.pk)]))
 
         createtransactionrequest.transactionRequest = transactionrequest
         createtransactioncontroller = createTransactionController(createtransactionrequest)
         createtransactioncontroller.execute()
 
         response = createtransactioncontroller.getresponse()
-
+        
         if (response.messages.resultCode == "Ok"):
-            print(f"Transaction ID : {response.transactionResponse.transId}")
+            return f"Transaction ID : {response.transactionResponse.transId}", True
         else:
-            print(f"response code: {response.messages.resultCode}")
+            return f"response code: {response.messages.resultCode}", False
+
+        

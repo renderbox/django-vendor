@@ -75,27 +75,42 @@ class CheckoutView(TemplateView):
     address_form_class = VendorAddressForm
     card_form_class = VendorCreditCardForm
     template_name = "vendor/checkout.html"
+    payment_processor = PaymentProcessor()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         profile = context['view'].request.user.customer_profile.get(site=settings.SITE_ID) 
+        invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
+        context['invoice'] = invoice
 
-        context['invoice'] = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
-
+        # TODO: Set PaymentProcessor Context. It should set the address form and card form?
+        # ctx = payment_processor.get_checkout_context(order, customer_id=str(request.user.pk))
         context['address_form'] = self.address_form_class(prefix='addr')
         context['card_form'] = self.card_form_class(prefix='card')
+        self.payment_processor.get_checkout_context(invoice)
+
         return context
 
     def post(self, request):
+        profile = request.user.customer_profile.get(site=settings.SITE_ID) 
+        invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
         address_form = self.address_form_class(request.POST, prefix='addr')
         card_form = self.card_form_class(request.POST, prefix='card')
         
         if not address_form.is_valid() or not card_form.is_valid():
-            return render(request, self.template_name, {'address_form':address_form, 'card_form': card_form})
+            return render(request, self.template_name, {'address_form':address_form, 'card_form': card_form, 'invoice': invoice})
 
-        messages.info(self.request, _("Payment made"))
-        return redirect(reverse('vendor:checkout'))
+        msg, success = payment_processor.auth_capture(invoice, card_form, address_form, None)
+
+        messages.info(self.request, msg)
+        if success:
+            return redirect(reverse('vendor:checkout'))
+        else:
+            return render(request, self.template_name, {'address_form':address_form, 'card_form': card_form, 'invoice': invoice})
+
+        
+
 
 class InvoicesView(ListView):
     pass
