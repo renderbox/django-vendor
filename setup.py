@@ -20,7 +20,7 @@ except ImportError:
 
 package_metadata = {
     'name': 'django-vendor',
-    'version': '0.1.0',
+    'version': '0.1.1',
     'description': 'Django App Toolkit for selling digital and physical goods online.',
     'long_description': long_description,
     'url': 'https://github.com/renderbox/django-vendor/',
@@ -38,9 +38,8 @@ package_metadata = {
 }
 
 setup(
-    **package_metadata,
     packages=find_packages(),
-    package_data={'vendor': ['*.html']},
+    package_data={'vendor': ['templates/vendor/*.html']},
     include_package_data=True,
     python_requires=">=3.6",
     install_requires=[
@@ -78,5 +77,6 @@ setup(
             'recommonmark',
             'rstcheck',
         ],
-    }
+    },
+    **package_metadata
 )

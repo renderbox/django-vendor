@@ -26,7 +26,7 @@ copyright = '2020, Grant Viklund/Whitemoon Labs'
 author = 'Grant Viklund, Roberto Himmelbauer'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+version = release = '0.1.1'
 
 
 # -- General configuration ---------------------------------------------------
@@ -40,6 +40,7 @@ extensions = [
     'sphinx.ext.autodoc', 
     'sphinx.ext.coverage', 
     'sphinx.ext.napoleon',
+    'sphinx.ext.viewcode',
 ]
 
 source_suffix = {

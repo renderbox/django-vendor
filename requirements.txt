@@ -3,5 +3,6 @@ Django==3.1
 django-address==0.2.4
 django-autoslug==1.9.8
 django-extensions==3.0.5
+iso4217==1.6.20180829
 pytz==2020.1
 sqlparse==0.3.1
