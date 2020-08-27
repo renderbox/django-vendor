@@ -15,8 +15,12 @@ from django.views.generic import TemplateView
 from django.http import HttpResponse
 
 from vendor.models import Offer, OrderItem, Invoice, Payment #Price, Purchase, Refund, CustomerProfile, PurchaseStatus, OrderStatus
-from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
+# from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
+from .models.address import Address as GoogleAddress
 from vendor.processors import PaymentProcessor
+
+from django.views.generic.edit import FormView
+from .forms import StateForm, LocalityForm, AddressForm, GoogleAddressForm, VendorAddressForm, VendorCreditCardForm
 
 payment_processor = PaymentProcessor()               # The Payment Processor configured in settings.py
 
@@ -66,45 +70,96 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
 
 
 # class PaymentView(LoginRequiredMixin, TemplateView):
+# class CheckoutView(TemplateView):
+#     '''
+#     Review items and submit Payment
+#     '''
+    
+#     template_name = "vendor/checkout.html"
+
+#     # GET returns the invoice with the items and the estimated totals.
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+
+#         profile = context['view'].request.user.customer_profile.get(site=settings.SITE_ID) 
+
+#         context['invoice'] = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
+
+#         return context
+
+#     def post(self, request):
+#         post_data = request.POST
+        
+#         # context = self.get_context_data()
+#         pass
 class CheckoutView(TemplateView):
     '''
     Review items and submit Payment
     '''
+    address_form_class = VendorAddressForm
+    card_form_class = VendorCreditCardForm
     template_name = "vendor/checkout.html"
 
     # GET returns the invoice with the items and the estimated totals.
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-    def get(self, request, *args, **kwargs):
-        profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
-        order = Invoice.objects.get(profile=profile, status=0)
+        profile = context['view'].request.user.customer_profile.get(site=settings.SITE_ID) 
 
-        ctx = payment_processor.get_checkout_context(order, customer_id=str(request.user.pk))
-        print(ctx)
+        context['invoice'] = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
 
-        return render(request, self.template_name, ctx)
+        context['address_form'] = self.address_form_class(prefix='addr')
+        context['card_form'] = self.card_form_class(prefix='card')
+        return context
+
+    def post(self, request):
+        address_form = self.address_form_class(request.POST, prefix='addr')
+        card_form = self.card_form_class(request.POST, prefix='card')
+        
+        if not address_form.is_valid() or not card_form.is_valid():
+            return render(request, self.template_name, {'address_form':address_form, 'card_form': card_form})
+
+        messages.info(self.request, _("Payment made"))
+        return redirect(reverse('vendor:checkout'))
+
+# class CheckoutCreateView(CreateView):
+#     model = GoogleAddress
+#     fields = ['name', 'street_number', 'route', 'locality']
+
+#     def get_context_data(self, **kwargs):
+#         data = super().get_context_data(**kwargs)
+
+    # def get(self, request, *args, **kwargs):
+    #     profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
+    #     invoice = Invoice.objects.get(profile=profile, status=0)
+
+    #     ctx = payment_processor.get_checkout_context(invoice, customer_id=str(request.user.pk))
+    #     print(ctx)
+
+    #     return render(request, self.template_name, ctx)
 
 
-    def post(self, request, *args, **kwargs):
-        print(request)
-        print(request.POST)
-        print(request.headers)
-        profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
-        order = Invoice.objects.get(profile=profile, status=0)
-        token = request.POST.get("stripeToken")
+    # def post(self, request, *args, **kwargs):
+    #     print(request)
+    #     print(request.POST)
+    #     print(request.headers)
+    #     profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
+    #     order = Invoice.objects.get(profile=profile, status=0)
+    #     token = request.POST.get("stripeToken")
 
-        # amount= int(order.total * 100)
-        # currency = order.currency
+    #     # amount= int(order.total * 100)
+    #     # currency = order.currency
 
-        # description = "Invoice #{} for ... in the amount of {}".format(order.pk, amount)
+    #     # description = "Invoice #{} for ... in the amount of {}".format(order.pk, amount)
 
-        # # stripe.Charge.create(
-        # #     amount=amount,
-        # #     currency=currency,
-        # #     source=token,
-        # #     description=description,
-        # # )
+    #     # # stripe.Charge.create(
+    #     # #     amount=amount,
+    #     # #     currency=currency,
+    #     # #     source=token,
+    #     # #     description=description,
+    #     # # )
 
-        # order.status = 20
+    #     # order.status = 20
 
 
 class InvoicesView(ListView):

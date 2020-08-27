@@ -2,65 +2,14 @@
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/global.css' %}" />
+{% comment %}
+<link rel="stylesheet" href="{% static 'css/global.css' %}" /> {% endcomment %}
 {% endblock %}
-
 
 {% block extra_head_js %}
-<script src="https://js.stripe.com/v3/"></script>
 {% endblock %}
 
-
-
-
 {% block content %}
-
-
-<table class="table table-bordered">
-  <thead>
-    <tr>
-      <th scope="col">#</th>
-      <th scope="col">Item</th>
-      <th scope="col">Price</th>
-      <th scope="col">Quantity</th>
-      <th scope="col">Total</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for item in object.order_items.all %}
-    <tr>
-      <th scope="row">{{ forloop.counter }}</th>
-      <td>{{item.name}}</td>
-      <td>${{item.price|floatformat:2}}</td>
-      <td>{{item.quantity}}</td>
-      <td>${{item.total|floatformat:2}}</td>
-    </tr>
-    {% endfor %}
-    <tr>
-      <td colspan=3></td>
-      <td>Subtotal</td>
-      <td>${{ object.subtotal|floatformat:2 }}</td>
-    </tr>
-    <tr>
-      <td colspan=3></td>
-      <td>Sales Tax</td>
-      <td>{% if object.tax == None %}TBD{% else %}${{ object.tax|floatformat:2 }}{% endif %}</td>
-    </tr>
-    <tr>
-      <td colspan=3></td>
-      <td>Shipping</td>
-      <td>{% if object.shipping == None %}TBD{% else %}${{ object.shipping|floatformat:2 }}{% endif %}</td>
-    </tr>
-    <tr>
-      <td colspan=3></td>
-      <td>Total</td>
-      <td>{% if object.total == None %}TBD{% else %}${{ object.total|floatformat:2 }}{% endif %}</td>
-    </tr>
-
-  </tbody>
-
-
-</table>
 
 {% comment %} <a href="{% url 'vendor:purchase' %}" class="btn btn-success">Purchase</a> {% endcomment %}
 {% comment %} <a href="#" class="btn btn-success">Purchase</a> {% endcomment %}
@@ -75,10 +24,55 @@
     validation state that can be triggered by attempting to submit the form without completing it.</p>
 </div>
 <div class="row">
+  <div class='col-12'>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Item</th>
+          <th scope="col">Price</th>
+          <th scope="col">Quantity</th>
+          <th scope="col">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order_item in invoice.order_items.all %}
+        <tr class="border">
+          <td>{{ forloop.counter }}</td>
+          <td>{{ order_item.name}}</td>
+          <td>{{ order_item.price}}</td>
+          <td>{{ order_item.quantity}}</td>
+          <td>{{ order_item.total}}</td>
+        </tr>
+        {% endfor %}
+        <tr class="border-0">
+          <td class="border-0"></td>
+          <td class="border-0"></td>
+          <td class="border-0"></td>
+          <td class="border"><strong>Shipping</strong></td>
+          <td class="border">${{ invoice.shipping }}</td>
+        </tr>
+        <tr class="border-0">
+          <td class="border-0"></td>
+          <td class="border-0"></td>
+          <td class="border-0"></td>
+          <td class="border"><strong>Tax</strong></td>
+          <td class="border">${{ invoice.tax }}</td>
+        </tr>
+        <tr class="border-0">
+          <td class="border-0"></td>
+          <td class="border-0"></td>
+          <td class="border-0"></td>
+          <td class="border"><strong>Total</strong></td>
+          <td class="border">${{ invoice.total }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
   <div class="col-md-4 order-md-2 mb-4">
     <h4 class="d-flex justify-content-between align-items-center mb-3">
       <span class="text-muted">Your cart</span>
-      <span class="badge badge-secondary badge-pill">3</span>
+      <span class="badge badge-secondary badge-pill">{{ invoice.order_items.all.count}}</span>
     </h4>
     <ul class="list-group mb-3">
 
@@ -86,7 +80,8 @@
       <li class="list-group-item d-flex justify-content-between lh-condensed">
         <div>
           <h6 class="my-0">{{ item.name }}</h6>
-          <small class="text-muted">Brief description</small>
+          <small class="text-muted">Unit Price: {{item.price}}</small>
+          <small class="text-muted">Quantity: {{item.quantity}}</small>
         </div>
         <span class="text-muted">${{ item.total }}</span>
       </li>
@@ -99,6 +94,16 @@
         </div>
         <span class="text-success">-$5</span>
       </li> {% endcomment %}
+
+      <li class="list-group-item d-flex justify-content-between">
+        <span>Shipping</span>
+        <strong>${{ invoice.shipping }}</strong>
+      </li>
+
+      <li class="list-group-item d-flex justify-content-between">
+        <span>Tax</span>
+        <strong>${{ invoice.tax }}</strong>
+      </li>
 
       <li class="list-group-item d-flex justify-content-between">
         <span>Total (USD)</span>
@@ -258,6 +263,15 @@
       <button class="btn btn-primary btn-lg btn-block" type="submit" data-secret="{{ client_secret }}">Submit
         Payment</button>
     </form>
+
+    <div class='row'>
+      <form method="post">
+        {% csrf_token %}
+        {{ address_form.as_p }}
+        {{ card_form.as_p }}
+        <input type="submit" value="Pay">
+      </form>
+    </div>
   </div>
 </div>
 
@@ -266,95 +280,11 @@
 
 
 {% block extra_js %}
-{% comment %}
-<script src="{% static 'js/client.js' %}" defer></script> {% endcomment %}
-{% comment %}
-<script src="https://js.stripe.com/v3/"></script> {% endcomment %}
-{% comment %}
-<script src="{% static 'js/script.js' %}"></script> {% endcomment %}
 
 <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
   integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
 <script src="/docs/4.4/dist/js/bootstrap.bundle.min.js"
   integrity="sha384-6khuMg9gaYr5AxOqhkVIODVIvm9ynTT5J4V1cfthmT+emCG6yVmEZsRHdxlotUnm" crossorigin="anonymous"></script>
-<script src="{% static 'js/form-validation.js' %}"></script>
 
-<script>
-  var stripe = Stripe('{{ pub_key }}');
-  var elements = stripe.elements();
-  console.log("Local Vars Loaded!");
-</script>
-
-
-<script>
-
-  var style = {
-    base: {
-      color: "#32325d",
-    }
-  };
-
-  var card = elements.create("card", { style: style });
-  card.mount("#card-element");
-
-  console.log("Client JS Loaded!");
-</script>
-
-<script>
-  card.on('change', ({ error }) => {
-    const displayError = document.getElementById('card-errors');
-    if (error) {
-      displayError.textContent = error.message;
-    } else {
-      displayError.textContent = '';
-    }
-  });
-</script>
-
-<script>
-  var form = document.getElementById('payment-form');
-
-  form.addEventListener('submit', function (ev) {
-    ev.preventDefault();
-    stripe.confirmCardPayment("{{ client_secret }}", {
-      payment_method: {
-        card: card,
-        billing_details: {
-          name: 'Jenny Rosen'
-        }
-      }
-    }).then(function (result) {
-      if (result.error) {
-        // Show error to your customer (e.g., insufficient funds)
-        console.log(result.error.message);
-      } else {
-        // The payment has been processed!
-        if (result.paymentIntent.status === 'succeeded') {
-          // Show a success message to your customer
-          // There's a risk of the customer closing the window before callback
-          // execution. Set up a webhook or plugin to listen for the
-          // payment_intent.succeeded event that handles any business critical
-          // post-payment actions.
-        }
-      }
-    });
-  });
-</script>
-
-
-
-
-
-
-{% comment %}
-<script src="{% static 'js/client.js' %}" defer></script> {% endcomment %}
-
-
-{% comment %}
-<script>
-  // Set your publishable key: remember to change this to your live publishable key in production
-  // See your keys here: https://dashboard.stripe.com/account/apikeys
-  var stripe = Stripe('pk_test_51Gx4h1JjRkl6Em6f9NLaLN2rHBzjmF9EytSZX9xNyVuKuaud0jmKcl97i8FThsaqSLB81hIjgzWHggDqFo25Xceu00Q626doG8');
-  var elements = stripe.elements();
-</script> {% endcomment %}
+{{ google_address_form.media }}
 {% endblock %}
