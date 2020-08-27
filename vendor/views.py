@@ -20,7 +20,7 @@ from .models.address import Address as GoogleAddress
 from vendor.processors import PaymentProcessor
 
 from django.views.generic.edit import FormView
-from .forms import StateForm, LocalityForm, AddressForm, GoogleAddressForm, VendorAddressForm, VendorCreditCardForm
+from .forms import VendorAddressForm, VendorCreditCardForm
 
 payment_processor = PaymentProcessor()               # The Payment Processor configured in settings.py
 
@@ -52,7 +52,6 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-
 class RemoveFromCartView(LoginRequiredMixin, DeleteView):
     '''
     Reduce the count of items from the cart and delete the order item if you reach 0
@@ -69,29 +68,6 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-# class PaymentView(LoginRequiredMixin, TemplateView):
-# class CheckoutView(TemplateView):
-#     '''
-#     Review items and submit Payment
-#     '''
-    
-#     template_name = "vendor/checkout.html"
-
-#     # GET returns the invoice with the items and the estimated totals.
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-
-#         profile = context['view'].request.user.customer_profile.get(site=settings.SITE_ID) 
-
-#         context['invoice'] = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
-
-#         return context
-
-#     def post(self, request):
-#         post_data = request.POST
-        
-#         # context = self.get_context_data()
-#         pass
 class CheckoutView(TemplateView):
     '''
     Review items and submit Payment
@@ -100,7 +76,6 @@ class CheckoutView(TemplateView):
     card_form_class = VendorCreditCardForm
     template_name = "vendor/checkout.html"
 
-    # GET returns the invoice with the items and the estimated totals.
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -121,46 +96,6 @@ class CheckoutView(TemplateView):
 
         messages.info(self.request, _("Payment made"))
         return redirect(reverse('vendor:checkout'))
-
-# class CheckoutCreateView(CreateView):
-#     model = GoogleAddress
-#     fields = ['name', 'street_number', 'route', 'locality']
-
-#     def get_context_data(self, **kwargs):
-#         data = super().get_context_data(**kwargs)
-
-    # def get(self, request, *args, **kwargs):
-    #     profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
-    #     invoice = Invoice.objects.get(profile=profile, status=0)
-
-    #     ctx = payment_processor.get_checkout_context(invoice, customer_id=str(request.user.pk))
-    #     print(ctx)
-
-    #     return render(request, self.template_name, ctx)
-
-
-    # def post(self, request, *args, **kwargs):
-    #     print(request)
-    #     print(request.POST)
-    #     print(request.headers)
-    #     profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
-    #     order = Invoice.objects.get(profile=profile, status=0)
-    #     token = request.POST.get("stripeToken")
-
-    #     # amount= int(order.total * 100)
-    #     # currency = order.currency
-
-    #     # description = "Invoice #{} for ... in the amount of {}".format(order.pk, amount)
-
-    #     # # stripe.Charge.create(
-    #     # #     amount=amount,
-    #     # #     currency=currency,
-    #     # #     source=token,
-    #     # #     description=description,
-    #     # # )
-
-    #     # order.status = 20
-
 
 class InvoicesView(ListView):
     pass

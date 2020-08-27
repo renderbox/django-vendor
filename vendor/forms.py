@@ -2,13 +2,9 @@ from calendar import monthrange
 from datetime import datetime
 from django import forms
 from django.utils.translation import ugettext as _
-from .models.address import Address as GoogleAddress
 
-from address.models import Country, State, Locality, Address
-# from crispy_forms.helper import FormHelper
-# from crispy_forms.layout import Submit
-
-# from .models import OrderItem
+from address.models import Country, State 
+from .models import OrderItem
 
 
 # class AddToCartModelForm(forms.ModelForm):
@@ -20,57 +16,10 @@ from address.models import Country, State, Locality, Address
 # class AddToCartForm(forms.Form):
 #     quantity = forms.IntegerField(required=True, initial=1)
 
-
-# class PaymentForm(forms.Form):
-#     stripeToken = forms.CharField(required=False)
-
-
-# class RequestRefundForm(forms.Form):
-#     pass
-
-
 # # class RequestRefundForm(forms.ModelForm):
 # #     class Meta:
 # #         model = Refund
 # #         fields = ['reason']
-
-# class CountryForm(forms.ModelForm):
-
-#     class Meta:
-#         model = Country
-#         fields = '__all__'
-
-# GoogleAddressFormset = forms.models.inlineformset_factory(
-#     GoogleAddress, Address, fields=('name', 'street_number', 'route', 'locality')
-# )
-
-
-class StateForm(forms.ModelForm):
-
-    class Meta:
-        model = State
-        fields = ['country']
-
-
-class LocalityForm(forms.ModelForm):
-
-    class Meta:
-        model = Locality
-        fields = ['postal_code', 'state']
-
-
-class AddressForm(forms.ModelForm):
-
-    class Meta:
-        model = Address
-        fields = ['street_number', 'route']
-
-
-class GoogleAddressForm(forms.ModelForm):
-
-    class Meta:
-        model = GoogleAddress
-        fields = ['name']
 
 
 class VendorAddressForm(forms.Form):
@@ -78,21 +27,14 @@ class VendorAddressForm(forms.Form):
     address_line_2 = forms.CharField(label=_('Address Line 2'), max_length=180)
     city = forms.CharField(label=_('City'))
     state = forms.ChoiceField(choices=[(state.pk, state.name) for state in [ s for s in State.objects.all()]], required=True)
-    postal_code = forms.IntegerField(
-        label=_('postal_code'), min_value=1000, max_value=99999)
-    country = forms.ChoiceField(label=_('Country'), choices=[(
-        country.pk, country.name) for country in [c for c in Country.objects.all()]])
+    postal_code = forms.IntegerField(label=_('Postal Code'), min_value=1000, max_value=99999)
+    country = forms.ChoiceField(label=_('Country'), choices=[(country.pk, country.name) for country in [c for c in Country.objects.all()]])
 
 
 class VendorSimpleCreditCardForm(forms.Form):
     name_on_card = forms.CharField(label=_('Name'), max_length=100)
     card_number = forms.CharField(label=_('Card Number'), max_length=8)
     card_cc = forms.CharField(label=_('Security Number'), max_length=4)
-
-class TelephoneInput(forms.widgets.TextInput):
-
-    # switch input type to type tel so that the numeric keyboard shows on mobile devices
-    input_type = 'tel'
 
 class CreditCardField(forms.CharField):
 
@@ -165,10 +107,7 @@ class CreditCardField(forms.CharField):
     def __init__(self, placeholder=None, *args, **kwargs):
         super(CreditCardField, self).__init__(
             # override default widget
-            widget=TelephoneInput(attrs={
-                'placeholder': placeholder
-            })
-        , *args, **kwargs)
+            widget=forms.widgets.TextInput(attrs={'placeholder': placeholder, 'type':'tel'}), *args, **kwargs)
 
     default_error_messages = {
         'invalid': _(u'The credit card number is invalid'),
