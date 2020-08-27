@@ -15,8 +15,12 @@ from django.views.generic import TemplateView
 from django.http import HttpResponse
 
 from vendor.models import Offer, OrderItem, Invoice, Payment #Price, Purchase, Refund, CustomerProfile, PurchaseStatus, OrderStatus
-from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
+# from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
+from .models.address import Address as GoogleAddress
 from vendor.processors import PaymentProcessor
+
+from django.views.generic.edit import FormView
+from .forms import VendorAddressForm, VendorCreditCardForm
 
 payment_processor = PaymentProcessor()               # The Payment Processor configured in settings.py
 
@@ -48,7 +52,6 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-
 class RemoveFromCartView(LoginRequiredMixin, DeleteView):
     '''
     Reduce the count of items from the cart and delete the order item if you reach 0
@@ -65,46 +68,48 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-# class PaymentView(LoginRequiredMixin, TemplateView):
 class CheckoutView(TemplateView):
     '''
     Review items and submit Payment
     '''
+    address_form_class = VendorAddressForm
+    card_form_class = VendorCreditCardForm
     template_name = "vendor/checkout.html"
+    payment_processor = PaymentProcessor()
 
-    # GET returns the invoice with the items and the estimated totals.
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-    def get(self, request, *args, **kwargs):
-        profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
-        order = Invoice.objects.get(profile=profile, status=0)
+        profile = context['view'].request.user.customer_profile.get(site=settings.SITE_ID) 
+        invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
+        context['invoice'] = invoice
 
-        ctx = payment_processor.get_checkout_context(order, customer_id=str(request.user.pk))
-        print(ctx)
+        # TODO: Set PaymentProcessor Context. It should set the address form and card form?
+        # ctx = payment_processor.get_checkout_context(order, customer_id=str(request.user.pk))
+        context['address_form'] = self.address_form_class(prefix='addr')
+        context['card_form'] = self.card_form_class(prefix='card')
+        self.payment_processor.get_checkout_context(invoice)
 
-        return render(request, self.template_name, ctx)
+        return context
 
+    def post(self, request):
+        profile = request.user.customer_profile.get(site=settings.SITE_ID) 
+        invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
+        address_form = self.address_form_class(request.POST, prefix='addr')
+        card_form = self.card_form_class(request.POST, prefix='card')
+        
+        if not address_form.is_valid() or not card_form.is_valid():
+            return render(request, self.template_name, {'address_form':address_form, 'card_form': card_form, 'invoice': invoice})
 
-    def post(self, request, *args, **kwargs):
-        print(request)
-        print(request.POST)
-        print(request.headers)
-        profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
-        order = Invoice.objects.get(profile=profile, status=0)
-        token = request.POST.get("stripeToken")
+        msg, success = payment_processor.auth_capture(invoice, card_form, address_form, None)
 
-        # amount= int(order.total * 100)
-        # currency = order.currency
+        messages.info(self.request, msg)
+        if success:
+            return redirect(reverse('vendor:checkout'))
+        else:
+            return render(request, self.template_name, {'address_form':address_form, 'card_form': card_form, 'invoice': invoice})
 
-        # description = "Invoice #{} for ... in the amount of {}".format(order.pk, amount)
-
-        # # stripe.Charge.create(
-        # #     amount=amount,
-        # #     currency=currency,
-        # #     source=token,
-        # #     description=description,
-        # # )
-
-        # order.status = 20
+        
 
 
 class InvoicesView(ListView):
