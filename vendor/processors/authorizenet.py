@@ -14,8 +14,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     REFUND_TRANSACTION = "refundTransaction"
 
 
-    # TODO: change to setup funcitons
-    def __init__(self):
+    def setUp(self):
         self.transaction_switch = {
             self.AUTHORIZE_CAPUTRE_TRANSACTION: self.auth_capture,
             self.REFUND_TRANSACTION: self.refund
@@ -195,4 +194,5 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         pass
 
     def process_payment(self, invoice, transaction_type, **kwargs):
+        self.setUp()
         self.TRANSACTION_TYPE[transaction_type](invoice, kwargs)

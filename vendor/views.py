@@ -79,7 +79,7 @@ class CheckoutView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        profile = request.user.customer_profile.get(site=settings.SITE_ID) 
+        profile = self.request.user.customer_profile.get(site=settings.SITE_ID) 
         invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
 
         processor = self.payment_processor(invoice)
