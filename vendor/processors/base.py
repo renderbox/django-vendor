@@ -28,6 +28,9 @@ class PaymentProcessorBase():
     def __init__(self, invoice):
          self.set_invoice(invoice)
 
+    def __init__(self, invoice):
+        self.set_invoice(invoice)
+
     def set_invoice(self, invoice):
         self.invoice = invoice
 
