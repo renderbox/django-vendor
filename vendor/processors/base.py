@@ -39,12 +39,13 @@ class PaymentProcessorBase():
     def set_invoice(self, invoice):
         self.invoice = invoice
 
-    def get_payment_model(self, invoice):
-        payment = Payment()
-        payment.profile = invoice.profile
-        payment.amount = invoice.get_amount()
-        payment.provider = self.provider
-        payment.invoice = invoice
+    def get_payment_model(self):
+        payment = Payment(  profile=self.invoice.profile,
+                            amount=invoice.get_amount(),
+                            provider=self.provider,
+                            invoice=self.invoice
+                            )
+        return payment
 
     def amount(self):   # Retrieves the total amount from the invoice
         self.invoice.update_totals()
@@ -120,6 +121,3 @@ class PaymentProcessorBase():
 
     def settlement(self):
         pass
-
-    def set_amount(self, amount):
-        self.status = amount
