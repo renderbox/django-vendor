@@ -80,12 +80,17 @@ class CheckoutView(TemplateView):
         context = super().get_context_data(**kwargs)
 
         profile = self.request.user.customer_profile.get(site=settings.SITE_ID) 
-        invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
+        invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)   # TODO: Should be like the line below.
+        # invoice = profile.invoices.get(status=Invoice.InvoiceStatus.CART)
 
         processor = self.payment_processor(invoice)
-        context.update(processor.get_checkout_context(context=context))
+
+        context = processor.get_checkout_context(context=context)
 
         context['billing_form'] = self.billing_form_class()
+        # TODO: Set below in the PaymentProcessor Context. It should set the address form and card form?
+        context['address_form'] = self.address_form_class(prefix='addr')
+        context['card_form'] = self.card_form_class(prefix='card')
 
         return context
 
@@ -105,36 +110,44 @@ class CheckoutView(TemplateView):
         profile = request.user.customer_profile.get(site=settings.SITE_ID) 
         invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
 
-        billing_form = self.billing_form_class(request.POST)
-        if not billing_form.is_valid():
-            return render(request, self.template_name, {'billing_form': billing_form, 'invoice': invoice})
+        # billing_form = self.billing_form_class(request.POST)
+        # if not billing_form.is_valid():
+        #     return render(request, self.template_name, {'billing_form': billing_form, 'invoice': invoice})
+
+        # processor = self.payment_processor(invoice)
+        # processor.billing_info = billing_form
+        # # processor.billing_address = address_form.data       # TODO: This should come from the invoice
+        # # processor.setUp()
+        # transaction_response = processor.process_payment(processor.AUTHORIZE_CAPUTRE_TRANSACTION)
+
+        # messages.info(self.request, transaction_response['msg'])
+        # if transaction_response['success']:
+        #     invoice.status = Invoice.InvoiceStatus.COMPLETE
+        #     invoice.save()
+
+        #     # TODO: Clean up make this a successfull create new payment function
+        #     billing_address = Address()
+        #     billing_address.create_address_from_billing_form(billing_form, profile)
+        #     billing_address.save()
+            
+        #     new_payment = Payment()
+        #     new_payment.invoice = invoice
+        #     new_payment.profile = str(self.payment_processor)
+        #     new_payment.transaction = transaction_response.get("trans_id")
+        #     new_payment.amount = invoice.total
+        #     new_payment.profile = profile
+        #     new_payment.success = True
+        #     new_payment.result = "\n".join([ str(d) for d in suc.items() ]).replace('(','{').replace(')','}')
+        #     new_payment.save()
 
         processor = self.payment_processor(invoice)
-        processor.billing_info = billing_form
-        # processor.billing_address = address_form.data       # TODO: This should come from the invoice
-        # processor.setUp()
-        transaction_response = processor.process_payment(processor.AUTHORIZE_CAPUTRE_TRANSACTION)
+        processor.payment_info = card_form.data
+        processor.billing_address = address_form.data       # TODO: This should come from the invoice
+        msg, success = processor.auth_capture()
 
-        messages.info(self.request, transaction_response['msg'])
-        if transaction_response['success']:
-            invoice.status = Invoice.InvoiceStatus.COMPLETE
-            invoice.save()
+        messages.info(self.request, msg)
 
-            # TODO: Clean up make this a successfull create new payment function
-            billing_address = Address()
-            billing_address.create_address_from_billing_form(billing_form, profile)
-            billing_address.save()
-            
-            new_payment = Payment()
-            new_payment.invoice = invoice
-            new_payment.profile = str(self.payment_processor)
-            new_payment.transaction = transaction_response.get("trans_id")
-            new_payment.amount = invoice.total
-            new_payment.profile = profile
-            new_payment.success = True
-            new_payment.result = "\n".join([ str(d) for d in suc.items() ]).replace('(','{').replace(')','}')
-            new_payment.save()
-
+        if success:
             return redirect(reverse('vendor:checkout'))
         else:
             return render(request, self.template_name, {'billing_form': billing_form, 'invoice': invoice})

@@ -1,8 +1,6 @@
 """
 Payment processor for Stripe.
 """
-from copy import deepcopy
-
 from django.conf import settings
 
 import stripe
@@ -12,36 +10,42 @@ from .base import PaymentProcessorBase
 
 class StripeProcessor(PaymentProcessorBase):
 
-    def __init__(self):
+    def processor_setup(self):
         stripe.api_key = settings.STRIPE_TEST_PUBLIC_KEY    # TODO: This should work, but may not the best way to do this
 
-    def get_checkout_context(self, invoice, **kwargs):
+    def get_checkout_context(self, request=request, context={}):
         '''
         The Invoice plus any additional values to include in the payment record.
         '''
-        metadata = deepcopy(kwargs)
+        context = super().get_checkout_context(request=request, context=context)
+        context['integration_check'] = 'accept_a_payment'
+
+        metadata = {}
         metadata['integration_check'] = 'accept_a_payment'
-        metadata['order_id'] = str(invoice.pk)
+        metadata['order_id'] = str(self.invoice.pk)
 
         intent = stripe.PaymentIntent.create(
-            amount=int(invoice.total * 100),  # Amount in pennies so it can be an int() rather than a float
-            currency=invoice.currency,        # "usd"
+            amount=int(self.invoice.total * 100),  # Amount in pennies so it can be an int() rather than a float
+            currency=self.invoice.currency,        # "usd"
             metadata=metadata,
         )
 
-        return {'client_secret': intent.client_secret, 'pub_key': settings.STRIPE_TEST_PUBLIC_KEY, 'invoice':invoice}
+        context['client_secret'] = intent.client_secret
+        context['pub_key'] = settings.STRIPE_TEST_PUBLIC_KEY
 
-    def process_payment(self, invoice, token):
-        
-        payment = self.get_payment_model(invoice)
+        return context
+
+    def process_payment(self, token):
+        super().process_payment()
+        payment = self.get_payment_model(self.invoice)
 
         try:
             # Use Stripe's library to make requests...
             # All necessary chage information should come from the invoice
             charge = stripe.Charge.create(
                 amount = amount,
-                currency = invoice.currency,
-                source = token
+                currency = self.invoice.currency,
+                source = self.transaction_token
             )
 
             payment.transaction = charge['id']

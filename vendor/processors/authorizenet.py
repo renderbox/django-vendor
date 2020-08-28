@@ -14,7 +14,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     REFUND_TRANSACTION = "refundTransaction"
 
 
-    def setUp(self):
+    def processor_setup(self):
         self.transaction_switch = {
             self.AUTHORIZE_CAPUTRE_TRANSACTION: self.auth_capture,
             self.REFUND_TRANSACTION: self.refund
@@ -31,6 +31,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.merchantAuthentication = self.merchantAuth
         self.transaction.refId = reference_id
 
+    # def process_payment(self):
+    #     if not self.merchantAuth.name or not self.merchantAuth.transactionKey:
+    #         return "error", False
+
     def init_transaction_request(self, transaction_type, amount):
         self.transaction_request = apicontractsv1.transactionRequestType()
         self.transaction_request.transactionType = transaction_type
@@ -38,9 +42,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def set_payment_type_credit_card(self, card):
         creditCard = apicontractsv1.creditCardType()
-        creditCard.cardNumber = str(card.data['card_number'])
-        creditCard.expirationDate = str("-".join([card.data['expire_year'], card.data['expire_month']]))
-        creditCard.cardCode = str(card.data['cvv_number'])
+        creditCard.cardNumber = str(self.payment_info['card-card_number'])
+        creditCard.expirationDate = str("-".join([self.payment_info['card-expire_year'], self.payment_info['card-expire_month']]))
+        creditCard.cardCode = str(self.payment_info['card-cvv_number'])
         return creditCard
 
     def set_transaction_request_payment(self, payment_data):
@@ -81,25 +85,17 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_request.lineItems = line_items
 
     def set_transaction_request_tax(self, tax):
-        pass
-
-    def set_transaction_request_duty(self):
-        pass
+        transactionrequest = apicontractsv1.transactionRequestType()
+        transactionrequest.transactionType = AUTHORIZE_CAPUTRE_TRANSACTION
+        transactionrequest.amount = Decimal(self.invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
+        transactionrequest.payment = payment
 
     def set_transaction_request_shipping(self, shipping):
         pass
 
-    def set_transaction_request_ship_to(self, shipping):
-        ship_to = apicontractsv1.customerAddressType()
-        ship_to.firstName = "Ellen"
-        ship_to.lastName = "Johnson"
-        ship_to.company = ""
-        ship_to.address = str(",".join([shipping.data.get('address_line_1', ""), shipping.data.get('address_line_2', "")]))
-        ship_to.city = str(shipping.data.get("city", ""))
-        ship_to.state = str(shipping.data.get("state", ""))
-        ship_to.zip = str(shipping.data.get("postal_code"))
-        ship_to.country = str(shipping.data.get("country"))
-        self.transaction_request.shipTo = ship_to
+        createtransactionrequest = apicontractsv1.createTransactionRequest()
+        createtransactionrequest.merchantAuthentication = self.merchantAuth
+        createtransactionrequest.refId = str("-".join([str(self.invoice.profile.pk), str(settings.SITE_ID), str(self.invoice.pk)]))
 
     def set_transaction_request_billing(self, billing_info):
         billing_address = apicontractsv1.customerAddressType()
@@ -190,6 +186,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def refund(self, invoice):
         pass
 
-    def process_payment(self, transaction_type):
-        self.setUp()
-        self.transaction_switch[transaction_type]()
+    # def process_payment(self, transaction_type):
+    #     self.setUp()
+    #     self.transaction_switch[transaction_type]()
