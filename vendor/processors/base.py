@@ -24,7 +24,7 @@ class PaymentProcessorBase():
     def amount(self):   # Retrieves the total amount from the invoice
         return 1.00
 
-    def get_checkout_context(self, invoice, **kwargs):
+    def get_checkout_context(self, invoice, request, **kwargs):
         '''
         The Invoice plus any additional values to include in the payment record.
         '''
@@ -70,7 +70,7 @@ class PaymentProcessorBase():
         pass
 
     def set_amount(self, amount):
-        self.status = PurchaseStatus.QUEUED
+        self.status = amount
 
     def process_payment(self, invoice):
         self.status = PurchaseStatus.ACTIVE
