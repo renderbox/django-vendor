@@ -19,6 +19,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def __init__(self):
         self.merchantAuth = apicontractsv1.merchantAuthenticationType()
 
+    def __str__(self):
+        return 'Authorize.Net'
+
     def get_checkout_context(self, invoice, **kwargs):
         '''
         The Invoice plus any additional values to include in the payment record.
