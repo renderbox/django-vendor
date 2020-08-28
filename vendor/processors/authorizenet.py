@@ -15,10 +15,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
 
     def processor_setup(self):
-        self.transaction_switch = {
-            self.AUTHORIZE_CAPUTRE_TRANSACTION: self.auth_capture,
-            self.REFUND_TRANSACTION: self.refund
-        }
+        # self.transaction_switch = {
+        #     self.AUTHORIZE_CAPUTRE_TRANSACTION: self.auth_capture,
+        #     self.REFUND_TRANSACTION: self.refund
+        # }
         self.merchantAuth = apicontractsv1.merchantAuthenticationType()
         self.merchantAuth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY
         self.merchantAuth.name = settings.AUTHORIZE_NET_API_ID
@@ -56,8 +56,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.transactionRequest = self.transaction_request
 
     def init_transaction_controller(self):
-        self.transaction_controller = createTransactionController(
-            self.transaction)
+        self.transaction_controller = createTransactionController(self.transaction)         # TODO: Not sure where the fucntion is declared
 
     def execute_transaction(self):
         self.transaction_controller.execute()
@@ -147,7 +146,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         return transaction_response
 
-    def auth_capture(self, **kwargs):
+    def process_payment(self):         # This needs to be handled in the 
         if not self.merchantAuth.name or not self.merchantAuth.transactionKey:
             print("error")
             return
@@ -185,7 +184,3 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def refund(self, invoice):
         pass
-
-    # def process_payment(self, transaction_type):
-    #     self.setUp()
-    #     self.transaction_switch[transaction_type]()

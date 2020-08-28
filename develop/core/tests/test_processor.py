@@ -131,17 +131,20 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertTrue(payment_processor.merchantAuth.name)
     
     def test_auth_capture_transaction_success(self):
-        payment_processor = PaymentProcessor(self.existing_invoice) 
-        payment_processor.get_checkout_context()    # TODO: updated if it needs a request object
-
-        billing_form = BillingForm(initial={'card_number': '5424000000000015', 'expire_month': '12', 'expire_year': '2020', 'cvv_number': '999' })
-        billing_form.data = billing_form.initial
-
-        transaction_response = payment_processor.auth_capture(self.existing_invoice, billing_form, None)
-        self.assertTrue(transaction_response['success'])
+        """
+        By passing in the invoice, setting the payment info and billing 
+        address, process the payment and make sure it succeeds.
+        """
+        payment_processor = PaymentProcessor(self.existing_invoice)
+        payment_processor.set_payment_info(card_number='5424000000000015', expire_month='12', expire_year='2020', cvv_number='999')
+        payment_processor.authorize_payment()
+        # self.assertTrue(transaction_response['success'])  # TODO: Need to test this differently.  The PaymentProcessor could hold the info needed to be retrieved.
 
     def test_auth_capture_transaction_fail(self):
-        # TODO: Implement Test
+        # TODO: Implement Test.
+        # payment_processor = PaymentProcessor(self.existing_invoice)
+        # payment_processor.set_payment_info(card_number='5424000000000015', expire_month='12', expire_year='2020', cvv_number='999')
+        # payment_processor.authorize_payment()
         pass
 
     def test_refund_success(self):

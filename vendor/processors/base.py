@@ -16,15 +16,15 @@ vendor_post_authorization =  django.dispatch.Signal()
 #############
 # BASE CLASS
 
-class PaymentProcessorBase():
+class PaymentProcessorBase(object):
     """
     Setup the core functionality for all processors.
     """
     status = None
     invoice = None
     provider = None
-    payment_info = None
-    billing_address = None
+    payment_info = {}
+    billing_address = {}
     transaction_token = None
 
     def __init__(self, invoice):
@@ -36,6 +36,9 @@ class PaymentProcessorBase():
 
     def processor_setup(self):
         pass
+
+    def set_payment_info(self, **kwargs):
+        self.payment_info = kwargs
 
     def set_invoice(self, invoice):
         self.invoice = invoice
@@ -81,7 +84,7 @@ class PaymentProcessorBase():
         """
         pass
 
-    def authorize(self):
+    def authorize_payment(self):
         """
         This runs the chain of events in a transaction.
         
@@ -117,9 +120,12 @@ class PaymentProcessorBase():
 
     def capture(self):
         """
-        Called to handle the capture.  (some gateways handle this at the same time as authorize() )
+        Called to handle the capture.  (some gateways handle this at the same time as authorize_payment() )
         """
         pass
 
-    def settlement(self):
+    def settle_payment(self):
+        pass
+
+    def refund_payment(self):
         pass
