@@ -9,6 +9,8 @@ from setuptools import setup, find_packages
 
 readme_file = path.join(path.dirname(path.abspath(__file__)), 'README.md')
 
+from vendor import __version__
+
 try:
     from m2r import parse_from_file
     long_description = parse_from_file(readme_file)     # Convert the file to RST for PyPI
@@ -20,7 +22,7 @@ except ImportError:
 
 package_metadata = {
     'name': 'django-vendor',
-    'version': '0.1.1',
+    'version': __version__,
     'description': 'Django App Toolkit for selling digital and physical goods online.',
     'long_description': long_description,
     'url': 'https://github.com/renderbox/django-vendor/',

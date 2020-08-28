@@ -15,6 +15,10 @@ import dj_database_url
 
 from iso4217 import Currency
 
+from headless import __version__
+
+BUILD_VERSION = __version__
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
@@ -30,8 +34,6 @@ SECRET_KEY = '&1mmk1e%&9p87fvr=&v84u6fx1)$7f&%)*t9#$zfnu$#h#+5v^'
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
-DJANGO_PROJECT_VERSION = "0.1.1"
 
 # Application definition
 
