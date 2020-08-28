@@ -124,14 +124,15 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertTrue(settings.AUTHORIZE_NET_API_ID)
 
     def test_get_checkout_context(self):
-        payment_processor = PaymentProcessor() 
-        payment_processor.get_checkout_context(self.existing_invoice)
+        payment_processor = PaymentProcessor(invoice=self.existing_invoice) 
+        payment_processor.get_checkout_context()
+        
         self.assertTrue(payment_processor.merchantAuth.transactionKey)
         self.assertTrue(payment_processor.merchantAuth.name)
     
     def test_auth_capture_transaction_success(self):
-        payment_processor = PaymentProcessor() 
-        payment_processor.get_checkout_context(self.existing_invoice)
+        payment_processor = PaymentProcessor(self.existing_invoice) 
+        payment_processor.get_checkout_context()    # TODO: updated if it needs a request object
 
         billing_form = BillingForm(initial={'card_number': '5424000000000015', 'expire_month': '12', 'expire_year': '2020', 'cvv_number': '999' })
         billing_form.data = billing_form.initial

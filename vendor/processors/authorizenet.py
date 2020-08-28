@@ -14,7 +14,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     REFUND_TRANSACTION = "refundTransaction"
 
 
-    def setUp(self):
+    def processor_setup(self):
         self.transaction_switch = {
             self.AUTHORIZE_CAPUTRE_TRANSACTION: self.auth_capture,
             self.REFUND_TRANSACTION: self.refund
@@ -31,7 +31,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.merchantAuthentication = self.merchantAuth
         self.transaction.refId = reference_id
 
-    def authorization(self):
+    def process_payment(self):
+        super().process_payment()
         if not self.merchantAuth.name or not self.merchantAuth.transactionKey:
             return "error", False
 
