@@ -81,25 +81,17 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_request.lineItems = line_items
 
     def set_transaction_request_tax(self, tax):
-        pass
-
-    def set_transaction_request_duty(self):
-        pass
+        transactionrequest = apicontractsv1.transactionRequestType()
+        transactionrequest.transactionType = AUTHORIZE_CAPUTRE_TRANSACTION
+        transactionrequest.amount = Decimal(self.invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
+        transactionrequest.payment = payment
 
     def set_transaction_request_shipping(self, shipping):
         pass
 
-    def set_transaction_request_ship_to(self, shipping):
-        ship_to = apicontractsv1.customerAddressType()
-        ship_to.firstName = "Ellen"
-        ship_to.lastName = "Johnson"
-        ship_to.company = ""
-        ship_to.address = str(",".join([shipping.data.get('address_line_1', ""), shipping.data.get('address_line_2', "")]))
-        ship_to.city = str(shipping.data.get("city", ""))
-        ship_to.state = str(shipping.data.get("state", ""))
-        ship_to.zip = str(shipping.data.get("postal_code"))
-        ship_to.country = str(shipping.data.get("country"))
-        self.transaction_request.shipTo = ship_to
+        createtransactionrequest = apicontractsv1.createTransactionRequest()
+        createtransactionrequest.merchantAuthentication = self.merchantAuth
+        createtransactionrequest.refId = str("-".join([str(self.invoice.profile.pk), str(settings.SITE_ID), str(self.invoice.pk)]))
 
     def set_transaction_request_billing(self, billing_info):
         billing_address = apicontractsv1.customerAddressType()
