@@ -109,7 +109,11 @@ class CheckoutView(TemplateView):
         if not billing_form.is_valid():
             return render(request, self.template_name, {'billing_form': billing_form, 'invoice': invoice})
 
-        self.payment_processor(invoice).auth_capture(billing_form, None)
+        processor = self.payment_processor(invoice)
+        processor.billing_info = billing_form
+        # processor.billing_address = address_form.data       # TODO: This should come from the invoice
+        processor.setUp()
+        transaction_response = processor.auth_capture()
 
         messages.info(self.request, transaction_response['msg'])
         if transaction_response['success']:

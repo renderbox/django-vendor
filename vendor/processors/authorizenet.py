@@ -151,11 +151,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         return transaction_response
 
-    def auth_capture(self, billing_info, **kwargs):
+    def auth_capture(self, **kwargs):
         if not self.merchantAuth.name or not self.merchantAuth.transactionKey:
-            print("error")
-            return
-        if 'billing_info' not in kwargs:
             print("error")
             return
 
@@ -166,8 +163,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         # Init the transaction request and payment
         self.init_transaction_request(
             AuthorizeNetProcessor.AUTHORIZE_CAPUTRE_TRANSACTION, self.invoice.total)
-        self.set_transaction_request_payment(billing_info)
-        self.set_transaction_request_billing(billing_info)
+        self.set_transaction_request_payment(self.billing_info)
+        self.set_transaction_request_billing(self.billing_info)
 
         if self.invoice.order_items:
             self.set_transaction_request_line_items(self.invoice.order_items.all())

@@ -10,6 +10,7 @@ class PaymentProcessorBase():
     status = None
     invoice = None
     provider = None
+    billing_info = None
 
     def __init__(self, invoice):
          self.set_invoice(invoice)
