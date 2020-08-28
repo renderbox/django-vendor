@@ -4,7 +4,7 @@ from django import forms
 from django.utils.translation import ugettext as _
 
 from address.models import Country, State 
-from .models import OrderItem
+from .models import OrderItem, Address
 
 
 # class AddToCartModelForm(forms.ModelForm):
@@ -21,14 +21,10 @@ from .models import OrderItem
 # #         model = Refund
 # #         fields = ['reason']
 
-class VendorAddressForm(forms.Form):
-    address_line_1 = forms.CharField(label=_('Address Line 1'), max_length=180)
-    address_line_2 = forms.CharField(label=_('Address Line 2'), max_length=180)
-    city = forms.CharField(label=_('City'))
-    state = forms.ChoiceField(choices=[(state.pk, state.name) for state in [ s for s in State.objects.all()]], required=True)
-    postal_code = forms.CharField(label=_('Postal Code'), max_length=5)
-    country = forms.ChoiceField(label=_('Country'), choices=[(country.pk, country.name) for country in [c for c in Country.objects.all()]])
-
+class VendorAddressForm(forms.ModelForm):
+    class Meta:
+        model = Address
+        fields = ['name', 'address_1', 'address_2', 'locality', 'country', 'postal_code']
 
 class VendorSimpleCreditCardForm(forms.Form):
     name_on_card = forms.CharField(label=_('Name'), max_length=100)
