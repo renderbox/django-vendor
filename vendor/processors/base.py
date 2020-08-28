@@ -35,6 +35,10 @@ class PaymentProcessorBase(object):
         self.processor_setup()
 
     def processor_setup(self):
+        """
+        This is for setting up any of the settings needed for the payment processing.
+        For example, here you would set the 
+        """
         pass
 
     def set_payment_info(self, **kwargs):
@@ -55,6 +59,9 @@ class PaymentProcessorBase(object):
         self.invoice.update_totals()
         return self.invoice.total
 
+    #-------------------
+    # Data for the View
+
     def get_checkout_context(self, request=None, context={}):
         '''
         The Invoice plus any additional values to include in the payment record.
@@ -70,7 +77,7 @@ class PaymentProcessorBase(object):
         """
         return []
 
-    def get_footer_javascript(self):
+    def get_javascript(self):
         """
         Scripts added to the bottom of the page in the normal js location.
 
@@ -84,6 +91,9 @@ class PaymentProcessorBase(object):
         """
         pass
 
+    #-------------------
+    # Process a Payment
+
     def authorize_payment(self):
         """
         This runs the chain of events in a transaction.
@@ -91,18 +101,22 @@ class PaymentProcessorBase(object):
         This should not be overriden.  Override one of the methods it calls if you need to.
         """
         self.status = PurchaseStatus.QUEUED     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
+        vendor_pre_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.pre_authorization()
 
         self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         self.process_payment()
 
+        vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()
+
+        #TODO: Set the status based on the result from the process_payment()
 
     def pre_authorization(self):
         """
         Called before the authorization begins.
         """
-        vendor_pre_authorization.send(sender=self.__class__, invoice=self.invoice)
+        pass
 
     def process_payment(self):
         """
@@ -116,16 +130,16 @@ class PaymentProcessorBase(object):
         """
         Called after the authorization is complete.
         """
-        vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
+        pass
 
-    def capture(self):
+    def capture_payment(self):
         """
         Called to handle the capture.  (some gateways handle this at the same time as authorize_payment() )
         """
         pass
 
-    def settle_payment(self):
-        pass
+    #-------------------
+    # Refund a Payment
 
     def refund_payment(self):
         pass

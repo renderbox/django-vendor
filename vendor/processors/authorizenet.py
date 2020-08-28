@@ -181,6 +181,3 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         transaction_response = self.check_response(response)
         return transaction_response
-
-    def refund(self, invoice):
-        pass
