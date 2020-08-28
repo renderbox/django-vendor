@@ -30,6 +30,9 @@ class PaymentProcessorBase():
     transaction_token = None
 
     def __init__(self, invoice):
+        """
+        This should not be overriden.  Override one of the methods it calls if you need to.
+        """
         self.set_invoice(invoice)
         self.processor_setup()
 
@@ -51,7 +54,7 @@ class PaymentProcessorBase():
         self.invoice.update_totals()
         return self.invoice.total
 
-    def get_checkout_context(self, request=request, context={}):
+    def get_checkout_context(self, request=None, context={}):
         '''
         The Invoice plus any additional values to include in the payment record.
         '''
@@ -84,6 +87,8 @@ class PaymentProcessorBase():
     def authorize(self):
         """
         This runs the chain of events in a transaction.
+        
+        This should not be overriden.  Override one of the methods it calls if you need to.
         """
         self.status = PurchaseStatus.QUEUED     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         self.pre_authorization()
