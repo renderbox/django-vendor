@@ -1,6 +1,8 @@
 """
 Base Payment processor used by all derived processors.
 """
+from copy import deepcopy
+
 import django.dispatch
 
 from vendor.models import Payment
@@ -25,9 +27,14 @@ class PaymentProcessorBase():
     provider = None
     payment_info = None
     billing_address = None
+    transaction_token = None
 
     def __init__(self, invoice):
         self.set_invoice(invoice)
+        self.processor_setup()
+
+    def processor_setup(self):
+        pass
 
     def set_invoice(self, invoice):
         self.invoice = invoice
@@ -40,13 +47,14 @@ class PaymentProcessorBase():
         payment.invoice = invoice
 
     def amount(self):   # Retrieves the total amount from the invoice
-        return 1.00
+        self.invoice.update_totals()
+        return self.invoice.total
 
-    def get_checkout_context(self, request, context={}):
+    def get_checkout_context(self, request=request, context={}):
         '''
         The Invoice plus any additional values to include in the payment record.
         '''
-        context = context
+        context = deepcopy(context)
         context['invoice'] = self.invoice
         return context
 
@@ -77,7 +85,7 @@ class PaymentProcessorBase():
         This runs the chain of events in a transaction.
         """
         self.pre_authorization()
-        self.authorization()
+        self.process_payment()
         self.post_authorization()
 
     def pre_authorization(self):
@@ -86,13 +94,13 @@ class PaymentProcessorBase():
         """
         vendor_pre_authorization.send(sender=self.__class__, invoice=self.invoice)
 
-    def authorization(self):
+    def process_payment(self):
         """
         Called to handle the authorization.  
         This is where the core of the payment processing happens.
         """
         # Gateway Transaction goes here...
-        pass
+        self.status = PurchaseStatus.ACTIVE
 
     def post_authorization(self):
         """
@@ -111,7 +119,3 @@ class PaymentProcessorBase():
 
     def set_amount(self, amount):
         self.status = PurchaseStatus.QUEUED
-
-    def process_payment(self, invoice):
-        self.status = PurchaseStatus.ACTIVE
-        # Returns a Payment model with a result

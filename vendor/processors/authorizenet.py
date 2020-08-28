@@ -15,12 +15,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         AUTHORIZE_CAPUTRE_TRANSACTION
     ]
 
-    def __init__(self):
+    def processor_setup(self):
         self.merchantAuth = apicontractsv1.merchantAuthenticationType()
         self.merchantAuth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY #'4tbEK65FB8Tht59Y'
         self.merchantAuth.name = settings.AUTHORIZE_NET_API_ID #'79MvGs6X3P'
 
-    def authorization(self):
+    def process_payment(self):
+        super().process_payment()
         if not self.merchantAuth.name or not self.merchantAuth.transactionKey:
             return "error", False
 
