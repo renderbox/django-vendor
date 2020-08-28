@@ -5,7 +5,7 @@ from django.urls import reverse
 
 from core.models import Product
 from vendor.models import Invoice
-from vendor.forms import VendorCreditCardForm, VendorAddressForm
+from vendor.forms import VendorCreditCardForm, VendorAddressForm, BillingForm
 
 from vendor.processors import PaymentProcessor
 
@@ -127,12 +127,11 @@ class AuthorizeNetProcessorTests(TestCase):
         payment_processor = PaymentProcessor() 
         payment_processor.get_checkout_context(self.existing_invoice)
 
-        # card_form = VendorCreditCardForm(initial={'card_number': '5424000000000015', 'expire_month': '12', 'expire_year': '2020', 'cvv_number': '999' })
-        # card_form.data = card_form.initial
-        # address_form = VendorAddressForm()
+        billing_form = BillingForm(initial={'card_number': '5424000000000015', 'expire_month': '12', 'expire_year': '2020', 'cvv_number': '999' })
+        billing_form.data = billing_form.initial
 
-        # msg, success = payment_processor.auth_capture(self.existing_invoice, card_form, address_form, None)
-        self.assertTrue(True)
+        msg, success = payment_processor.auth_capture(self.existing_invoice, billing_form, None)
+        self.assertTrue(success)
 
     def test_auth_capture_transaction_fail(self):
         # TODO: Implement Test
