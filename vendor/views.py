@@ -22,7 +22,7 @@ from vendor.processors import PaymentProcessor
 from django.views.generic.edit import FormView
 from .forms import VendorAddressForm, VendorCreditCardForm, BillingForm
 
-payment_processor = PaymentProcessor()               # The Payment Processor configured in settings.py
+# payment_processor = PaymentProcessor()               # The Payment Processor configured in settings.py
 
 class CartView(LoginRequiredMixin, DetailView):
     '''
@@ -68,45 +68,48 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-class CheckoutView(PaymentProcessor, TemplateView):
+class CheckoutView(TemplateView):
     '''
     Review items and submit Payment
     '''
     template_name = "vendor/checkout.html"
     billing_form_class = BillingForm
+    payment_processor = PaymentProcessor
 
-    # def get_context_data(self, **kwargs):
-    #     context = super().get_context_data(**kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-    #     profile = context['view'].request.user.customer_profile.get(site=settings.SITE_ID) 
-    #     invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
-
-    #     context['invoice'] = invoice
-
-    #     context['billing_form'] = self.billing_form_class()
-    #     self.payment_processor.get_checkout_context(invoice)
-
-    #     return context
-
-    def get(self, request, *args, **kwargs):
-        profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
+        profile = request.user.customer_profile.get(site=settings.SITE_ID) 
         invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
 
-        context = payment_processor.get_checkout_context(invoice, request, None))
+        processor = self.payment_processor(invoice)
+        context.update(processor.get_checkout_context(context=context))
 
-        return render(request, self.template_name, context)
+        context['billing_form'] = self.billing_form_class()
+
+        return context
+
+    # def get(self, request, *args, **kwargs):
+    #     profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
+    #     invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
+
+    #     processor = self.payment_processor(invoice)
+
+    #     context.update(processor.get_checkout_context(context=context))
+
+    #     context['billing_form'] = self.billing_form_class()
+
+    #     return render(request, self.template_name, context)
 
     def post(self, request):
         profile = request.user.customer_profile.get(site=settings.SITE_ID) 
         invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
 
-        self.auth.capture()
-        
         billing_form = self.billing_form_class(request.POST)
         if not billing_form.is_valid():
             return render(request, self.template_name, {'billing_form': billing_form, 'invoice': invoice})
 
-        transaction_response = self.payment_processor.auth_capture(invoice, billing_form, None)
+        self.payment_processor(invoice).auth_capture(billing_form, None)
 
         messages.info(self.request, transaction_response['msg'])
         if transaction_response['success']:

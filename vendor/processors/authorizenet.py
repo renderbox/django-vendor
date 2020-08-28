@@ -13,13 +13,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     AUTHORIZE_CAPUTRE_TRANSACTION = "authCaptureTransaction"
     REFUND_TRANSACTION = "refundTransaction"
 
-    TRANSACTION_TYPE = {
-        AUTHORIZE_CAPUTRE_TRANSACTION: self.auth_capture,
-        REFUND_TRANSACTION: self.refund
-    }
 
     # TODO: change to setup funcitons
     def __init__(self):
+        self.transaction_switch = {
+            self.AUTHORIZE_CAPUTRE_TRANSACTION: self.auth_capture,
+            self.REFUND_TRANSACTION: self.refund
+        }
         self.merchantAuth = apicontractsv1.merchantAuthenticationType()
         self.merchantAuth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY
         self.merchantAuth.name = settings.AUTHORIZE_NET_API_ID
@@ -27,22 +27,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def __str__(self):
         return 'Authorize.Net'
 
-    def get_checkout_context(self, invoice, request,  **kwargs):
-        '''
-        The Invoice plus any additional values to include in the payment record.
-        '''
-        context = super().get_context_data(**kwargs)
-
-        context['invoice'] = invoice
-        context['billing_form'] = BillingForm()
-
-        return context
-
-
     def init_transaction(self, reference_id):
         self.transaction = apicontractsv1.createTransactionRequest()
         self.transaction.merchantAuthentication = self.merchantAuth
-        # str("-".join([str(invoice.profile.pk), str(settings.SITE_ID), str(invoice.pk)]))
         self.transaction.refId = reference_id
 
     def init_transaction_request(self, transaction_type, amount):
@@ -165,28 +152,32 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         return transaction_response
 
-    def auth_capture(self, invoice, kwargs):
+    def auth_capture(self, billing_info, **kwargs):
         if not self.merchantAuth.name or not self.merchantAuth.transactionKey:
-            return "error", False
+            print("error")
+            return
+        if 'billing_info' not in kwargs:
+            print("error")
+            return
 
         # Init transaction
         self.init_transaction(
-            str("-".join([str(invoice.profile.pk), str(settings.SITE_ID), str(invoice.pk)])))
+            str("-".join([str(self.invoice.profile.pk), str(settings.SITE_ID), str(self.invoice.pk)])))
 
         # Init the transaction request and payment
         self.init_transaction_request(
-            AuthorizeNetProcessor.AUTHORIZE_CAPUTRE_TRANSACTION, invoice.total)
+            AuthorizeNetProcessor.AUTHORIZE_CAPUTRE_TRANSACTION, self.invoice.total)
         self.set_transaction_request_payment(billing_info)
         self.set_transaction_request_billing(billing_info)
 
-        if invoice.order_items:
-            self.set_transaction_request_line_items(invoice.order_items.all())
-        if invoice.tax:
-            self.set_transaction_request_tax(invoice.tax)
-        if invoice.shipping:
-            self.set_transaction_request_shipping(invoice.shipping)
-        if invoice.shipping_address:
-            self.set_transaction_request_ship_to(invoice.shipping_address)
+        if self.invoice.order_items:
+            self.set_transaction_request_line_items(self.invoice.order_items.all())
+        if self.invoice.tax:
+            self.set_transaction_request_tax(self.invoice.tax)
+        if self.invoice.shipping:
+            self.set_transaction_request_shipping(self.invoice.shipping)
+        if self.invoice.shipping_address:
+            self.set_transaction_request_ship_to(self.invoice.shipping_address)
 
         # You set the request to the transaction
         self.set_transaction_request()
@@ -203,5 +194,5 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def refund(self, invoice):
         pass
 
-    def process_payment(self, invoice, request, transaction_type):
-        self.TRANSACTION_TYPE[transaction_type](invoice, request)
+    def process_payment(self, invoice, transaction_type, **kwargs):
+        self.TRANSACTION_TYPE[transaction_type](invoice, kwargs)

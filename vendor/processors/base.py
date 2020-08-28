@@ -11,6 +11,8 @@ class PaymentProcessorBase():
     invoice = None
     provider = None
 
+    def __init__(self, invoice):
+         self.set_invoice(invoice)
 
     def set_invoice(self, invoice):
         self.invoice = invoice
@@ -25,11 +27,13 @@ class PaymentProcessorBase():
     def amount(self):   # Retrieves the total amount from the invoice
         return 1.00
 
-    def get_checkout_context(self, invoice, request, **kwargs):
+    def get_checkout_context(self, context={}):
         '''
         The Invoice plus any additional values to include in the payment record.
         '''
-        return {'invoice':invoice}
+        context = context
+        context['invoice'] = self.invoice
+        return context
 
     def get_head_javascript(self):
         """
