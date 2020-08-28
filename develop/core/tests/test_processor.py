@@ -1,11 +1,13 @@
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse
+from unittest import skipIf
 
 from core.models import Product
 from vendor.models import Invoice
-from vendor.forms import VendorCreditCardForm, VendorAddressForm
+from vendor.forms import VendorCreditCardForm, VendorAddressForm, BillingForm
 
 from vendor.processors import PaymentProcessor
 
@@ -110,30 +112,32 @@ TEST_PAYLOAD = {
         }
     }
 }
-
+@skipIf(settings.AUTHORIZE_NET_API_ID and settings.AUTHORIZE_NET_TRANSACTION_KEY, "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
     fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'invoice']
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
 
+    def test_environment_variables_set(self):
+        self.assertTrue(settings.AUTHORIZE_NET_TRANSACTION_KEY)
+        self.assertTrue(settings.AUTHORIZE_NET_API_ID)
+
     def test_get_checkout_context(self):
         payment_processor = PaymentProcessor() 
         payment_processor.get_checkout_context(self.existing_invoice)
-        # self.assertTrue(payment_processor.merchantAuth.transactionKey)
-        # self.assertTrue(payment_processor.merchantAuth.name)
-        self.assertTrue(True)
+        self.assertTrue(payment_processor.merchantAuth.transactionKey)
+        self.assertTrue(payment_processor.merchantAuth.name)
     
     def test_auth_capture_transaction_success(self):
         payment_processor = PaymentProcessor() 
         payment_processor.get_checkout_context(self.existing_invoice)
 
-        # card_form = VendorCreditCardForm(initial={'card_number': '5424000000000015', 'expire_month': '12', 'expire_year': '2020', 'cvv_number': '999' })
-        # card_form.data = card_form.initial
-        # address_form = VendorAddressForm()
+        billing_form = BillingForm(initial={'card_number': '5424000000000015', 'expire_month': '12', 'expire_year': '2020', 'cvv_number': '999' })
+        billing_form.data = billing_form.initial
 
-        # msg, success = payment_processor.auth_capture(self.existing_invoice, card_form, address_form, None)
-        self.assertTrue(True)
+        transaction_response = payment_processor.auth_capture(self.existing_invoice, billing_form, None)
+        self.assertTrue(transaction_response['success'])
 
     def test_auth_capture_transaction_fail(self):
         # TODO: Implement Test
@@ -181,6 +185,7 @@ class AuthorizeNetProcessorTests(TestCase):
     
     
 
+@skipIf(settings.AUTHORIZE_NET_API_ID and settings.AUTHORIZE_NET_TRANSACTION_KEY, "Strip enviornment variables not set, skipping tests")
 class StripeProcessorTests(TestCase):
 
     def setUp(self):

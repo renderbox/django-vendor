@@ -23,6 +23,10 @@ class PaymentProcessorBase():
     status = None
     invoice = None
     provider = None
+    billing_info = None
+
+    def __init__(self, invoice):
+         self.set_invoice(invoice)
 
     def set_invoice(self, invoice):
         self.invoice = invoice
@@ -37,11 +41,13 @@ class PaymentProcessorBase():
     def amount(self):   # Retrieves the total amount from the invoice
         return 1.00
 
-    def get_checkout_context(self, invoice, **kwargs):
+    def get_checkout_context(self, context={}):
         '''
         The Invoice plus any additional values to include in the payment record.
         '''
-        return {'invoice':invoice}
+        context = context
+        context['invoice'] = self.invoice
+        return context
 
     def get_header_javascript(self):
         """
@@ -103,7 +109,7 @@ class PaymentProcessorBase():
         pass
 
     def set_amount(self, amount):
-        self.status = PurchaseStatus.QUEUED
+        self.status = amount
 
     def process_payment(self, invoice):
         self.status = PurchaseStatus.ACTIVE
