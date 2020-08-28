@@ -21,7 +21,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.merchantAuth.name = settings.AUTHORIZE_NET_API_ID #'79MvGs6X3P'
 
     def process_payment(self):
-        super().process_payment()
         if not self.merchantAuth.name or not self.merchantAuth.transactionKey:
             return "error", False
 
