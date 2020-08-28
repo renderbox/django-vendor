@@ -84,8 +84,12 @@ class PaymentProcessorBase():
         """
         This runs the chain of events in a transaction.
         """
+        self.status = PurchaseStatus.QUEUED
         self.pre_authorization()
+
+        self.status = PurchaseStatus.ACTIVE
         self.process_payment()
+
         self.post_authorization()
 
     def pre_authorization(self):
@@ -100,7 +104,7 @@ class PaymentProcessorBase():
         This is where the core of the payment processing happens.
         """
         # Gateway Transaction goes here...
-        self.status = PurchaseStatus.ACTIVE
+        pass
 
     def post_authorization(self):
         """

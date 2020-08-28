@@ -32,7 +32,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.refId = reference_id
 
     def process_payment(self):
-        super().process_payment()
         if not self.merchantAuth.name or not self.merchantAuth.transactionKey:
             return "error", False
 
