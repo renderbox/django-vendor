@@ -155,7 +155,7 @@ class CreditCardField(forms.CharField):
 
 class VendorCreditCardForm(forms.Form):
     card_number = CreditCardField(placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)
-    name = forms.CharField(required=True, label=_("Card Holder First Name"), max_length=80)
+    full_name = forms.CharField(required=True, label=_("Card Holder First Name"), max_length=80)
     expire_month = forms.ChoiceField(required=True, choices=[(x, x) for x in range(1, 13)])
     expire_year = forms.ChoiceField(required=True, choices=[(x, x) for x in range(datetime.now().year, datetime.now().year + 15)])
     cvv_number = forms.IntegerField(required=True, label=_("CVV Number"), max_value=9999, widget=forms.TextInput(attrs={'size': '4'}))
