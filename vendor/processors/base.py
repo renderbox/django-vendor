@@ -42,7 +42,7 @@ class PaymentProcessorBase():
     def amount(self):   # Retrieves the total amount from the invoice
         return 1.00
 
-    def get_checkout_context(self, context={}):
+    def get_checkout_context(self, request, context={}):
         '''
         The Invoice plus any additional values to include in the payment record.
         '''
