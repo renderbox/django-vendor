@@ -25,7 +25,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.merchantAuth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY#'4tbEK65FB8Tht59Y'
         self.merchantAuth.name = settings.AUTHORIZE_NET_API_ID #'79MvGs6X3P'
 
-    def auth_capture(self, invoice, card, address, kwargs):
+    def auth_capture(self, card, address, kwargs):
         if not self.merchantAuth.name or not self.merchantAuth.transactionKey:
             return "error", False
 
@@ -40,13 +40,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         transactionrequest = apicontractsv1.transactionRequestType()
         transactionrequest.transactionType = AUTHORIZE_CAPUTRE_TRANSACTION
-        transactionrequest.amount = Decimal(invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
+        transactionrequest.amount = Decimal(self.invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
         transactionrequest.payment = payment
 
 
         createtransactionrequest = apicontractsv1.createTransactionRequest()
         createtransactionrequest.merchantAuthentication = self.merchantAuth
-        createtransactionrequest.refId = str("-".join([str(invoice.profile.pk), str(settings.SITE_ID), str(invoice.pk)]))
+        createtransactionrequest.refId = str("-".join([str(self.invoice.profile.pk), str(settings.SITE_ID), str(self.invoice.pk)]))
 
         createtransactionrequest.transactionRequest = transactionrequest
         createtransactioncontroller = createTransactionController(createtransactionrequest)
