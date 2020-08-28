@@ -15,7 +15,7 @@ import dj_database_url
 
 from iso4217 import Currency
 
-from headless import __version__
+from vendor import __version__
 
 BUILD_VERSION = __version__
 
@@ -47,12 +47,12 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'address',
     'core',
-    'vendor',
     'crispy_forms',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'iso4217'
+    'iso4217',
+    'vendor',
 ]
 
 MIDDLEWARE = [

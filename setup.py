@@ -7,9 +7,9 @@
 from os import path
 from setuptools import setup, find_packages
 
-readme_file = path.join(path.dirname(path.abspath(__file__)), 'README.md')
-
 from vendor import __version__
+
+readme_file = path.join(path.dirname(path.abspath(__file__)), 'README.md')
 
 try:
     from m2r import parse_from_file
