@@ -85,10 +85,10 @@ class PaymentProcessorBase():
         """
         This runs the chain of events in a transaction.
         """
-        self.status = PurchaseStatus.QUEUED
+        self.status = PurchaseStatus.QUEUED     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         self.pre_authorization()
 
-        self.status = PurchaseStatus.ACTIVE
+        self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         self.process_payment()
 
         self.post_authorization()
