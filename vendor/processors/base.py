@@ -1,8 +1,6 @@
 """
 Base Payment processor used by all derived processors.
 """
-from copy import deepcopy
-
 import django.dispatch
 
 from vendor.models import Payment
@@ -58,7 +56,6 @@ class PaymentProcessorBase():
         '''
         The Invoice plus any additional values to include in the payment record.
         '''
-        context = deepcopy(context)
         context['invoice'] = self.invoice
         return context
 
