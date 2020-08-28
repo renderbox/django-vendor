@@ -1,7 +1,20 @@
 """
 Base Payment processor used by all derived processors.
 """
+import django.dispatch
+
 from vendor.models import Payment
+from vendor.models.choice import PurchaseStatus
+
+##########
+# SIGNALS
+
+vendor_pre_authorization = django.dispatch.Signal()
+vendor_post_authorization =  django.dispatch.Signal()
+
+
+#############
+# BASE CLASS
 
 class PaymentProcessorBase():
     """
@@ -30,17 +43,21 @@ class PaymentProcessorBase():
         '''
         return {'invoice':invoice}
 
-    def get_head_javascript(self):
+    def get_header_javascript(self):
         """
         Scripts that are expected to show in the top of the template.
-        """
-        pass
 
-    def get_javascript(self):
+        This will return a list of relative static URLs to the scripts.
+        """
+        return []
+
+    def get_footer_javascript(self):
         """
         Scripts added to the bottom of the page in the normal js location.
+
+        This will return a list of relative static URLs to the scripts.
         """
-        pass
+        return []
 
     def get_template(self):
         """
@@ -48,17 +65,32 @@ class PaymentProcessorBase():
         """
         pass
 
+    def authorize(self):
+        """
+        """
+        self.pre_authorization()
+        self.authorization()
+        self.post_authorization()
+
     def pre_authorization(self):
         """
         Called before the authorization begins.
         """
+        vendor_pre_authorization.send(sender=self.__class__, invoice=self.invoice)
+
+    def authorization(self):
+        """
+        Called to handle the authorization.  
+        This is where the core of the payment processing happens.
+        """
+        # Gateway Transaction goes here...
         pass
 
-    def authorize(self):
+    def post_authorization(self):
         """
-        Called to handle the authorization.
+        Called after the authorization is complete.
         """
-        pass
+        vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
 
     def capture(self):
         """
