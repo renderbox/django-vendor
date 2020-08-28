@@ -123,7 +123,6 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertTrue(settings.AUTHORIZE_NET_TRANSACTION_KEY)
         self.assertTrue(settings.AUTHORIZE_NET_API_ID)
 
-
     def test_get_checkout_context(self):
         payment_processor = PaymentProcessor() 
         payment_processor.get_checkout_context(self.existing_invoice)

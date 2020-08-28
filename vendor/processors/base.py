@@ -11,6 +11,7 @@ class PaymentProcessorBase():
     invoice = None
     provider = None
 
+
     def set_invoice(self, invoice):
         self.invoice = invoice
 

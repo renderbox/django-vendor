@@ -11,23 +11,33 @@ from django.conf import settings
 
 class AuthorizeNetProcessor(PaymentProcessorBase):
     AUTHORIZE_CAPUTRE_TRANSACTION = "authCaptureTransaction"
+    REFUND_TRANSACTION = "refundTransaction"
 
-    API_ENDPOINTS = [
-        AUTHORIZE_CAPUTRE_TRANSACTION
-    ]
+    TRANSACTION_TYPE = {
+        AUTHORIZE_CAPUTRE_TRANSACTION: self.auth_capture,
+        REFUND_TRANSACTION: self.refund
+    }
 
+    # TODO: change to setup funcitons
     def __init__(self):
         self.merchantAuth = apicontractsv1.merchantAuthenticationType()
+        self.merchantAuth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY
+        self.merchantAuth.name = settings.AUTHORIZE_NET_API_ID
 
     def __str__(self):
         return 'Authorize.Net'
 
-    def get_checkout_context(self, invoice, **kwargs):
+    def get_checkout_context(self, invoice, request,  **kwargs):
         '''
         The Invoice plus any additional values to include in the payment record.
         '''
-        self.merchantAuth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY
-        self.merchantAuth.name = settings.AUTHORIZE_NET_API_ID
+        context = super().get_context_data(**kwargs)
+
+        context['invoice'] = invoice
+        context['billing_form'] = BillingForm()
+
+        return context
+
 
     def init_transaction(self, reference_id):
         self.transaction = apicontractsv1.createTransactionRequest()
@@ -38,14 +48,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def init_transaction_request(self, transaction_type, amount):
         self.transaction_request = apicontractsv1.transactionRequestType()
         self.transaction_request.transactionType = transaction_type
-        self.transaction_request.amount = Decimal(
-            amount).quantize(Decimal('.00'), rounding=ROUND_DOWN)
+        self.transaction_request.amount = Decimal(amount).quantize(Decimal('.00'), rounding=ROUND_DOWN)
 
     def set_payment_type_credit_card(self, card):
         creditCard = apicontractsv1.creditCardType()
         creditCard.cardNumber = str(card.data['card_number'])
-        creditCard.expirationDate = str(
-            "-".join([card.data['expire_year'], card.data['expire_month']]))
+        creditCard.expirationDate = str("-".join([card.data['expire_year'], card.data['expire_month']]))
         creditCard.cardCode = str(card.data['cvv_number'])
         return creditCard
 
@@ -157,7 +165,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         return transaction_response
 
-    def auth_capture(self, invoice, billing_info, kwargs):
+    def auth_capture(self, invoice, kwargs):
         if not self.merchantAuth.name or not self.merchantAuth.transactionKey:
             return "error", False
 
@@ -191,3 +199,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         transaction_response = self.check_response(response)
         return transaction_response
+
+    def refund(self, invoice):
+        pass
+
+    def process_payment(self, invoice, request, transaction_type):
+        self.TRANSACTION_TYPE[transaction_type](invoice, request)
