@@ -22,7 +22,7 @@ from vendor.processors import PaymentProcessor
 from django.views.generic.edit import FormView
 from .forms import VendorAddressForm, VendorCreditCardForm
 
-payment_processor = PaymentProcessor()               # The Payment Processor configured in settings.py
+# payment_processor = PaymentProcessor()               # The Payment Processor configured in settings.py
 
 class CartView(LoginRequiredMixin, DetailView):
     '''
@@ -75,20 +75,21 @@ class CheckoutView(TemplateView):
     address_form_class = VendorAddressForm
     card_form_class = VendorCreditCardForm
     template_name = "vendor/checkout.html"
-    payment_processor = PaymentProcessor()
+    payment_processor = PaymentProcessor
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        profile = context['view'].request.user.customer_profile.get(site=settings.SITE_ID) 
+        profile = self.request.user.customer_profile.get(site=settings.SITE_ID) 
         invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
-        context['invoice'] = invoice
+        
+        processor = self.payment_processor(invoice)
 
-        # TODO: Set PaymentProcessor Context. It should set the address form and card form?
-        # ctx = payment_processor.get_checkout_context(order, customer_id=str(request.user.pk))
+        context.update(processor.get_checkout_context(context=context))
+
+        # TODO: Set below in the PaymentProcessor Context. It should set the address form and card form?
         context['address_form'] = self.address_form_class(prefix='addr')
         context['card_form'] = self.card_form_class(prefix='card')
-        self.payment_processor.get_checkout_context(invoice)
 
         return context
 
@@ -101,7 +102,7 @@ class CheckoutView(TemplateView):
         if not address_form.is_valid() or not card_form.is_valid():
             return render(request, self.template_name, {'address_form':address_form, 'card_form': card_form, 'invoice': invoice})
 
-        msg, success = payment_processor.auth_capture(invoice, card_form, address_form, None)
+        msg, success = self.payment_processor().auth_capture(invoice, card_form, address_form, None)
 
         messages.info(self.request, msg)
         if success:
