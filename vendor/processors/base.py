@@ -67,6 +67,7 @@ class PaymentProcessorBase():
 
     def authorize(self):
         """
+        This runs the chain of events in a transaction.
         """
         self.pre_authorization()
         self.authorization()
