@@ -15,7 +15,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
 
     def processor_setup(self):
-        # self.transaction_switch = {
+        # self.transaction_switch = {                                       # TODO: This should be handled in the process_payment
         #     self.AUTHORIZE_CAPUTRE_TRANSACTION: self.auth_capture,
         #     self.REFUND_TRANSACTION: self.refund
         # }
