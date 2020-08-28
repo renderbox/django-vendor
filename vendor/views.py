@@ -140,8 +140,14 @@ class CheckoutView(TemplateView):
         #     new_payment.result = "\n".join([ str(d) for d in suc.items() ]).replace('(','{').replace(')','}')
         #     new_payment.save()
 
-        msg, success = self.payment_processor(invoice).auth_capture(card_form, address_form, None)
+        processor = self.payment_processor(invoice)
+        processor.payment_info = card_form.data
+        processor.billing_address = address_form.data       # TODO: This should come from the invoice
+        msg, success = processor.auth_capture()
 
+        messages.info(self.request, msg)
+
+        if success:
             return redirect(reverse('vendor:checkout'))
         else:
             return render(request, self.template_name, {'billing_form': billing_form, 'invoice': invoice})

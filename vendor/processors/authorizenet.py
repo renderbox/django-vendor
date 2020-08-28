@@ -31,6 +31,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.merchantAuthentication = self.merchantAuth
         self.transaction.refId = reference_id
 
+    def authorization(self):
+        if not self.merchantAuth.name or not self.merchantAuth.transactionKey:
+            return "error", False
+
     def init_transaction_request(self, transaction_type, amount):
         self.transaction_request = apicontractsv1.transactionRequestType()
         self.transaction_request.transactionType = transaction_type
@@ -38,10 +42,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def set_payment_type_credit_card(self, card):
         creditCard = apicontractsv1.creditCardType()
-        creditCard.cardNumber = str(card.data['card_number'])
-        creditCard.expirationDate = str("-".join([card.data['expire_year'], card.data['expire_month']]))
-        creditCard.cardCode = str(card.data['cvv_number'])
+        creditCard.cardNumber = str(self.payment_info['card-card_number'])
+        creditCard.expirationDate = str("-".join([self.payment_info['card-expire_year'], self.payment_info['card-expire_month']]))
+        creditCard.cardCode = str(self.payment_info['card-cvv_number'])
         return creditCard
+
 
     def set_transaction_request_payment(self, payment_data):
         payment = apicontractsv1.paymentType()
