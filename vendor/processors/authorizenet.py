@@ -17,23 +17,18 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def __init__(self):
         self.merchantAuth = apicontractsv1.merchantAuthenticationType()
-
-    def get_checkout_context(self, invoice, **kwargs):
-        '''
-        The Invoice plus any additional values to include in the payment record.
-        '''
-        self.merchantAuth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY#'4tbEK65FB8Tht59Y'
+        self.merchantAuth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY #'4tbEK65FB8Tht59Y'
         self.merchantAuth.name = settings.AUTHORIZE_NET_API_ID #'79MvGs6X3P'
 
-    def auth_capture(self, card, address, kwargs):
+    def authorization(self):
         if not self.merchantAuth.name or not self.merchantAuth.transactionKey:
             return "error", False
 
         creditCard = apicontractsv1.creditCardType()
 
-        creditCard.cardNumber = str(card.data['card-card_number'])
-        creditCard.expirationDate = str("-".join([card.data['card-expire_year'],card.data['card-expire_month']]))
-        creditCard.cardCode = str(card.data['card-cvv_number'])
+        creditCard.cardNumber = str(self.payment_info['card-card_number'])
+        creditCard.expirationDate = str("-".join([self.payment_info['card-expire_year'], self.payment_info['card-expire_month']]))
+        creditCard.cardCode = str(self.payment_info['card-cvv_number'])
 
         payment = apicontractsv1.paymentType()
         payment.creditCard = creditCard
