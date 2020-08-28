@@ -26,7 +26,7 @@ class VendorAddressForm(forms.Form):
     address_line_2 = forms.CharField(label=_('Address Line 2'), max_length=180)
     city = forms.CharField(label=_('City'))
     state = forms.ChoiceField(choices=[(state.pk, state.name) for state in [ s for s in State.objects.all()]], required=True)
-    postal_code = forms.IntegerField(label=_('Postal Code'), min_value=1000, max_value=99999)
+    postal_code = forms.IntegerField(label=_('Postal Code'), min_value=10000, max_value=99999)
     country = forms.ChoiceField(label=_('Country'), choices=[(country.pk, country.name) for country in [c for c in Country.objects.all()]])
 
 

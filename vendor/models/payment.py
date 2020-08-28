@@ -13,7 +13,7 @@ class Payment(models.Model):
     - Gift cards can be used as payments
     - Discounts are Payment credits
     '''
-    invoice = models.ForeignKey("vendor.Invoice", verbose_name=_("Invoice"), on_delete=models.CASCADE, related_name="payments")
+    invoice = models.ForeignKey("vendor.invoice", verbose_name=_("Invoice"), on_delete=models.CASCADE, related_name="payments")
     created = models.DateTimeField("date created", auto_now_add=True)
     transaction = models.CharField(_("Transaction ID"), max_length=50)
     provider = models.CharField(_("Payment Provider"), max_length=16)

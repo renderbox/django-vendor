@@ -130,8 +130,8 @@ class AuthorizeNetProcessorTests(TestCase):
         billing_form = BillingForm(initial={'card_number': '5424000000000015', 'expire_month': '12', 'expire_year': '2020', 'cvv_number': '999' })
         billing_form.data = billing_form.initial
 
-        msg, success = payment_processor.auth_capture(self.existing_invoice, billing_form, None)
-        self.assertTrue(success)
+        transaction_response = payment_processor.auth_capture(self.existing_invoice, billing_form, None)
+        self.assertTrue(transaction_response['success'])
 
     def test_auth_capture_transaction_fail(self):
         # TODO: Implement Test

@@ -99,10 +99,10 @@ class CheckoutView(TemplateView):
         if not billing_form.is_valid():
             return render(request, self.template_name, {'billing_form': billing_form, 'invoice': invoice})
 
-        msg, success = self.payment_processor.auth_capture(invoice, billing_form, None)
+        transaction_response = self.payment_processor.auth_capture(invoice, billing_form, None)
 
-        messages.info(self.request, msg)
-        if success:
+        messages.info(self.request, transaction_response['msg'])
+        if transaction_response['success']:
             return redirect(reverse('vendor:checkout'))
         else:
             return render(request, self.template_name, {'billing_form': billing_form, 'invoice': invoice})
