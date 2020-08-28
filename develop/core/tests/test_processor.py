@@ -1,7 +1,9 @@
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse
+from unittest import skipIf
 
 from core.models import Product
 from vendor.models import Invoice
@@ -110,12 +112,17 @@ TEST_PAYLOAD = {
         }
     }
 }
-
+@skipIf(settings.AUTHORIZE_NET_API_ID and settings.AUTHORIZE_NET_TRANSACTION_KEY, "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
     fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'invoice']
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
+
+    def test_environment_variables_set(self):
+        self.assertTrue(settings.AUTHORIZE_NET_TRANSACTION_KEY)
+        self.assertTrue(settings.AUTHORIZE_NET_API_ID)
+
 
     def test_get_checkout_context(self):
         payment_processor = PaymentProcessor() 
@@ -179,6 +186,7 @@ class AuthorizeNetProcessorTests(TestCase):
     
     
 
+@skipIf(settings.AUTHORIZE_NET_API_ID and settings.AUTHORIZE_NET_TRANSACTION_KEY, "Strip enviornment variables not set, skipping tests")
 class StripeProcessorTests(TestCase):
 
     def setUp(self):
