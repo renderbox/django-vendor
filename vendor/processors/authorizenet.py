@@ -190,6 +190,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def refund(self, invoice):
         pass
 
-    def process_payment(self, invoice, transaction_type, **kwargs):
+    def process_payment(self, transaction_type):
         self.setUp()
-        self.TRANSACTION_TYPE[transaction_type](invoice, kwargs)
+        self.transaction_switch[transaction_type]()

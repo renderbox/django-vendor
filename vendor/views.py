@@ -112,8 +112,8 @@ class CheckoutView(TemplateView):
         processor = self.payment_processor(invoice)
         processor.billing_info = billing_form
         # processor.billing_address = address_form.data       # TODO: This should come from the invoice
-        processor.setUp()
-        transaction_response = processor.auth_capture()
+        # processor.setUp()
+        transaction_response = processor.process_payment(processor.AUTHORIZE_CAPUTRE_TRANSACTION)
 
         messages.info(self.request, transaction_response['msg'])
         if transaction_response['success']:
