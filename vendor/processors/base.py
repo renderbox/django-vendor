@@ -26,6 +26,7 @@ class PaymentProcessorBase(object):
     payment_info = {}
     billing_address = {}
     transaction_token = None
+    transaction_result = None
 
     def __init__(self, invoice):
         """
@@ -58,6 +59,10 @@ class PaymentProcessorBase(object):
     def amount(self):   # Retrieves the total amount from the invoice
         self.invoice.update_totals()
         return self.invoice.total
+
+    def get_transaction_id(self):
+        # return str("-".join([str(self.invoice.profile.pk), str(settings.SITE_ID), str(self.invoice.pk)]))
+        return "TRANS:{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk)
 
     #-------------------
     # Data for the View
