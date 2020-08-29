@@ -59,6 +59,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_request.payment = payment
 
     def set_transaction_request(self):
+        """
+        Adds the Transaction Request Type to the Transaction
+        """
         self.transaction.transactionRequest = self.transaction_request
 
     def init_transaction_controller(self):
