@@ -22,6 +22,8 @@ class Payment(models.Model):
     billing_address = models.ForeignKey("vendor.Address", verbose_name=_("payments"), on_delete=models.CASCADE, blank=True, null=True)
     result = models.TextField(_("Result"), blank=True, null=True)
     success = models.BooleanField(_("Successful"), default=False)
+    payee_full_name = models.CharField(_("Name on Card"), max_length=50)
+    payee_company = models.CharField(_("Company"), max_length=50, blank=True, null=True)
 
 
 # class Coupon(models.Model):

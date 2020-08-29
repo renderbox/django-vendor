@@ -107,9 +107,17 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         createtransactionrequest.refId = str("-".join([str(self.invoice.profile.pk), str(settings.SITE_ID), str(self.invoice.pk)]))
 
     def set_transaction_request_billing(self):
+        """
+        Used to help improve security
+        """
+        # TODO: split the full name early and do a check to see if it's more
+        # than one name.  If it's just one, make it the last.  If it's more
+        # than 2, the last entry is the last name, the rest get joined together
+        # as the first name.
+
         billing_address = apicontractsv1.customerAddressType()
-        billing_address.firstName = "Ellen"
-        billing_address.lastName = "Johnson"
+        billing_address.firstName = "Ellen"             # " ".join(str(self.payment.payee_full_name).split(" ")[:-1])
+        billing_address.lastName = "Johnson"            # str(self.payment.payee_full_name).split(" ")[-1]
         billing_address.company = ""
         billing_address.address = str(",".join([self.billing_address.get('address_line_1', ""), self.billing_address.get('address_line_2', "")]))
         billing_address.city = str(self.billing_address.get("city", ""))
