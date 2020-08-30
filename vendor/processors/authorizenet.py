@@ -40,21 +40,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def get_checkout_context(self, request=None, context={}):
         context = super().get_checkout_context(context=context)
-        # TODO: request not used correctly
-        if request:
-            # Alternative to use request, down side you repeat the form validations
-            # self.payment_info = CreditCardForm(request.POST, prefix='credit-card')
-            # self.billing_address = BillingAddressForm(request.POST, prefix='billing-address')
-            # self.payment_info.is_valid()
-            # self.billing_address.is_valid()
-            # context['credit_card_form'] = self.payment_info
-            # context['billing_address_form'] = self.billing_address
-            context['credit_card_form'] = self.payment_info
-            context['billing_address_form'] = self.billing_address
-        else:
-            # # TODO: prefix should be defined somewhere
-            context['credit_card_form'] = CreditCardForm(prefix='credit-card')
-            context['billing_address_form'] = BillingAddressForm(prefix='billing-address')
+        # TODO: prefix should be defined somewhere
+        context['credit_card_form'] = CreditCardForm(prefix='credit-card')
+        context['billing_address_form'] = BillingAddressForm(prefix='billing-address')
         return context
     
     def processor_setup(self):
@@ -214,10 +202,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def process_form(self, form_data):
         self.payment_info = CreditCardForm(dict([d for d in form_data.items() if 'credit-card' in d[0]]), prefix='credit-card')
         self.billing_address = BillingAddressForm(dict([d for d in form_data.items() if 'billing-address' in d[0]]), prefix='billing-address')
-        if self.billing_address.is_valid() and self.payment_info.is_valid():
-            return True
-        else:
-            return False
+        
 
     def process_payment(self, request):
         if not self.merchant_auth.name or not self.merchant_auth.transactionKey:
@@ -226,10 +211,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             return
         
         # Process form data to set up transaction
-        if not self.process_form(request.POST):
-            self.transaction_result = False
-            self.transaction_response = {'msg': "Make sure you run processor_setup before process_payment and that envarionment keys are set"}
-            return
+        self.process_form(request.POST)
 
         # Init transaction
         self.transaction = self.create_transaction()

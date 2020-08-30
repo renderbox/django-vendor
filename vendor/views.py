@@ -73,8 +73,8 @@ class CheckoutView(TemplateView):
     Review items and submit Payment
     '''
     template_name = "vendor/checkout.html"
-    billing_address_form_class = BillingAddressForm
-    card_form_class = CreditCardForm
+    # billing_address_form_class = BillingAddressForm
+    # card_form_class = CreditCardForm
     # payment_processor = PaymentProcessor
 
     # def get_context_data(self, **kwargs):
@@ -105,23 +105,25 @@ class CheckoutView(TemplateView):
 
         return render(request, self.template_name, context)
 
-    # def get(self, request, *args, **kwargs):
-    #     profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
-    #     invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
-
-    #     processor = self.payment_processor(invoice)
-
-    #     context.update(processor.get_checkout_context(context=context))
-
-    #     context['billing_form'] = self.billing_form_class()
-
-    #     return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         profile = request.user.customer_profile.get(site=settings.SITE_ID) 
         invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
+                
+        credit_card_form = CreditCardForm(request.POST, prefix='credit-card')
+        billing_address_form = BillingAddressForm(request.POST, prefix='billing-address')
+        
+        if not (billing_address_form.is_valid() or credit_card_form.is_valid()):
+            return render(request, self.template_name, processor.get_checkout_context(context))
+        
+        processor = payment_processor(invoice)
 
+        processor.process_payment(request)
+        if processor.transaction_result:
+            return redirect('purchase-summary')
+        else:
+            return render(request, self.template_name, processor.get_checkout_context(request, context))
         # billing_form = self.billing_form_class(request.POST)
         # if not billing_form.is_valid():
         #     return render(request, self.template_name, {'billing_form': billing_form, 'invoice': invoice})
@@ -152,12 +154,6 @@ class CheckoutView(TemplateView):
         #     new_payment.result = "\n".join([ str(d) for d in suc.items() ]).replace('(','{').replace(')','}')
         #     new_payment.save()
 
-        processor = payment_processor(invoice)
-        processor.process_payment(request)
-        if processor.transaction_result:
-            return redirect('purchase-summary')
-        else:
-            return render(request, self.template_name, processor.get_checkout_context(request, context))
 
         processor = self.payment_processor(invoice)
         processor.payment_info = card_form.data
