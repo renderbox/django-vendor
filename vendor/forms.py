@@ -5,6 +5,7 @@ from django.utils.translation import ugettext as _
 
 from address.models import Country, State 
 from .models import OrderItem, Address
+from vendor.processors.base import PaymentTypes
 
 
 # class AddToCartModelForm(forms.ModelForm):
@@ -21,15 +22,14 @@ from .models import OrderItem, Address
 # #         model = Refund
 # #         fields = ['reason']
 
-class VendorAddressForm(forms.ModelForm):
+class BillingAddressForm(forms.ModelForm):
+    company = forms.CharField(label=_('Company'), required=False)
+
+    field_order = ['name', 'company', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
     class Meta:
         model = Address
-        fields = ['name', 'address_1', 'address_2', 'locality', 'country', 'postal_code']
+        fields = ['name', 'company', 'address_1', 'address_2', 'locality', 'state', 'country', 'postal_code']
 
-class VendorSimpleCreditCardForm(forms.Form):
-    name_on_card = forms.CharField(label=_('Name'), max_length=100)
-    card_number = forms.CharField(label=_('Card Number'), max_length=8)
-    card_cc = forms.CharField(label=_('Security Number'), max_length=4)
 
 class CreditCardField(forms.CharField):
 
@@ -149,19 +149,20 @@ class CreditCardField(forms.CharField):
         return checksum % 10 == 0
 
 
-class VendorCreditCardForm(forms.Form):
+class CreditCardForm(forms.Form):
+    full_name = forms.CharField(required=True, label=_("Card Holder"), max_length=80)
     card_number = CreditCardField(placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)
-    full_name = forms.CharField(required=True, label=_("Card Holder First Name"), max_length=80)
     expire_month = forms.ChoiceField(required=True, choices=[(x, x) for x in range(1, 13)])
     expire_year = forms.ChoiceField(required=True, choices=[(x, x) for x in range(datetime.now().year, datetime.now().year + 15)])
     cvv_number = forms.IntegerField(required=True, label=_("CVV Number"), max_value=9999, widget=forms.TextInput(attrs={'size': '4'}))
 
     def __init__(self, *args, **kwargs):
+        self.payment_type = PaymentTypes.CREDIT_CARD
         self.payment_data = kwargs.pop('payment_data', None)
-        super(VendorCreditCardForm, self).__init__(*args, **kwargs)
+        super(CreditCardForm, self).__init__(*args, **kwargs)
 
     def clean(self):
-        cleaned_data = super(VendorCreditCardForm, self).clean()
+        cleaned_data = super(CreditCardForm, self).clean()
         expire_month = cleaned_data.get('expire_month')
         expire_year = cleaned_data.get('expire_year')
 
@@ -182,19 +183,3 @@ class VendorCreditCardForm(forms.Form):
             self._errors["expire_year"] = self.error_class([_("The expiration date you entered is in the past.")])
 
         return cleaned_data
-
-
-class BillingForm(VendorAddressForm, VendorCreditCardForm):
-    field_order = [
-        'address_line_1',
-        'address_line_2',
-        'city',          
-        'state',         
-        'postal_code',   
-        'country',  
-        'name',  
-        'card_number', 
-        'expire_month',
-        'expire_year',
-        'cvv_number'
-    ]
