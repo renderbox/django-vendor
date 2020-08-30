@@ -53,6 +53,7 @@ class Address(models.Model):
     address_1 = models.CharField(_("Address 1"), max_length=40, blank=False)
     address_2 = models.CharField(_("Address 2"), max_length=40, blank=True, null=True)
     locality = models.CharField(_("City"), max_length=40, blank=False)
+    state = models.CharField(_("State"), max_length=40, blank=False)
     country = models.IntegerField(_("Country"), choices=COUNTRY_CHOICE, default=COUNTRY_DEFAULT)
     postal_code = models.CharField(_("Postal Code"), max_length=16, blank=True)
 
