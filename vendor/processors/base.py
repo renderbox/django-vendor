@@ -3,8 +3,12 @@ Base Payment processor used by all derived processors.
 """
 import django.dispatch
 
+from copy import deepcopy
+from django.conf import settings
+from enum import Enum, auto
 from vendor.models import Payment
 from vendor.models.choice import PurchaseStatus
+
 
 ##########
 # SIGNALS
@@ -12,6 +16,11 @@ from vendor.models.choice import PurchaseStatus
 vendor_pre_authorization = django.dispatch.Signal()
 vendor_post_authorization =  django.dispatch.Signal()
 
+class PaymentTypes(Enum):
+    CREDIT_CARD = auto()
+    BANK_ACCOUNT = auto()
+    PAY_PAL = auto()
+    MOBILE = auto()
 
 #############
 # BASE CLASS
@@ -27,6 +36,8 @@ class PaymentProcessorBase(object):
     billing_address = {}
     transaction_token = None
     transaction_result = None
+    transaction_response = {}
+
 
     def __init__(self, invoice):
         """
@@ -61,7 +72,6 @@ class PaymentProcessorBase(object):
         return self.invoice.total
 
     def get_transaction_id(self):
-        # return str("-".join([str(self.invoice.profile.pk), str(settings.SITE_ID), str(self.invoice.pk)]))
         return "TRANS:{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk)
 
     #-------------------
@@ -71,6 +81,7 @@ class PaymentProcessorBase(object):
         '''
         The Invoice plus any additional values to include in the payment record.
         '''
+        # context = deepcopy(context)
         context['invoice'] = self.invoice
         return context
 
