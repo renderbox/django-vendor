@@ -44,6 +44,7 @@ class PaymentProcessorBase(object):
         This should not be overriden.  Override one of the methods it calls if you need to.
         """
         self.set_invoice(invoice)
+        self.provider = self.__class__.__name__
         self.processor_setup()
 
     def processor_setup(self):
@@ -66,6 +67,9 @@ class PaymentProcessorBase(object):
                             invoice=self.invoice
                             )
         return payment
+
+    def save_payment_transaction(self):
+        pass
 
     def amount(self):   # Retrieves the total amount from the invoice
         self.invoice.update_totals()

@@ -199,10 +199,21 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         else:
             self.transaction_response['msg'] = 'Null Response.'
 
-    def process_form(self, form_data):
+    def get_form_data(self, form_data):
         self.payment_info = CreditCardForm(dict([d for d in form_data.items() if 'credit-card' in d[0]]), prefix='credit-card')
         self.billing_address = BillingAddressForm(dict([d for d in form_data.items() if 'billing-address' in d[0]]), prefix='billing-address')
         
+
+    def save_payment_transaction(self):
+        payment = self.get_payment_model()        
+        payment.success = self.transaction_result
+        payment.transaction = self.transaction_response.get('trans_id', "Transaction Faild")
+        payment.result = "\n".join([ str(d) for d in self.transaction_response.items() ]).replace('(','{').replace(')','}')
+        payment.payee_full_name = self.payment_info.data.get('credit-card-full_name')
+        payment.payee_company = self.billing_address.get('company')
+        billing_address = self.billing_address.save()
+        payment.billing_address = billing_address
+        payment.save()
 
     def process_payment(self, request):
         if not self.merchant_auth.name or not self.merchant_auth.transactionKey:
@@ -211,7 +222,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             return
         
         # Process form data to set up transaction
-        self.process_form(request.POST)
+        self.get_form_data(request.POST)
 
         # Init transaction
         self.transaction = self.create_transaction()
@@ -231,3 +242,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         # You execute and get the response
         response = self.controller.getresponse()
         self.transaction_response = self.check_response(response)
+
+        self.save_payment_transaction()
+
+
+        

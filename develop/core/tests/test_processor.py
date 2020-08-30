@@ -7,7 +7,7 @@ from unittest import skipIf
 
 from core.models import Product
 from vendor.models import Invoice
-from vendor.forms import CreditCardForm, BillingAddressForm, BillingForm
+from vendor.forms import CreditCardForm, BillingAddressForm
 
 from vendor.processors import PaymentProcessor
 
@@ -112,7 +112,7 @@ TEST_PAYLOAD = {
         }
     }
 }
-@skipIf(settings.AUTHORIZE_NET_API_ID and settings.AUTHORIZE_NET_TRANSACTION_KEY, "Authorize.Net enviornment variables not set, skipping tests")
+@skipIf((settings.AUTHORIZE_NET_API_ID or settings.AUTHORIZE_NET_TRANSACTION_KEY) == None, "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
     fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'invoice']
 
@@ -120,17 +120,28 @@ class AuthorizeNetProcessorTests(TestCase):
         self.existing_invoice = Invoice.objects.get(pk=1)
 
     def test_environment_variables_set(self):
-        self.assertTrue(settings.AUTHORIZE_NET_TRANSACTION_KEY)
-        self.assertTrue(settings.AUTHORIZE_NET_API_ID)
+        self.assertIsNotNone(settings.AUTHORIZE_NET_TRANSACTION_KEY)
+        self.assertIsNotNone(settings.AUTHORIZE_NET_API_ID)
 
-    def test_get_checkout_context(self):
-        payment_processor = PaymentProcessor(invoice=self.existing_invoice) 
-        payment_processor.get_checkout_context()
-        
-        self.assertTrue(payment_processor.merchantAuth.transactionKey)
-        self.assertTrue(payment_processor.merchantAuth.name)
+    def test_processor_initialization_success(self):
+        processor = PaymentProcessor(self.existing_invoice)
+
+        self.assertEquals(processor.provider, 'AuthorizeNetProcessor')
+        self.assertIsNotNone(processor.invoice)
+        self.assertIsNotNone(processor.merchant_auth)
+        self.assertIsNotNone(processor.merchant_auth.transactionKey)
+        self.assertIsNotNone(processor.merchant_auth.name)
     
-    def test_auth_capture_transaction_success(self):
+    
+    def test_get_checkout_context(self):
+        context = {}
+        payment_processor = PaymentProcessor(invoice=self.existing_invoice) 
+        context = payment_processor.get_checkout_context()
+        
+        self.assertContains('credit-card-form', context)
+        self.assertContains('billing-address-form', context)
+    
+    def test_process_payment_transaction_success(self):
         """
         By passing in the invoice, setting the payment info and billing 
         address, process the payment and make sure it succeeds.
