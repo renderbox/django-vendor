@@ -1,86 +1,139 @@
 """
 Payment processor for Authorize.net.
 """
-from .base import PaymentProcessorBase
-
+from django.conf import settings
 from authorizenet import apicontractsv1
 from authorizenet.apicontrollers import *
-from decimal import *
-from django.conf import settings
+from decimal import Decimal, ROUND_DOWN
 
+from .base import PaymentProcessorBase, PaymentTypes
+
+from vendor.forms import CreditCardForm, BillingAddressForm
 
 class AuthorizeNetProcessor(PaymentProcessorBase):
-    AUTHORIZE_CAPUTRE_TRANSACTION = "authCaptureTransaction"
-    REFUND_TRANSACTION = "refundTransaction"
+    """
+    Implementation of Authoirze.Net SDK
+    https://apitest.authorize.net/xml/v1/schema/AnetApiSchema.xsd
+    """
+    TransactionTypes = [
+        "authOnlyTransaction",
+        "authCaptureTransaction",
+        "captureOnlyTransaction",
+        "refundTransaction",
+        "priorAuthCaptureTransaction",
+        "voidTransaction",
+        "getDetailsTransaction",
+        "authOnlyContinueTransaction",
+        "authCaptureContinueTransaction"
+    ]
 
-
-    def processor_setup(self):
-        # self.transaction_switch = {                                       # TODO: This should be handled in the process_payment
-        #     self.AUTHORIZE_CAPUTRE_TRANSACTION: self.auth_capture,
-        #     self.REFUND_TRANSACTION: self.refund
-        # }
-        self.merchantAuth = apicontractsv1.merchantAuthenticationType()
-        self.merchantAuth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY
-        self.merchantAuth.name = settings.AUTHORIZE_NET_API_ID
-
+    """
+    Controller executes the transaction, that process a transaction type
+    """
+    controller = None
+    transaction = None
+    merchant_auth = None
+    transaction_type = None
+    
     def __str__(self):
         return 'Authorize.Net'
 
-    #---------------------
-    # Start the trancation
+    def get_checkout_context(self, request=None, context={}):
+        context = super().get_checkout_context(context=context)
+        # TODO: request not used correctly
+        if request:
+            # Alternative to use request, down side you repeat the form validations
+            # self.payment_info = CreditCardForm(request.POST, prefix='credit-card')
+            # self.billing_address = BillingAddressForm(request.POST, prefix='billing-address')
+            # self.payment_info.is_valid()
+            # self.billing_address.is_valid()
+            # context['credit_card_form'] = self.payment_info
+            # context['billing_address_form'] = self.billing_address
+            context['credit_card_form'] = self.payment_info
+            context['billing_address_form'] = self.billing_address
+        else:
+            # # TODO: prefix should be defined somewhere
+            context['credit_card_form'] = CreditCardForm(prefix='credit-card')
+            context['billing_address_form'] = BillingAddressForm(prefix='billing-address')
+        return context
+    
+    def processor_setup(self):
+        """
+        Merchant Information needed to aprove the transaction. 
+        """
+        if not (settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID):
+            raise ValueError
+        self.merchant_auth = apicontractsv1.merchantAuthenticationType()
+        self.merchant_auth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY
+        self.merchant_auth.name = settings.AUTHORIZE_NET_API_ID
+        self.init_payment_type_switch()
 
-    def init_transaction(self):
+    def init_payment_type_switch(self):
+        """
+        Initializes the Payment Types create functions
+        """
+        self.payment_type_switch = {
+            PaymentTypes.CREDIT_CARD: self.create_credit_card_payment,
+            PaymentTypes.BANK_ACCOUNT: self.create_bank_account_payment,
+            PaymentTypes.PAY_PAL: self.create_pay_pay_payment,
+            PaymentTypes.MOBILE: self.create_mobile_payment,
+        }
+
+    def create_transaction(self):
         """
         This creates the main transaction to be processed.
         """
-        self.transaction = apicontractsv1.createTransactionRequest()
-        self.transaction.merchantAuthentication = self.merchantAuth
-        self.transaction.refId = self.get_transaction_id()
+        transaction = apicontractsv1.createTransactionRequest()
+        transaction.merchantAuthentication = self.merchant_auth
+        transaction.refId = self.get_transaction_id()
+        return transaction
 
-    def init_transaction_request(self):
+    def create_transaction_type(self):
         """
-        This holds the 
-        Billing
+        Creates the transaction type instance with the amount
         """
-        self.transaction_request = apicontractsv1.transactionRequestType()
-        self.transaction_request.transactionType = self.AUTHORIZE_CAPUTRE_TRANSACTION
-        self.transaction_request.amount = Decimal(self.invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
+        transaction_type = apicontractsv1.transactionRequestType()
+        transaction_type.transactionType = settings.AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT
+        transaction_type.amount = Decimal(self.invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
+        return transaction_type
 
-    def set_payment_type_credit_card(self):
+    def create_credit_card_payment(self):
+        """
+        Creates and credit card payment type instance form the payment information set. 
+        """
         creditCard = apicontractsv1.creditCardType()
-        creditCard.cardNumber = str(self.payment_info['card-card_number'])
-        creditCard.expirationDate = str("-".join([self.payment_info['card-expire_year'], self.payment_info['card-expire_month']]))
-        creditCard.cardCode = str(self.payment_info['card-cvv_number'])
+        creditCard.cardNumber = self.payment_info.data.get('credit-card-card_number')
+        creditCard.expirationDate = "-".join([self.payment_info.data.get('credit-card-expire_year'), self.payment_info.data.get('credit-card-expire_month')])
+        creditCard.cardCode = self.payment_info.data.get('credit-card-cvv_number')
         return creditCard
 
-    def set_transaction_request_payment(self):
+    def create_bank_account_payment(self):
+        raise NotImplementedError
+
+    def create_pay_pay_payment(self):
+        raise NotImplementedError
+
+    def create_mobile_payment(self):
+        raise NotImplementedError
+
+    def create_payment(self):
+        """
+        Creates a payment instance acording to the billing information captured
+        """
         payment = apicontractsv1.paymentType()
-        payment.creditCard = self.set_payment_type_credit_card()
-        self.transaction_request.payment = payment
-
-    def set_transaction_request(self):
-        """
-        Adds the Transaction Request Type to the Transaction
-        """
-        self.transaction.transactionRequest = self.transaction_request
-
-    def init_transaction_controller(self):
-        self.transaction_controller = createTransactionController(self.transaction)         # TODO: Not sure where the fucntion is declared
-
-    def execute_transaction(self):
-        """
-        This is where the call to Authorize.net is made.
-        """
-        self.transaction_controller.execute()
-        return self.transaction_controller.getresponse()
+        payment.creditCard = self.payment_type_switch[self.payment_info.payment_type]()
+        return payment
 
     def set_transaction_request_settings(self, settings):
-        pass
+        raise NotImplementedError
 
     def set_transaction_request_client_ip(self, client_ip):
-        pass
+        raise NotImplementedError
 
-    def init_line_item(self, item):
+    def create_line_item(self, item):
+        """
+        Create a single line item (products) that is attached to a line item array
+        """
         line_item = apicontractsv1.lineItemType()
         line_item.itemId = str(item.pk)
         line_item.name = item.name
@@ -89,110 +142,110 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         line_item.unitPrice = str(item.price)
         return line_item
 
-    def set_transaction_request_line_items(self, items):
+    def create_line_item_array(self, items):
+        """
+        Creates a list o line items(products) that are attached to the transaction type
+        """
         line_items = apicontractsv1.ArrayOfLineItem()
         for item in items:
-            line_items.append(self.init_line_item(item))
-        self.transaction_request.lineItems = line_items
+            line_items.append(self.create_line_item(item))
+        return line_items
 
-    def set_transaction_request_tax(self, tax):
-        transactionrequest = apicontractsv1.transactionRequestType()
-        transactionrequest.transactionType = AUTHORIZE_CAPUTRE_TRANSACTION
-        transactionrequest.amount = Decimal(self.invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
-        transactionrequest.payment = payment
+    def create_tax(self, tax):
+        raise NotImplementedError
 
-    def set_transaction_request_shipping(self, shipping):
-        createtransactionrequest = apicontractsv1.createTransactionRequest()
-        createtransactionrequest.merchantAuthentication = self.merchantAuth
-        createtransactionrequest.refId = str("-".join([str(self.invoice.profile.pk), str(settings.SITE_ID), str(self.invoice.pk)]))
+    def create_shipping(self, shipping):
+        raise NotImplementedError
 
-    def set_transaction_request_billing(self):
+    def create_billing_address(self):
         """
-        Used to help improve security
+        Creates Billing address to improve security in transaction
         """
-        # TODO: split the full name early and do a check to see if it's more
-        # than one name.  If it's just one, make it the last.  If it's more
-        # than 2, the last entry is the last name, the rest get joined together
-        # as the first name.
-
         billing_address = apicontractsv1.customerAddressType()
-        billing_address.firstName = "Ellen"             # " ".join(str(self.payment.payee_full_name).split(" ")[:-1])
-        billing_address.lastName = "Johnson"            # str(self.payment.payee_full_name).split(" ")[-1]
-        billing_address.company = ""
-        billing_address.address = str(",".join([self.billing_address.get('address_line_1', ""), self.billing_address.get('address_line_2', "")]))
-        billing_address.city = str(self.billing_address.get("city", ""))
-        billing_address.state = str(self.billing_address.get("state", ""))
-        billing_address.zip = str(self.billing_address.get("postal_code"))
-        billing_address.country = str(self.billing_address.get("country"))
-        self.transaction_request.billTo = billing_address
+        billing_address.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])
+        billing_address.lastName = self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1]
+        billing_address.company = self.billing_address.data.get('billing-address-company')
+        billing_address.address = str(", ".join([self.billing_address.data.get('billing-address-address_1'), self.billing_address.data.get('billing-address-address_2')]))
+        billing_address.city = str(self.billing_address.data.get("billing-address-city", ""))
+        billing_address.state = str(self.billing_address.data.get("billing-address-state", ""))
+        billing_address.zip = str(self.billing_address.data.get("billing-address-postal_code"))
+        billing_address.country = str(self.billing_address.data.get("billing-address-country"))
+        return billing_address
 
-    def set_transaction_request_customer(self):
-        pass
+    def create_customer(self):
+        raise NotImplementedError
 
     def check_response(self, response):
-        transaction_response = {}
-        transaction_response['success'] = False
-        transaction_response['msg'] = ""
+        """
+        Checks the transaction response and set the transaction_result and transaction_response variables
+        """
+        self.transaction_response = {}
+        self.transaction_result = False
+        self.transaction_response['msg'] = ""
         if response is not None:
             # Check to see if the API request was successfully received and acted upon
             if response.messages.resultCode == "Ok":
                 # Since the API request was successful, look for a transaction response
                 # and parse it to display the results of authorizing the card
                 if hasattr(response.transactionResponse, 'messages') is True:
-                    transaction_response['success'] = True
-                    transaction_response['msg'] = "Payment Complete"
-                    transaction_response['trans_id'] = response.transactionResponse.transId
-                    transaction_response['response_code'] = response.transactionResponse.responseCode
-                    transaction_response['code'] = response.transactionResponse.messages.message[0].code
-                    transaction_response['message'] = response.transactionResponse.messages.message[0].description
+                    self.transaction_result = True
+                    self.transaction_response['msg'] = "Payment Complete"
+                    self.transaction_response['trans_id'] = response.transactionResponse.transId
+                    self.transaction_response['response_code'] = response.transactionResponse.responseCode
+                    self.transaction_response['code'] = response.transactionResponse.messages.message[0].code
+                    self.transaction_response['message'] = response.transactionResponse.messages.message[0].description
                 else:
-                    transaction_response['msg'] = 'Failed Transaction.'
+                    self.transaction_response['msg'] = 'Failed Transaction.'
                     if hasattr(response.transactionResponse, 'errors') is True:
-                        transaction_response['error_code'] = response.transactionResponse.errors.error[0].errorCode
-                        transaction_response['error_text'] = response.transactionResponse.errors.error[0].errorText
+                        self.transaction_response['error_code'] = response.transactionResponse.errors.error[0].errorCode
+                        self.transaction_response['error_text'] = response.transactionResponse.errors.error[0].errorText
             # Or, print errors if the API request wasn't successful
             else:
-                transaction_response['msg'] = 'Failed Transaction.'
+                self.transaction_response['msg'] = 'Failed Transaction.'
                 if hasattr(response, 'transactionResponse') is True and hasattr(response.transactionResponse, 'errors') is True:
-                    transaction_response['error_code'] = response.transactionResponse.errors.error[0].errorCode
-                    transaction_response['error_text'] = response.transactionResponse.errors.error[0].errorText
+                    self.transaction_response['error_code'] = response.transactionResponse.errors.error[0].errorCode
+                    self.transaction_response['error_text'] = response.transactionResponse.errors.error[0].errorText
                 else:
-                    transaction_response['error_code'] = response.messages.message[0]['code'].text
-                    transaction_response['error_text'] = response.messages.message[0]['text'].text
+                    self.transaction_response['error_code'] = response.messages.message[0]['code'].text
+                    self.transaction_response['error_text'] = response.messages.message[0]['text'].text
         else:
-            transaction_response['msg'] = 'Null Response.' 
+            self.transaction_response['msg'] = 'Null Response.'
 
-        return transaction_response
+    def process_form(self, form_data):
+        self.payment_info = CreditCardForm(dict([d for d in form_data.items() if 'credit-card' in d[0]]), prefix='credit-card')
+        self.billing_address = BillingAddressForm(dict([d for d in form_data.items() if 'billing-address' in d[0]]), prefix='billing-address')
+        if self.billing_address.is_valid() and self.payment_info.is_valid():
+            return True
+        else:
+            return False
 
-    def process_payment(self):         # This needs to be handled in the 
-        if not self.merchantAuth.name or not self.merchantAuth.transactionKey:
-            print("error")
+    def process_payment(self, request):
+        if not self.merchant_auth.name or not self.merchant_auth.transactionKey:
+            self.transaction_result = False
+            self.transaction_response = {'msg': "Make sure you run processor_setup before process_payment and that envarionment keys are set"}
+            return
+        
+        # Process form data to set up transaction
+        if not self.process_form(request.POST):
+            self.transaction_result = False
+            self.transaction_response = {'msg': "Make sure you run processor_setup before process_payment and that envarionment keys are set"}
             return
 
         # Init transaction
-        self.init_transaction()
-        self.init_transaction_request()         # Init the transaction request and payment
-        self.set_transaction_request_payment()
-        self.set_transaction_request_billing()
+        self.transaction = self.create_transaction()
+        self.transaction_type = self.create_transaction_type()
+        self.transaction_type.payment = self.create_payment()
+        self.transaction_type.billTo = self.create_billing_address()
 
         # Optional items for make it easier to read and use on the Authorize.net portal.
         if self.invoice.order_items:
-            self.set_transaction_request_line_items(self.invoice.order_items.all())
-        if self.invoice.tax:
-            self.set_transaction_request_tax(self.invoice.tax)
-        if self.invoice.shipping:
-            self.set_transaction_request_shipping(self.invoice.shipping)
-        if self.invoice.shipping_address:
-            self.set_transaction_request_ship_to(self.invoice.shipping_address)
+            self.transaction_type.lineItems = self.create_line_item_array(self.invoice.order_items.all())
 
         # You set the request to the transaction
-        self.set_transaction_request()
-
-        # Init the Controller with the transaction
-        self.init_transaction_controller()
+        self.transaction.transactionRequest = self.transaction_type
+        self.controller = createTransactionController(self.transaction)
+        self.controller.execute()
 
         # You execute and get the response
-        response = self.execute_transaction()
-
-        transaction_response = self.check_response(response)
-        return transaction_response
+        response = self.controller.getresponse()
+        self.transaction_response = self.check_response(response)

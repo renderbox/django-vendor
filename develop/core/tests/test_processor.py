@@ -7,7 +7,7 @@ from unittest import skipIf
 
 from core.models import Product
 from vendor.models import Invoice
-from vendor.forms import VendorCreditCardForm, VendorAddressForm, BillingForm
+from vendor.forms import CreditCardForm, BillingAddressForm, BillingForm
 
 from vendor.processors import PaymentProcessor
 

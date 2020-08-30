@@ -20,9 +20,9 @@ from .models.address import Address as GoogleAddress
 from vendor.processors import PaymentProcessor
 
 from django.views.generic.edit import FormView
-from .forms import VendorAddressForm, VendorCreditCardForm, BillingForm
+from .forms import BillingAddressForm, CreditCardForm
 
-# payment_processor = PaymentProcessor()               # The Payment Processor configured in settings.py
+payment_processor = PaymentProcessor              # The Payment Processor configured in settings.py
 
 class CartView(LoginRequiredMixin, DetailView):
     '''
@@ -73,26 +73,37 @@ class CheckoutView(TemplateView):
     Review items and submit Payment
     '''
     template_name = "vendor/checkout.html"
-    billing_form_class = BillingForm
-    payment_processor = PaymentProcessor
+    billing_address_form_class = BillingAddressForm
+    card_form_class = CreditCardForm
+    # payment_processor = PaymentProcessor
 
-    def get_context_data(self, **kwargs):
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+
+    #     profile = self.request.user.customer_profile.get(site=settings.SITE_ID) 
+    #     invoice = profile.invoices.get(status=Invoice.InvoiceStatus.CART)
+
+    #     processor = self.payment_processor(invoice)
+
+    #     context = processor.get_checkout_context(context=context)
+
+    #     context['billing_form'] = self.billing_form_class()
+    #     # TODO: Set below in the PaymentProcessor Context. It should set the address form and card form?
+    #     context['address_form'] = self.address_form_class(prefix='addr')
+    #     context['card_form'] = self.card_form_class(prefix='card')
+
+    #     return context
+
+    def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-
         profile = self.request.user.customer_profile.get(site=settings.SITE_ID) 
-        invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)   # TODO: Should be like the line below.
-        # invoice = profile.invoices.get(status=Invoice.InvoiceStatus.CART)
+        invoice = profile.invoices.get(status=Invoice.InvoiceStatus.CART)
 
-        processor = self.payment_processor(invoice)
+        processor = payment_processor(invoice)
 
         context = processor.get_checkout_context(context=context)
 
-        context['billing_form'] = self.billing_form_class()
-        # TODO: Set below in the PaymentProcessor Context. It should set the address form and card form?
-        context['address_form'] = self.address_form_class(prefix='addr')
-        context['card_form'] = self.card_form_class(prefix='card')
-
-        return context
+        return render(request, self.template_name, context)
 
     # def get(self, request, *args, **kwargs):
     #     profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
@@ -106,7 +117,8 @@ class CheckoutView(TemplateView):
 
     #     return render(request, self.template_name, context)
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
         profile = request.user.customer_profile.get(site=settings.SITE_ID) 
         invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
 
@@ -139,6 +151,13 @@ class CheckoutView(TemplateView):
         #     new_payment.success = True
         #     new_payment.result = "\n".join([ str(d) for d in suc.items() ]).replace('(','{').replace(')','}')
         #     new_payment.save()
+
+        processor = payment_processor(invoice)
+        processor.process_payment(request)
+        if processor.transaction_result:
+            return redirect('purchase-summary')
+        else:
+            return render(request, self.template_name, processor.get_checkout_context(request, context))
 
         processor = self.payment_processor(invoice)
         processor.payment_info = card_form.data
