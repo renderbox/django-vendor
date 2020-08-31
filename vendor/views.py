@@ -130,7 +130,6 @@ class CheckoutView(TemplateView):
         
 class PaymentView(DetailView):
     model = Payment
-    template_name = 'vendor/payment_summary.html'
 
 class InvoicesView(ListView):
     pass
