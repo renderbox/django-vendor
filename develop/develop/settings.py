@@ -15,9 +15,9 @@ import dj_database_url
 
 from iso4217 import Currency
 
-from vendor import __version__
+from vendor.__version__ import VERSION
 
-BUILD_VERSION = __version__
+BUILD_VERSION = VERSION
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent

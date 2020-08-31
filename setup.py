@@ -7,7 +7,7 @@
 from os import path
 from setuptools import setup, find_packages
 
-from vendor import __version__
+from vendor.__version__ import VERSION
 
 readme_file = path.join(path.dirname(path.abspath(__file__)), 'README.md')
 
@@ -22,7 +22,7 @@ except ImportError:
 
 package_metadata = {
     'name': 'django-vendor',
-    'version': __version__,
+    'version': VERSION,
     'description': 'Django App Toolkit for selling digital and physical goods online.',
     'long_description': long_description,
     'url': 'https://github.com/renderbox/django-vendor/',
