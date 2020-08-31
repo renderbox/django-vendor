@@ -115,7 +115,7 @@ TEST_PAYLOAD = {
 }
 @skipIf((settings.AUTHORIZE_NET_API_ID or settings.AUTHORIZE_NET_TRANSACTION_KEY) == None, "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
-    fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'invoice']
+    fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'address', 'invoice']
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
@@ -155,6 +155,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertIsNotNone(processor.payment)
         self.assertTrue(processor.payment.success)
+        self.assertEquals(Invoice.InvoiceStatus.COMPLETE, processor.invoice.status)
 
     def test_process_payment_transaction_fail_invalid_card(self):
         """
@@ -170,6 +171,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertIsNotNone(processor.payment)
         self.assertFalse(processor.payment.success)
+        self.assertEquals(Invoice.InvoiceStatus.FAILED, processor.invoice.status)
 
     def test_process_payment_transaction_fail_invalid_expiration(self):
         """
@@ -185,11 +187,15 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertIsNotNone(processor.payment)
         self.assertFalse(processor.payment.success)
+        self.assertEquals(Invoice.InvoiceStatus.FAILED, processor.invoice.status)
         
 
     def test_refund_success(self):
         processor = PaymentProcessor(self.existing_invoice)
-        processor.refund_payment()
+        processor.refund_payment(self.existing_invoice.payments.get(pk=1))
+
+        self.assertEquals(Invoice.InvoiceStatus.REFUNDED, processor.invoice.status)
+        pass
 
     def test_refund_fail(self):
         # TODO: Implement Test

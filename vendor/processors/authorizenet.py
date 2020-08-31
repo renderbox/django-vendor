@@ -5,11 +5,13 @@ from django.conf import settings
 from authorizenet import apicontractsv1
 from authorizenet.apicontrollers import *
 from decimal import Decimal, ROUND_DOWN
+import ast
+
 
 from .base import PaymentProcessorBase, PaymentTypes, TransactionTypes
 
 from vendor.forms import CreditCardForm, BillingAddressForm
-
+from vendor.models.invoice import Invoice
 class AuthorizeNetProcessor(PaymentProcessorBase):
     """
     Implementation of Authoirze.Net SDK
@@ -84,12 +86,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         transaction.refId = self.get_transaction_id()
         return transaction
 
-    def create_transaction_type(self, transaction_type):
+    def create_transaction_type(self, trans_type):
         """
         Creates the transaction type instance with the amount
         """
         transaction_type = apicontractsv1.transactionRequestType()
-        transaction_type.transactionType = transaction_type
+        transaction_type.transactionType = trans_type
         transaction_type.amount = Decimal(self.invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
         return transaction_type
 
@@ -175,9 +177,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         Checks the transaction response and set the transaction_result and transaction_response variables
         """
-        self.transaction_response = {}
+        self.transaction_response = response.transactionResponse
+        self.transaction_message = {}
         self.transaction_result = False
-        self.transaction_response['msg'] = ""
+        self.transaction_message['msg'] = ""
         if response is not None:
             # Check to see if the API request was successfully received and acted upon
             if response.messages.resultCode == "Ok":
@@ -185,27 +188,27 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
                 # and parse it to display the results of authorizing the card
                 if hasattr(response.transactionResponse, 'messages') is True:
                     self.transaction_result = True
-                    self.transaction_response['msg'] = "Payment Complete"
-                    self.transaction_response['trans_id'] = response.transactionResponse.transId
-                    self.transaction_response['response_code'] = response.transactionResponse.responseCode
-                    self.transaction_response['code'] = response.transactionResponse.messages.message[0].code
-                    self.transaction_response['message'] = response.transactionResponse.messages.message[0].description
+                    self.transaction_message['msg'] = "Payment Complete"
+                    self.transaction_message['trans_id'] = response.transactionResponse.transId
+                    self.transaction_message['response_code'] = response.transactionResponse.responseCode
+                    self.transaction_message['code'] = response.transactionResponse.messages.message[0].code
+                    self.transaction_message['message'] = response.transactionResponse.messages.message[0].description
                 else:
-                    self.transaction_response['msg'] = 'Failed Transaction.'
+                    self.transaction_message['msg'] = 'Failed Transaction.'
                     if hasattr(response.transactionResponse, 'errors') is True:
-                        self.transaction_response['error_code'] = response.transactionResponse.errors.error[0].errorCode
-                        self.transaction_response['error_text'] = response.transactionResponse.errors.error[0].errorText
+                        self.transaction_message['error_code'] = response.transactionResponse.errors.error[0].errorCode
+                        self.transaction_message['error_text'] = response.transactionResponse.errors.error[0].errorText
             # Or, print errors if the API request wasn't successful
             else:
-                self.transaction_response['msg'] = 'Failed Transaction.'
+                self.transaction_message['msg'] = 'Failed Transaction.'
                 if hasattr(response, 'transactionResponse') is True and hasattr(response.transactionResponse, 'errors') is True:
-                    self.transaction_response['error_code'] = response.transactionResponse.errors.error[0].errorCode
-                    self.transaction_response['error_text'] = response.transactionResponse.errors.error[0].errorText
+                    self.transaction_message['error_code'] = response.transactionResponse.errors.error[0].errorCode
+                    self.transaction_message['error_text'] = response.transactionResponse.errors.error[0].errorText
                 else:
-                    self.transaction_response['error_code'] = response.messages.message[0]['code'].text
-                    self.transaction_response['error_text'] = response.messages.message[0]['text'].text
+                    self.transaction_message['error_code'] = response.messages.message[0]['code'].text
+                    self.transaction_message['error_text'] = response.messages.message[0]['text'].text
         else:
-            self.transaction_response['msg'] = 'Null Response.'
+            self.transaction_message['msg'] = 'Null Response.'
 
     def get_form_data(self, form_data):
         self.payment_info = CreditCardForm(dict([d for d in form_data.items() if 'credit-card' in d[0]]), prefix='credit-card')
@@ -215,11 +218,18 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def save_payment_transaction(self):
         self.payment = self.get_payment_model()        
         self.payment.success = self.transaction_result
-        self.payment.transaction = self.transaction_response.get('trans_id', "Transaction Faild")
-        self.payment.result = str(dict(self.transaction_response))
+        self.payment.transaction = self.transaction_response.get('transId', "Transaction Faild")
+        response = self.transaction_response.__dict__
+        if 'errors' in response:
+            response.pop('errors')
+        if 'messages' in response:
+            response.pop('messages')
+        self.payment.result = str({**self.transaction_message, **response})
         self.payment.payee_full_name = self.payment_info.data.get('credit-card-full_name')
         self.payment.payee_company = self.billing_address.data.get('billing-address-company')
-        billing_address = self.billing_address.save()
+        billing_address = self.billing_address.save(commit=False)
+        billing_address.profile = self.invoice.profile
+        billing_address.save()
         self.payment.billing_address = billing_address
         self.payment.save()
 
@@ -234,6 +244,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         else:
             return False
 
+    def update_invoice_status(self, new_status):
+        if self.transaction_result:
+            self.invoice.status = new_status
+        else:
+            self.invoice.status = Invoice.InvoiceStatus.FAILED
+        self.invoice.save()
 
     def process_payment(self, request):
         if self.check_transaction_keys():
@@ -263,8 +279,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.save_payment_transaction()
 
-        self.invoice.status = Invoice.InvoiceStatus.COMPLETE
-        self.invoice.save()
+        self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 
     def refund_payment(self, payment):
         if self.check_transaction_keys():
@@ -273,10 +288,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         # Init transaction
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(self.transaction_types[TransactionTypes.REFUND])
-        self.transaction_type.refTransId = dict(payment.result).get('refTransID')
+        self.transaction_type.refTransId = ast.literal_eval(payment.result).get('refTransID')
 
         creditCard = apicontractsv1.creditCardType()
-        creditCard.cardNumber = dict(payment.result).get('accountNumber')[-4]
+        creditCard.cardNumber = ast.literal_eval(payment.result).get('accountNumber')[-4:]
         creditCard.expirationDate = "XXXX"
 
         payment = apicontractsv1.paymentType()
@@ -288,8 +303,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.controller.execute()
 
         response = self.controller.getresponse()
-        self.check_response()
+        self.check_response(response)
 
-        if self.transaction_result:
-            self.invoice.status = Invoice.InvoiceStatus.REFUNDED
-            self.invoice.save()
+        self.update_invoice_status(Invoice.InvoiceStatus.REFUNDED)

@@ -43,6 +43,7 @@ class PaymentProcessorBase(object):
     billing_address = {}
     transaction_token = None
     transaction_result = None
+    transaction_message = {}
     transaction_response = {}
 
 
@@ -83,7 +84,7 @@ class PaymentProcessorBase(object):
         return self.invoice.total
 
     def get_transaction_id(self):
-        return "TRANS:{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk)
+        return "{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk)
 
     #-------------------
     # Data for the View
