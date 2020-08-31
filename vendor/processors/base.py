@@ -22,6 +22,12 @@ class PaymentTypes(Enum):
     PAY_PAL = auto()
     MOBILE = auto()
 
+class TransactionTypes(Enum):
+    AUTHORIZE = auto()
+    CAPTURE = auto()
+    SETTLE = auto()
+    REFUND = auto()
+
 #############
 # BASE CLASS
 
