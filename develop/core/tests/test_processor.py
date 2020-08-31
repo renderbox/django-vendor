@@ -1,15 +1,16 @@
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.http import HttpRequest, QueryDict
 from django.test import TestCase, Client
 from django.urls import reverse
 from unittest import skipIf
-
 from core.models import Product
 from vendor.models import Invoice
+from vendor.models.address import Country
 from vendor.forms import CreditCardForm, BillingAddressForm
-
 from vendor.processors import PaymentProcessor
+
 
 ###############################
 # Test constants
@@ -118,6 +119,25 @@ class AuthorizeNetProcessorTests(TestCase):
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
+        self.credit_card_form = CreditCardForm(initial={
+            'full_name': 'Bob Ross', 
+            'card_number': '5424000000000015',
+            'expire_month': '12',
+            'expire_year': '2030',
+            'cvv_number': '999'
+        }, prefix='credit-card')
+        self.credit_card_form.data = self.credit_card_form.initial
+        self.billing_address_form = BillingAddressForm(initial={
+            'name': 'Home Address',
+            'company': 'Whitemoon Labs',
+            'country': Country.USA,
+            'address_1': '221B Baker Street',
+            'address_2': "",
+            'locality': 'Marylebone', 
+            'state': 'California',
+            'postal_code': '90292'
+        }, prefix='billing-address')
+        self.billing_address_form.data = self.billing_address_form.initial
 
     def test_environment_variables_set(self):
         self.assertIsNotNone(settings.AUTHORIZE_NET_TRANSACTION_KEY)
@@ -132,24 +152,28 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(processor.merchant_auth.transactionKey)
         self.assertIsNotNone(processor.merchant_auth.name)
     
-    
     def test_get_checkout_context(self):
         context = {}
         payment_processor = PaymentProcessor(invoice=self.existing_invoice) 
         context = payment_processor.get_checkout_context()
         
-        self.assertContains('credit-card-form', context)
-        self.assertContains('billing-address-form', context)
+        self.assertIn('invoice', context)
+        self.assertIn('credit_card_form', context)
+        self.assertIn('billing_address_form', context)
     
     def test_process_payment_transaction_success(self):
         """
         By passing in the invoice, setting the payment info and billing 
         address, process the payment and make sure it succeeds.
         """
-        payment_processor = PaymentProcessor(self.existing_invoice)
-        payment_processor.set_payment_info(card_number='5424000000000015', expire_month='12', expire_year='2020', cvv_number='999')
-        payment_processor.authorize_payment()
-        # self.assertTrue(transaction_response['success'])  # TODO: Need to test this differently.  The PaymentProcessor could hold the info needed to be retrieved.
+        request = HttpRequest()
+        request.POST = QueryDict(
+            'billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=999')
+
+        processor = PaymentProcessor(self.existing_invoice)
+        processor.process_payment(request)
+
+        self.assertIsNotNone(Payment.objects.get(invoice=self.existing_invoice))
 
     def test_auth_capture_transaction_fail(self):
         # TODO: Implement Test.
