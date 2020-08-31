@@ -3,8 +3,12 @@ Base Payment processor used by all derived processors.
 """
 import django.dispatch
 
+from copy import deepcopy
+from django.conf import settings
+from enum import Enum, auto
 from vendor.models import Payment
 from vendor.models.choice import PurchaseStatus
+
 
 ##########
 # SIGNALS
@@ -12,50 +16,84 @@ from vendor.models.choice import PurchaseStatus
 vendor_pre_authorization = django.dispatch.Signal()
 vendor_post_authorization =  django.dispatch.Signal()
 
+class PaymentTypes(Enum):
+    CREDIT_CARD = auto()
+    BANK_ACCOUNT = auto()
+    PAY_PAL = auto()
+    MOBILE = auto()
+
+class TransactionTypes(Enum):
+    AUTHORIZE = auto()
+    CAPTURE = auto()
+    SETTLE = auto()
+    REFUND = auto()
 
 #############
 # BASE CLASS
 
-class PaymentProcessorBase():
+class PaymentProcessorBase(object):
     """
     Setup the core functionality for all processors.
     """
     status = None
     invoice = None
     provider = None
-    payment_info = None
-    billing_address = None
+    payment = None
+    payment_info = {}
+    billing_address = {}
     transaction_token = None
+    transaction_result = None
+    transaction_message = {}
+    transaction_response = {}
+
 
     def __init__(self, invoice):
         """
         This should not be overriden.  Override one of the methods it calls if you need to.
         """
         self.set_invoice(invoice)
+        self.provider = self.__class__.__name__
         self.processor_setup()
 
     def processor_setup(self):
+        """
+        This is for setting up any of the settings needed for the payment processing.
+        For example, here you would set the 
+        """
         pass
+
+    def set_payment_info(self, **kwargs):
+        self.payment_info = kwargs
 
     def set_invoice(self, invoice):
         self.invoice = invoice
 
     def get_payment_model(self):
         payment = Payment(  profile=self.invoice.profile,
-                            amount=invoice.get_amount(),
+                            amount=self.invoice.total,
                             provider=self.provider,
                             invoice=self.invoice
                             )
         return payment
 
+    def save_payment_transaction(self):
+        pass
+
     def amount(self):   # Retrieves the total amount from the invoice
         self.invoice.update_totals()
         return self.invoice.total
+
+    def get_transaction_id(self):
+        return "{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk)
+
+    #-------------------
+    # Data for the View
 
     def get_checkout_context(self, request=None, context={}):
         '''
         The Invoice plus any additional values to include in the payment record.
         '''
+        # context = deepcopy(context)
         context['invoice'] = self.invoice
         return context
 
@@ -67,7 +105,7 @@ class PaymentProcessorBase():
         """
         return []
 
-    def get_footer_javascript(self):
+    def get_javascript(self):
         """
         Scripts added to the bottom of the page in the normal js location.
 
@@ -81,25 +119,32 @@ class PaymentProcessorBase():
         """
         pass
 
-    def authorize(self):
+    #-------------------
+    # Process a Payment
+
+    def authorize_payment(self):
         """
         This runs the chain of events in a transaction.
         
         This should not be overriden.  Override one of the methods it calls if you need to.
         """
         self.status = PurchaseStatus.QUEUED     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
+        vendor_pre_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.pre_authorization()
 
         self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         self.process_payment()
 
+        vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()
+
+        #TODO: Set the status based on the result from the process_payment()
 
     def pre_authorization(self):
         """
         Called before the authorization begins.
         """
-        vendor_pre_authorization.send(sender=self.__class__, invoice=self.invoice)
+        pass
 
     def process_payment(self):
         """
@@ -113,13 +158,16 @@ class PaymentProcessorBase():
         """
         Called after the authorization is complete.
         """
-        vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
+        pass
 
-    def capture(self):
+    def capture_payment(self):
         """
-        Called to handle the capture.  (some gateways handle this at the same time as authorize() )
+        Called to handle the capture.  (some gateways handle this at the same time as authorize_payment() )
         """
         pass
 
-    def settlement(self):
+    #-------------------
+    # Refund a Payment
+
+    def refund_payment(self):
         pass

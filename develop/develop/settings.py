@@ -15,6 +15,10 @@ import dj_database_url
 
 from iso4217 import Currency
 
+from vendor import __version__
+
+BUILD_VERSION = __version__
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
@@ -31,8 +35,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-DJANGO_PROJECT_VERSION = "0.1.1"
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -45,12 +47,12 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'address',
     'core',
-    'vendor',
     'crispy_forms',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'iso4217'
+    'iso4217',
+    'vendor',
 ]
 
 MIDDLEWARE = [
@@ -178,6 +180,7 @@ DEFAULT_CURRENCY = Currency.usd.name
 AUTHORIZE_NET_API_ID = os.getenv("AUTHORIZE_NET_API_ID")
 AUTHORIZE_NET_TRANSACTION_KEY = os.getenv("AUTHORIZE_NET_TRANSACTION_KEY")
 AUTHORIZE_NET_KEY = os.getenv("AUTHORIZE_NET_KEY")
+AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT = "authOnlyTransaction"
 
 # Stripe Settings
 STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY")

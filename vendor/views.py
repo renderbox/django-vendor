@@ -20,9 +20,9 @@ from .models.address import Address as GoogleAddress
 from vendor.processors import PaymentProcessor
 
 from django.views.generic.edit import FormView
-from .forms import VendorAddressForm, VendorCreditCardForm, BillingForm
+from .forms import BillingAddressForm, CreditCardForm
 
-# payment_processor = PaymentProcessor()               # The Payment Processor configured in settings.py
+payment_processor = PaymentProcessor              # The Payment Processor configured in settings.py
 
 class CartView(LoginRequiredMixin, DetailView):
     '''
@@ -73,87 +73,62 @@ class CheckoutView(TemplateView):
     Review items and submit Payment
     '''
     template_name = "vendor/checkout.html"
-    billing_form_class = BillingForm
-    payment_processor = PaymentProcessor
+    # billing_address_form_class = BillingAddressForm
+    # card_form_class = CreditCardForm
+    # payment_processor = PaymentProcessor
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
 
-        profile = self.request.user.customer_profile.get(site=settings.SITE_ID) 
-        invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)   # TODO: Should be like the line below.
-        # invoice = profile.invoices.get(status=Invoice.InvoiceStatus.CART)
-
-        processor = self.payment_processor(invoice)
-
-        context = processor.get_checkout_context(context=context)
-
-        context['billing_form'] = self.billing_form_class()
-        # TODO: Set below in the PaymentProcessor Context. It should set the address form and card form?
-        context['address_form'] = self.address_form_class(prefix='addr')
-        context['card_form'] = self.card_form_class(prefix='card')
-
-        return context
-
-    # def get(self, request, *args, **kwargs):
-    #     profile = request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
-    #     invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
+    #     profile = self.request.user.customer_profile.get(site=settings.SITE_ID) 
+    #     invoice = profile.invoices.get(status=Invoice.InvoiceStatus.CART)
 
     #     processor = self.payment_processor(invoice)
 
-    #     context.update(processor.get_checkout_context(context=context))
+    #     context = processor.get_checkout_context(context=context)
 
     #     context['billing_form'] = self.billing_form_class()
+    #     # TODO: Set below in the PaymentProcessor Context. It should set the address form and card form?
+    #     context['address_form'] = self.address_form_class(prefix='addr')
+    #     context['card_form'] = self.card_form_class(prefix='card')
 
-    #     return render(request, self.template_name, context)
+    #     return context
 
-    def post(self, request):
+    def get(self, request, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile = self.request.user.customer_profile.get(site=settings.SITE_ID) 
+        invoice = profile.invoices.get(status=Invoice.InvoiceStatus.CART)
+
+        processor = payment_processor(invoice)
+
+        context = processor.get_checkout_context(context=context)
+
+        return render(request, self.template_name, context)
+
+
+    def post(self, request, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
         profile = request.user.customer_profile.get(site=settings.SITE_ID) 
         invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
+                
+        credit_card_form = CreditCardForm(request.POST, prefix='credit-card')
+        billing_address_form = BillingAddressForm(request.POST, prefix='billing-address')
+        
+        if not (billing_address_form.is_valid() or credit_card_form.is_valid()):
+            return render(request, self.template_name, processor.get_checkout_context(context))
+        
+        processor = payment_processor(invoice)
 
-        # billing_form = self.billing_form_class(request.POST)
-        # if not billing_form.is_valid():
-        #     return render(request, self.template_name, {'billing_form': billing_form, 'invoice': invoice})
-
-        # processor = self.payment_processor(invoice)
-        # processor.billing_info = billing_form
-        # # processor.billing_address = address_form.data       # TODO: This should come from the invoice
-        # # processor.setUp()
-        # transaction_response = processor.process_payment(processor.AUTHORIZE_CAPUTRE_TRANSACTION)
-
-        # messages.info(self.request, transaction_response['msg'])
-        # if transaction_response['success']:
-        #     invoice.status = Invoice.InvoiceStatus.COMPLETE
-        #     invoice.save()
-
-        #     # TODO: Clean up make this a successfull create new payment function
-        #     billing_address = Address()
-        #     billing_address.create_address_from_billing_form(billing_form, profile)
-        #     billing_address.save()
-            
-        #     new_payment = Payment()
-        #     new_payment.invoice = invoice
-        #     new_payment.profile = str(self.payment_processor)
-        #     new_payment.transaction = transaction_response.get("trans_id")
-        #     new_payment.amount = invoice.total
-        #     new_payment.profile = profile
-        #     new_payment.success = True
-        #     new_payment.result = "\n".join([ str(d) for d in suc.items() ]).replace('(','{').replace(')','}')
-        #     new_payment.save()
-
-        processor = self.payment_processor(invoice)
-        processor.payment_info = card_form.data
-        processor.billing_address = address_form.data       # TODO: This should come from the invoice
-        msg, success = processor.auth_capture()
-
-        messages.info(self.request, msg)
-
-        if success:
-            return redirect(reverse('vendor:checkout'))
+        processor.process_payment(request)
+        if processor.transaction_result:
+            return redirect('purchase-summary', pk=processor.invoice.payments.filter(success=True).values_list('pk'))
         else:
-            return render(request, self.template_name, {'billing_form': billing_form, 'invoice': invoice})
+            return render(request, self.template_name, processor.get_checkout_context(request, context))
 
         
-
+class PaymentView(DetailView):
+    model = Payment
+    template_name = 'vendor/payment_summary.html'
 
 class InvoicesView(ListView):
     pass

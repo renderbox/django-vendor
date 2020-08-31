@@ -1,15 +1,16 @@
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.http import HttpRequest, QueryDict
 from django.test import TestCase, Client
 from django.urls import reverse
 from unittest import skipIf
-
 from core.models import Product
 from vendor.models import Invoice
-from vendor.forms import VendorCreditCardForm, VendorAddressForm, BillingForm
-
+from vendor.models.address import Country
+from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.processors import PaymentProcessor
+
 
 ###############################
 # Test constants
@@ -112,40 +113,88 @@ TEST_PAYLOAD = {
         }
     }
 }
-@skipIf(settings.AUTHORIZE_NET_API_ID and settings.AUTHORIZE_NET_TRANSACTION_KEY, "Authorize.Net enviornment variables not set, skipping tests")
+@skipIf((settings.AUTHORIZE_NET_API_ID or settings.AUTHORIZE_NET_TRANSACTION_KEY) == None, "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
-    fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'invoice']
+    fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'address', 'invoice']
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
 
     def test_environment_variables_set(self):
-        self.assertTrue(settings.AUTHORIZE_NET_TRANSACTION_KEY)
-        self.assertTrue(settings.AUTHORIZE_NET_API_ID)
+        self.assertIsNotNone(settings.AUTHORIZE_NET_TRANSACTION_KEY)
+        self.assertIsNotNone(settings.AUTHORIZE_NET_API_ID)
 
-    def test_get_checkout_context(self):
-        payment_processor = PaymentProcessor(invoice=self.existing_invoice) 
-        payment_processor.get_checkout_context()
-        
-        self.assertTrue(payment_processor.merchantAuth.transactionKey)
-        self.assertTrue(payment_processor.merchantAuth.name)
+    def test_processor_initialization_success(self):
+        processor = PaymentProcessor(self.existing_invoice)
+
+        self.assertEquals(processor.provider, 'AuthorizeNetProcessor')
+        self.assertIsNotNone(processor.invoice)
+        self.assertIsNotNone(processor.merchant_auth)
+        self.assertIsNotNone(processor.merchant_auth.transactionKey)
+        self.assertIsNotNone(processor.merchant_auth.name)
     
-    def test_auth_capture_transaction_success(self):
-        payment_processor = PaymentProcessor(self.existing_invoice) 
-        payment_processor.get_checkout_context()    # TODO: updated if it needs a request object
+    def test_get_checkout_context(self):
+        context = {}
+        payment_processor = PaymentProcessor(invoice=self.existing_invoice) 
+        context = payment_processor.get_checkout_context()
+        
+        self.assertIn('invoice', context)
+        self.assertIn('credit_card_form', context)
+        self.assertIn('billing_address_form', context)
+    
+    def test_process_payment_transaction_success(self):
+        """
+        By passing in the invoice, setting the payment info and billing 
+        address, process the payment and make sure it succeeds.
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=999')
 
-        billing_form = BillingForm(initial={'card_number': '5424000000000015', 'expire_month': '12', 'expire_year': '2020', 'cvv_number': '999' })
-        billing_form.data = billing_form.initial
+        processor = PaymentProcessor(self.existing_invoice)
+        processor.process_payment(request)
 
-        transaction_response = payment_processor.auth_capture(self.existing_invoice, billing_form, None)
-        self.assertTrue(transaction_response['success'])
+        self.assertIsNotNone(processor.payment)
+        self.assertTrue(processor.payment.success)
+        self.assertEquals(Invoice.InvoiceStatus.COMPLETE, processor.invoice.status)
 
-    def test_auth_capture_transaction_fail(self):
-        # TODO: Implement Test
-        pass
+    def test_process_payment_transaction_fail_invalid_card(self):
+        """
+        Simulates a payment transaction for a reqeust.POST, with the payment and 
+        billing information. The test send an invalid card number to test the 
+        transation fails
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=999')
+
+        processor = PaymentProcessor(self.existing_invoice)
+        processor.process_payment(request)
+
+        self.assertIsNotNone(processor.payment)
+        self.assertFalse(processor.payment.success)
+        self.assertEquals(Invoice.InvoiceStatus.FAILED, processor.invoice.status)
+
+    def test_process_payment_transaction_fail_invalid_expiration(self):
+        """
+        Simulates a payment transaction for a reqeust.POST, with the payment and 
+        billing information. The test send an invalid expiration date to test the 
+        transation fails.
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000015&credit-card-expire_month=12&credit-card-expire_year=2000&credit-card-cvv_number=999')
+
+        processor = PaymentProcessor(self.existing_invoice)
+        processor.process_payment(request)
+
+        self.assertIsNotNone(processor.payment)
+        self.assertFalse(processor.payment.success)
+        self.assertEquals(Invoice.InvoiceStatus.FAILED, processor.invoice.status)
+        
 
     def test_refund_success(self):
-        # TODO: Implement Test
+        processor = PaymentProcessor(self.existing_invoice)
+        processor.refund_payment(self.existing_invoice.payments.get(pk=1))
+
+        self.assertEquals(Invoice.InvoiceStatus.REFUNDED, processor.invoice.status)
         pass
 
     def test_refund_fail(self):
@@ -186,7 +235,7 @@ class AuthorizeNetProcessorTests(TestCase):
     
     
 
-@skipIf(settings.AUTHORIZE_NET_API_ID and settings.AUTHORIZE_NET_TRANSACTION_KEY, "Strip enviornment variables not set, skipping tests")
+@skipIf((settings.STRIPE_TEST_SECRET_KEY or settings.STRIPE_TEST_PUBLIC_KEY) == None, "Strip enviornment variables not set, skipping tests")
 class StripeProcessorTests(TestCase):
 
     def setUp(self):
