@@ -121,7 +121,9 @@ class CheckoutView(TemplateView):
 
         processor.process_payment(request)
         if processor.transaction_result:
-            return redirect('purchase-summary', pk=processor.invoice.payments.filter(success=True).values_list('pk'))
+            return redirect('vendor:purchase-summary', pk=invoice.pk)   # redirect to the summary page for the above invoice
+            # TODO: invoices should have a UUID attached to them
+            # return redirect('vendor:purchase-summary', pk=processor.invoice.payments.filter(success=True).values_list('pk'))    # TODO: broken
         else:
             return render(request, self.template_name, processor.get_checkout_context(request, context))
 
