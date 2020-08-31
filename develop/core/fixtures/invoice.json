@@ -18,5 +18,22 @@
             "currency": "jpy",
             "shipping_address": null
         }
+    },
+    {
+        "model": "vendor.payment",
+        "pk": 1,
+        "fields": {
+            "invoice": 1,
+            "created": "2020-06-30T01:20:01.616Z",
+            "transaction": "1-1-1",
+            "provider": "AuthorizeNetProcessor",
+            "amount": 408.43,
+            "profile": 1,
+            "billing_address": 1, 
+            "result": "" ,
+            "success": true, 
+            "payee_full_name": "Bob Ross",
+            "payee_company": "Whitemoon Dreams"
+        }
     }
 ]

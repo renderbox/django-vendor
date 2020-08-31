@@ -119,25 +119,6 @@ class AuthorizeNetProcessorTests(TestCase):
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
-        self.credit_card_form = CreditCardForm(initial={
-            'full_name': 'Bob Ross', 
-            'card_number': '5424000000000015',
-            'expire_month': '12',
-            'expire_year': '2030',
-            'cvv_number': '999'
-        }, prefix='credit-card')
-        self.credit_card_form.data = self.credit_card_form.initial
-        self.billing_address_form = BillingAddressForm(initial={
-            'name': 'Home Address',
-            'company': 'Whitemoon Labs',
-            'country': Country.USA,
-            'address_1': '221B Baker Street',
-            'address_2': "",
-            'locality': 'Marylebone', 
-            'state': 'California',
-            'postal_code': '90292'
-        }, prefix='billing-address')
-        self.billing_address_form.data = self.billing_address_form.initial
 
     def test_environment_variables_set(self):
         self.assertIsNotNone(settings.AUTHORIZE_NET_TRANSACTION_KEY)
@@ -167,8 +148,7 @@ class AuthorizeNetProcessorTests(TestCase):
         address, process the payment and make sure it succeeds.
         """
         request = HttpRequest()
-        request.POST = QueryDict(
-            'billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=999')
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=999')
 
         processor = PaymentProcessor(self.existing_invoice)
         processor.process_payment(request)
@@ -183,8 +163,8 @@ class AuthorizeNetProcessorTests(TestCase):
         pass
 
     def test_refund_success(self):
-        # TODO: Implement Test
-        pass
+        processor = PaymentProcessor(self.existing_invoice)
+        processor.refund_payment(
 
     def test_refund_fail(self):
         # TODO: Implement Test

@@ -121,12 +121,14 @@ class CheckoutView(TemplateView):
 
         processor.process_payment(request)
         if processor.transaction_result:
-            return redirect('purchase-summary')
+            return redirect('purchase-summary', pk=processor.invoice.payments.filter(success=True).values_list('pk'))
         else:
             return render(request, self.template_name, processor.get_checkout_context(request, context))
 
         
-
+class PaymentView(DetailView):
+    model = Payment
+    template_name = 'vendor/payment_summary.html'
 
 class InvoicesView(ListView):
     pass
