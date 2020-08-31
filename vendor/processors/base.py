@@ -38,6 +38,7 @@ class PaymentProcessorBase(object):
     status = None
     invoice = None
     provider = None
+    payment = None
     payment_info = {}
     billing_address = {}
     transaction_token = None

@@ -213,15 +213,15 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         
 
     def save_payment_transaction(self):
-        payment = self.get_payment_model()        
-        payment.success = self.transaction_result
-        payment.transaction = self.transaction_response.get('trans_id', "Transaction Faild")
-        payment.result = str(dict(self.transaction_response))
-        payment.payee_full_name = self.payment_info.data.get('credit-card-full_name')
-        payment.payee_company = self.billing_address.data.get('billing-address-company')
+        self.payment = self.get_payment_model()        
+        self.payment.success = self.transaction_result
+        self.payment.transaction = self.transaction_response.get('trans_id', "Transaction Faild")
+        self.payment.result = str(dict(self.transaction_response))
+        self.payment.payee_full_name = self.payment_info.data.get('credit-card-full_name')
+        self.payment.payee_company = self.billing_address.data.get('billing-address-company')
         billing_address = self.billing_address.save()
-        payment.billing_address = billing_address
-        payment.save()
+        self.payment.billing_address = billing_address
+        self.payment.save()
 
     def check_transaction_keys(self):
         """
@@ -230,9 +230,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if not self.merchant_auth.name or not self.merchant_auth.transactionKey:
             self.transaction_result = False
             self.transaction_response = {'msg': "Make sure you run processor_setup before process_payment and that envarionment keys are set"}
-            return False
-        else:
             return True
+        else:
+            return False
 
 
     def process_payment(self, request):
