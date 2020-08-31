@@ -208,9 +208,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         payment = self.get_payment_model()        
         payment.success = self.transaction_result
         payment.transaction = self.transaction_response.get('trans_id', "Transaction Faild")
-        payment.result = "\n".join([ str(d) for d in self.transaction_response.items() ]).replace('(','{').replace(')','}')
+        payment.result = str(dict(self.transaction_response))
         payment.payee_full_name = self.payment_info.data.get('credit-card-full_name')
-        payment.payee_company = self.billing_address.get('company')
+        payment.payee_company = self.billing_address.data.get('billing-address-company')
         billing_address = self.billing_address.save()
         payment.billing_address = billing_address
         payment.save()
@@ -241,7 +241,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         # You execute and get the response
         response = self.controller.getresponse()
-        self.transaction_response = self.check_response(response)
+        self.check_response(response)
 
         self.save_payment_transaction()
 

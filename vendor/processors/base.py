@@ -62,7 +62,7 @@ class PaymentProcessorBase(object):
 
     def get_payment_model(self):
         payment = Payment(  profile=self.invoice.profile,
-                            amount=invoice.get_amount(),
+                            amount=self.invoice.total,
                             provider=self.provider,
                             invoice=self.invoice
                             )
