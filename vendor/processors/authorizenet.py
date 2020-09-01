@@ -68,7 +68,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             TransactionTypes.REFUND: self.REFUND,
         }
     
-
     def init_payment_type_switch(self):
         """
         Initializes the Payment Types create functions
@@ -95,7 +94,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         transaction_type = apicontractsv1.transactionRequestType()
         transaction_type.transactionType = trans_type
-        transaction_type.amount = Decimal(self.invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
         return transaction_type
 
     def create_credit_card_payment(self):
@@ -217,7 +215,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.payment_info = CreditCardForm(dict([d for d in form_data.items() if 'credit-card' in d[0]]), prefix='credit-card')
         self.billing_address = BillingAddressForm(dict([d for d in form_data.items() if 'billing-address' in d[0]]), prefix='billing-address')
         
-
     def save_payment_transaction(self):
         self.payment = self.get_payment_model()        
         self.payment.success = self.transaction_result
@@ -264,6 +261,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         # Init transaction
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(settings.AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT)
+        self.transaction_type.amount = Decimal(self.invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
         self.transaction_type.payment = self.create_payment()
         self.transaction_type.billTo = self.create_billing_address()
 
@@ -291,6 +289,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         # Init transaction
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(self.transaction_types[TransactionTypes.REFUND])
+        self.transaction_type.amount = Decimal(self.invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
         self.transaction_type.refTransId = ast.literal_eval(payment.result).get('refTransID')
 
         creditCard = apicontractsv1.creditCardType()
@@ -309,3 +308,21 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.check_response(response)
 
         self.update_invoice_status(Invoice.InvoiceStatus.REFUNDED)
+
+    def get_settled_batch_list(self):
+        if self.check_transaction_keys():
+            return 
+
+        self.transaction = self.create_transaction()
+        self.transaction_type = self.create_transaction_type(self.GET_SETTLED_BATCH_LIST)
+
+        self.transaction.transactionRequest = self.transaction_type
+        self.controller = createTransactionController(self.transaction)
+        self.controller.execute()
+
+        response = self.controller.getresponse()
+        self.check_response(response)
+
+
+
+    

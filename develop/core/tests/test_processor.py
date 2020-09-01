@@ -205,13 +205,15 @@ class AuthorizeNetProcessorTests(TestCase):
         The test will get a settle payment and test refund transaction.
         """
         # Get Settled payment
+        processor = PaymentProcessor()
+        processor.get_settled_batch_list()
         # Create payment models
         # Linke payment to invoice
         # Init processor
         # Refund transaction
         # Check response.
 
-        processor = PaymentProcessor(self.existing_invoice)
+        # processor = PaymentProcessor(self.existing_invoice)
         processor.refund_payment(self.existing_invoice.payments.get(pk=1))
 
         self.assertEquals(Invoice.InvoiceStatus.REFUNDED, processor.invoice.status)
@@ -265,3 +267,4 @@ class StripeProcessorTests(TestCase):
 
     def setUp(self):
         pass
+
