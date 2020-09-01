@@ -115,10 +115,11 @@ TEST_PAYLOAD = {
 }
 @skipIf((settings.AUTHORIZE_NET_API_ID or settings.AUTHORIZE_NET_TRANSACTION_KEY) == None, "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
-    fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'address', 'invoice']
+    fixtures = ['developer']
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
+        pass
     
     ##########
     # Processor Initialization Tests
@@ -205,16 +206,16 @@ class AuthorizeNetProcessorTests(TestCase):
         The test will get a settle payment and test refund transaction.
         """
         # Get Settled payment
-        processor = PaymentProcessor()
+        processor = PaymentProcessor(self.existing_invoice)
         processor.get_settled_batch_list()
+        processor.get_transaction_batch_list()
         # Create payment models
         # Linke payment to invoice
         # Init processor
         # Refund transaction
         # Check response.
 
-        # processor = PaymentProcessor(self.existing_invoice)
-        processor.refund_payment(self.existing_invoice.payments.get(pk=1))
+        # processor.refund_payment(self.existing_invoice.payments.get(pk=1))
 
         self.assertEquals(Invoice.InvoiceStatus.REFUNDED, processor.invoice.status)
         pass

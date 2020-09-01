@@ -313,16 +313,35 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if self.check_transaction_keys():
             return 
 
-        self.transaction = self.create_transaction()
-        self.transaction_type = self.create_transaction_type(self.GET_SETTLED_BATCH_LIST)
+        settledBatchListRequest = apicontractsv1.getSettledBatchListRequest()
+        settledBatchListRequest.merchantAuthentication = self.merchant_auth
 
-        self.transaction.transactionRequest = self.transaction_type
-        self.controller = createTransactionController(self.transaction)
+        settledBatchListController = getSettledBatchListController(settledBatchListRequest)
+        settledBatchListController.execute()
+
+        response = settledBatchListController.getresponse()
+
+    def get_transaction_batch_list(self, batch_id):
+
+        # set sorting parameters
+        sorting = apicontractsv1.TransactionListSorting()
+        sorting.orderBy = apicontractsv1.TransactionListOrderFieldEnum.id
+        sorting.orderDescending = True
+
+        # set paging and offset parameters
+        paging = apicontractsv1.Paging()
+        # Paging limit can be up to 1000 for this request
+        paging.limit = 20
+        paging.offset = 1
+
+        transactionListRequest = apicontractsv1.getTransactionListRequest()
+        transactionListRequest.merchantAuthentication = self.merchant_auth
+        transactionListRequest.refId = 
+        transactionListRequest.batchId = batch_id
+        transactionListRequest.sorting = sorting
+        transactionListRequest.paging = paging
+
+        self.controller = getTransactionListController(transactionListRequest)
         self.controller.execute()
-
-        response = self.controller.getresponse()
-        self.check_response(response)
-
-
 
     
