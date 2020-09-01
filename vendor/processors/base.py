@@ -16,16 +16,11 @@ from vendor.models.choice import PurchaseStatus
 vendor_pre_authorization = django.dispatch.Signal()
 vendor_post_authorization =  django.dispatch.Signal()
 
-class PaymentTypes(Enum):
-    CREDIT_CARD = auto()
-    BANK_ACCOUNT = auto()
-    PAY_PAL = auto()
-    MOBILE = auto()
-
 class TransactionTypes(Enum):
     AUTHORIZE = auto()
     CAPTURE = auto()
     SETTLE = auto()
+    VOID = auto()
     REFUND = auto()
 
 #############

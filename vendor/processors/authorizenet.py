@@ -8,7 +8,7 @@ from decimal import Decimal, ROUND_DOWN
 import ast
 
 
-from .base import PaymentProcessorBase, PaymentTypes, TransactionTypes
+from .base import PaymentProcessorBase, TransactionTypes
 
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models.invoice import Invoice
@@ -42,7 +42,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def get_checkout_context(self, request=None, context={}):
         context = super().get_checkout_context(context=context)
         # TODO: prefix should be defined somewhere
-        context['credit_card_form'] = CreditCardForm(prefix='credit-card')
+        context['credit_card_form'] = CreditCardForm(prefix='credit-card', initial={'payment_type': CreditCardForm.PaymentTypes.CREDIT_CARD})
         context['billing_address_form'] = BillingAddressForm(prefix='billing-address')
         return context
     
@@ -71,10 +71,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Initializes the Payment Types create functions
         """
         self.payment_type_switch = {
-            PaymentTypes.CREDIT_CARD: self.create_credit_card_payment,
-            PaymentTypes.BANK_ACCOUNT: self.create_bank_account_payment,
-            PaymentTypes.PAY_PAL: self.create_pay_pay_payment,
-            PaymentTypes.MOBILE: self.create_mobile_payment,
+            CreditCardForm.PaymentTypes.CREDIT_CARD: self.create_credit_card_payment,
+            CreditCardForm.PaymentTypes.BANK_ACCOUNT: self.create_bank_account_payment,
+            CreditCardForm.PaymentTypes.PAY_PAL: self.create_pay_pay_payment,
+            CreditCardForm.PaymentTypes.MOBILE: self.create_mobile_payment,
         }
 
     def create_transaction(self):
@@ -119,7 +119,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Creates a payment instance acording to the billing information captured
         """
         payment = apicontractsv1.paymentType()
-        payment.creditCard = self.payment_type_switch[self.payment_info.payment_type]()
+        payment.creditCard = self.payment_type_switch[int(self.payment_info.data.get('credit-card-payment_type'))]()
         return payment
 
     def set_transaction_request_settings(self, settings):
