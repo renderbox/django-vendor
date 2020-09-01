@@ -48,9 +48,10 @@
       <h5 class="my-0 mr-md-auto font-weight-normal">Django Vendor</h5>
       <nav class="my-2 my-md-0 mr-md-3">
         <a class="p-2 text-dark" href="/">Home</a>
-        {% comment %} <a class="p-2 text-dark" href="#">Enterprise</a>
-        <a class="p-2 text-dark" href="#">Support</a> {% endcomment %}
-        <a class="p-2 text-dark" href="{% url 'vendor:order-list' %}">Order History</a>
+        <a class="p-2 text-dark" href="{% url 'vendor:order-list' %}">My Orders</a>
+        {% if perms.vendor.can_view_site_purchases %}
+        <a class="p-2 text-dark" href="{% url 'vendor:manager-dashboard' %}">Purchase Dashboard</a>
+        {% endif %}
         <a class="p-2 text-dark" href="{% url 'vendor:cart' %}">Cart</a>
       </nav>
       {% if request.user.is_authenticated %}
@@ -79,7 +80,7 @@
     <footer class="pt-4 my-md-5 pt-md-5 border-top">
       <div class="row">
         <div class="col-12 col-md">
-          <!-- <img class="mb-2" src="/docs/4.4/assets/brand/bootstrap-solid.svg" alt="" width="24" height="24"> -->
+          <img class="mb-2" src="https://getbootstrap.com/docs/4.5/assets/brand/bootstrap-solid.svg" alt="" width="24" height="24">
           <small class="d-block mb-3 text-muted">© 2020</small>
         </div>
         <div class="col-6 col-md">
