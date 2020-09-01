@@ -15,8 +15,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
 from django.http import HttpResponse
 
-from vendor.models import Offer, OrderItem, Invoice, Payment, Address #Price, Purchase, Refund, CustomerProfile, PurchaseStatus, OrderStatus
-# from vendor.forms import AddToCartForm, AddToCartModelForm, PaymentForm, RequestRefundForm
+from vendor.models import Offer, OrderItem, Invoice, Payment, Address
 from vendor.models.address import Address as GoogleAddress
 from vendor.processors import PaymentProcessor
 from vendor.forms import BillingAddressForm, CreditCardForm

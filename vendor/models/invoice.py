@@ -40,7 +40,7 @@ class Invoice(CreateUpdateModelBase):
     currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=settings.DEFAULT_CURRENCY)      # User's default currency
     shipping_address = models.ForeignKey("vendor.Address", verbose_name=_("Shipping Address"), on_delete=models.CASCADE, blank=True, null=True)
     # paid = models.BooleanField(_("Paid"))                 # May be Useful for quick filtering on invoices that are outstanding
-    # paid_date = models.DateTimeField(_("Payment Date"))
+    # settle_date = models.DateTimeField(_("Settle Date"))
 
     objects = models.Manager()
     on_site = CurrentSiteManager()

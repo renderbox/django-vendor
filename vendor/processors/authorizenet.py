@@ -7,12 +7,13 @@ from authorizenet.apicontrollers import *
 from decimal import Decimal, ROUND_DOWN
 import ast
 
+from .base import PaymentProcessorBase
+from vendor.models.choice import TransactionTypes, PaymentTypes
 
-from .base import PaymentProcessorBase, TransactionTypes
-
-from vendor.choices import PaymentTypes
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models.invoice import Invoice
+
+
 class AuthorizeNetProcessor(PaymentProcessorBase):
     """
     Implementation of Authoirze.Net SDK

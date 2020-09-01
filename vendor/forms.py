@@ -5,7 +5,7 @@ from django.utils.translation import ugettext as _
 from django.db.models import IntegerChoices
 from address.models import Country, State 
 from .models import OrderItem, Address
-from .choices import PaymentTypes
+from vendor.models.choice import PaymentTypes
 
 
 # class AddToCartModelForm(forms.ModelForm):
