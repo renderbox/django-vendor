@@ -207,7 +207,7 @@ class AuthorizeNetProcessorTests(TestCase):
         """
         # Get Settled payment
         processor = PaymentProcessor(self.existing_invoice)
-        processor.get_settled_batch_list()
+        batch_list = processor.get_settled_batch_list()
         processor.get_transaction_batch_list()
         processor.get_transaction_detail()
         # Create payment models
