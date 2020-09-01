@@ -49,6 +49,7 @@ class Invoice(CreateUpdateModelBase):
     class Meta:
         verbose_name = _("Invoice")
         verbose_name_plural = _("Invoices")
+        ordering = ['-ordered_date', '-updated']             # TODO: change to use ordered_date.  Invoice ordered_date needs to be updated on successful purchase by the PaymentProcessor.
 
     def __str__(self):
         return "%s Invoice (%s)" % (self.profile.user.username, self.created.strftime('%Y-%m-%d %H:%M'))

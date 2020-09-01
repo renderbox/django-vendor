@@ -23,6 +23,6 @@ urlpatterns = [
     # path('issue/refund/<int:id>/', views.IssueRefundView.as_view(), name='vendor-issue-refund'),
     path('checkout/', views.CheckoutView.as_view(), name="checkout"),
     
-    path('orders/', views.OrderHistoryListView.as_view(), name="order-history-list"),
+    path('orders/', views.OrderHistoryListView.as_view(), name="order-history"),
     path('order/<uuid:uuid>/', views.OrderHistoryDetailView.as_view(), name="order-history-detail"),
 ]

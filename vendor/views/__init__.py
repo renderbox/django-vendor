@@ -145,7 +145,7 @@ class OrderHistoryListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         try:
-            return self.request.user.customer_profile.get().invoices.all()  # The profile and user are site specific so this should only return what's on the site for that user
+            return self.request.user.customer_profile.get().invoices.filter(status__gt=Invoice.InvoiceStatus.CART)  # The profile and user are site specific so this should only return what's on the site for that user excluding the cart
         except ObjectDoesNotExist:         # Catch the actual error for the exception
             return []   # Return empty list if there is no customer_profile
 
@@ -166,13 +166,18 @@ class AdminInvoiceListView(LoginRequiredMixin, ListView):
     '''
     List of all the invoices generated on the current site.
     '''
+    template_name = "vendor/invoice_admin_list.html"
     model = Invoice
+
+    def get_queryset(self):
+        return self.model.on_site.all()  # The profile and user are site specific so this should only return what's on the site for that user
 
 
 class AdminInvoiceDetailView(LoginRequiredMixin, DetailView):
     '''
     Details of an invoice generated on the current site.
     '''
+    template_name = "vendor/invoice_history_detail.html"
     model = Invoice
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
