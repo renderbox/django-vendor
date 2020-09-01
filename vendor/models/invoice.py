@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
 from django.utils.translation import ugettext as _
 
@@ -40,6 +41,10 @@ class Invoice(CreateUpdateModelBase):
     shipping_address = models.ForeignKey("vendor.Address", verbose_name=_("Shipping Address"), on_delete=models.CASCADE, blank=True, null=True)
     # paid = models.BooleanField(_("Paid"))                 # May be Useful for quick filtering on invoices that are outstanding
     # paid_date = models.DateTimeField(_("Payment Date"))
+
+    objects = models.Manager()
+    on_site = CurrentSiteManager()
+
 
     class Meta:
         verbose_name = _("Invoice")
