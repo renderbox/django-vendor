@@ -2,10 +2,9 @@ from calendar import monthrange
 from datetime import datetime
 from django import forms
 from django.utils.translation import ugettext as _
-
+from django.db.models import IntegerChoices
 from address.models import Country, State 
 from .models import OrderItem, Address
-from vendor.processors.base import PaymentTypes
 
 
 # class AddToCartModelForm(forms.ModelForm):
@@ -149,17 +148,28 @@ class CreditCardField(forms.CharField):
         return checksum % 10 == 0
 
 
-class CreditCardForm(forms.Form):
+class PaymentFrom(forms.Form):
+    class PaymentTypes(IntegerChoices):
+            CREDIT_CARD = 10, _('Credit Card')
+            BANK_ACCOUNT = 20, _('Bank Account')
+            PAY_PAL = 30, _('Pay Pal')
+            MOBILE = 40, _('Mobile')
+
+    payment_type = forms.ChoiceField(label=_("Payment Type"), choices=PaymentTypes.choices, widget=forms.widgets.HiddenInput)
+
+
+
+class CreditCardForm(PaymentFrom):
     full_name = forms.CharField(required=True, label=_("Card Holder"), max_length=80)
     card_number = CreditCardField(placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)
     expire_month = forms.ChoiceField(required=True, choices=[(x, x) for x in range(1, 13)])
     expire_year = forms.ChoiceField(required=True, choices=[(x, x) for x in range(datetime.now().year, datetime.now().year + 15)])
     cvv_number = forms.IntegerField(required=True, label=_("CVV Number"), max_value=9999, widget=forms.TextInput(attrs={'size': '4'}))
 
-    def __init__(self, *args, **kwargs):
-        self.payment_type = PaymentTypes.CREDIT_CARD
-        self.payment_data = kwargs.pop('payment_data', None)
-        super(CreditCardForm, self).__init__(*args, **kwargs)
+    # def __init__(self, *args, **kwargs):
+    #     self.payment_type = PaymentTypes.CREDIT_CARD
+    #     self.payment_data = kwargs.pop('payment_data', None)
+    #     super(CreditCardForm, self).__init__(*args, **kwargs)
 
     def clean(self):
         cleaned_data = super(CreditCardForm, self).clean()
