@@ -209,6 +209,7 @@ class AuthorizeNetProcessorTests(TestCase):
         processor = PaymentProcessor(self.existing_invoice)
         processor.get_settled_batch_list()
         processor.get_transaction_batch_list()
+        processor.get_transaction_detail()
         # Create payment models
         # Linke payment to invoice
         # Init processor

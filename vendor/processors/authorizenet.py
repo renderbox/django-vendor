@@ -313,35 +313,25 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if self.check_transaction_keys():
             return 
 
-        settledBatchListRequest = apicontractsv1.getSettledBatchListRequest()
-        settledBatchListRequest.merchantAuthentication = self.merchant_auth
+        self.transaction = apicontractsv1.getSettledBatchListRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
 
-        settledBatchListController = getSettledBatchListController(settledBatchListRequest)
+        self.controller = getSettledBatchListController(settledBatchListRequest)
         settledBatchListController.execute()
 
         response = settledBatchListController.getresponse()
 
+        if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok and hasattr(response, 'batchList'):
+            return response.batchList.batch
+            
     def get_transaction_batch_list(self, batch_id):
 
-        # set sorting parameters
-        sorting = apicontractsv1.TransactionListSorting()
-        sorting.orderBy = apicontractsv1.TransactionListOrderFieldEnum.id
-        sorting.orderDescending = True
+        self.transaction = apicontractsv1.getTransactionListRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.refId = "X"
+        self.transaction.batchId = batch_id
 
-        # set paging and offset parameters
-        paging = apicontractsv1.Paging()
-        # Paging limit can be up to 1000 for this request
-        paging.limit = 20
-        paging.offset = 1
-
-        transactionListRequest = apicontractsv1.getTransactionListRequest()
-        transactionListRequest.merchantAuthentication = self.merchant_auth
-        transactionListRequest.refId = 
-        transactionListRequest.batchId = batch_id
-        transactionListRequest.sorting = sorting
-        transactionListRequest.paging = paging
-
-        self.controller = getTransactionListController(transactionListRequest)
+        self.controller = getTransactionListController(self.transaction)
         self.controller.execute()
 
-    
+        response = transactionListController.getresponse()
