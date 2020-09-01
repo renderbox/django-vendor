@@ -9,7 +9,7 @@ from vendor.models import Offer, Price, Invoice, OrderItem, Reciept, CustomerPro
 
 class ModelInvoiceTests(TestCase):
 
-    fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'invoice']
+    fixtures = ['unittest']
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
@@ -77,7 +77,7 @@ class ModelInvoiceTests(TestCase):
 
 class ViewInvoiceTests(TestCase):
 
-    fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'invoice']
+    fixtures = ['unittest']
     
     def setUp(self):
         self.client = Client()

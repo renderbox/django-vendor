@@ -9,7 +9,7 @@ from vendor.models import Offer, Price, OrderItem
 
 class ModelOfferTests(TestCase):
 
-    fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'invoice']
+    fixtures = ['unittest']
 
     def setUp(self):
         pass
@@ -61,7 +61,7 @@ class ModelOfferTests(TestCase):
 
 class ViewOfferTests(TestCase):
     
-    fixtures = ['site', 'user', 'product', 'price', 'offer', 'order_item', 'invoice']
+    fixtures = ['unittest']
     
     def setUp(self):
         self.client = Client()
