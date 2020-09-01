@@ -5,6 +5,7 @@ from django.utils.translation import ugettext as _
 from django.db.models import IntegerChoices
 from address.models import Country, State 
 from .models import OrderItem, Address
+from .choices import PaymentTypes
 
 
 # class AddToCartModelForm(forms.ModelForm):
@@ -149,12 +150,6 @@ class CreditCardField(forms.CharField):
 
 
 class PaymentFrom(forms.Form):
-    class PaymentTypes(IntegerChoices):
-            CREDIT_CARD = 10, _('Credit Card')
-            BANK_ACCOUNT = 20, _('Bank Account')
-            PAY_PAL = 30, _('Pay Pal')
-            MOBILE = 40, _('Mobile')
-
     payment_type = forms.ChoiceField(label=_("Payment Type"), choices=PaymentTypes.choices, widget=forms.widgets.HiddenInput)
 
 
