@@ -1,18 +1,18 @@
 """
 Payment processor for Authorize.net.
 """
-from django.conf import settings
-from authorizenet import apicontractsv1
-from authorizenet.apicontrollers import *
-from decimal import Decimal, ROUND_DOWN
 import ast
 
-
-from .base import PaymentProcessorBase, TransactionTypes
-
+from authorizenet import apicontractsv1
+from authorizenet.apicontrollers import *
+from django.conf import settings
+from decimal import Decimal, ROUND_DOWN
 from vendor.choices import PaymentTypes
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models.invoice import Invoice
+
+from .base import PaymentProcessorBase, TransactionTypes
+
 class AuthorizeNetProcessor(PaymentProcessorBase):
     """
     Implementation of Authoirze.Net SDK
@@ -28,6 +28,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     GET_DETAILS = "getDetailsTransaction"
     AUTHORIZE_CONTINUE = "authOnlyContinueTransaction"
     AUTHORIZE_CAPTURE_CONTINUE = "authCaptureContinueTransaction"
+
+    GET_SETTLED_BATCH_LIST = "getSettledBatchListRequest"
 
     """
     Controller executes the transaction, that process a transaction type

@@ -119,7 +119,10 @@ class AuthorizeNetProcessorTests(TestCase):
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
-
+    
+    ##########
+    # Processor Initialization Tests
+    ##########
     def test_environment_variables_set(self):
         self.assertIsNotNone(settings.AUTHORIZE_NET_TRANSACTION_KEY)
         self.assertIsNotNone(settings.AUTHORIZE_NET_API_ID)
@@ -133,6 +136,9 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(processor.merchant_auth.transactionKey)
         self.assertIsNotNone(processor.merchant_auth.name)
     
+    ##########
+    # Checkout and Payment Transaction Tests
+    ##########
     def test_get_checkout_context(self):
         context = {}
         payment_processor = PaymentProcessor(invoice=self.existing_invoice) 
@@ -188,9 +194,23 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(processor.payment)
         self.assertFalse(processor.payment.success)
         self.assertEquals(Invoice.InvoiceStatus.FAILED, processor.invoice.status)
-        
 
+    ##########
+    # Refund Transactin Tests
+    ##########        
     def test_refund_success(self):
+        """
+        In order for this test to pass a transaction has to be settled first. The settlement process
+        takes effect once a day. It is defined in the Sandbox in the cut-off time.
+        The test will get a settle payment and test refund transaction.
+        """
+        # Get Settled payment
+        # Create payment models
+        # Linke payment to invoice
+        # Init processor
+        # Refund transaction
+        # Check response.
+
         processor = PaymentProcessor(self.existing_invoice)
         processor.refund_payment(self.existing_invoice.payments.get(pk=1))
 
@@ -201,6 +221,9 @@ class AuthorizeNetProcessorTests(TestCase):
         # TODO: Implement Test
         pass
 
+    ##########
+    # Customer Payment Profile Transaction Tests
+    ##########
     def test_create_customer_payment_profile(self):
         # TODO: Implement Test
         pass
@@ -217,6 +240,9 @@ class AuthorizeNetProcessorTests(TestCase):
         # TODO: Implement Test
         pass
 
+    ##########
+    # Subsction Transaction Tests
+    ##########
     def test_create_subscription(self):
         # TODO: Implement Test
         pass
@@ -232,7 +258,6 @@ class AuthorizeNetProcessorTests(TestCase):
     def test_create_subscription_customer_profile(self):
         # TODO: Implement Test
         pass
-    
     
 
 @skipIf((settings.STRIPE_TEST_SECRET_KEY or settings.STRIPE_TEST_PUBLIC_KEY) == None, "Strip enviornment variables not set, skipping tests")
