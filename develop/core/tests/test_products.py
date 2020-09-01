@@ -13,7 +13,7 @@ from core.models import Product
 
 class ModelProductTests(TestCase):
 
-    fixtures = ['unittest']
+    fixtures = ['group', 'user','unit_test']
 
     def setUp(self):
         self.new_product = Product()

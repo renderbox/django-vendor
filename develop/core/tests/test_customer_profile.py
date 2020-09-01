@@ -10,7 +10,7 @@ from vendor.models import Offer, Price, Invoice, OrderItem, Reciept, CustomerPro
 
 class ModelCustomerProfileTests(TestCase):
     
-    fixtures = ['unittest']
+    fixtures = ['group', 'user','unit_test']
 
     def setUp(self):
         pass

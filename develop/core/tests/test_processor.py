@@ -115,7 +115,8 @@ TEST_PAYLOAD = {
 }
 @skipIf((settings.AUTHORIZE_NET_API_ID or settings.AUTHORIZE_NET_TRANSACTION_KEY) == None, "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
-    fixtures = ['unittest']
+    
+    fixtures = ['group', 'user','unit_test']
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
