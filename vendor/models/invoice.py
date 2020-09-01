@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.db import models
@@ -23,6 +25,7 @@ class Invoice(CreateUpdateModelBase):
         COMPLETE = 50, _("Complete")    # Payment Processor Completed Transaction.
         REFUNDED = 60, _("Refunded")    # Invoice Refunded to client. 
 
+    uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
     profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="invoices")                      # For multi-site support
     status = models.IntegerField(_("Status"), choices=InvoiceStatus.choices, default=InvoiceStatus.CART)

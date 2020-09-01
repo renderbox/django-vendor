@@ -24,5 +24,5 @@ urlpatterns = [
     path('checkout/', views.CheckoutView.as_view(), name="checkout"),
     
     path('orders/', views.OrderHistoryListView.as_view(), name="order-history-list"),
-    path('orders/<slug:slug>/', views.OrderHistoryDetailView.as_view(), name="order-history-detail"),
+    path('order/<slug:slug>/', views.OrderHistoryDetailView.as_view(), name="order-history-detail"),
 ]
