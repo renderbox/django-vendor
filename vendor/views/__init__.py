@@ -21,6 +21,8 @@ from vendor.models.address import Address as GoogleAddress
 from vendor.processors import PaymentProcessor
 from vendor.forms import BillingAddressForm, CreditCardForm
 
+from .admin import AdminDashboardView, AdminInvoiceDetailView, AdminInvoiceListView
+
 
 payment_processor = PaymentProcessor              # The Payment Processor configured in settings.py
 
@@ -159,28 +161,6 @@ class OrderHistoryDetailView(LoginRequiredMixin, DetailView):
     slug_url_kwarg = 'uuid'
 
 
-#############
-# Admin Views
-
-class AdminInvoiceListView(LoginRequiredMixin, ListView):
-    '''
-    List of all the invoices generated on the current site.
-    '''
-    template_name = "vendor/invoice_admin_list.html"
-    model = Invoice
-
-    def get_queryset(self):
-        return self.model.on_site.all()  # The profile and user are site specific so this should only return what's on the site for that user
-
-
-class AdminInvoiceDetailView(LoginRequiredMixin, DetailView):
-    '''
-    Details of an invoice generated on the current site.
-    '''
-    template_name = "vendor/invoice_history_detail.html"
-    model = Invoice
-    slug_field = 'uuid'
-    slug_url_kwarg = 'uuid'
 
 
 
