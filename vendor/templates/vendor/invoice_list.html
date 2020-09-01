@@ -5,7 +5,7 @@
 
     <nav aria-label="breadcrumb">
       <!-- <ol class="breadcrumb"> -->
-      <h1>Orders</h1>
+      <h1>My Orders</h1>
       <!-- </ol> -->
     </nav>
 
@@ -24,15 +24,15 @@
           <tbody>
             {% for item in object_list %}
             <tr>
-                    <td><a class="text-primary" href="{% url 'vendor:order-history-detail' item.uuid %}">Order</a></td>
-                    <td>{{ item.created }}</td>
-                    <td>{{ item.total }}</td>
-                </tr>
+              <td><a class="text-primary" href="{% url 'vendor:order-detail' item.uuid %}">Order</a></td>
+              <td>{{ item.created }}</td>
+              <td>{{ item.total }}</td>
+            </tr>
             {% empty %}
             <tr>
-                <td>
-                    No Orders
-                </td>
+              <td>
+                No Orders
+              </td>
             </tr>
             {% endfor %}
           </tbody>
