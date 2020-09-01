@@ -34,3 +34,10 @@ class CustomerProfile(CreateUpdateModelBase):
     def get_cart(self):
         cart, created = self.invoices.get_or_create(status=Invoice.InvoiceStatus.CART)
         return cart
+
+    def has_product(self, product):
+        """
+        returns true/false if the user has a reciept to a given product
+        it also checks against elegibility start/end/empty dates on consumable products and subscriptions
+        """
+        return True    # TODO: Build out to check if the person really has access to the given product
