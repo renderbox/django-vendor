@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext as _
 from django.db import models
 from django.contrib.sites.models import Site
+from django.contrib.sites.managers import CurrentSiteManager
 from django.conf import settings
 
 from vendor.models.base import ProductModelBase
@@ -15,6 +16,9 @@ class Catalog(models.Model):
     '''
     name = models.CharField(_("Name"), max_length=80, blank=True)
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID)
+
+    objects = models.Manager()
+    on_site = CurrentSiteManager()
 
     def __str__(self):
         return self.name

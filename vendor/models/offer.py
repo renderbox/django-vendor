@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.contrib.sites.managers import CurrentSiteManager
 from django.core.exceptions import FieldError
 from django.db import models
 from django.urls import reverse
@@ -39,6 +40,9 @@ class Offer(CreateUpdateModelBase):
     term_details = models.JSONField(_("Details"), default=dict, blank=True, null=True)
     term_start_date = models.DateTimeField(_("Term Start Date"), help_text="When is this product available to use?", blank=True, null=True) # Useful for Event Tickets or Pre-Orders
     available = models.BooleanField(_("Available"), default=False, help_text="Is this currently available?")
+
+    objects = models.Manager()
+    on_site = CurrentSiteManager()
 
     class Meta:
         verbose_name = _("Offer")
