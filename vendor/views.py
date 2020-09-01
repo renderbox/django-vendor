@@ -131,7 +131,25 @@ class CheckoutView(TemplateView):
 class PaymentView(DetailView):
     model = Payment
 
-class InvoicesView(ListView):
+
+class OrderHistoryView(ListView):
+    pass
+
+
+#############
+# Admin Views
+
+class AdminInvoiceListView(ListView):
+    '''
+    List of all the invoices generated on the current site.
+    '''
+    pass
+
+
+class AdminInvoiceDetailView(DetailView):
+    '''
+    Details of an invoice generated on the current site.
+    '''
     pass
 
 
