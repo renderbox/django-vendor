@@ -72,10 +72,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Initializes the Payment Types create functions
         """
         self.payment_type_switch = {
-            CreditCardForm.PaymentTypes.CREDIT_CARD: self.create_credit_card_payment,
-            CreditCardForm.PaymentTypes.BANK_ACCOUNT: self.create_bank_account_payment,
-            CreditCardForm.PaymentTypes.PAY_PAL: self.create_pay_pay_payment,
-            CreditCardForm.PaymentTypes.MOBILE: self.create_mobile_payment,
+            PaymentTypes.CREDIT_CARD: self.create_credit_card_payment,
+            PaymentTypes.BANK_ACCOUNT: self.create_bank_account_payment,
+            PaymentTypes.PAY_PAL: self.create_pay_pay_payment,
+            PaymentTypes.MOBILE: self.create_mobile_payment,
         }
 
     def create_transaction(self):

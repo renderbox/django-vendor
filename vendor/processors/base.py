@@ -2,7 +2,7 @@
 Base Payment processor used by all derived processors.
 """
 import django.dispatch
-from django.db.models import IntegerChoices
+
 from copy import deepcopy
 from django.conf import settings
 from enum import Enum, auto
@@ -16,12 +16,17 @@ from vendor.models.choice import PurchaseStatus
 vendor_pre_authorization = django.dispatch.Signal()
 vendor_post_authorization =  django.dispatch.Signal()
 
-class TransactionTypes(IntegerChoices):
-    AUTHORIZE = 10
-    CAPTURE = 20
-    SETTLE = 30
-    VOID = 40
-    REFUND = 50
+class PaymentTypes(Enum):
+    CREDIT_CARD = auto()
+    BANK_ACCOUNT = auto()
+    PAY_PAL = auto()
+    MOBILE = auto()
+
+class TransactionTypes(Enum):
+    AUTHORIZE = auto()
+    CAPTURE = auto()
+    SETTLE = auto()
+    REFUND = auto()
 
 #############
 # BASE CLASS
