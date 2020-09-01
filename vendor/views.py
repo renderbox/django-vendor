@@ -132,7 +132,14 @@ class PaymentView(DetailView):
     model = Payment
 
 
-class OrderHistoryView(ListView):
+######################
+# Order History Views
+
+class OrderHistoryListView(ListView):
+    pass
+
+
+class OrderHistoryDetailView(DetailView):
     pass
 
 
