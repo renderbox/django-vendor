@@ -5,12 +5,13 @@ from django.contrib.sites.models import Site
 from django.http import HttpRequest, QueryDict
 from django.test import TestCase, Client
 from django.urls import reverse
-from unittest import skipIf
 from core.models import Product
+from random import randrange
 from vendor.models import Invoice, Payment
 from vendor.models.address import Country
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.processors import PaymentProcessor
+from unittest import skipIf
 
 
 ###############################
@@ -117,7 +118,7 @@ TEST_PAYLOAD = {
 @skipIf((settings.AUTHORIZE_NET_API_ID or settings.AUTHORIZE_NET_TRANSACTION_KEY) == None, "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
     
-    fixtures = ['group', 'user','unit_test']
+    fixtures = ['user','unit_test']
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
@@ -157,6 +158,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
         
+        self.processor.invoice.total = randrange(1,100)
         self.processor.process_payment(request)
 
         print(self.processor.transaction_message)
@@ -196,11 +198,11 @@ class AuthorizeNetProcessorTests(TestCase):
 
     ##########
     # CVV Tests
+    # Reference: Test Guide: https://developer.authorize.net/hello_world/testing_guide.html
     ##########
     def test_process_payment_fail_cvv_no_match(self):
         """
         Check a failed transaction due to cvv number does not match card number.
-        Test Guide: https://developer.authorize.net/hello_world/testing_guide.html
         CVV: 901 
         """
         request = HttpRequest()
@@ -215,7 +217,6 @@ class AuthorizeNetProcessorTests(TestCase):
     def test_process_payment_fail_cvv_should_not_be_on_card(self):
         """
         Check a failed transaction due to cvv number does not match card number.
-        Test Guide: https://developer.authorize.net/hello_world/testing_guide.html
         CVV: 902
         """
         request = HttpRequest()
@@ -245,7 +246,6 @@ class AuthorizeNetProcessorTests(TestCase):
     def test_process_payment_fail_cvv_not_processed(self):
         """
         Check a failed transaction due to cvv number is not processed.
-        Test Guide: https://developer.authorize.net/hello_world/testing_guide.html
         CVV: 904 
         """
         request = HttpRequest()
@@ -259,9 +259,149 @@ class AuthorizeNetProcessorTests(TestCase):
     
     ##########
     # AVS Tests
+    # Reference: https://support.authorize.net/s/article/What-Are-the-Different-Address-Verification-Service-AVS-Response-Codes
     ##########
-    def test_process_payment_avs_b(self):
-        pass
+
+    def test_process_payment_avs_a(self):
+        """
+        A = Street Address: Match -- First 5 Digits of ZIP: No Match
+        Postal Code: 46201
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=46201&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
+
+        self.processor.invoice.total = randrange(1,100)
+        self.processor.process_payment(request)
+
+        self.assertIsNotNone(self.processor.payment)
+        self.assertIn("'avsResultCode': 'A'", self.processor.payment.result)
+
+    def test_process_payment_avs_e(self):
+        """
+        E = AVS Error
+        Postal Code: 46203
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Souveniropolis&billing-address-country=581&billing-address-address_1=14 Main Street&billing-address-address_2=&billing-address-locality=Pecan Springs&billing-address-state=CA&billing-address-postal_code=46203&credit-card-full_name=Bob Ross&credit-card-card_number=2223000010309711&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
+                
+        self.processor.invoice.total = randrange(1,100)
+        self.processor.process_payment(request)
+
+        self.assertIsNotNone(self.processor.payment)
+        self.assertIn("'avsResultCode': 'E'", self.processor.payment.result)
+
+    def test_process_payment_avs_g(self):
+        """
+        G = Non U.S. Card Issuing Bank
+        Postal Code: 46204
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=46204&credit-card-full_name=Bob Ross&credit-card-card_number=4007000000027&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
+
+        self.processor.invoice.total = randrange(1,100)
+        self.processor.process_payment(request)
+
+        self.assertIsNotNone(self.processor.payment)
+        self.assertIn("'avsResultCode': 'G'", self.processor.payment.result)
+
+    def test_process_payment_avs_n(self):
+        """
+        N = Street Address: No Match -- First 5 Digits of ZIP: No Match
+        Postal Code: 46205
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=46205&credit-card-full_name=Bob Ross&credit-card-card_number=2223000010309711&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
+
+        self.processor.invoice.total = randrange(1,100)
+        self.processor.process_payment(request)
+
+        self.assertIsNotNone(self.processor.payment)
+        self.assertIn("'avsResultCode': 'N'", self.processor.payment.result)
+
+    def test_process_payment_avs_r(self):
+        """
+        R = Retry, System Is Unavailable
+        Postal Code: 46207
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=46207&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
+
+        self.processor.invoice.total = randrange(1,100)
+        self.processor.process_payment(request)
+
+        self.assertIsNotNone(self.processor.payment)
+        self.assertIn("'avsResultCode': 'R'", self.processor.payment.result)
+        self.assertFalse(self.processor.payment.success)
+        self.assertEquals(Invoice.InvoiceStatus.FAILED, self.processor.invoice.status) 
+
+    def test_process_payment_avs_s(self):
+        """
+        S = AVS Not Supported by Card Issuing Bank
+        Postal Code: 46208
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=46208&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
+
+        self.processor.process_payment(request)
+
+        self.assertIsNotNone(self.processor.payment)
+        self.assertIn("'avsResultCode': 'S'", self.processor.payment.result)
+
+    def test_process_payment_avs_u(self):
+        """
+        U = Address Information For This Cardholder Is Unavailable
+        Postal Code: 46209
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=46209&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
+
+        self.processor.invoice.total = randrange(1,100)
+        self.processor.process_payment(request)
+
+        self.assertIsNotNone(self.processor.payment)
+        self.assertIn("'avsResultCode': 'U'", self.processor.payment.result)
+
+    def test_process_payment_avs_w(self):
+        """
+        W = Street Address: No Match -- All 9 Digits of ZIP: Match
+        Postal Code: 46211
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=46211&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
+
+        self.processor.invoice.total = randrange(1,100)
+        self.processor.process_payment(request)
+
+        self.assertIsNotNone(self.processor.payment)
+        self.assertIn("'avsResultCode': 'W'", self.processor.payment.result)
+
+    def test_process_payment_avs_x(self):
+        """
+        X = Street Address: Match -- All 9 Digits of ZIP: Match
+        Postal Code: 46214
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=46214&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
+
+        self.processor.invoice.total = randrange(1,100)
+        self.processor.process_payment(request)
+
+        self.assertIsNotNone(self.processor.payment)
+        self.assertIn("'avsResultCode': 'X'", self.processor.payment.result)
+
+    def test_process_payment_avs_z(self):
+        """
+        Z = Street Address: No Match - First 5 Digits of ZIP: Match
+        Postal Code: 46217
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=46217&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
+
+        self.processor.invoice.total = randrange(1,100)
+        self.processor.process_payment(request)
+
+        self.assertIsNotNone(self.processor.payment)
+        self.assertIn("'avsResultCode': 'Z'", self.processor.payment.result)
     
     ##########
     # Refund Transactin Tests
@@ -276,16 +416,17 @@ class AuthorizeNetProcessorTests(TestCase):
         start_date, end_date = (datetime.now() - timedelta(days=31)), datetime.now()
         batch_list = self.processor.get_settled_batch_list(start_date, end_date)
         transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
+        successfull_transactions = [ t for t in transaction_list if t['transactionStatus'] == 'settledSuccessfully' ]
 
         payment = Payment()
         # payment.amount = transaction_detail.authAmount.pyval
         # Hard coding minimum amount so the test can run multiple times.
         payment.amount = 0.01
-        payment.transaction = transaction_list[-1].transId.text
-        payment.result = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+        payment.transaction = successfull_transactions[-1].transId.text
+        payment.result = str({ 'accountNumber': successfull_transactions[-1].accountNumber.text})
 
         self.processor.refund_payment(payment)
-
+        print(f'Message: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}')
         self.assertEquals(Invoice.InvoiceStatus.REFUNDED, self.existing_invoice.status)
 
     def test_refund_fail_invalid_account_number(self):
@@ -372,7 +513,7 @@ class AuthorizeNetProcessorTests(TestCase):
         pass
 
     ##########
-    # Subsction Transaction Tests
+    # Subscription Transaction Tests
     ##########
     def test_create_subscription(self):
         # TODO: Implement Test

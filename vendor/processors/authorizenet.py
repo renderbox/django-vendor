@@ -10,6 +10,7 @@ from django.conf import settings
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models.choice import TransactionTypes, PaymentTypes
 from vendor.models.invoice import Invoice
+from vendor.models.address import Country
 
 from .base import PaymentProcessorBase
 
@@ -126,6 +127,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         payment.creditCard = self.payment_type_switch[int(self.payment_info.data.get('credit-card-payment_type'))]()
         return payment
 
+    def create_customer_data(self):
+        customerData = apicontractsv1.customerDataType()
+        customerData.type = "individual"
+        customerData.id = str(self.invoice.profile.user.pk)
+        customerData.email = self.invoice.profile.user.email
+        return customerData
+
     def set_transaction_request_settings(self, settings):
         raise NotImplementedError
 
@@ -150,7 +158,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         line_items = apicontractsv1.ArrayOfLineItem()
         for item in items:
-            line_items.append(self.create_line_item(item))
+            line_items.lineItem.append(self.create_line_item(item))
         return line_items
 
     def create_tax(self, tax):
@@ -171,7 +179,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         billing_address.city = str(self.billing_address.data.get("billing-address-city", ""))
         billing_address.state = str(self.billing_address.data.get("billing-address-state", ""))
         billing_address.zip = str(self.billing_address.data.get("billing-address-postal_code"))
-        billing_address.country = str(self.billing_address.data.get("billing-address-country"))
+        country = Country(int(self.billing_address.data.get("billing-address-country")))
+        billing_address.country = str(country.name)
         return billing_address
 
     def create_customer(self):
