@@ -23,9 +23,12 @@ class ModelCustomerProfileTests(TestCase):
 
 
     def test_new_invoice_cart(self):
-        # TODO: Implement Test
+        new_user = User()
+        new_user.username = 'WMD'
+        new_user.save()
+
         new_cp = CustomerProfile()
-        new_cp.user = User.objects.get(pk=2)
+        new_cp.user = User.objects.get(pk=new_user.pk)
         new_cp.save()
 
         new_invoice = new_cp.get_cart()

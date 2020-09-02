@@ -223,7 +223,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         processor.refund_payment(payment)
 
-        self.assertEquals(Invoice.InvoiceStatus.REFUNDED, processor.invoice.status)
+        self.assertEquals(Invoice.InvoiceStatus.REFUNDED, self.existing_invoice.status)
 
     def test_refund_fail_invalid_account_number(self):
         """
