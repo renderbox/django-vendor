@@ -22,7 +22,7 @@ PAYMENT = {
         "creditCard": {
             "cardNumber": "5424000000000015",
             "expirationDate": "2020-12",
-            "cardCode": "999"
+            "cardCode": "900"
         }
     }
 }
@@ -41,7 +41,7 @@ TEST_PAYLOAD = {
                 "creditCard": {
                     "cardNumber": "5424000000000015",
                     "expirationDate": "2020-12",
-                    "cardCode": "999"
+                    "cardCode": "900"
                 }
             },
             "lineItems": {
@@ -70,7 +70,7 @@ TEST_PAYLOAD = {
             },
             "poNumber": "456654",
             "customer": {
-                "id": "99999456654"
+                "id": "90099456654"
             },
             "billTo": {
                 "firstName": "Ellen",
@@ -157,7 +157,7 @@ class AuthorizeNetProcessorTests(TestCase):
         address, process the payment and make sure it succeeds.
         """
         request = HttpRequest()
-        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=999&credit-card-payment_type=10')
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
 
         processor = PaymentProcessor(self.existing_invoice)
         processor.process_payment(request)
@@ -173,7 +173,7 @@ class AuthorizeNetProcessorTests(TestCase):
         transation fails
         """
         request = HttpRequest()
-        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=999&credit-card-payment_type=10')
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
 
         processor = PaymentProcessor(self.existing_invoice)
         processor.process_payment(request)
@@ -189,7 +189,7 @@ class AuthorizeNetProcessorTests(TestCase):
         transation fails.
         """
         request = HttpRequest()
-        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000015&credit-card-expire_month=12&credit-card-expire_year=2000&credit-card-cvv_number=999&credit-card-payment_type=10')
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000015&credit-card-expire_month=12&credit-card-expire_year=2000&credit-card-cvv_number=900&credit-card-payment_type=10')
 
         processor = PaymentProcessor(self.existing_invoice)
         processor.process_payment(request)
@@ -198,6 +198,70 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertFalse(processor.payment.success)
         self.assertEquals(Invoice.InvoiceStatus.FAILED, processor.invoice.status)      
 
+    ##########
+    # CVV Tests
+    ##########
+    def test_process_payment_fail_cvv_no_match(self):
+        """
+        Check a failed transaction due to cvv number does not match card number.
+        Test Guide: https://developer.authorize.net/hello_world/testing_guide.html
+        CVV: 901 
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=901&credit-card-payment_type=10')
+
+        processor = PaymentProcessor(self.existing_invoice)
+        processor.process_payment(request)
+        pass
+
+    def test_process_payment_fail_cvv_should_not_be_on_card(self):
+        """
+        Check a failed transaction due to cvv number does not match card number.
+        Test Guide: https://developer.authorize.net/hello_world/testing_guide.html
+        CVV: 902
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=902&credit-card-payment_type=10')
+
+        processor = PaymentProcessor(self.existing_invoice)
+        processor.process_payment(request)
+        
+        self.assertIsNotNone(processor.payment)
+        self.assertFalse(processor.payment.success)
+        self.assertEquals(Invoice.InvoiceStatus.FAILED, processor.invoice.status) 
+
+    def test_process_payment_fail_cvv_not_certified(self):
+        """
+        Check a failed transaction due to cvv number does not match card number.
+        Test Guide: https://developer.authorize.net/hello_world/testing_guide.html
+        CVV: 903
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=903&credit-card-payment_type=10')
+
+        processor = PaymentProcessor(self.existing_invoice)
+        processor.process_payment(request)
+        
+        self.assertIsNotNone(processor.payment)
+        self.assertFalse(processor.payment.success)
+        self.assertEquals(Invoice.InvoiceStatus.FAILED, processor.invoice.status) 
+
+    def test_process_payment_fail_cvv_not_processed(self):
+        """
+        Check a failed transaction due to cvv number is not processed.
+        Test Guide: https://developer.authorize.net/hello_world/testing_guide.html
+        CVV: 904 
+        """
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=904&credit-card-payment_type=10')
+
+        processor = PaymentProcessor(self.existing_invoice)
+        processor.process_payment(request)
+        
+        self.assertIsNotNone(processor.payment)
+        self.assertFalse(processor.payment.success)
+        self.assertEquals(Invoice.InvoiceStatus.FAILED, processor.invoice.status) 
+    
     ##########
     # Refund Transactin Tests
     ##########        
