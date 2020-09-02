@@ -13,7 +13,7 @@ from core.models import Product
 
 class ModelProductTests(TestCase):
 
-    fixtures = ['site', 'product']
+    fixtures = ['group', 'user','unit_test']
 
     def setUp(self):
         self.new_product = Product()
@@ -86,8 +86,6 @@ class ModelProductTests(TestCase):
     
 class TransactionProductTests(TestCase):
 
-    fixtures = ['site', 'user', 'product']
-
     def setUp(self):
         pass
 
@@ -100,8 +98,6 @@ class TransactionProductTests(TestCase):
         pass
 
 class ViewsProductTests(TestCase):
-
-    fixtures = ['site', 'user', 'product']
 
     def setUp(self):
         pass

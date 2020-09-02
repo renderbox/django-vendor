@@ -22,4 +22,11 @@ urlpatterns = [
     # path('retrieve/refund/requests/', views.RetrieveRefundRequestsView.as_view(), name='vendor-retrieve-refund-requests'),
     # path('issue/refund/<int:id>/', views.IssueRefundView.as_view(), name='vendor-issue-refund'),
     path('checkout/', views.CheckoutView.as_view(), name="checkout"),
+    
+    path('orders/', views.OrderHistoryListView.as_view(), name="order-list"),
+    path('order/<uuid:uuid>/', views.OrderHistoryDetailView.as_view(), name="order-detail"),
+
+    path('manage/', views.AdminDashboardView.as_view(), name="manager-dashboard"),
+    path('manage/orders/', views.AdminInvoiceListView.as_view(), name="manager-order-list"),
+    path('manage/order/<uuid:uuid>/', views.AdminInvoiceDetailView.as_view(), name="manager-order-detail"),
 ]

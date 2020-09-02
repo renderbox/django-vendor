@@ -19,3 +19,16 @@ class PurchaseStatus(models.IntegerChoices):
     REFUNDED = 35, _("Refunded")
 
 
+class PaymentTypes(models.IntegerChoices):
+    CREDIT_CARD = 10, _('Credit Card')
+    BANK_ACCOUNT = 20, _('Bank Account')
+    PAY_PAL = 30, _('Pay Pal')
+    MOBILE = 40, _('Mobile')
+
+
+class TransactionTypes(models.IntegerChoices):
+    AUTHORIZE = 10, _('Authorize')
+    CAPTURE = 20, _('Capture')
+    SETTLE = 30, _('Settle')
+    VOID = 40, _('Void')
+    REFUND = 50, _('Refund')

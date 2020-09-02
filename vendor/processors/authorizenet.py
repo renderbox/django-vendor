@@ -5,13 +5,15 @@ import ast
 
 from authorizenet import apicontractsv1
 from authorizenet.apicontrollers import *
-from django.conf import settings
 from decimal import Decimal, ROUND_DOWN
-from vendor.choices import PaymentTypes
+from django.conf import settings
 from vendor.forms import CreditCardForm, BillingAddressForm
+from vendor.models.choice import TransactionTypes, PaymentTypes
 from vendor.models.invoice import Invoice
 
-from .base import PaymentProcessorBase, TransactionTypes
+from .base import PaymentProcessorBase
+
+
 
 class AuthorizeNetProcessor(PaymentProcessorBase):
     """
@@ -94,6 +96,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         transaction_type = apicontractsv1.transactionRequestType()
         transaction_type.transactionType = trans_type
+        transaction_type.currencyCode = 'USD'
         return transaction_type
 
     def create_credit_card_payment(self):
@@ -289,16 +292,16 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         # Init transaction
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(self.transaction_types[TransactionTypes.REFUND])
-        self.transaction_type.amount = Decimal(self.invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
-        self.transaction_type.refTransId = ast.literal_eval(payment.result).get('refTransID')
+        self.transaction_type.amount = Decimal(payment.amount).quantize(Decimal('.00'), rounding=ROUND_DOWN)
+        self.transaction_type.refTransId = payment.transaction
 
         creditCard = apicontractsv1.creditCardType()
         creditCard.cardNumber = ast.literal_eval(payment.result).get('accountNumber')[-4:]
         creditCard.expirationDate = "XXXX"
 
-        payment = apicontractsv1.paymentType()
-        payment.creditCard =  creditCard
-        self.transaction_type.payment = payment        
+        payment_type = apicontractsv1.paymentType()
+        payment_type.creditCard =  creditCard
+        self.transaction_type.payment = payment_type        
 
         self.transaction.transactionRequest = self.transaction_type
         self.controller = createTransactionController(self.transaction)
@@ -307,31 +310,54 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
         self.check_response(response)
 
-        self.update_invoice_status(Invoice.InvoiceStatus.REFUNDED)
+        if self.transaction_result:
+            self.update_invoice_status(Invoice.InvoiceStatus.REFUNDED)
 
-    def get_settled_batch_list(self):
-        if self.check_transaction_keys():
-            return 
-
+    def get_settled_batch_list(self, start_date, end_date):
+        """
+        Gets a list of batches for settled transaction between the start and end date.
+        """
         self.transaction = apicontractsv1.getSettledBatchListRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.firstSettlementDate = start_date
+        self.transaction.lastSettlementDate = end_date
 
-        self.controller = getSettledBatchListController(settledBatchListRequest)
-        settledBatchListController.execute()
+        self.controller = getSettledBatchListController(self.transaction)
+        self.controller.execute()
 
-        response = settledBatchListController.getresponse()
+        response = self.controller.getresponse()
 
         if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok and hasattr(response, 'batchList'):
-            return response.batchList.batch
+            return [ batch for batch in response.batchList.batch ]
             
     def get_transaction_batch_list(self, batch_id):
-
+        """
+        Gets the list of settled transaction in a batch. There are sorting and paging option
+        that are not currently implemented. It will get the last 1k transactions.
+        """
         self.transaction = apicontractsv1.getTransactionListRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.refId = "X"
         self.transaction.batchId = batch_id
 
         self.controller = getTransactionListController(self.transaction)
         self.controller.execute()
 
-        response = transactionListController.getresponse()
+        response = self.controller.getresponse()
+
+        if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok and hasattr(response, 'transactions'):
+            return [transaction for transaction in response.transactions.transaction ]
+
+    def get_transaction_detail(self, transaction_id):
+        self.transaction = apicontractsv1.getTransactionDetailsRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.transId = transaction_id
+
+        self.controller = getTransactionDetailsController(self.transaction)
+        self.controller.execute()
+
+        response = self.controller.getresponse()
+
+        if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
+            return response.transaction
+
+

@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.contrib.sites.managers import CurrentSiteManager
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext as _
@@ -39,6 +40,9 @@ class ProductModelBase(CreateUpdateModelBase):
     description = models.TextField(blank=True, null=True)
     meta = models.CharField(_("Meta"), max_length=150, validators=[validate_msrp_format], blank=True, null=True, help_text=_("Eg: USD,10.99\n(iso4217 Country Code), (MSRP Price)"))                                          # allows for things like a MSRP in multiple currencies. Not JSONField to force a db
     classification = models.ManyToManyField("vendor.TaxClassifier", blank=True)                                        # What taxes can apply to this item
+
+    objects = models.Manager()
+    on_site = CurrentSiteManager()
 
     class Meta:
         abstract = True

@@ -1,5 +1,8 @@
+import uuid
+
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
 from django.utils.translation import ugettext as _
 
@@ -23,6 +26,7 @@ class Invoice(CreateUpdateModelBase):
         COMPLETE = 50, _("Complete")    # Payment Processor Completed Transaction.
         REFUNDED = 60, _("Refunded")    # Invoice Refunded to client. 
 
+    uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
     profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="invoices")                      # For multi-site support
     status = models.IntegerField(_("Status"), choices=InvoiceStatus.choices, default=InvoiceStatus.CART)
@@ -36,11 +40,21 @@ class Invoice(CreateUpdateModelBase):
     currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=settings.DEFAULT_CURRENCY)      # User's default currency
     shipping_address = models.ForeignKey("vendor.Address", verbose_name=_("Shipping Address"), on_delete=models.CASCADE, blank=True, null=True)
     # paid = models.BooleanField(_("Paid"))                 # May be Useful for quick filtering on invoices that are outstanding
-    # paid_date = models.DateTimeField(_("Payment Date"))
+    # settle_date = models.DateTimeField(_("Settle Date"))
+
+    objects = models.Manager()
+    on_site = CurrentSiteManager()
+
 
     class Meta:
         verbose_name = _("Invoice")
         verbose_name_plural = _("Invoices")
+        ordering = ['-ordered_date', '-updated']             # TODO: [GK-2518] change to use ordered_date.  Invoice ordered_date needs to be updated on successful purchase by the PaymentProcessor.
+
+        permissions = (
+            ('can_view_site_purchases', 'Can view Site Purchases'),
+            ('can_refund_purchase', 'Can refund Purchase'),
+        )
 
     def __str__(self):
         return "%s Invoice (%s)" % (self.profile.user.username, self.created.strftime('%Y-%m-%d %H:%M'))

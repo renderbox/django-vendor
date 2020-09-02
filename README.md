@@ -57,3 +57,12 @@ To run the project:
 ```bash
 ./manage.py runserver
 ```
+
+
+to dump unit test data
+
+```bash
+./manage.py dumpdata --indent 4 auth.group --natural-foreign --natural-primary > fixtures/group.json
+./manage.py dumpdata --indent 4 auth.user --natural-foreign > fixtures/user.json
+./manage.py dumpdata --indent 4 -e contenttypes -e auth.permission -e sessions -e admin.logentry -e authtoken.token -e account.emailaddress -e auth.group -e auth.user > fixtures/unit_test.json
+```

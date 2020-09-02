@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -6,7 +7,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from unittest import skipIf
 from core.models import Product
-from vendor.models import Invoice
+from vendor.models import Invoice, Payment
 from vendor.models.address import Country
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.processors import PaymentProcessor
@@ -115,7 +116,8 @@ TEST_PAYLOAD = {
 }
 @skipIf((settings.AUTHORIZE_NET_API_ID or settings.AUTHORIZE_NET_TRANSACTION_KEY) == None, "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
-    fixtures = ['developer']
+    
+    fixtures = ['group', 'user','unit_test']
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
@@ -155,7 +157,7 @@ class AuthorizeNetProcessorTests(TestCase):
         address, process the payment and make sure it succeeds.
         """
         request = HttpRequest()
-        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=999')
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=999&credit-card-payment_type=10')
 
         processor = PaymentProcessor(self.existing_invoice)
         processor.process_payment(request)
@@ -171,7 +173,7 @@ class AuthorizeNetProcessorTests(TestCase):
         transation fails
         """
         request = HttpRequest()
-        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=999')
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=999&credit-card-payment_type=10')
 
         processor = PaymentProcessor(self.existing_invoice)
         processor.process_payment(request)
@@ -187,14 +189,14 @@ class AuthorizeNetProcessorTests(TestCase):
         transation fails.
         """
         request = HttpRequest()
-        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000015&credit-card-expire_month=12&credit-card-expire_year=2000&credit-card-cvv_number=999')
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000015&credit-card-expire_month=12&credit-card-expire_year=2000&credit-card-cvv_number=999&credit-card-payment_type=10')
 
         processor = PaymentProcessor(self.existing_invoice)
         processor.process_payment(request)
 
         self.assertIsNotNone(processor.payment)
         self.assertFalse(processor.payment.success)
-        self.assertEquals(Invoice.InvoiceStatus.FAILED, processor.invoice.status)
+        self.assertEquals(Invoice.InvoiceStatus.FAILED, processor.invoice.status)      
 
     ##########
     # Refund Transactin Tests
@@ -205,25 +207,89 @@ class AuthorizeNetProcessorTests(TestCase):
         takes effect once a day. It is defined in the Sandbox in the cut-off time.
         The test will get a settle payment and test refund transaction.
         """
-        # Get Settled payment
         processor = PaymentProcessor(self.existing_invoice)
-        batch_list = processor.get_settled_batch_list()
-        processor.get_transaction_batch_list()
-        processor.get_transaction_detail()
-        # Create payment models
-        # Linke payment to invoice
-        # Init processor
-        # Refund transaction
-        # Check response.
+        
+        # Get Settled payment
+        start_date, end_date = (datetime.now() - timedelta(days=31)), datetime.now()
+        batch_list = processor.get_settled_batch_list(start_date, end_date)
+        transaction_list = processor.get_transaction_batch_list(str(batch_list[-1].batchId))
 
-        # processor.refund_payment(self.existing_invoice.payments.get(pk=1))
+        payment = Payment()
+        # payment.amount = transaction_detail.authAmount.pyval
+        # Hard coding minimum amount so the test can run multiple times.
+        payment.amount = 0.01
+        payment.transaction = transaction_list[-1].transId.text
+        payment.result = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+
+        processor.refund_payment(payment)
 
         self.assertEquals(Invoice.InvoiceStatus.REFUNDED, processor.invoice.status)
-        pass
 
-    def test_refund_fail(self):
-        # TODO: Implement Test
-        pass
+    def test_refund_fail_invalid_account_number(self):
+        """
+        Checks for transaction_result fail because the account number does not match the payment transaction settled.
+        """
+        processor = PaymentProcessor(self.existing_invoice)       
+        status_before_transaction = self.existing_invoice.status
+
+        # Get Settled payment
+        start_date, end_date = (datetime.now() - timedelta(days=31)), datetime.now()
+        batch_list = processor.get_settled_batch_list(start_date, end_date)
+        transaction_list = processor.get_transaction_batch_list(str(batch_list[-1].batchId))
+
+        payment = Payment()
+        payment.amount = 0.01
+        payment.transaction = transaction_list[-1].transId.text
+        payment.result = str({ 'accountNumber': '6699'})
+
+        processor.refund_payment(payment)
+
+        self.assertFalse(processor.transaction_result)
+        self.assertEquals(processor.invoice.status, status_before_transaction)
+
+    def test_refund_fail_invalid_amount(self):
+        """
+        Checks for transaction_result fail because the amount exceeds the payment transaction settled.
+        """
+        processor = PaymentProcessor(self.existing_invoice)       
+        status_before_transaction = self.existing_invoice.status
+
+        # Get Settled payment
+        start_date, end_date = (datetime.now() - timedelta(days=31)), datetime.now()
+        batch_list = processor.get_settled_batch_list(start_date, end_date)
+        transaction_list = processor.get_transaction_batch_list(str(batch_list[-1].batchId))
+
+        payment = Payment()
+        payment.amount = 1000000.00
+        payment.transaction = transaction_list[-1].transId.text
+        payment.result = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+
+        processor.refund_payment(payment)
+
+        self.assertFalse(processor.transaction_result)
+        self.assertEquals(processor.invoice.status, status_before_transaction)
+
+    def test_refund_fail_invalid_transaction_id(self):
+        """
+        Checks for transaction_result fail because the transaction id does not match
+        """
+        processor = PaymentProcessor(self.existing_invoice)       
+        status_before_transaction = self.existing_invoice.status
+
+        # Get Settled payment
+        start_date, end_date = (datetime.now() - timedelta(days=31)), datetime.now()
+        batch_list = processor.get_settled_batch_list(start_date, end_date)
+        transaction_list = processor.get_transaction_batch_list(str(batch_list[-1].batchId))
+
+        payment = Payment()
+        payment.amount = 0.01
+        payment.transaction = '111222333412'
+        payment.result = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+
+        processor.refund_payment(payment)
+
+        self.assertFalse(processor.transaction_result)
+        self.assertEquals(processor.invoice.status, status_before_transaction)
 
     ##########
     # Customer Payment Profile Transaction Tests
