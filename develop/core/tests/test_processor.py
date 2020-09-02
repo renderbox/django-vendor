@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -6,7 +7,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from unittest import skipIf
 from core.models import Product
-from vendor.models import Invoice
+from vendor.models import Invoice, Payment
 from vendor.models.address import Country
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.processors import PaymentProcessor
@@ -120,7 +121,11 @@ class AuthorizeNetProcessorTests(TestCase):
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
-
+        pass
+    
+    ##########
+    # Processor Initialization Tests
+    ##########
     def test_environment_variables_set(self):
         self.assertIsNotNone(settings.AUTHORIZE_NET_TRANSACTION_KEY)
         self.assertIsNotNone(settings.AUTHORIZE_NET_API_ID)
@@ -134,6 +139,9 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(processor.merchant_auth.transactionKey)
         self.assertIsNotNone(processor.merchant_auth.name)
     
+    ##########
+    # Checkout and Payment Transaction Tests
+    ##########
     def test_get_checkout_context(self):
         context = {}
         payment_processor = PaymentProcessor(invoice=self.existing_invoice) 
@@ -190,17 +198,102 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertFalse(processor.payment.success)
         self.assertEquals(Invoice.InvoiceStatus.FAILED, processor.invoice.status)      
 
+    ##########
+    # Refund Transactin Tests
+    ##########        
     def test_refund_success(self):
+        """
+        In order for this test to pass a transaction has to be settled first. The settlement process
+        takes effect once a day. It is defined in the Sandbox in the cut-off time.
+        The test will get a settle payment and test refund transaction.
+        """
         processor = PaymentProcessor(self.existing_invoice)
-        processor.refund_payment(self.existing_invoice.payments.get(pk=1))
+        
+        # Get Settled payment
+        start_date, end_date = (datetime.now() - timedelta(days=31)), datetime.now()
+        batch_list = processor.get_settled_batch_list(start_date, end_date)
+        transaction_list = processor.get_transaction_batch_list(str(batch_list[-1].batchId))
 
-        self.assertEquals(Invoice.InvoiceStatus.REFUNDED, processor.invoice.status)
-        pass
+        payment = Payment()
+        # payment.amount = transaction_detail.authAmount.pyval
+        # Hard coding minimum amount so the test can run multiple times.
+        payment.amount = 0.01
+        payment.transaction = transaction_list[-1].transId.text
+        payment.result = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
 
-    def test_refund_fail(self):
-        # TODO: Implement Test
-        pass
+        processor.refund_payment(payment)
 
+        self.assertEquals(Invoice.InvoiceStatus.REFUNDED, self.existing_invoice.status)
+
+    def test_refund_fail_invalid_account_number(self):
+        """
+        Checks for transaction_result fail because the account number does not match the payment transaction settled.
+        """
+        processor = PaymentProcessor(self.existing_invoice)       
+        status_before_transaction = self.existing_invoice.status
+
+        # Get Settled payment
+        start_date, end_date = (datetime.now() - timedelta(days=31)), datetime.now()
+        batch_list = processor.get_settled_batch_list(start_date, end_date)
+        transaction_list = processor.get_transaction_batch_list(str(batch_list[-1].batchId))
+
+        payment = Payment()
+        payment.amount = 0.01
+        payment.transaction = transaction_list[-1].transId.text
+        payment.result = str({ 'accountNumber': '6699'})
+
+        processor.refund_payment(payment)
+
+        self.assertFalse(processor.transaction_result)
+        self.assertEquals(processor.invoice.status, status_before_transaction)
+
+    def test_refund_fail_invalid_amount(self):
+        """
+        Checks for transaction_result fail because the amount exceeds the payment transaction settled.
+        """
+        processor = PaymentProcessor(self.existing_invoice)       
+        status_before_transaction = self.existing_invoice.status
+
+        # Get Settled payment
+        start_date, end_date = (datetime.now() - timedelta(days=31)), datetime.now()
+        batch_list = processor.get_settled_batch_list(start_date, end_date)
+        transaction_list = processor.get_transaction_batch_list(str(batch_list[-1].batchId))
+
+        payment = Payment()
+        payment.amount = 1000000.00
+        payment.transaction = transaction_list[-1].transId.text
+        payment.result = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+
+        processor.refund_payment(payment)
+
+        self.assertFalse(processor.transaction_result)
+        self.assertEquals(processor.invoice.status, status_before_transaction)
+
+    def test_refund_fail_invalid_transaction_id(self):
+        """
+        Checks for transaction_result fail because the transaction id does not match
+        """
+        processor = PaymentProcessor(self.existing_invoice)       
+        status_before_transaction = self.existing_invoice.status
+
+        # Get Settled payment
+        start_date, end_date = (datetime.now() - timedelta(days=31)), datetime.now()
+        batch_list = processor.get_settled_batch_list(start_date, end_date)
+        transaction_list = processor.get_transaction_batch_list(str(batch_list[-1].batchId))
+
+        payment = Payment()
+        payment.amount = 0.01
+        payment.transaction = '111222333412'
+        payment.result = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+
+        processor.refund_payment(payment)
+
+        self.assertFalse(processor.transaction_result)
+        self.assertEquals(processor.invoice.status, status_before_transaction)
+
+    ##########
+    # Customer Payment Profile Transaction Tests
+    ##########
     def test_create_customer_payment_profile(self):
         # TODO: Implement Test
         pass
@@ -217,6 +310,9 @@ class AuthorizeNetProcessorTests(TestCase):
         # TODO: Implement Test
         pass
 
+    ##########
+    # Subsction Transaction Tests
+    ##########
     def test_create_subscription(self):
         # TODO: Implement Test
         pass
@@ -233,10 +329,10 @@ class AuthorizeNetProcessorTests(TestCase):
         # TODO: Implement Test
         pass
     
-    
 
 @skipIf((settings.STRIPE_TEST_SECRET_KEY or settings.STRIPE_TEST_PUBLIC_KEY) == None, "Strip enviornment variables not set, skipping tests")
 class StripeProcessorTests(TestCase):
 
     def setUp(self):
         pass
+
