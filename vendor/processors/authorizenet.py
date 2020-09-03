@@ -215,6 +215,22 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def create_customer(self):
         raise NotImplementedError
 
+    def create_payment_scheduale_interval_type(self, period_length, payment_occurrences, trial_occurrences=0):
+        """
+        Create an interval schedule with fixed months.
+        period_length: The period length the service payed mor last 
+            eg: period_length = 2. the user will be billed every 2 months.
+        payment_occurrences: The number of occurrences the payment should be made.
+            eg: payment_occurrences = 6. There will be six payments made at each period_length.
+        trial_occurrences: The number of ignored payments out of the payment_occurrences
+        """
+        payment_schedule = apicontractsv1.paymentScheduleType()
+        payment_schedule.interval = apicontractsv1.paymentScheduleTypeInterval()
+        payment_schedule.interval.length = period_length
+        payment_schedule.interval.unit = apicontractsv1.ARBSubscriptionUnitEnum.months
+        payment_schedule.startDate = datetime.now()
+        payment_schedule.totalOccurrences = payment_occurrences
+        payment_schedule.trialOccurrences = trial_occurrences
     ##########
     # Django-Vendor to Authoriaze.net data exchange functions
     ##########
@@ -344,33 +360,35 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         for subscription in subscription_list:
             self.create_subscription(subscription)
 
+    
+    
     def create_subscription(self, subscription):
         """
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
-        paymentschedule = apicontractsv1.paymentScheduleType()
-        paymentschedule.interval = apicontractsv1.paymentScheduleTypeInterval() #apicontractsv1.CTD_ANON() #modified by krgupta
-        paymentschedule.interval.length = str(ast.literal_eval(subscription.offer.term_details).get('length'))
-        paymentschedule.interval.unit = apicontractsv1.ARBSubscriptionUnitEnum.months
-        paymentschedule.startDate = datetime.now()
-        paymentschedule.totalOccurrences = ast.literal_eval(subscription.offer.term_details).get('occurrences')
-        paymentschedule.trialOccurrences = 0
+        period_length = str(ast.literal_eval(subscription.offer.term_details).get('period_length'))
+        payment_occurrences = ast.literal_eval(subscription.offer.term_details).get('payment_occurrences')
+        trail_occurrences = ast.literal_eval(subscription.offer.term_details).get('trial_occurrences', 0)
+        
         # Setting billing information
         billto = apicontractsv1.nameAndAddressType()
         billto.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])
         billto.lastName = self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1]
+
         # Setting subscription details
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
-        self.transaction_type.name = "Sample Subscription"
-        self.transaction_type.paymentSchedule = paymentschedule
+        self.transaction_type.name = subscription.offer.name
+        self.transaction_type.paymentSchedule = self.create_payment_scheduale_interval_type(period_length, payment_occurrences)
         self.transaction_type.amount = Decimal(subscription.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
         self.transaction_type.trialAmount = Decimal('0.00')
         self.transaction_type.billTo = billto
         self.transaction_type.payment = self.create_payment()
+
         # Creating the request
         self.transaction = apicontractsv1.ARBCreateSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.subscription = self.transaction_type
+        
         # Creating and executing the controller
         self.controller = ARBCreateSubscriptionController(self.transaction)
         self.controller.execute()
