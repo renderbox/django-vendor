@@ -80,7 +80,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.payment_type_switch = {
             PaymentTypes.CREDIT_CARD: self.create_credit_card_payment,
             PaymentTypes.BANK_ACCOUNT: self.create_bank_account_payment,
-            PaymentTypes.PAY_PAL: self.create_pay_pay_payment,
+            PaymentTypes.PAY_PAL: self.create_pay_pal_payment,
             PaymentTypes.MOBILE: self.create_mobile_payment,
         }
 
@@ -133,13 +133,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def create_bank_account_payment(self):
         raise NotImplementedError
 
-    def create_pay_pay_payment(self):
+    def create_pay_pal_payment(self):
         raise NotImplementedError
 
     def create_mobile_payment(self):
         raise NotImplementedError
 
-    def create_payment(self):
+    def create_authorize_payment(self):
         """
         Creates a payment instance acording to the billing information captured
         """
@@ -193,22 +193,14 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Creates Billing address to improve security in transaction
         """
         billing_address = apicontractsv1.customerAddressType()
-        billing_address.firstName = " ".join(self.payment_info.data.get(
-            'credit-card-full_name', "").split(" ")[:-1])
-        billing_address.lastName = self.payment_info.data.get(
-            'credit-card-full_name', "").split(" ")[-1]
-        billing_address.company = self.billing_address.data.get(
-            'billing-address-company')
-        billing_address.address = str(", ".join([self.billing_address.data.get(
-            'billing-address-address_1'), self.billing_address.data.get('billing-address-address_2')]))
-        billing_address.city = str(
-            self.billing_address.data.get("billing-address-city", ""))
-        billing_address.state = str(
-            self.billing_address.data.get("billing-address-state", ""))
-        billing_address.zip = str(
-            self.billing_address.data.get("billing-address-postal_code"))
-        country = Country(
-            int(self.billing_address.data.get("billing-address-country")))
+        billing_address.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])
+        billing_address.lastName = self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1]
+        billing_address.company = self.billing_address.data.get('billing-address-company')
+        billing_address.address = ", ".join([self.billing_address.data.get('billing-address-address_1'), self.billing_address.data.get('billing-address-address_2')])
+        billing_address.city = self.billing_address.data.get("billing-address-city", "")
+        billing_address.state = self.billing_address.data.get("billing-address-state", "")
+        billing_address.zip = self.billing_address.data.get("billing-address-postal_code")
+        country = Country(int(self.billing_address.data.get("billing-address-country")))
         billing_address.country = str(country.name)
         return billing_address
 
@@ -304,6 +296,41 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         else:
             self.transaction_message['msg'] = 'Null Response.'
 
+    def get_form_data(self, form_data):
+        self.payment_info = CreditCardForm(dict([d for d in form_data.items() if 'credit-card' in d[0]]), prefix='credit-card')
+        self.billing_address = BillingAddressForm(dict([d for d in form_data.items() if 'billing-address' in d[0]]), prefix='billing-address')
+    
+    def create_payment_model(self):
+        self.payment = self.get_payment_model() 
+        
+    def save_payment_transaction(self):       
+        self.payment.success = self.transaction_result
+        self.payment.transaction = self.transaction_response.get('transId', "Transaction Faild")
+        response = self.transaction_response.__dict__
+        if 'errors' in response:
+            response.pop('errors')
+        if 'messages' in response:
+            response.pop('messages')
+        self.payment.result = str({**self.transaction_message, **response})
+        self.payment.payee_full_name = self.payment_info.data.get('credit-card-full_name')
+        self.payment.payee_company = self.billing_address.data.get('billing-address-company')
+        billing_address = self.billing_address.save(commit=False)
+        billing_address.profile = self.invoice.profile
+        billing_address.save()
+        self.payment.billing_address = billing_address
+        self.payment.save()
+
+    def check_transaction_keys(self):
+        """
+        Checks if the transaction keys have been set otherwise the transaction should not continue
+        """
+        if not self.merchant_auth.name or not self.merchant_auth.transactionKey:
+            self.transaction_result = False
+            self.transaction_response = {'msg': "Make sure you run processor_setup before process_payment and that envarionment keys are set"}
+            return True
+        else:
+            return False
+
     def update_invoice_status(self, new_status):
         if self.transaction_result:
             self.invoice.status = new_status
@@ -328,15 +355,15 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if self.check_transaction_keys():
             return
 
+        self.create_payment_model()
         # Process form data to set up transaction
         self.get_form_data(request.POST)
 
         # Init transaction
         self.transaction = self.create_transaction()
-        self.transaction_type = self.create_transaction_type(
-            settings.AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT)
+        self.transaction_type = self.create_transaction_type(settings.AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT)
         self.transaction_type.amount = self.to_valid_decimal(self.invoice.total)
-        self.transaction_type.payment = self.create_payment()
+        self.transaction_type.payment = self.create_authorize_payment()
         self.transaction_type.billTo = self.create_billing_address()
 
         # Optional items for make it easier to read and use on the Authorize.net portal.
