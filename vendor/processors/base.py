@@ -5,6 +5,7 @@ import django.dispatch
 
 from copy import deepcopy
 from datetime import datetime
+from django.utils import timezone
 from django.conf import settings
 from enum import Enum, auto
 from vendor.models import Payment
@@ -60,7 +61,8 @@ class PaymentProcessorBase(object):
         payment = Payment(  profile=self.invoice.profile,
                             amount=self.invoice.total,
                             provider=self.provider,
-                            invoice=self.invoice
+                            invoice=self.invoice,
+                            created=timezone.now()
                             )
         return payment
 
