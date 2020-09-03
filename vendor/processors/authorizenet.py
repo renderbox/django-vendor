@@ -415,6 +415,58 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         else:
             self.transaction_message['msg'] = "Subscription Failed"
 
+    def update_subscription(self, request, subscription_id):
+        
+        self.get_form_data(request.POST)
+
+        self.transaction_type = apicontractsv1.ARBSubscriptionType()
+        self.transaction_type.payment = self.create_payment()
+
+        self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.subscriptionId = subscriptionId
+        self.transaction.subscription = self.transaction_type
+
+        self.controller = ARBUpdateSubscriptionController(self.transaction)
+        self.controller.execute()
+
+        response = self.controller.getresponse()
+
+        if (response.messages.resultCode=="Ok"):
+            print ("SUCCESS")
+            print ("Message Code : %s" % response.messages.message[0]['code'].text)
+            print ("Message text : %s" % response.messages.message[0]['text'].text)
+        else:
+            print ("ERROR")
+            print ("Message Code : %s" % response.messages.message[0]['code'].text)
+            print ("Message text : %s" % response.messages.message[0]['text'].text)
+
+        return response
+
+    def cancel_subscription(self, subscription_id):
+
+        self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.subscriptionId = subscriptionId
+
+        self.controller = ARBCancelSubscriptionController(self.transaction)
+        self.controller.execute()
+
+        response = self.controller.getresponse()
+
+        if (response.messages.resultCode=="Ok"):
+            print ("SUCCESS")
+            print ("Message Code : %s" % response.messages.message[0]['code'].text)
+            print ("Message text : %s" % response.messages.message[0]['text'].text)
+        else:
+            print ("ERROR")
+            print ("Message Code : %s" % response.messages.message[0]['code'].text)
+            print ("Message text : %s" % response.messages.message[0]['text'].text)
+
+        return response
+
+
+        
 
     def refund_payment(self, payment):
         if self.check_transaction_keys():
