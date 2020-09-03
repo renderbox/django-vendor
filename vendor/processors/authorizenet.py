@@ -15,13 +15,12 @@ from vendor.models.address import Country
 from .base import PaymentProcessorBase
 
 
-
 class AuthorizeNetProcessor(PaymentProcessorBase):
     """
     Implementation of Authoirze.Net SDK
     https://apitest.authorize.net/xml/v1/schema/AnetApiSchema.xsd
     """
-    
+
     AUTHORIZE = "authOnlyTransaction"
     AUTHORIZE_CAPTURE = "authCaptureTransaction"
     CAPTURE = "captureOnlyTransaction"
@@ -41,23 +40,26 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     transaction = None
     merchant_auth = None
     transaction_type = None
-    
+
     def __str__(self):
         return 'Authorize.Net'
 
     def get_checkout_context(self, request=None, context={}):
         context = super().get_checkout_context(context=context)
         # TODO: prefix should be defined somewhere
-        context['credit_card_form'] = CreditCardForm(prefix='credit-card', initial={'payment_type': PaymentTypes.CREDIT_CARD})
-        context['billing_address_form'] = BillingAddressForm(prefix='billing-address')
+        context['credit_card_form'] = CreditCardForm(
+            prefix='credit-card', initial={'payment_type': PaymentTypes.CREDIT_CARD})
+        context['billing_address_form'] = BillingAddressForm(
+            prefix='billing-address')
         return context
-    
+
     def processor_setup(self):
         """
         Merchant Information needed to aprove the transaction. 
         """
         if not (settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID):
-            raise ValueError("Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID")
+            raise ValueError(
+                "Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID")
         self.merchant_auth = apicontractsv1.merchantAuthenticationType()
         self.merchant_auth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY
         self.merchant_auth.name = settings.AUTHORIZE_NET_API_ID
@@ -70,7 +72,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             TransactionTypes.CAPTURE: self.CAPTURE,
             TransactionTypes.REFUND: self.REFUND,
         }
-    
+
     def init_payment_type_switch(self):
         """
         Initializes the Payment Types create functions
@@ -88,13 +90,15 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         if not self.merchant_auth.name or not self.merchant_auth.transactionKey:
             self.transaction_result = False
-            self.transaction_response = {'msg': "Make sure you run processor_setup before process_payment and that envarionment keys are set"}
+            self.transaction_response = {
+                'msg': "Make sure you run processor_setup before process_payment and that envarionment keys are set"}
             return True
         else:
             return False
     ##########
     # Authorize.net Object creations
     ##########
+
     def create_transaction(self):
         """
         This creates the main transaction to be processed.
@@ -118,9 +122,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Creates and credit card payment type instance form the payment information set. 
         """
         creditCard = apicontractsv1.creditCardType()
-        creditCard.cardNumber = self.payment_info.data.get('credit-card-card_number')
-        creditCard.expirationDate = "-".join([self.payment_info.data.get('credit-card-expire_year'), self.payment_info.data.get('credit-card-expire_month')])
-        creditCard.cardCode = self.payment_info.data.get('credit-card-cvv_number')
+        creditCard.cardNumber = self.payment_info.data.get(
+            'credit-card-card_number')
+        creditCard.expirationDate = "-".join([self.payment_info.data.get(
+            'credit-card-expire_year'), self.payment_info.data.get('credit-card-expire_month')])
+        creditCard.cardCode = self.payment_info.data.get(
+            'credit-card-cvv_number')
         return creditCard
 
     def create_bank_account_payment(self):
@@ -137,7 +144,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Creates a payment instance acording to the billing information captured
         """
         payment = apicontractsv1.paymentType()
-        payment.creditCard = self.payment_type_switch[int(self.payment_info.data.get('credit-card-payment_type'))]()
+        payment.creditCard = self.payment_type_switch[int(
+            self.payment_info.data.get('credit-card-payment_type'))]()
         return payment
 
     def create_customer_data(self):
@@ -185,14 +193,22 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Creates Billing address to improve security in transaction
         """
         billing_address = apicontractsv1.customerAddressType()
-        billing_address.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])
-        billing_address.lastName = self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1]
-        billing_address.company = self.billing_address.data.get('billing-address-company')
-        billing_address.address = str(", ".join([self.billing_address.data.get('billing-address-address_1'), self.billing_address.data.get('billing-address-address_2')]))
-        billing_address.city = str(self.billing_address.data.get("billing-address-city", ""))
-        billing_address.state = str(self.billing_address.data.get("billing-address-state", ""))
-        billing_address.zip = str(self.billing_address.data.get("billing-address-postal_code"))
-        country = Country(int(self.billing_address.data.get("billing-address-country")))
+        billing_address.firstName = " ".join(self.payment_info.data.get(
+            'credit-card-full_name', "").split(" ")[:-1])
+        billing_address.lastName = self.payment_info.data.get(
+            'credit-card-full_name', "").split(" ")[-1]
+        billing_address.company = self.billing_address.data.get(
+            'billing-address-company')
+        billing_address.address = str(", ".join([self.billing_address.data.get(
+            'billing-address-address_1'), self.billing_address.data.get('billing-address-address_2')]))
+        billing_address.city = str(
+            self.billing_address.data.get("billing-address-city", ""))
+        billing_address.state = str(
+            self.billing_address.data.get("billing-address-state", ""))
+        billing_address.zip = str(
+            self.billing_address.data.get("billing-address-postal_code"))
+        country = Country(
+            int(self.billing_address.data.get("billing-address-country")))
         billing_address.country = str(country.name)
         return billing_address
 
@@ -203,21 +219,26 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     # Django-Vendor to Authoriaze.net data exchange functions
     ##########
     def get_form_data(self, form_data):
-        self.payment_info = CreditCardForm(dict([d for d in form_data.items() if 'credit-card' in d[0]]), prefix='credit-card')
-        self.billing_address = BillingAddressForm(dict([d for d in form_data.items() if 'billing-address' in d[0]]), prefix='billing-address')
-        
+        self.payment_info = CreditCardForm(dict(
+            [d for d in form_data.items() if 'credit-card' in d[0]]), prefix='credit-card')
+        self.billing_address = BillingAddressForm(dict(
+            [d for d in form_data.items() if 'billing-address' in d[0]]), prefix='billing-address')
+
     def save_payment_transaction(self):
-        self.payment = self.get_payment_model()        
+        self.payment = self.get_payment_model()
         self.payment.success = self.transaction_result
-        self.payment.transaction = self.transaction_response.get('transId', "Transaction Faild")
+        self.payment.transaction = self.transaction_response.get(
+            'transId', "Transaction Faild")
         response = self.transaction_response.__dict__
         if 'errors' in response:
             response.pop('errors')
         if 'messages' in response:
             response.pop('messages')
         self.payment.result = str({**self.transaction_message, **response})
-        self.payment.payee_full_name = self.payment_info.data.get('credit-card-full_name')
-        self.payment.payee_company = self.billing_address.data.get('billing-address-company')
+        self.payment.payee_full_name = self.payment_info.data.get(
+            'credit-card-full_name')
+        self.payment.payee_company = self.billing_address.data.get(
+            'billing-address-company')
         billing_address = self.billing_address.save(commit=False)
         billing_address.profile = self.invoice.profile
         billing_address.save()
@@ -280,14 +301,17 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         # Init transaction
         self.transaction = self.create_transaction()
-        self.transaction_type = self.create_transaction_type(settings.AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT)
-        self.transaction_type.amount = Decimal(self.invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
+        self.transaction_type = self.create_transaction_type(
+            settings.AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT)
+        self.transaction_type.amount = Decimal(self.invoice.total).quantize(
+            Decimal('.00'), rounding=ROUND_DOWN)
         self.transaction_type.payment = self.create_payment()
         self.transaction_type.billTo = self.create_billing_address()
 
         # Optional items for make it easier to read and use on the Authorize.net portal.
         if self.invoice.order_items:
-            self.transaction_type.lineItems = self.create_line_item_array(self.invoice.order_items.all())
+            self.transaction_type.lineItems = self.create_line_item_array(
+                self.invoice.order_items.all())
 
         # You set the request to the transaction
         self.transaction.transactionRequest = self.transaction_type
@@ -301,12 +325,49 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.save_payment_transaction()
 
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
-    
-    def create_subscription(self):
+
+    def create_subscription(self, request):
         """
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
-        pass
+        if self.check_transaction_keys():
+            return
+            
+        # Setting payment schedule
+        self.request_type = apicontractsv1.paymentScheduleType()
+        self.request_type.interval = apicontractsv1.paymentScheduleTypeInterval()
+        self.request_type.interval.length = days
+        self.request_type.interval.unit = apicontractsv1.ARBSubscriptionUnitEnum.month
+        self.request_type.startDate = datetime(2020, 8, 30)
+        self.request_type.totalOccurrences = 12
+        self.request_type.trialOccurrences = 1
+        # Giving the credit card info
+        creditcard = apicontractsv1.creditCardType()
+        creditcard.cardNumber = "4111111111111111"
+        creditcard.expirationDate = "2020-12"
+        payment = apicontractsv1.paymentType()
+        payment.creditCard = creditcard
+        # Setting billing information
+        billto = apicontractsv1.nameAndAddressType()
+        billto.firstName = "John"
+        billto.lastName = "Smith"
+        # Setting subscription details
+        subscription = apicontractsv1.ARBSubscriptionType()
+        subscription.name = "Sample Subscription"
+        subscription.paymentSchedule = self.request_type
+        subscription.amount = amount
+        subscription.trialAmount = Decimal('0.00')
+        subscription.billTo = billto
+        subscription.payment = payment
+        # Creating the request
+        request = apicontractsv1.ARBCreateSubscriptionRequest()
+        request.merchantAuthentication = merchantAuth
+        request.subscription = subscription
+        # Creating and executing the controller
+        controller = ARBCreateSubscriptionController(request)
+        controller.execute()
+        # Getting the response
+        response = controller.getresponse()
 
     def refund_payment(self, payment):
         if self.check_transaction_keys():
@@ -314,17 +375,20 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         # Init transaction
         self.transaction = self.create_transaction()
-        self.transaction_type = self.create_transaction_type(self.transaction_types[TransactionTypes.REFUND])
-        self.transaction_type.amount = Decimal(payment.amount).quantize(Decimal('.00'), rounding=ROUND_DOWN)
+        self.transaction_type = self.create_transaction_type(
+            self.transaction_types[TransactionTypes.REFUND])
+        self.transaction_type.amount = Decimal(payment.amount).quantize(
+            Decimal('.00'), rounding=ROUND_DOWN)
         self.transaction_type.refTransId = payment.transaction
 
         creditCard = apicontractsv1.creditCardType()
-        creditCard.cardNumber = ast.literal_eval(payment.result).get('accountNumber')[-4:]
+        creditCard.cardNumber = ast.literal_eval(
+            payment.result).get('accountNumber')[-4:]
         creditCard.expirationDate = "XXXX"
 
         payment_type = apicontractsv1.paymentType()
-        payment_type.creditCard =  creditCard
-        self.transaction_type.payment = payment_type        
+        payment_type.creditCard = creditCard
+        self.transaction_type.payment = payment_type
 
         self.transaction.transactionRequest = self.transaction_type
         self.controller = createTransactionController(self.transaction)
@@ -354,8 +418,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
 
         if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok and hasattr(response, 'batchList'):
-            return [ batch for batch in response.batchList.batch ]
-            
+            return [batch for batch in response.batchList.batch]
+
     def get_transaction_batch_list(self, batch_id):
         """
         Gets the list of settled transaction in a batch. There are sorting and paging option
@@ -371,7 +435,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
 
         if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok and hasattr(response, 'transactions'):
-            return [transaction for transaction in response.transactions.transaction ]
+            return [transaction for transaction in response.transactions.transaction]
 
     def get_transaction_detail(self, transaction_id):
         self.transaction = apicontractsv1.getTransactionDetailsRequest()
@@ -385,5 +449,3 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
             return response.transaction
-
-      
