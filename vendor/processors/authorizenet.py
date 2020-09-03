@@ -218,19 +218,25 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def create_payment_scheduale_interval_type(self, period_length, payment_occurrences, trial_occurrences=0):
         """
         Create an interval schedule with fixed months.
-        period_length: The period length the service payed mor last 
+        period_length: The period length the service paided mor last 
             eg: period_length = 2. the user will be billed every 2 months.
         payment_occurrences: The number of occurrences the payment should be made.
             eg: payment_occurrences = 6. There will be six payments made at each period_length.
         trial_occurrences: The number of ignored payments out of the payment_occurrences
         """
+        # Payment offset is set to 1 because first payment is paided in full with the process_payment
+        payment_offset = 1
+
         payment_schedule = apicontractsv1.paymentScheduleType()
         payment_schedule.interval = apicontractsv1.paymentScheduleTypeInterval()
         payment_schedule.interval.length = period_length
         payment_schedule.interval.unit = apicontractsv1.ARBSubscriptionUnitEnum.months
         payment_schedule.startDate = datetime.now()
         payment_schedule.totalOccurrences = payment_occurrences
-        payment_schedule.trialOccurrences = trial_occurrences
+        payment_schedule.trialOccurrences = trial_occurrences + payment_offset
+
+        return payment_schedule
+
     ##########
     # Django-Vendor to Authoriaze.net data exchange functions
     ##########
@@ -311,7 +317,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         subscription_total = sum([ s.total for s in subscriptions ])
 
         amount = self.invoice.total - subscription_total
-        return Decimal(amount).quantize(Decimal('.00'), rounding=ROUND_DOWN)
+        return self.to_valid_decimal(amount)
+
+    def to_valid_decimal(self, number):
+        return Decimal(number).quantize(Decimal('.00'), rounding=ROUND_DOWN)
     ##########
     # Processor Transactions
     ##########
@@ -326,7 +335,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(
             settings.AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT)
-        self.transaction_type.amount = self.get_amount_without_subscriptions()
+        self.transaction_type.amount = self.to_valid_decimal(self.invoice.total)
         self.transaction_type.payment = self.create_payment()
         self.transaction_type.billTo = self.create_billing_address()
 
@@ -348,7 +357,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 
-
     def create_subscriptions(self, request):
         if self.check_transaction_keys():
             return
@@ -359,8 +367,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         for subscription in subscription_list:
             self.create_subscription(subscription)
-
-    
     
     def create_subscription(self, subscription):
         """
@@ -378,8 +384,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         # Setting subscription details
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.name = subscription.offer.name
-        self.transaction_type.paymentSchedule = self.create_payment_scheduale_interval_type(period_length, payment_occurrences)
-        self.transaction_type.amount = Decimal(subscription.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
+        self.transaction_type.paymentSchedule = self.create_payment_scheduale_interval_type(period_length, payment_occurrences, trail_occurrences)
+        self.transaction_type.amount = self.to_valid_decimal(subscription.total)
         self.transaction_type.trialAmount = Decimal('0.00')
         self.transaction_type.billTo = billto
         self.transaction_type.payment = self.create_payment()
@@ -388,15 +394,26 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction = apicontractsv1.ARBCreateSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.subscription = self.transaction_type
-        
+
         # Creating and executing the controller
         self.controller = ARBCreateSubscriptionController(self.transaction)
         self.controller.execute()
         # Getting the response
         response = self.controller.getresponse()
-     
-        # Save Payment
-        
+
+        self.transaction_response = response
+        self.transaction_message = {}
+        self.transaction_result = False
+        self.transaction_message['msg'] = ""
+        self.transaction_message['code'] = response.messages.message[0]['code'].text
+        self.transaction_message['message'] = response.messages.message[0]['text'].text
+
+        if (response.messages.resultCode=="Ok"):
+            self.transaction_result = True
+            self.transaction_message['msg'] = "Subscription Complete"
+            self.transaction_message['subscription_id'] = response.subscriptionId
+        else:
+            self.transaction_message['msg'] = "Subscription Failed"
 
 
     def refund_payment(self, payment):
@@ -407,8 +424,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(
             self.transaction_types[TransactionTypes.REFUND])
-        self.transaction_type.amount = Decimal(payment.amount).quantize(
-            Decimal('.00'), rounding=ROUND_DOWN)
+        self.transaction_type.amount = self.to_valid_decimal(payment.amount)
         self.transaction_type.refTransId = payment.transaction
 
         creditCard = apicontractsv1.creditCardType()

@@ -522,6 +522,7 @@ class AuthorizeNetProcessorTests(TestCase):
         comment
         """
         self.existing_invoice.add_offer(Offer.objects.get(pk=4))
+        self.existing_invoice.add_offer(Offer.objects.get(pk=4))
         self.existing_invoice.save()
         self.processor = PaymentProcessor(self.existing_invoice)
         request = HttpRequest()
@@ -530,9 +531,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.create_subscriptions(request)
 
         print(self.processor.transaction_message)
-        self.assertIsNotNone(self.processor.payment)
-        self.assertTrue(self.processor.payment.success)
-        self.assertEquals(Invoice.InvoiceStatus.COMPLETE, self.processor.invoice.status)
+        self.assertTrue(self.processor.transaction_result)
 
     def test_update_subscription(self):
         # TODO: Implement Test
