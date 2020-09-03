@@ -5,13 +5,13 @@ import ast
 
 from authorizenet import apicontractsv1
 from authorizenet.apicontrollers import *
+from datetime import datetime
 from decimal import Decimal, ROUND_DOWN
 from django.conf import settings
 from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models.choice import TransactionTypes, PaymentTypes
+from vendor.models.choice import TransactionTypes, PaymentTypes, TermType
 from vendor.models.invoice import Invoice
 from vendor.models.address import Country
-
 from .base import PaymentProcessorBase
 
 
@@ -289,6 +289,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             self.invoice.status = Invoice.InvoiceStatus.FAILED
         self.invoice.save()
 
+    def get_amount_without_subscriptions(self):
+        subscriptions = self.invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
+        
+        subscription_total = sum([ s.total for s in subscriptions ])
+
+        amount = self.invoice.total - subscription_total
+        return Decimal(amount).quantize(Decimal('.00'), rounding=ROUND_DOWN)
     ##########
     # Processor Transactions
     ##########
@@ -303,8 +310,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(
             settings.AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT)
-        self.transaction_type.amount = Decimal(self.invoice.total).quantize(
-            Decimal('.00'), rounding=ROUND_DOWN)
+        self.transaction_type.amount = self.get_amount_without_subscriptions()
         self.transaction_type.payment = self.create_payment()
         self.transaction_type.billTo = self.create_billing_address()
 
@@ -326,48 +332,54 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 
-    def create_subscription(self, request):
+
+    def create_subscriptions(self, request):
+        if self.check_transaction_keys():
+            return
+        subscription_list = self.invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
+        if not subscription_list:
+            return
+        self.get_form_data(request.POST)
+
+        for subscription in subscription_list:
+            self.create_subscription(subscription)
+
+    def create_subscription(self, subscription):
         """
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
-        if self.check_transaction_keys():
-            return
-            
-        # Setting payment schedule
-        self.request_type = apicontractsv1.paymentScheduleType()
-        self.request_type.interval = apicontractsv1.paymentScheduleTypeInterval()
-        self.request_type.interval.length = days
-        self.request_type.interval.unit = apicontractsv1.ARBSubscriptionUnitEnum.month
-        self.request_type.startDate = datetime(2020, 8, 30)
-        self.request_type.totalOccurrences = 12
-        self.request_type.trialOccurrences = 1
-        # Giving the credit card info
-        creditcard = apicontractsv1.creditCardType()
-        creditcard.cardNumber = "4111111111111111"
-        creditcard.expirationDate = "2020-12"
-        payment = apicontractsv1.paymentType()
-        payment.creditCard = creditcard
+        paymentschedule = apicontractsv1.paymentScheduleType()
+        paymentschedule.interval = apicontractsv1.paymentScheduleTypeInterval() #apicontractsv1.CTD_ANON() #modified by krgupta
+        paymentschedule.interval.length = str(ast.literal_eval(subscription.offer.term_details).get('length'))
+        paymentschedule.interval.unit = apicontractsv1.ARBSubscriptionUnitEnum.months
+        paymentschedule.startDate = datetime.now()
+        paymentschedule.totalOccurrences = ast.literal_eval(subscription.offer.term_details).get('occurrences')
+        paymentschedule.trialOccurrences = 0
         # Setting billing information
         billto = apicontractsv1.nameAndAddressType()
-        billto.firstName = "John"
-        billto.lastName = "Smith"
+        billto.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])
+        billto.lastName = self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1]
         # Setting subscription details
-        subscription = apicontractsv1.ARBSubscriptionType()
-        subscription.name = "Sample Subscription"
-        subscription.paymentSchedule = self.request_type
-        subscription.amount = amount
-        subscription.trialAmount = Decimal('0.00')
-        subscription.billTo = billto
-        subscription.payment = payment
+        self.transaction_type = apicontractsv1.ARBSubscriptionType()
+        self.transaction_type.name = "Sample Subscription"
+        self.transaction_type.paymentSchedule = paymentschedule
+        self.transaction_type.amount = Decimal(subscription.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
+        self.transaction_type.trialAmount = Decimal('0.00')
+        self.transaction_type.billTo = billto
+        self.transaction_type.payment = self.create_payment()
         # Creating the request
-        request = apicontractsv1.ARBCreateSubscriptionRequest()
-        request.merchantAuthentication = merchantAuth
-        request.subscription = subscription
+        self.transaction = apicontractsv1.ARBCreateSubscriptionRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.subscription = self.transaction_type
         # Creating and executing the controller
-        controller = ARBCreateSubscriptionController(request)
-        controller.execute()
+        self.controller = ARBCreateSubscriptionController(self.transaction)
+        self.controller.execute()
         # Getting the response
-        response = controller.getresponse()
+        response = self.controller.getresponse()
+     
+        # Save Payment
+    
+
 
     def refund_payment(self, payment):
         if self.check_transaction_keys():

@@ -7,7 +7,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from core.models import Product
 from random import randrange
-from vendor.models import Invoice, Payment
+from vendor.models import Invoice, Payment, Offer
 from vendor.models.address import Country
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.processors import PaymentProcessor
@@ -155,10 +155,12 @@ class AuthorizeNetProcessorTests(TestCase):
         By passing in the invoice, setting the payment info and billing 
         address, process the payment and make sure it succeeds.
         """
+        self.existing_invoice.add_offer(Offer.objects.get(pk=4))
+        self.existing_invoice.save()
+        self.processor = PaymentProcessor(self.existing_invoice)
         request = HttpRequest()
         request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
         
-        self.processor.invoice.total = randrange(1,100)
         self.processor.process_payment(request)
 
         print(self.processor.transaction_message)
@@ -516,8 +518,21 @@ class AuthorizeNetProcessorTests(TestCase):
     # Subscription Transaction Tests
     ##########
     def test_create_subscription(self):
-        # TODO: Implement Test
-        pass
+        """
+        comment
+        """
+        self.existing_invoice.add_offer(Offer.objects.get(pk=4))
+        self.existing_invoice.save()
+        self.processor = PaymentProcessor(self.existing_invoice)
+        request = HttpRequest()
+        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
+        
+        self.processor.create_subscription(request)
+
+        print(self.processor.transaction_message)
+        self.assertIsNotNone(self.processor.payment)
+        self.assertTrue(self.processor.payment.success)
+        self.assertEquals(Invoice.InvoiceStatus.COMPLETE, self.processor.invoice.status)
 
     def test_update_subscription(self):
         # TODO: Implement Test

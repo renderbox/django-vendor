@@ -265,8 +265,8 @@
         "product": 4,
         "start_date": "2020-06-30T02:38:16Z",
         "end_date": null,
-        "terms": 0,
-        "term_details": "{}",
+        "terms": 10,
+        "term_details": "{'length': 1, 'occurrences': 3}",
         "term_start_date": null,
         "available": false,
         "bundle": [4]
