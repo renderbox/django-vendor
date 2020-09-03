@@ -378,7 +378,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
      
         # Save Payment
-    
+        
 
 
     def refund_payment(self, payment):

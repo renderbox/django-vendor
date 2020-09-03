@@ -527,7 +527,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
         
-        self.processor.create_subscription(request)
+        self.processor.create_subscriptions(request)
 
         print(self.processor.transaction_message)
         self.assertIsNotNone(self.processor.payment)
