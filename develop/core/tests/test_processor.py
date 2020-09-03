@@ -122,7 +122,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
-        self.assertEquals("N", self.processor.transaction_response.cvvResultCode)
+        self.assertEquals("N", self.processor.transaction_response.cvvResultCode.text)
 
     def test_process_payment_fail_cvv_should_not_be_on_card(self):
         """
@@ -137,7 +137,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_payment(request)
         
         self.assertIsNotNone(self.processor.payment)
-        self.assertEquals("S", self.processor.transaction_response.cvvResultCode)
+        self.assertEquals("S", self.processor.transaction_response.cvvResultCode.text)
 
     def test_process_payment_fail_cvv_not_certified(self):
         """
@@ -153,7 +153,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_payment(request)
         
         self.assertIsNotNone(self.processor.payment)
-        self.assertEquals("U", self.processor.transaction_response.cvvResultCode)
+        self.assertEquals("U", self.processor.transaction_response.cvvResultCode.text)
 
     def test_process_payment_fail_cvv_not_processed(self):
         """
@@ -168,7 +168,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_payment(request)
         
         self.assertIsNotNone(self.processor.payment)
-        self.assertEquals("P", self.processor.transaction_response.cvvResultCode)
+        self.assertEquals("P", self.processor.transaction_response.cvvResultCode.text)
     
     ##########
     # AVS Tests
