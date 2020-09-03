@@ -138,5 +138,8 @@ class OrderItem(CreateUpdateModelBase):
     @property
     def name(self):
         # TODO: What if it is an Bundle
-        return self.offer.product.name
+        if self.offer.bundle:
+            return self.offer.name
+        else:
+            return self.offer.product.name
 
