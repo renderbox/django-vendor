@@ -517,7 +517,7 @@ class AuthorizeNetProcessorTests(TestCase):
     ##########
     # Subscription Transaction Tests
     ##########
-    def test_create_subscription(self):
+    def test_create_subscription_success(self):
         """
         comment
         """
@@ -530,21 +530,25 @@ class AuthorizeNetProcessorTests(TestCase):
         
         self.processor.create_subscriptions(request)
 
+
         print(self.processor.transaction_message)
         self.assertTrue(self.processor.transaction_result)
 
-    def test_update_subscription(self):
+    def test_update_subscription_success(self):
         # TODO: Implement Test
+        # self.assertTrue(self.processor.transaction_result)
         pass
 
-    def test_cancel_subscription(self):
-        # TODO: Implement Test
-        pass
+    def test_cancel_subscription_success(self):
 
-    def test_create_subscription_customer_profile(self):
-        # TODO: Implement Test
-        pass
-    
+        subscription_list = self.processor.get_list_of_subscriptions()
+        active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
+        
+        
+        self.processor.cancel_subscription(active_subscriptions)
+
+        self.assertTrue(self.processor.transaction_result)
+
 
 @skipIf((settings.STRIPE_TEST_SECRET_KEY or settings.STRIPE_TEST_PUBLIC_KEY) == None, "Strip enviornment variables not set, skipping tests")
 class StripeProcessorTests(TestCase):

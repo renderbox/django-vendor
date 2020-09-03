@@ -368,6 +368,22 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         for subscription in subscription_list:
             self.create_subscription(subscription)
     
+    def check_subscription_response(self, response):
+        self.transaction_response = response
+        self.transaction_message = {}
+        self.transaction_result = False
+        self.transaction_message['msg'] = ""
+        self.transaction_message['code'] = response.messages.message[0]['code'].text
+        self.transaction_message['message'] = response.messages.message[0]['text'].text
+
+        if (response.messages.resultCode=="Ok"):
+            self.transaction_result = True
+            self.transaction_message['msg'] = "Subscription Tansaction Complete"
+            if 'subscriptionId' in response:
+                self.transaction_message['subscription_id'] = response.subscriptionId
+        else:
+            self.transaction_message['msg'] = "Subscription Tansaction Failed"
+
     def create_subscription(self, subscription):
         """
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
@@ -401,19 +417,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         # Getting the response
         response = self.controller.getresponse()
 
-        self.transaction_response = response
-        self.transaction_message = {}
-        self.transaction_result = False
-        self.transaction_message['msg'] = ""
-        self.transaction_message['code'] = response.messages.message[0]['code'].text
-        self.transaction_message['message'] = response.messages.message[0]['text'].text
-
-        if (response.messages.resultCode=="Ok"):
-            self.transaction_result = True
-            self.transaction_message['msg'] = "Subscription Complete"
-            self.transaction_message['subscription_id'] = response.subscriptionId
-        else:
-            self.transaction_message['msg'] = "Subscription Failed"
+        self.check_subscription_response(response)
 
     def update_subscription(self, request, subscription_id):
         
@@ -447,26 +451,15 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = subscriptionId
+        self.transaction.subscriptionId = subscription_id
 
         self.controller = ARBCancelSubscriptionController(self.transaction)
         self.controller.execute()
 
         response = self.controller.getresponse()
 
-        if (response.messages.resultCode=="Ok"):
-            print ("SUCCESS")
-            print ("Message Code : %s" % response.messages.message[0]['code'].text)
-            print ("Message text : %s" % response.messages.message[0]['text'].text)
-        else:
-            print ("ERROR")
-            print ("Message Code : %s" % response.messages.message[0]['code'].text)
-            print ("Message text : %s" % response.messages.message[0]['text'].text)
+        self.check_subscription_response(response)
 
-        return response
-
-
-        
 
     def refund_payment(self, payment):
         if self.check_transaction_keys():
@@ -547,3 +540,31 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
             return response.transaction
+
+    def get_list_of_subscriptions(self):
+
+        # set sorting parameters
+        sorting = apicontractsv1.ARBGetSubscriptionListSorting()
+        sorting.orderBy = apicontractsv1.ARBGetSubscriptionListOrderFieldEnum.id
+        sorting.orderDescending = True
+
+        # set paging and offset parameters
+        paging = apicontractsv1.Paging()
+        # Paging limit can be up to 1000 for this request
+        paging.limit = 20
+        paging.offset = 1
+
+        self.transaction = apicontractsv1.ARBGetSubscriptionListRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.searchType = apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionInactive
+        self.transaction.sorting = sorting
+        self.transaction.paging = paging
+
+        self.controller = ARBGetSubscriptionListController(self.transaction)
+        self.controller.execute()
+
+        # Work on the response
+        response = self.controller.getresponse()
+        if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
+            return response.subscriptionDetails.subscriptionDetail
+
