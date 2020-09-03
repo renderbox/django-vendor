@@ -74,7 +74,7 @@ class PaymentProcessorBase(object):
         return self.invoice.total
 
     def get_transaction_id(self):
-        return "{}-{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk, str(self.invoice.payments.last().created)[-12:-6])
+        return "{}-{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk, str(self.payment.created)[-12:-6])
 
     #-------------------
     # Data for the View
