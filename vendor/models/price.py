@@ -27,4 +27,4 @@ class Price(models.Model):
         verbose_name_plural = _("Prices")
 
     def __str__(self):
-        return "{} for {}:{}".format(self.offer.name, Currency[self.currency].value, self.cost)
+        return "{} for {}:{}".format(self.offer.name, dict(CURRENCY_CHOICES)[self.currency], self.cost)
