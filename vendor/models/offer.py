@@ -13,6 +13,8 @@ from autoslug import AutoSlugField
 
 from .base import CreateUpdateModelBase
 
+from .choice import TermType
+
 #########
 # OFFER
 #########
@@ -23,11 +25,6 @@ class Offer(CreateUpdateModelBase):
     This is so more than one offer can be made per product, with different 
     priorities.
     '''
-    class TermType(models.IntegerChoices):
-        PERPETUAL = 0, _("Perpetual")
-        SUBSCRIPTION = 10, _("Subscription")
-        ONE_TIME_USER = 20, _("One-Time Use")
-
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)                                # Used to track the product
     slug = AutoSlugField(populate_from='name', unique_with='site__id')                                               # SEO friendly 
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="product_offers")                      # For multi-site support
