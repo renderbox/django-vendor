@@ -76,7 +76,7 @@ class AuthorizeNetProcessorTests(TestCase):
         billing information. The test send an invalid card number to test the 
         transation fails
         """
-        self.form_data['credit-card-card_number'] = 5424000000015
+        self.form_data['credit-card-card_number'] = '5424000000015'
 
         request = HttpRequest()
         request.POST = self.form_data
@@ -93,8 +93,8 @@ class AuthorizeNetProcessorTests(TestCase):
         billing information. The test send an invalid expiration date to test the 
         transation fails.
         """
-        self.form_data['credit-card-expire_month'] = 12
-        self.form_data['credit-card-expire_year'] = 2000
+        self.form_data['credit-card-expire_month'] = '12'
+        self.form_data['credit-card-expire_year'] = '2000'
         
         request = HttpRequest()
         request.POST = self.form_data
@@ -416,7 +416,7 @@ class AuthorizeNetProcessorTests(TestCase):
         """
         Checks for transaction_result fail because the transaction id does not match
         """
-        self.processor = PaymentProcessor(self.existing_invoice)       
+        self.processor = AuthorizeNetProcessor(self.existing_invoice)       
         status_before_transaction = self.existing_invoice.status
 
         # Get Settled payment

@@ -78,7 +78,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.payment_type_switch = {
             PaymentTypes.CREDIT_CARD: self.create_credit_card_payment,
             PaymentTypes.BANK_ACCOUNT: self.create_bank_account_payment,
-            PaymentTypes.PAY_PAL: self.create_pay_pay_payment,
+            PaymentTypes.PAY_PAL: self.create_pay_pal_payment,
             PaymentTypes.MOBILE: self.create_mobile_payment,
         }
 
@@ -113,13 +113,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def create_bank_account_payment(self):
         raise NotImplementedError
 
-    def create_pay_pay_payment(self):
+    def create_pay_pal_payment(self):
         raise NotImplementedError
 
     def create_mobile_payment(self):
         raise NotImplementedError
 
-    def create_payment(self):
+    def create_authorize_payment(self):
         """
         Creates a payment instance acording to the billing information captured
         """
@@ -175,10 +175,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         billing_address.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])
         billing_address.lastName = self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1]
         billing_address.company = self.billing_address.data.get('billing-address-company')
-        billing_address.address = str(", ".join([self.billing_address.data.get('billing-address-address_1'), self.billing_address.data.get('billing-address-address_2')]))
-        billing_address.city = str(self.billing_address.data.get("billing-address-city", ""))
-        billing_address.state = str(self.billing_address.data.get("billing-address-state", ""))
-        billing_address.zip = str(self.billing_address.data.get("billing-address-postal_code"))
+        billing_address.address = ", ".join([self.billing_address.data.get('billing-address-address_1'), self.billing_address.data.get('billing-address-address_2')])
+        billing_address.city = self.billing_address.data.get("billing-address-city", "")
+        billing_address.state = self.billing_address.data.get("billing-address-state", "")
+        billing_address.zip = self.billing_address.data.get("billing-address-postal_code")
         country = Country(int(self.billing_address.data.get("billing-address-country")))
         billing_address.country = str(country.name)
         return billing_address
@@ -226,9 +226,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def get_form_data(self, form_data):
         self.payment_info = CreditCardForm(dict([d for d in form_data.items() if 'credit-card' in d[0]]), prefix='credit-card')
         self.billing_address = BillingAddressForm(dict([d for d in form_data.items() if 'billing-address' in d[0]]), prefix='billing-address')
+    
+    def create_payment_model(self):
+        self.payment = self.get_payment_model() 
         
-    def save_payment_transaction(self):
-        self.payment = self.get_payment_model()        
+    def save_payment_transaction(self):       
         self.payment.success = self.transaction_result
         self.payment.transaction = self.transaction_response.get('transId', "Transaction Faild")
         response = self.transaction_response.__dict__
@@ -267,6 +269,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if self.check_transaction_keys():
             return
 
+        self.create_payment_model()
         # Process form data to set up transaction
         self.get_form_data(request.POST)
 
@@ -274,7 +277,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(settings.AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT)
         self.transaction_type.amount = Decimal(self.invoice.total).quantize(Decimal('.00'), rounding=ROUND_DOWN)
-        self.transaction_type.payment = self.create_payment()
+        self.transaction_type.payment = self.create_authorize_payment()
         self.transaction_type.billTo = self.create_billing_address()
 
         # Optional items for make it easier to read and use on the Authorize.net portal.
