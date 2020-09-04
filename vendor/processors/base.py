@@ -156,6 +156,19 @@ class PaymentProcessorBase(object):
         """
         pass
 
+    
+    #-------------------
+    # Process a Subscription
+    
+    def process_subscription(self):
+        pass
+
+    def process_update_subscription(self):
+        pass
+
+    def process_cancel_subscription(self):
+        pass
+
     #-------------------
     # Refund a Payment
 
