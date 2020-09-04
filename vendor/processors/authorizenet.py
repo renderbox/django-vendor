@@ -320,17 +320,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.payment.billing_address = billing_address
         self.payment.save()
 
-    def check_transaction_keys(self):
-        """
-        Checks if the transaction keys have been set otherwise the transaction should not continue
-        """
-        if not self.merchant_auth.name or not self.merchant_auth.transactionKey:
-            self.transaction_result = False
-            self.transaction_response = {'msg': "Make sure you run processor_setup before process_payment and that envarionment keys are set"}
-            return True
-        else:
-            return False
-
     def update_invoice_status(self, new_status):
         if self.transaction_result:
             self.invoice.status = new_status
