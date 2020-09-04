@@ -462,10 +462,7 @@ class AuthorizeNetProcessorTests(TestCase):
     def test_create_subscription_success(self):
         """
         Test a successfull subscription enrollment.
-        """
-        self.form_data['billing-address-postal_code'] = '46217'
-        self.form_data['credit-card-card_number'] = '5424000000000015'
-        
+        """        
         request = HttpRequest()
         request.POST = self.form_data
 

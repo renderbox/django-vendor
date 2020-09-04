@@ -285,9 +285,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         else:
             self.transaction_message['msg'] = 'Null Response.'
 
-    def get_form_data(self, form_data):
-        self.payment_info = CreditCardForm(dict([d for d in form_data.items() if 'credit-card' in d[0]]), prefix='credit-card')
-        self.billing_address = BillingAddressForm(dict([d for d in form_data.items() if 'billing-address' in d[0]]), prefix='billing-address')
+    # def get_billing_address_form_data(self, form_data):
+    #     self.billing_address = BillingAddressForm(dict([d for d in form_data.items() if 'billing-address' in d[0]]), prefix='billing-address')
+    
+    # def get_payment_info_form_data(self, form_data):
+    #     self.payment_info = CreditCardForm(dict([d for d in form_data.items() if 'credit-card' in d[0]]), prefix='credit-card')
     
     def create_payment_model(self):
         self.payment = self.get_payment_model() 
@@ -309,21 +311,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.payment.billing_address = billing_address
         self.payment.save()
 
-    def update_invoice_status(self, new_status):
-        if self.transaction_result:
-            self.invoice.status = new_status
-        else:
-            self.invoice.status = Invoice.InvoiceStatus.FAILED
-        self.invoice.save()
-
-    def get_amount_without_subscriptions(self):
-        subscriptions = self.invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
-        
-        subscription_total = sum([ s.total for s in subscriptions ])
-
-        amount = self.invoice.total - subscription_total
-        return self.to_valid_decimal(amount)
-
     def to_valid_decimal(self, number):
         return Decimal(number).quantize(Decimal('.00'), rounding=ROUND_DOWN)
     ##########
@@ -332,7 +319,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def process_payment(self, request):
         self.create_payment_model()
         # Process form data to set up transaction
-        self.get_form_data(request.POST)
+        self.get_billing_address_form_data(request.POST)
+        self.get_payment_info_form_data(request.POST)
 
         # Init transaction
         self.transaction = self.create_transaction()
@@ -379,7 +367,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
-        self.get_form_data(request.POST)
+        self.get_billing_address_form_data(request.POST, BillingAddressForm,'billing-address')
+        self.get_payment_info_form_data(request.POST, CreditCardForm, 'credit-card')
 
         period_length = str(ast.literal_eval(subscription.offer.term_details).get('period_length'))
         payment_occurrences = ast.literal_eval(subscription.offer.term_details).get('payment_occurrences')
@@ -414,7 +403,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def process_update_subscription(self, request, subscription_id):
         
-        self.get_form_data(request.POST)
+        self.get_billing_address_form_data(request.POST)
+        self.get_payment_info_form_data(request.POST)
 
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.payment = self.create_authorize_payment()
@@ -452,7 +442,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
 
         self.check_subscription_response(response)
-
 
     def refund_payment(self, payment):
         # Init transaction
