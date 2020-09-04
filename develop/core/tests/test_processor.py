@@ -9,6 +9,7 @@ from core.models import Product
 from random import randrange
 from vendor.models import Invoice, Payment, Offer
 from vendor.models.address import Country
+from vendor.models.choice import TermType
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.processors.authorizenet import AuthorizeNetProcessor
 from unittest import skipIf
@@ -460,20 +461,27 @@ class AuthorizeNetProcessorTests(TestCase):
     ##########
     def test_create_subscription_success(self):
         """
-        comment
+        Test a successfull subscription enrollment.
         """
+        self.form_data['billing-address-postal_code'] = '46217'
+        self.form_data['credit-card-card_number'] = '5424000000000015'
+        
+        request = HttpRequest()
+        request.POST = self.form_data
+
         self.existing_invoice.add_offer(Offer.objects.get(pk=4))
         self.existing_invoice.add_offer(Offer.objects.get(pk=4))
         self.existing_invoice.save()
-        self.processor = AuthorizeNetProcessor(self.existing_invoice)
-        request = HttpRequest()
-        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
-        
-        self.processor.create_subscriptions(request)
 
+        self.processor = AuthorizeNetProcessor(self.existing_invoice)
+        
+        subscription_list = self.existing_invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
+
+        self.processor.process_subscription(request, subscription_list[0])
 
         print(self.processor.transaction_message)
         self.assertTrue(self.processor.transaction_result)
+        self.assertIsNotNone(self.processor.transaction_response.subscriptionId)
 
     def test_update_subscription_success(self):
         # TODO: Implement Test
@@ -486,7 +494,7 @@ class AuthorizeNetProcessorTests(TestCase):
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         
         
-        self.processor.cancel_subscription(active_subscriptions)
+        self.processor.process_cancel_subscription(active_subscriptions)
 
         self.assertTrue(self.processor.transaction_result)
 
