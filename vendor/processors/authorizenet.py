@@ -84,17 +84,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             PaymentTypes.MOBILE: self.create_mobile_payment,
         }
 
-    def check_transaction_keys(self):
-        """
-        Checks if the transaction keys have been set otherwise the transaction should not continue
-        """
-        if not self.merchant_auth.name or not self.merchant_auth.transactionKey:
-            self.transaction_result = False
-            self.transaction_response = {
-                'msg': "Make sure you run processor_setup before process_payment and that envarionment keys are set"}
-            return True
-        else:
-            return False
     ##########
     # Authorize.net Object creations
     ##########
@@ -341,9 +330,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     # Processor Transactions
     ##########
     def process_payment(self, request):
-        if self.check_transaction_keys():
-            return
-
         self.create_payment_model()
         # Process form data to set up transaction
         self.get_form_data(request.POST)
@@ -374,8 +360,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 
     def create_subscriptions(self, request):
-        if self.check_transaction_keys():
-            return
         subscription_list = self.invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
         if not subscription_list:
             return
@@ -478,9 +462,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
 
     def refund_payment(self, payment):
-        if self.check_transaction_keys():
-            return
-
         # Init transaction
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(
