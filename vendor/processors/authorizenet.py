@@ -431,7 +431,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_type.amount = self.to_valid_decimal(subscription.total)
         self.transaction_type.trialAmount = Decimal('0.00')
         self.transaction_type.billTo = billto
-        self.transaction_type.payment = self.create_payment()
+        self.transaction_type.payment = self.create_authorize_payment()
 
         # Creating the request
         self.transaction = apicontractsv1.ARBCreateSubscriptionRequest()
@@ -451,7 +451,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.get_form_data(request.POST)
 
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
-        self.transaction_type.payment = self.create_payment()
+        self.transaction_type.payment = self.create_authorize_payment()
 
         self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
