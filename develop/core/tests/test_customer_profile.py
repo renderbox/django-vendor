@@ -10,7 +10,7 @@ from vendor.models import Offer, Price, Invoice, OrderItem, Reciept, CustomerPro
 
 class ModelCustomerProfileTests(TestCase):
     
-    fixtures = ['group', 'user','unit_test']
+    fixtures = ['group', 'user', 'unit_test']
 
     def setUp(self):
         pass
@@ -20,7 +20,6 @@ class ModelCustomerProfileTests(TestCase):
         invoice = cp.get_cart()
 
         self.assertIsNotNone(invoice)
-
 
     def test_new_invoice_cart(self):
         new_user = User()
