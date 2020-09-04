@@ -4,11 +4,11 @@ Base Payment processor used by all derived processors.
 import django.dispatch
 
 from copy import deepcopy
+from datetime import datetime
 from django.conf import settings
 from enum import Enum, auto
 from vendor.models import Payment
 from vendor.models.choice import PurchaseStatus
-
 
 ##########
 # SIGNALS
@@ -72,7 +72,7 @@ class PaymentProcessorBase(object):
         return self.invoice.total
 
     def get_transaction_id(self):
-        return "{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk)
+        return "{}-{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk, str(self.invoice.payments.last().created)[-12:-6])
 
     #-------------------
     # Data for the View
