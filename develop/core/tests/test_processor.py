@@ -490,11 +490,12 @@ class AuthorizeNetProcessorTests(TestCase):
         subscription_list = self.processor.get_list_of_subscriptions()
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         
-        
-        self.processor.process_cancel_subscription(active_subscriptions)
-
-        self.assertTrue(self.processor.transaction_result)
-
+        if active_subscriptions:
+            self.processor.process_cancel_subscription(active_subscriptions[0])
+            self.assertTrue(self.processor.transaction_result)
+        else:
+            print("No active Subscriptions, Skipping Test")
+            pass
 
 @skipIf((settings.STRIPE_TEST_SECRET_KEY or settings.STRIPE_TEST_PUBLIC_KEY) == None, "Strip enviornment variables not set, skipping tests")
 class StripeProcessorTests(TestCase):

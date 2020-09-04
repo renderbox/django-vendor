@@ -8,7 +8,7 @@ from datetime import datetime
 from django.db.models import Sum
 from django.conf import settings
 from django.utils import timezone
-from vendor.models import Payment
+from vendor.models import Payment, Invoice
 from vendor.models.choice import PurchaseStatus
 ##########
 # SIGNALS
@@ -175,7 +175,6 @@ class PaymentProcessorBase(object):
         """
         pass
 
-    
     #-------------------
     # Process a Subscription
     

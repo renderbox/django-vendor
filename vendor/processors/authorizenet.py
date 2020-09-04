@@ -320,8 +320,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def process_payment(self, request):
         self.create_payment_model()
         # Process form data to set up transaction
-        self.get_billing_address_form_data(request.POST)
-        self.get_payment_info_form_data(request.POST)
+        self.get_billing_address_form_data(request.POST, BillingAddressForm,'billing-address')
+        self.get_payment_info_form_data(request.POST, CreditCardForm, 'credit-card')
 
         # Init transaction
         self.transaction = self.create_transaction()
@@ -388,8 +388,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def process_update_subscription(self, request, subscription_id):
         
-        self.get_billing_address_form_data(request.POST)
-        self.get_payment_info_form_data(request.POST)
+        self.get_billing_address_form_data(request.POST, BillingAddressForm,'billing-address')
+        self.get_payment_info_form_data(request.POST, CreditCardForm, 'credit-card')
 
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.payment = self.create_authorize_payment()
@@ -419,7 +419,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = subscription_id
+        self.transaction.subscriptionId = str(subscription_id)
 
         self.controller = ARBCancelSubscriptionController(self.transaction)
         self.controller.execute()
