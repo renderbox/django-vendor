@@ -17,6 +17,7 @@ from django.http import HttpResponse
 
 from vendor.models import Offer, OrderItem, Invoice, Payment, Address
 from vendor.models.address import Address as GoogleAddress
+from vendor.models.choice import TermType
 from vendor.processors import PaymentProcessor
 from vendor.forms import BillingAddressForm, CreditCardForm
 
@@ -72,8 +73,9 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
 
 
         
-class PaymentView(LoginRequiredMixin, DetailView):
+class PaymentSummaryView(LoginRequiredMixin, DetailView):
     model = Invoice
+    template_name = 'vendor/payment_summary.html'
 
 class CheckoutView(LoginRequiredMixin, TemplateView):
     '''
@@ -107,6 +109,10 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
         processor = payment_processor(invoice)
 
         processor.process_payment(request)
+
+        # if invoice.order_list.filter(offer__term=TermType.SUBSCRIPTION).count():
+        #     invoice.process_subscriptions()
+        
         if processor.transaction_result:
             return redirect('vendor_shopper:purchase-summary', pk=invoice.pk)   # redirect to the summary page for the above invoice
             # TODO: invoices should have a UUID attached to them
