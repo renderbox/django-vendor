@@ -359,15 +359,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 
-    def create_subscriptions(self, request):
-        subscription_list = self.invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
-        if not subscription_list:
-            return
-        self.get_form_data(request.POST)
-
-        for subscription in subscription_list:
-            self.create_subscription(subscription)
-    
     def check_subscription_response(self, response):
         self.transaction_response = response
         self.transaction_message = {}
@@ -384,10 +375,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         else:
             self.transaction_message['msg'] = "Subscription Tansaction Failed"
 
-    def create_subscription(self, subscription):
+    def process_subscription(self, request, subscription):
         """
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
+        self.get_form_data(request.POST)
+
         period_length = str(ast.literal_eval(subscription.offer.term_details).get('period_length'))
         payment_occurrences = ast.literal_eval(subscription.offer.term_details).get('payment_occurrences')
         trail_occurrences = ast.literal_eval(subscription.offer.term_details).get('trial_occurrences', 0)
@@ -419,7 +412,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.check_subscription_response(response)
 
-    def update_subscription(self, request, subscription_id):
+    def process_update_subscription(self, request, subscription_id):
         
         self.get_form_data(request.POST)
 
@@ -447,7 +440,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         return response
 
-    def cancel_subscription(self, subscription_id):
+    def process_cancel_subscription(self, subscription_id):
 
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
