@@ -56,14 +56,13 @@ class PaymentProcessorBase(object):
     def set_invoice(self, invoice):
         self.invoice = invoice
 
-    def get_payment_model(self):
-        payment = Payment(  profile=self.invoice.profile,
+    def create_payment_model(self):
+        self.payment = Payment(  profile=self.invoice.profile,
                             amount=self.invoice.total,
                             provider=self.provider,
                             invoice=self.invoice,
                             created=timezone.now()
                             )
-        return payment
 
     def save_payment_transaction(self):
         pass
