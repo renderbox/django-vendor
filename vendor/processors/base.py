@@ -5,12 +5,11 @@ import django.dispatch
 
 from copy import deepcopy
 from datetime import datetime
-from django.utils import timezone
+from django.db.models import Sum
 from django.conf import settings
-from enum import Enum, auto
+from django.utils import timezone
 from vendor.models import Payment
 from vendor.models.choice import PurchaseStatus
-
 ##########
 # SIGNALS
 
@@ -31,7 +30,7 @@ class PaymentProcessorBase(object):
     payment_info = {}
     billing_address = {}
     transaction_token = None
-    transaction_result = None
+    transaction_result = False
     transaction_message = {}
     transaction_response = {}
 
@@ -69,12 +68,33 @@ class PaymentProcessorBase(object):
     def save_payment_transaction(self):
         pass
 
+    def update_invoice_status(self, new_status):
+        if self.transaction_result:
+            self.invoice.status = new_status
+        else:
+            self.invoice.status = Invoice.InvoiceStatus.FAILED
+        self.invoice.save()
+
     def amount(self):   # Retrieves the total amount from the invoice
         self.invoice.update_totals()
         return self.invoice.total
 
+    def amount_without_subscriptions(self):
+        subscription_total = self.invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION).aggregate(Sum('offer__total'))
+        
+        subscription_total = sum([ s.total for s in subscriptions ])
+
+        amount = self.invoice.total - subscription_total
+        return self.to_valid_decimal(amount)
+
     def get_transaction_id(self):
         return "{}-{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk, str(self.invoice.payments.last().created)[-12:-6])
+
+    def get_billing_address_form_data(self, form_data, form_class=None, prefix=""):
+        self.billing_address = form_class(form_data, prefix=prefix)
+    
+    def get_payment_info_form_data(self, form_data, form_class=None, prefix=""):
+        self.payment_info = form_class(form_data, prefix=prefix)
 
     #-------------------
     # Data for the View
@@ -174,3 +194,5 @@ class PaymentProcessorBase(object):
 
     def refund_payment(self):
         pass
+
+    
