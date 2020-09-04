@@ -375,7 +375,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
     def test_refund_fail_invalid_account_number(self):
         """
-        Checks for transaction_result fail because the account number does not match the payment transaction settled.
+        Checks for transaction_submitted fail because the account number does not match the payment transaction settled.
         """
         status_before_transaction = self.existing_invoice.status
 
@@ -391,12 +391,12 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.processor.refund_payment(payment)
 
-        self.assertFalse(self.processor.transaction_result)
+        self.assertFalse(self.processor.transaction_submitted)
         self.assertEquals(self.processor.invoice.status, status_before_transaction)
 
     def test_refund_fail_invalid_amount(self):
         """
-        Checks for transaction_result fail because the amount exceeds the payment transaction settled.
+        Checks for transaction_submitted fail because the amount exceeds the payment transaction settled.
         """
         status_before_transaction = self.existing_invoice.status
 
@@ -412,12 +412,12 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.processor.refund_payment(payment)
 
-        self.assertFalse(self.processor.transaction_result)
+        self.assertFalse(self.processor.transaction_submitted)
         self.assertEquals(self.processor.invoice.status, status_before_transaction)
 
     def test_refund_fail_invalid_transaction_id(self):
         """
-        Checks for transaction_result fail because the transaction id does not match
+        Checks for transaction_submitted fail because the transaction id does not match
         """
         self.processor = AuthorizeNetProcessor(self.existing_invoice)       
         status_before_transaction = self.existing_invoice.status
@@ -434,7 +434,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.processor.refund_payment(payment)
 
-        self.assertFalse(self.processor.transaction_result)
+        self.assertFalse(self.processor.transaction_submitted)
         self.assertEquals(self.processor.invoice.status, status_before_transaction)
 
     ##########
@@ -477,12 +477,12 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_subscription(request, subscription_list[0])
 
         print(self.processor.transaction_message)
-        self.assertTrue(self.processor.transaction_result)
+        self.assertTrue(self.processor.transaction_submitted)
         self.assertIsNotNone(self.processor.transaction_response.subscriptionId)
 
     def test_update_subscription_success(self):
         # TODO: Implement Test
-        # self.assertTrue(self.processor.transaction_result)
+        # self.assertTrue(self.processor.transaction_submitted)
         pass
 
     def test_cancel_subscription_success(self):
@@ -492,7 +492,7 @@ class AuthorizeNetProcessorTests(TestCase):
         
         if active_subscriptions:
             self.processor.process_cancel_subscription(active_subscriptions[0])
-            self.assertTrue(self.processor.transaction_result)
+            self.assertTrue(self.processor.transaction_submitted)
         else:
             print("No active Subscriptions, Skipping Test")
             pass

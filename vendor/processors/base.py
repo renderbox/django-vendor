@@ -30,7 +30,7 @@ class PaymentProcessorBase(object):
     payment_info = {}
     billing_address = {}
     transaction_token = None
-    transaction_result = False
+    transaction_submitted = False
     transaction_message = {}
     transaction_response = {}
 
@@ -68,7 +68,7 @@ class PaymentProcessorBase(object):
         pass
 
     def update_invoice_status(self, new_status):
-        if self.transaction_result:
+        if self.transaction_submitted:
             self.invoice.status = new_status
         else:
             self.invoice.status = Invoice.InvoiceStatus.FAILED
@@ -89,10 +89,10 @@ class PaymentProcessorBase(object):
     def get_transaction_id(self):
         return "{}-{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk, str(self.invoice.payments.last().created)[-12:-6])
 
-    def get_billing_address_form_data(self, form_data, form_class=None, prefix=""):
+    def get_billing_address_form_data(self, form_data, form_class, prefix=""):
         self.billing_address = form_class(form_data, prefix=prefix)
     
-    def get_payment_info_form_data(self, form_data, form_class=None, prefix=""):
+    def get_payment_info_form_data(self, form_data, form_class, prefix=""):
         self.payment_info = form_class(form_data, prefix=prefix)
 
     #-------------------

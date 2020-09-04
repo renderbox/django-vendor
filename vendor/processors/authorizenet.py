@@ -222,7 +222,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     # Django-Vendor to Authoriaze.net data exchange functions
     ##########
     def save_payment_transaction(self):
-        self.payment.success = self.transaction_result
+        self.payment.success = self.transaction_submitted
         self.payment.transaction = self.transaction_response.get(
             'transId', "Transaction Faild")
         response = self.transaction_response.__dict__
@@ -243,11 +243,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def check_response(self, response):
         """
-        Checks the transaction response and set the transaction_result and transaction_response variables
+        Checks the transaction response and set the transaction_submitted and transaction_response variables
         """
         self.transaction_response = response.transactionResponse
         self.transaction_message = {}
-        self.transaction_result = False
+        self.transaction_submitted = False
         self.transaction_message['msg'] = ""
         if response is not None:
             # Check to see if the API request was successfully received and acted upon
@@ -255,7 +255,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
                 # Since the API request was successful, look for a transaction response
                 # and parse it to display the results of authorizing the card
                 if hasattr(response.transactionResponse, 'messages') is True:
-                    self.transaction_result = True
+                    self.transaction_submitted = True
                     self.transaction_message['msg'] = "Payment Complete"
                     self.transaction_message['trans_id'] = response.transactionResponse.transId
                     self.transaction_message['response_code'] = response.transactionResponse.responseCode
@@ -281,13 +281,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def check_subscription_response(self, response):
         self.transaction_response = response
         self.transaction_message = {}
-        self.transaction_result = False
+        self.transaction_submitted = False
         self.transaction_message['msg'] = ""
         self.transaction_message['code'] = response.messages.message[0]['code'].text
         self.transaction_message['message'] = response.messages.message[0]['text'].text
 
         if (response.messages.resultCode=="Ok"):
-            self.transaction_result = True
+            self.transaction_submitted = True
             self.transaction_message['msg'] = "Subscription Tansaction Complete"
             if 'subscriptionId' in response:
                 self.transaction_message['subscription_id'] = response.subscriptionId
@@ -296,7 +296,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         
     def save_payment_transaction(self):       
-        self.payment.success = self.transaction_result
+        self.payment.success = self.transaction_submitted
         self.payment.transaction = self.transaction_response.get('transId', "Transaction Faild")
         response = self.transaction_response.__dict__
         if 'errors' in response:
@@ -452,7 +452,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
         self.check_response(response)
 
-        if self.transaction_result:
+        if self.transaction_submitted:
             self.update_invoice_status(Invoice.InvoiceStatus.REFUNDED)
 
     ##########
@@ -506,23 +506,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             return response.transaction
 
     def get_list_of_subscriptions(self):
-
-        # set sorting parameters
-        sorting = apicontractsv1.ARBGetSubscriptionListSorting()
-        sorting.orderBy = apicontractsv1.ARBGetSubscriptionListOrderFieldEnum.id
-        sorting.orderDescending = True
-
-        # set paging and offset parameters
-        paging = apicontractsv1.Paging()
-        # Paging limit can be up to 1000 for this request
-        paging.limit = 20
-        paging.offset = 1
-
         self.transaction = apicontractsv1.ARBGetSubscriptionListRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.searchType = apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionInactive
-        self.transaction.sorting = sorting
-        self.transaction.paging = paging
 
         self.controller = ARBGetSubscriptionListController(self.transaction)
         self.controller.execute()
