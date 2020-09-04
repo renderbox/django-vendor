@@ -23,6 +23,7 @@ class Reciept(CreateUpdateModelBase):
     vendor_notes = models.TextField()
     transaction = models.CharField(_("Transaction"), max_length=80)
     status = models.IntegerField(_("Status"), choices=PurchaseStatus.choices, default=0)       # Fulfilled, Refund
+    meta = models.TextField()
     class Meta:
         verbose_name = _("Reciept")
         verbose_name_plural = _("Reciepts")
