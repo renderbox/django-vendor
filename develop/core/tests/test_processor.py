@@ -25,10 +25,25 @@ class AuthorizeNetProcessorTests(TestCase):
     
     fixtures = ['user','unit_test']
 
+    VALID_CARD_NUMBERS = [
+        '370000000000002',
+        '6011000000000012',
+        '3088000000000017',
+        '38000000000006',
+        '4007000000027',
+        '4012888818888',
+        '4111111111111111',
+        '5424000000000015',
+        '2223000010309703',
+        '2223000010309711'
+    ]
+
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
         self.form_data = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10', mutable=True)
+        self.form_data['credit-card-card_number'] = choice(self.VALID_CARD_NUMBERS)
+
     
     ##########
     # Processor Initialization Tests
@@ -123,7 +138,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
-        self.processor.invoice.total = randrange(1,100)
+        self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
@@ -139,7 +154,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
-        self.processor.invoice.total = randrange(1,100)
+        self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
         
         self.assertIsNotNone(self.processor.payment)
@@ -156,7 +171,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
-        self.processor.invoice.total = randrange(1,100)
+        self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
         
         self.assertIsNotNone(self.processor.payment)
@@ -172,7 +187,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
-        self.processor.invoice.total = randrange(1,100)
+        self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
         
         self.assertIsNotNone(self.processor.payment)
@@ -193,7 +208,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
-        self.processor.invoice.total = randrange(1,100)
+        self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
@@ -210,7 +225,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
                 
-        self.processor.invoice.total = randrange(1,100)
+        self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
@@ -227,7 +242,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
-        self.processor.invoice.total = randrange(1,100)
+        self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
@@ -244,7 +259,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
-        self.processor.invoice.total = randrange(1,100)
+        self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
@@ -261,7 +276,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
-        self.processor.invoice.total = randrange(1,100)
+        self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
@@ -295,7 +310,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
-        self.processor.invoice.total = randrange(1,100)
+        self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
@@ -312,7 +327,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
-        self.processor.invoice.total = randrange(1,100)
+        self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
@@ -329,7 +344,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
-        self.processor.invoice.total = randrange(1,100)
+        self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
@@ -346,7 +361,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
-        self.processor.invoice.total = randrange(1,100)
+        self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
@@ -475,7 +490,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.existing_invoice.add_offer(Offer.objects.get(pk=4))
         price = Price()
         price.offer = Offer.objects.get(pk=4)
-        price.cost = randrange(1,100)
+        price.cost = randrange(1,1000)
         price.start_date = datetime.now() - timedelta(days=1)
         price.save()
         self.existing_invoice.save()
