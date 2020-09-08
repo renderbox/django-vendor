@@ -1,0 +1,147 @@
+{% extends "vendor/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block extra_head_js %}
+{% endblock %}
+
+{% block content %}
+
+
+<div class="py-5 text-center">
+  <h2>Checkout form</h2>
+  <p class="lead">Below is an example form built entirely with Bootstrap’s form controls. Each required form group has a
+    validation state that can be triggered by attempting to submit the form without completing it.</p>
+</div>
+<div class="row">
+  <!-- Table -->
+  {% comment %}
+  <div class='col-12'>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Item</th>
+          <th scope="col">Price</th>
+          <th scope="col">Quantity</th>
+          <th scope="col">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order_item in invoice.order_items.all %}
+        <tr class="border">
+          <td>{{ forloop.counter }}</td>
+          <td>{{ order_item.name}}</td>
+          <td>{{ order_item.price}}</td>
+          <td>{{ order_item.quantity}}</td>
+          <td>{{ order_item.total}}</td>
+        </tr>
+        {% endfor %}
+        <tr class="border-0">
+          <td class="border-0"></td>
+          <td class="border-0"></td>
+          <td class="border-0"></td>
+          <td class="border"><strong>Shipping</strong></td>
+          <td class="border">${{ invoice.shipping }}</td>
+        </tr>
+        <tr class="border-0">
+          <td class="border-0"></td>
+          <td class="border-0"></td>
+          <td class="border-0"></td>
+          <td class="border"><strong>Tax</strong></td>
+          <td class="border">${{ invoice.tax }}</td>
+        </tr>
+        <tr class="border-0">
+          <td class="border-0"></td>
+          <td class="border-0"></td>
+          <td class="border-0"></td>
+          <td class="border"><strong>Total</strong></td>
+          <td class="border">${{ invoice.total }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  {% endcomment %}
+  <!-- Cart Summery -->
+  <div class="col-md-4 order-md-2 mb-4">
+    <h4 class="d-flex justify-content-between align-items-center mb-3">
+      <span class="text-muted">Your cart</span>
+      <span class="badge badge-secondary badge-pill">{{ invoice.order_items.all.count}}</span>
+    </h4>
+    <ul class="list-group mb-3">
+
+      {% for item in invoice.order_items.all %}
+      <li class="list-group-item d-flex justify-content-between lh-condensed">
+        <div>
+          <h6 class="my-0">{{ item.name }}</h6>
+          <small class="text-muted">Unit Price: {{item.price}}</small>
+          <small class="text-muted">Quantity: {{item.quantity}}</small>
+        </div>
+        <span class="text-muted">${{ item.total }}</span>
+      </li>
+      {% endfor %}
+
+      {% comment %}
+      <li class="list-group-item d-flex justify-content-between bg-light">
+        <div class="text-success">
+          <h6 class="my-0">Promo code</h6>
+          <small>EXAMPLECODE</small>
+        </div>
+        <span class="text-success">-$5</span>
+      </li>
+      {% endcomment %}
+
+      <li class="list-group-item d-flex justify-content-between">
+        <span>Shipping</span>
+        <strong>${{ invoice.shipping }}</strong>
+      </li>
+
+      <li class="list-group-item d-flex justify-content-between">
+        <span>Tax</span>
+        <strong>${{ invoice.tax }}</strong>
+      </li>
+
+      <li class="list-group-item d-flex justify-content-between">
+        <span>Total (USD)</span>
+        <strong>${{ invoice.total }}</strong>
+      </li>
+    </ul>
+
+    {% comment %}
+    <form class="card p-2">
+      <div class="input-group">
+        <input type="text" class="form-control" placeholder="Promo code">
+        <div class="input-group-append">
+          <button type="submit" class="btn btn-secondary">Redeem</button>
+        </div>
+      </div>
+    </form>
+    {% endcomment %}
+  </div>
+  <!-- Billing Info -->
+  <div class="col-md-8 order-md-1">
+    <form method="post">
+      <h4 class="mb-3">Billing Information</h4>
+      {% csrf_token %}
+      {{ billing_address_form.as_p }}
+      {{ credit_card_form.as_p }}
+      <button class="btn btn-primary btn-lg btn-block" type="submit" >Submit Payment</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+
+
+{% block extra_js %}
+
+<!-- <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+  integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script> -->
+<!-- <script src="/docs/4.4/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-6khuMg9gaYr5AxOqhkVIODVIvm9ynTT5J4V1cfthmT+emCG6yVmEZsRHdxlotUnm" crossorigin="anonymous"></script> -->
+
+{{ google_address_form.media }}
+{% endblock %}

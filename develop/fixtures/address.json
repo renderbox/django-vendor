@@ -1,0 +1,16 @@
+[
+    {
+        "model": "vendor.address",
+        "pk": 1,
+        "fields": {
+            "name": "Home",
+            "profile_id": 1,
+            "address_1": "221B Baker Street",
+            "address_2": "",
+            "locality": "Marylebone",
+            "state": "California",
+            "country": 581,
+            "postal_code": "90292"
+        }
+    }
+]

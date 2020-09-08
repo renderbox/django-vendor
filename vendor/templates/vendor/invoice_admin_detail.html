@@ -1,0 +1,41 @@
+{% extends "vendor/base.html" %}
+
+
+{% block content %}
+
+<h2>Admin: Order Details</h2>
+
+<table class="table table-bordered">
+
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Item</th>
+      <th scope="col">Price</th>
+      <th scope="col">Quantity</th>
+      <th scope="col">Total</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for item in object.order_items.all %}
+    <tr>
+      <th scope="row">{{ forloop.counter }}</th>
+      <td>{{item.name}}</td>
+      <td>${{item.price|floatformat:2}}</td>
+      <td>{{item.quantity}}</td>
+      <td>${{item.total|floatformat:2}}</td>
+    </tr>
+    {% endfor %}
+    <tr>
+      <td colspan=3></td>
+      <td>Subtotal</td>
+      <td>${{ object.subtotal|floatformat:2 }}</td>
+    </tr>
+  </tbody>
+
+</table>
+
+<a href="{% url 'vendor:manager-order-list' %}" class="btn btn-primary">Back to List</a>
+{% endblock %}
+

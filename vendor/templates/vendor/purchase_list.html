@@ -1,0 +1,34 @@
+{% extends "vendor/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+        <nav aria-label="breadcrumb">
+            <!-- <ol class="breadcrumb"> -->
+            <h1>Purchases</h1>
+            <!-- </ol> -->
+        </nav>
+        <div class="row">
+                <div class="col">
+                    <table class="table table-striped">
+                        {% for items in object_list %}
+                        <tr>
+                                <td><a class="text-primary" href="{% url 'vendor-user-purchase-retrieve' items.id %}">{{ items.order_item.offer.name }}</a></td>
+                                <td>{{ items.created }}</td>
+                            </tr>
+                        {% empty %}
+                        <tr>
+                            <td>
+                                No purchases
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+      
+       
+    </div>
+ {% endblock %}   
+
+
+

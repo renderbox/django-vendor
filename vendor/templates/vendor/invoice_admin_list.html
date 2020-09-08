@@ -1,0 +1,34 @@
+{% extends "vendor/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+        <nav aria-label="breadcrumb">
+            <!-- <ol class="breadcrumb"> -->
+            <h1>Site Order History</h1>
+            <!-- </ol> -->
+        </nav>
+        <div class="row">
+                <div class="col">
+                    <table class="table table-striped">
+                        {% for item in object_list %}
+                        <tr>
+                                <td><a class="text-primary" href="{% url 'vendor:manager-order-detail' item.uuid %}">{{ item.pk }}</a></td>
+                                <td>{{ item.created }}</td>
+                            </tr>
+                        {% empty %}
+                        <tr>
+                            <td>
+                                No purchases
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+      
+       
+    </div>
+ {% endblock %}   
+
+
+

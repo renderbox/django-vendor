@@ -9,12 +9,20 @@ https://docs.djangoproject.com/en/2.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
-
 import os
+from pathlib import Path
+import dj_database_url
+
+from iso4217 import Currency
+
+from vendor.__version__ import VERSION
+
+BUILD_VERSION = VERSION
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
+SITE_ID = int(os.getenv('SITE_ID', '1'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
@@ -27,7 +35,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,7 +45,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'address',
     'core',
+    'crispy_forms',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'iso4217',
     'vendor',
 ]
 
@@ -65,6 +78,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request',
             ],
         },
     },
@@ -72,17 +86,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'develop.wsgi.application'
 
+AUTHENTICATION_BACKENDS = [
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
+DATABASES = {}
+DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=False, default=os.environ.get('DATABASE_URL'))
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#     }
+# }
 
 
 # Password validation
@@ -104,6 +127,22 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+AUTHENTICATION_BACKENDS  = (
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
+
+ACCOUNT_EMAIL_REQUIRED = True
+
+LOGIN_REDIRECT_URL = "/vendor/add-to-cart/"
+
+FIXTURE_DIRS = (
+   os.path.join(BASE_DIR, 'fixtures'),
+)
+
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
@@ -123,6 +162,30 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-PRODUCT_MODEL = 'core.Product'
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
 
-SITE_ID = int(os.getenv('SITE_ID', '1'))
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+
+# Django Vendor Settings
+VENDOR_PRODUCT_MODEL = 'core.Product'
+VENDOR_PAYMENT_PROCESSOR = "authorizenet.AuthorizeNetProcessor"
+DEFAULT_CURRENCY = Currency.usd.name
+
+# Authorize.Net Settings:
+AUTHORIZE_NET_API_ID = os.getenv("AUTHORIZE_NET_API_ID")
+AUTHORIZE_NET_TRANSACTION_KEY = os.getenv("AUTHORIZE_NET_TRANSACTION_KEY")
+AUTHORIZE_NET_KEY = os.getenv("AUTHORIZE_NET_KEY")
+AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT = os.getenv("AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT")
+
+# Stripe Settings
+STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY")
+STRIPE_TEST_PUBLIC_KEY = os.getenv("STRIPE_TEST_PUBLIC_KEY")
+STRIPE_LIVE_MODE = False
+
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+

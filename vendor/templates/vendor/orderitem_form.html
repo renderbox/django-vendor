@@ -1,0 +1,16 @@
+{% extends "vendor/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-lg container-fluid page__container">
+                
+                <form method="post">{% csrf_token %}
+                    {{ form|crispy }}
+                    <button class="btn btn-danger">Add To Cart</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

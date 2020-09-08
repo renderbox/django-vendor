@@ -1,0 +1,40 @@
+{% extends "vendor/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+        <nav aria-label="breadcrumb">
+            <!-- <ol class="breadcrumb"> -->
+            <h1>Order Summary</h1>
+            <!-- </ol> -->
+        </nav>
+        <table class="table", border = "1">
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Per Item Cost</th>
+                <th>Cost</th>
+            </tr>
+            {% for items in object_list %}
+            <tr>
+                <td>{{ items.offer.product.name }}</td>
+                <td>{{ items.quantity }}</td>
+                <td>{{ items.price }}</td>
+                <td>{{ items.total }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <h2>Total number of items: {{item_count}}</h2>
+        <h2>Order Total: {{order_total}}</h2>
+        <form action="{% url 'vendor-payment-processing' %}" method="post">
+                {% csrf_token %}
+                <script src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                        data-key="{{ key }}"
+                        data-description="A Django Charge"
+                        data-amount={{amount}}
+                        data-locale="auto"></script>
+              </form>
+       <br>
+        <a class="text-danger" href="{% url 'vendor-user-cart-retrieve' %}">Back To Cart</a>
+    </div>
+{% endblock %}
+    

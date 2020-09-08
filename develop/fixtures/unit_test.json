@@ -1,0 +1,335 @@
+[
+{
+    "model": "sites.site",
+    "pk": 1,
+    "fields": {
+        "domain": "example.com",
+        "name": "example.com"
+    }
+},
+{
+    "model": "sites.site",
+    "pk": 2,
+    "fields": {
+        "domain": "example_two.com",
+        "name": "example_two.com"
+    }
+},
+{
+    "model": "core.catalog",
+    "pk": 1,
+    "fields": {
+        "name": "Main Catalog",
+        "site": 1
+    }
+},
+{
+    "model": "core.product",
+    "pk": 1,
+    "fields": {
+        "created": "2020-06-30T00:48:03.710Z",
+        "updated": "2020-06-30T00:48:03.710Z",
+        "sku": null,
+        "uuid": "188e45aa-0fdf-4877-ba84-f4c39c0fc41b",
+        "site": 1,
+        "slug": "mouse-t-shirt",
+        "available": false,
+        "description": "Powerful T-Shirt",
+        "meta": "{}",
+        "name": "Mouse T-Shirt",
+        "classification": []
+    }
+},
+{
+    "model": "core.product",
+    "pk": 2,
+    "fields": {
+        "created": "2020-06-30T02:32:37.655Z",
+        "updated": "2020-06-30T02:33:10.492Z",
+        "sku": null,
+        "uuid": "3faee1ef-1611-44d3-8e96-e98535fa00e8",
+        "site": 1,
+        "slug": "wheel-of-cheddar",
+        "available": false,
+        "description": "This is a food item",
+        "meta": "{}",
+        "name": "Wheel of Cheddar",
+        "classification": []
+    }
+},
+{
+    "model": "core.product",
+    "pk": 3,
+    "fields": {
+        "created": "2020-06-30T02:33:35.109Z",
+        "updated": "2020-06-30T02:33:35.109Z",
+        "sku": null,
+        "uuid": "def0d4f5-fd8f-4aa4-b25a-c043a846a732",
+        "site": 1,
+        "slug": "hamster-wheel",
+        "available": false,
+        "description": "",
+        "meta": "{}",
+        "name": "Hamster Wheel",
+        "classification": []
+    }
+},
+{
+    "model": "core.product",
+    "pk": 4,
+    "fields": {
+        "created": "2020-06-30T02:33:35.109Z",
+        "updated": "2020-06-30T02:33:35.109Z",
+        "sku": null,
+        "uuid": "defdd4f5-fd8f-4aa4-b25a-c043a846a732",
+        "site": 1,
+        "slug": "hulk-mug",
+        "available": false,
+        "description": "",
+        "meta": "MXN,21.12",
+        "name": "Hulk Mug",
+        "classification": []
+    }
+},
+{
+    "model": "vendor.address",
+    "pk": 1,
+    "fields": {
+        "name": "Home",
+        "profile_id": 1,
+        "address_1": "221B Baker Street",
+        "address_2": "",
+        "locality": "Marylebone",
+        "state": "California",
+        "country": 581,
+        "postal_code": "90292"
+    }
+},
+{
+    "model": "vendor.invoice",
+    "pk": 1,
+    "fields": {
+        "created": "2020-06-30T01:20:01.616Z",
+        "updated": "2020-08-12T19:32:32.910Z",
+        "profile": 1,
+        "site": 1,
+        "status": 0,
+        "customer_notes": "",
+        "vendor_notes": "",
+        "ordered_date": null,
+        "subtotal": 364.98,
+        "tax": 36.5,
+        "shipping": 6.95,
+        "total": 408.43,
+        "currency": "jpy",
+        "shipping_address": null
+    }
+},
+{
+    "model": "vendor.payment",
+    "pk": 1,
+    "fields": {
+        "invoice": 1,
+        "created": "2020-06-30T01:20:01.616Z",
+        "transaction": "1-1-1",
+        "provider": "AuthorizeNetProcessor",
+        "amount": 408.43,
+        "profile": 1,
+        "billing_address": 1, 
+        "result": "{'msg': 'Payment Complete', 'trans_id': 40053987215, 'response_code': 1, 'code': 1, 'message': 'This transaction has been approved.', 'responseCode': 1, 'authCode': 'A3YXNW', 'avsResultCode': 'Y', 'cvvResultCode': 'P', 'cavvResultCode': 2, 'transId': 40053987215, 'refTransID': '1234567890', 'transHash': '', 'testRequest': 0, 'accountNumber': 'XXXX0015', 'accountType': 'MasterCard', 'transHashSha2': '', 'networkTransId': 'LAHTAFS7B44MPV2SMDCBB85'}",
+        "success": true, 
+        "payee_full_name": "Bob Ross",
+        "payee_company": "Whitemoon Dreams"
+    }
+},
+{
+    "model": "vendor.orderitem",
+    "pk": 2,
+    "fields": {
+        "created": "2020-06-30T02:38:46.707Z",
+        "updated": "2020-08-12T19:32:32.901Z",
+        "invoice": 1,
+        "offer": 2,
+        "quantity": 4
+    }
+},
+{
+    "model": "vendor.orderitem",
+    "pk": 3,
+    "fields": {
+        "created": "2020-06-30T03:01:12.555Z",
+        "updated": "2020-07-02T01:14:47.468Z",
+        "invoice": 1,
+        "offer": 3,
+        "quantity": 1
+    }
+},
+{
+    "model": "vendor.orderitem",
+    "pk": 5,
+    "fields": {
+        "created": "2020-07-01T05:32:28.668Z",
+        "updated": "2020-08-12T19:32:27.435Z",
+        "invoice": 1,
+        "offer": 1,
+        "quantity": 2
+    }
+},
+{
+    "model": "vendor.customerprofile",
+    "pk": 1,
+    "fields": {
+        "created": "2020-06-30T01:15:00.350Z",
+        "updated": "2020-06-30T01:15:00.350Z",
+        "user": 1,
+        "currency": "mxn",
+        "site": 1
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 1,
+    "fields": {
+        "created": "2020-06-30T00:54:47.106Z",
+        "updated": "2020-06-30T00:55:25.997Z",
+        "uuid": "cbb49050-c7df-465f-91d1-261c0afa6c0f",
+        "slug": "mouse-t-shirt",
+        "site": 1,
+        "name": "Mouse T-Shirt",
+        "product": 1,
+        "start_date": "2020-06-30T00:53:23Z",
+        "end_date": null,
+        "terms": 0,
+        "term_details": null,
+        "term_start_date": "2020-06-30T00:53:31Z",
+        "available": false,
+        "bundle": [
+            1
+        ]
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 2,
+    "fields": {
+        "created": "2020-06-30T02:34:41.313Z",
+        "updated": "2020-06-30T02:37:42.780Z",
+        "uuid": "ac7b320b-dc14-4638-980d-ce635294b722",
+        "slug": "wheel-of-wensleydale",
+        "site": 1,
+        "name": "Wheel of Wensleydale",
+        "product": 2,
+        "start_date": "2020-06-30T02:34:32Z",
+        "end_date": null,
+        "terms": 0,
+        "term_details": "{}",
+        "term_start_date": null,
+        "available": false,
+        "bundle": [
+            2
+        ]
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 3,
+    "fields": {
+        "created": "2020-06-30T02:38:17.762Z",
+        "updated": "2020-06-30T02:38:35.045Z",
+        "uuid": "ceda0d8a-0ddf-440b-8804-eddc2800499b",
+        "slug": "hamster-wheel",
+        "site": 1,
+        "name": "Hamster Wheel",
+        "product": 3,
+        "start_date": "2020-06-30T02:38:16Z",
+        "end_date": null,
+        "terms": 0,
+        "term_details": "{}",
+        "term_start_date": null,
+        "available": false,
+        "bundle": [
+            2
+        ]
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 4,
+    "fields": {
+        "created": "2020-06-30T02:38:17.762Z",
+        "updated": "2020-06-30T02:38:35.045Z",
+        "uuid": "ceda0d8a-0ddf-440b-8804-eddc2800493b",
+        "slug": "hulk-mug",
+        "site": 1,
+        "name": "Hulk Mug Subscription",
+        "product": 4,
+        "start_date": "2020-06-30T02:38:16Z",
+        "end_date": null,
+        "terms": 10,
+        "term_details": "{'period_length': 1, 'payment_occurrences': 3}",
+        "term_start_date": null,
+        "available": false,
+        "bundle": [4]
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 1,
+    "fields": {
+        "offer": 1,
+        "cost": 19.99,
+        "currency": "usd",
+        "start_date": "2020-06-30T00:55:21Z",
+        "end_date": null,
+        "priority": 0
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 2,
+    "fields": {
+        "offer": 2,
+        "cost": 75.0,
+        "currency": "jpy",
+        "start_date": "2020-06-30T02:34:56Z",
+        "end_date": null,
+        "priority": 0
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 3,
+    "fields": {
+        "offer": 3,
+        "cost": 25.0,
+        "currency": "484",
+        "start_date": "2020-06-30T02:38:30Z",
+        "end_date": null,
+        "priority": 0
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 4,
+    "fields": {
+        "offer": 3,
+        "cost": 25.1,
+        "currency": "usd",
+        "start_date": "2000-06-30T02:38:30Z",
+        "end_date": "2120-06-30T02:38:30Z",
+        "priority": 1
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 5,
+    "fields": {
+        "offer": 3,
+        "cost": 25.2,
+        "currency": "usd",
+        "start_date": "2000-06-30T02:38:30Z",
+        "end_date": "2120-06-30T02:38:30Z",
+        "priority": 2
+    }
+}
+]

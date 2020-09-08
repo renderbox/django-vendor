@@ -1,0 +1,55 @@
+{% extends "vendor/base.html" %}
+{% load l10n %}
+
+{% block title %}Cart{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <nav aria-label="breadcrumb">
+        <!-- <ol class="breadcrumb"> -->
+    </nav>
+
+    {% if invoice %}
+    <h1>Your Cart</h1>
+        {% if object_list %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Product</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Per Item Cost</th>
+                    <th scope="col">Cost</th>
+                    <th scope="col">Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for items in object_list %}
+                <tr>
+                    <td>{{ items.offer.product.name }}</td>
+                    <td>
+                        <form action="{% url 'vendor-cart-item-quantity-edit' items.id %}" method=POST>{% csrf_token %}
+                                <div class="col-2">
+                                <input class="form-control" type="number" value={{items.quantity}} id="quantity", name="quantity" onChange="this.form.submit()">
+                                </div>
+                          </form></td>
+                    <td>{{ items.price|localize }}</td>
+                    <td>{{ items.total|localize }}</td>
+                    <td><a class="text-danger" href="{% url 'vendor-remove-from-cart' items.offer.sku %}">Remove Item</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>Total number of cart items: {{ item_count }}</h2>
+        
+        <h2><a class="btn btn-success" href="{% url 'vendor-order-summary-retrieve' %}">Checkout</a></h2>
+        {% else %}
+        <h2>No items in the cart </h2>
+        {% endif %}
+
+    {% else %}
+    <h1>No active Cart </h1>
+    {% endif %}
+    <a class="btn btn-warning" href="{% url 'vendor_index' %}">Add item</a>
+</div>
+{% endblock %}

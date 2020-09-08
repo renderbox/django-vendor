@@ -1,0 +1,9 @@
+{% extends "vendor/base.html" %}
+
+{% block content %}
+<form class="p-5 form" method="post">{% csrf_token %}
+        <p class="form-text">Are you sure you want to remove?' "{{ object.offer.product.name }}" from the cart</p>
+        <input class="btn btn-danger" type="submit" value="Confirm">
+    </form>
+
+{% endblock %}

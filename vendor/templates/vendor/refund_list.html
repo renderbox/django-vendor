@@ -1,0 +1,39 @@
+{% extends "vendor/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+        <nav aria-label="breadcrumb">
+            <!-- <ol class="breadcrumb"> -->
+            <h1>Refund requests</h1>
+            <!-- </ol> -->
+        </nav>
+        <table class="table", border = "1">
+            <tr>
+                <th>User</th>
+                <th>Product</th>
+                <th>Reason</th>
+                <th>Price</th>
+                <th>Refund</th>
+            </tr>
+            {% for items in object_list %}
+            <tr>
+                <td>{{ items.user.username }}</td>
+                <td>{{ items.purchase.product.name }}</td>
+                <td>{{ items.reason }}</td>
+                <td>{{ items.purchase.order_item.price.cost }}</td>
+                {% if items.accepted %}
+                    <td><form class="p-5 form" method="post" action="{% url 'vendor-issue-refund' items.id %}">{% csrf_token %}
+                            <input class="btn btn-danger" type="submit" value="Refunded" disabled></form></td>
+                
+                {% else %}
+                    <td><form class="p-5 form" method="post" action="{% url 'vendor-issue-refund' items.id %}">{% csrf_token %}
+                            <input class="btn btn-danger" type="submit" value="Issue Refund"></form></td>
+                 
+                {% endif %}
+            </tr>
+            </tr>
+            {% endfor %}
+        </table>
+       
+    </div>
+ {% endblock %}   

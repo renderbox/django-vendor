@@ -1,5 +1,8 @@
-Django==2.2.4
--e git+git@github.com:renderbox/django-vendor.git@c277f12d13da85c2315c4ef492e80e2fdecf57d4#egg=django_vendor
-djangorestframework==3.10.2
-pytz==2019.2
-sqlparse==0.3.0
+asgiref==3.2.10
+Django==3.1
+django-address==0.2.4
+django-autoslug==1.9.8
+django-extensions==3.0.5
+iso4217==1.6.20180829
+pytz==2020.1
+sqlparse==0.3.1
