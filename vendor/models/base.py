@@ -8,7 +8,6 @@ from django.db import models
 from django.utils.translation import ugettext as _
 
 from autoslug import AutoSlugField
-from iso4217 import Currency
 
 from .validator import validate_msrp_format
 
@@ -50,4 +49,8 @@ class ProductModelBase(CreateUpdateModelBase):
     def __str__(self):
         return self.name
 
+    def add_to_cart_url(self):
+        """
+        Link to add the item to the user's cart.
+        """
     # TODO: ADD trigger when object becomes unavailable to disable offer if it exisits. 
