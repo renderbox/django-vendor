@@ -9,6 +9,7 @@ from core.models import Product
 from random import randrange
 from vendor.models import Invoice, Payment, Offer
 from vendor.models.address import Country
+from vendor.models.choice import TermType
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.processors.authorizenet import AuthorizeNetProcessor
 from unittest import skipIf
@@ -374,7 +375,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
     def test_refund_fail_invalid_account_number(self):
         """
-        Checks for transaction_result fail because the account number does not match the payment transaction settled.
+        Checks for transaction_submitted fail because the account number does not match the payment transaction settled.
         """
         status_before_transaction = self.existing_invoice.status
 
@@ -390,12 +391,12 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.processor.refund_payment(payment)
 
-        self.assertFalse(self.processor.transaction_result)
+        self.assertFalse(self.processor.transaction_submitted)
         self.assertEquals(self.processor.invoice.status, status_before_transaction)
 
     def test_refund_fail_invalid_amount(self):
         """
-        Checks for transaction_result fail because the amount exceeds the payment transaction settled.
+        Checks for transaction_submitted fail because the amount exceeds the payment transaction settled.
         """
         status_before_transaction = self.existing_invoice.status
 
@@ -411,12 +412,12 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.processor.refund_payment(payment)
 
-        self.assertFalse(self.processor.transaction_result)
+        self.assertFalse(self.processor.transaction_submitted)
         self.assertEquals(self.processor.invoice.status, status_before_transaction)
 
     def test_refund_fail_invalid_transaction_id(self):
         """
-        Checks for transaction_result fail because the transaction id does not match
+        Checks for transaction_submitted fail because the transaction id does not match
         """
         self.processor = AuthorizeNetProcessor(self.existing_invoice)       
         status_before_transaction = self.existing_invoice.status
@@ -433,7 +434,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.processor.refund_payment(payment)
 
-        self.assertFalse(self.processor.transaction_result)
+        self.assertFalse(self.processor.transaction_submitted)
         self.assertEquals(self.processor.invoice.status, status_before_transaction)
 
     ##########
@@ -460,24 +461,28 @@ class AuthorizeNetProcessorTests(TestCase):
     ##########
     def test_create_subscription_success(self):
         """
-        comment
-        """
+        Test a successfull subscription enrollment.
+        """        
+        request = HttpRequest()
+        request.POST = self.form_data
+
         self.existing_invoice.add_offer(Offer.objects.get(pk=4))
         self.existing_invoice.add_offer(Offer.objects.get(pk=4))
         self.existing_invoice.save()
-        self.processor = AuthorizeNetProcessor(self.existing_invoice)
-        request = HttpRequest()
-        request.POST = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10')
-        
-        self.processor.create_subscriptions(request)
 
+        self.processor = AuthorizeNetProcessor(self.existing_invoice)
+        
+        subscription_list = self.existing_invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
+
+        self.processor.process_subscription(request, subscription_list[0])
 
         print(self.processor.transaction_message)
-        self.assertTrue(self.processor.transaction_result)
+        self.assertTrue(self.processor.transaction_submitted)
+        self.assertIsNotNone(self.processor.transaction_response.subscriptionId)
 
     def test_update_subscription_success(self):
         # TODO: Implement Test
-        # self.assertTrue(self.processor.transaction_result)
+        # self.assertTrue(self.processor.transaction_submitted)
         pass
 
     def test_cancel_subscription_success(self):
@@ -485,11 +490,12 @@ class AuthorizeNetProcessorTests(TestCase):
         subscription_list = self.processor.get_list_of_subscriptions()
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         
-        
-        self.processor.cancel_subscription(active_subscriptions)
-
-        self.assertTrue(self.processor.transaction_result)
-
+        if active_subscriptions:
+            self.processor.process_cancel_subscription(active_subscriptions[0])
+            self.assertTrue(self.processor.transaction_submitted)
+        else:
+            print("No active Subscriptions, Skipping Test")
+            pass
 
 @skipIf((settings.STRIPE_TEST_SECRET_KEY or settings.STRIPE_TEST_PUBLIC_KEY) == None, "Strip enviornment variables not set, skipping tests")
 class StripeProcessorTests(TestCase):

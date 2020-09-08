@@ -84,17 +84,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             PaymentTypes.MOBILE: self.create_mobile_payment,
         }
 
-    def check_transaction_keys(self):
-        """
-        Checks if the transaction keys have been set otherwise the transaction should not continue
-        """
-        if not self.merchant_auth.name or not self.merchant_auth.transactionKey:
-            self.transaction_result = False
-            self.transaction_response = {
-                'msg': "Make sure you run processor_setup before process_payment and that envarionment keys are set"}
-            return True
-        else:
-            return False
     ##########
     # Authorize.net Object creations
     ##########
@@ -232,15 +221,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     ##########
     # Django-Vendor to Authoriaze.net data exchange functions
     ##########
-    def get_form_data(self, form_data):
-        self.payment_info = CreditCardForm(dict(
-            [d for d in form_data.items() if 'credit-card' in d[0]]), prefix='credit-card')
-        self.billing_address = BillingAddressForm(dict(
-            [d for d in form_data.items() if 'billing-address' in d[0]]), prefix='billing-address')
-
     def save_payment_transaction(self):
-        self.payment = self.get_payment_model()
-        self.payment.success = self.transaction_result
+        self.payment.success = self.transaction_submitted
         self.payment.transaction = self.transaction_response.get(
             'transId', "Transaction Faild")
         response = self.transaction_response.__dict__
@@ -261,11 +243,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def check_response(self, response):
         """
-        Checks the transaction response and set the transaction_result and transaction_response variables
+        Checks the transaction response and set the transaction_submitted and transaction_response variables
         """
         self.transaction_response = response.transactionResponse
         self.transaction_message = {}
-        self.transaction_result = False
+        self.transaction_submitted = False
         self.transaction_message['msg'] = ""
         if response is not None:
             # Check to see if the API request was successfully received and acted upon
@@ -273,7 +255,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
                 # Since the API request was successful, look for a transaction response
                 # and parse it to display the results of authorizing the card
                 if hasattr(response.transactionResponse, 'messages') is True:
-                    self.transaction_result = True
+                    self.transaction_submitted = True
                     self.transaction_message['msg'] = "Payment Complete"
                     self.transaction_message['trans_id'] = response.transactionResponse.transId
                     self.transaction_message['response_code'] = response.transactionResponse.responseCode
@@ -295,16 +277,26 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
                     self.transaction_message['error_text'] = response.messages.message[0]['text'].text
         else:
             self.transaction_message['msg'] = 'Null Response.'
-
-    def get_form_data(self, form_data):
-        self.payment_info = CreditCardForm(dict([d for d in form_data.items() if 'credit-card' in d[0]]), prefix='credit-card')
-        self.billing_address = BillingAddressForm(dict([d for d in form_data.items() if 'billing-address' in d[0]]), prefix='billing-address')
     
-    def create_payment_model(self):
-        self.payment = self.get_payment_model() 
+    def check_subscription_response(self, response):
+        self.transaction_response = response
+        self.transaction_message = {}
+        self.transaction_submitted = False
+        self.transaction_message['msg'] = ""
+        self.transaction_message['code'] = response.messages.message[0]['code'].text
+        self.transaction_message['message'] = response.messages.message[0]['text'].text
+
+        if (response.messages.resultCode=="Ok"):
+            self.transaction_submitted = True
+            self.transaction_message['msg'] = "Subscription Tansaction Complete"
+            if 'subscriptionId' in response:
+                self.transaction_message['subscription_id'] = response.subscriptionId
+        else:
+            self.transaction_message['msg'] = "Subscription Tansaction Failed"
+
         
     def save_payment_transaction(self):       
-        self.payment.success = self.transaction_result
+        self.payment.success = self.transaction_submitted
         self.payment.transaction = self.transaction_response.get('transId', "Transaction Faild")
         response = self.transaction_response.__dict__
         if 'errors' in response:
@@ -320,44 +312,16 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.payment.billing_address = billing_address
         self.payment.save()
 
-    def check_transaction_keys(self):
-        """
-        Checks if the transaction keys have been set otherwise the transaction should not continue
-        """
-        if not self.merchant_auth.name or not self.merchant_auth.transactionKey:
-            self.transaction_result = False
-            self.transaction_response = {'msg': "Make sure you run processor_setup before process_payment and that envarionment keys are set"}
-            return True
-        else:
-            return False
-
-    def update_invoice_status(self, new_status):
-        if self.transaction_result:
-            self.invoice.status = new_status
-        else:
-            self.invoice.status = Invoice.InvoiceStatus.FAILED
-        self.invoice.save()
-
-    def get_amount_without_subscriptions(self):
-        subscriptions = self.invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
-        
-        subscription_total = sum([ s.total for s in subscriptions ])
-
-        amount = self.invoice.total - subscription_total
-        return self.to_valid_decimal(amount)
-
     def to_valid_decimal(self, number):
         return Decimal(number).quantize(Decimal('.00'), rounding=ROUND_DOWN)
     ##########
-    # Processor Transactions
+    # Base Processor Transaction Implementations
     ##########
     def process_payment(self, request):
-        if self.check_transaction_keys():
-            return
-
         self.create_payment_model()
         # Process form data to set up transaction
-        self.get_form_data(request.POST)
+        self.get_billing_address_form_data(request.POST, BillingAddressForm,'billing-address')
+        self.get_payment_info_form_data(request.POST, CreditCardForm, 'credit-card')
 
         # Init transaction
         self.transaction = self.create_transaction()
@@ -384,37 +348,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 
-    def create_subscriptions(self, request):
-        if self.check_transaction_keys():
-            return
-        subscription_list = self.invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
-        if not subscription_list:
-            return
-        self.get_form_data(request.POST)
-
-        for subscription in subscription_list:
-            self.create_subscription(subscription)
-    
-    def check_subscription_response(self, response):
-        self.transaction_response = response
-        self.transaction_message = {}
-        self.transaction_result = False
-        self.transaction_message['msg'] = ""
-        self.transaction_message['code'] = response.messages.message[0]['code'].text
-        self.transaction_message['message'] = response.messages.message[0]['text'].text
-
-        if (response.messages.resultCode=="Ok"):
-            self.transaction_result = True
-            self.transaction_message['msg'] = "Subscription Tansaction Complete"
-            if 'subscriptionId' in response:
-                self.transaction_message['subscription_id'] = response.subscriptionId
-        else:
-            self.transaction_message['msg'] = "Subscription Tansaction Failed"
-
-    def create_subscription(self, subscription):
+    def process_subscription(self, request, subscription):
         """
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
+        self.get_billing_address_form_data(request.POST, BillingAddressForm,'billing-address')
+        self.get_payment_info_form_data(request.POST, CreditCardForm, 'credit-card')
+
         period_length = str(ast.literal_eval(subscription.offer.term_details).get('period_length'))
         payment_occurrences = ast.literal_eval(subscription.offer.term_details).get('payment_occurrences')
         trail_occurrences = ast.literal_eval(subscription.offer.term_details).get('trial_occurrences', 0)
@@ -431,7 +371,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_type.amount = self.to_valid_decimal(subscription.total)
         self.transaction_type.trialAmount = Decimal('0.00')
         self.transaction_type.billTo = billto
-        self.transaction_type.payment = self.create_payment()
+        self.transaction_type.payment = self.create_authorize_payment()
 
         # Creating the request
         self.transaction = apicontractsv1.ARBCreateSubscriptionRequest()
@@ -446,12 +386,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.check_subscription_response(response)
 
-    def update_subscription(self, request, subscription_id):
+    def process_update_subscription(self, request, subscription_id):
         
-        self.get_form_data(request.POST)
+        self.get_billing_address_form_data(request.POST, BillingAddressForm,'billing-address')
+        self.get_payment_info_form_data(request.POST, CreditCardForm, 'credit-card')
 
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
-        self.transaction_type.payment = self.create_payment()
+        self.transaction_type.payment = self.create_authorize_payment()
 
         self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
@@ -474,11 +415,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         return response
 
-    def cancel_subscription(self, subscription_id):
+    def process_cancel_subscription(self, subscription_id):
 
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = subscription_id
+        self.transaction.subscriptionId = str(subscription_id)
 
         self.controller = ARBCancelSubscriptionController(self.transaction)
         self.controller.execute()
@@ -487,11 +428,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.check_subscription_response(response)
 
-
     def refund_payment(self, payment):
-        if self.check_transaction_keys():
-            return
-
         # Init transaction
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(
@@ -515,7 +452,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
         self.check_response(response)
 
-        if self.transaction_result:
+        if self.transaction_submitted:
             self.update_invoice_status(Invoice.InvoiceStatus.REFUNDED)
 
     ##########
@@ -569,23 +506,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             return response.transaction
 
     def get_list_of_subscriptions(self):
-
-        # set sorting parameters
-        sorting = apicontractsv1.ARBGetSubscriptionListSorting()
-        sorting.orderBy = apicontractsv1.ARBGetSubscriptionListOrderFieldEnum.id
-        sorting.orderDescending = True
-
-        # set paging and offset parameters
-        paging = apicontractsv1.Paging()
-        # Paging limit can be up to 1000 for this request
-        paging.limit = 20
-        paging.offset = 1
-
         self.transaction = apicontractsv1.ARBGetSubscriptionListRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.searchType = apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionInactive
-        self.transaction.sorting = sorting
-        self.transaction.paging = paging
 
         self.controller = ARBGetSubscriptionListController(self.transaction)
         self.controller.execute()

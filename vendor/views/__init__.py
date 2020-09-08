@@ -25,6 +25,117 @@ from .admin import AdminDashboardView, AdminInvoiceDetailView, AdminInvoiceListV
 
 payment_processor = PaymentProcessor              # The Payment Processor configured in settings.py
 
+<<<<<<< HEAD
+=======
+class CartView(LoginRequiredMixin, DetailView):
+    '''
+    View items in the cart
+    '''
+    model = Invoice
+
+    def get_object(self):
+        profile, created = self.request.user.customer_profile.get_or_create(site=settings.SITE_ID)
+        return profile.get_cart()
+
+
+class AddToCartView(LoginRequiredMixin, TemplateView):
+    '''
+    Create an order item and add it to the order
+    '''
+
+    def get(self, *args, **kwargs):         # TODO: Move to POST
+        offer = Offer.objects.get(slug=self.kwargs["slug"])
+        profile, created = self.request.user.customer_profile.get_or_create(site=settings.SITE_ID)      # Make sure they have a cart
+
+        cart = profile.get_cart()
+        cart.add_offer(offer)
+
+        messages.info(self.request, _("Added item to cart."))
+
+        return redirect('vendor:cart')      # Redirect to cart on success
+
+
+class RemoveFromCartView(LoginRequiredMixin, DeleteView):
+    '''
+    Reduce the count of items from the cart and delete the order item if you reach 0
+    TODO: Change to form/POST for better security & flexibility
+    '''
+    def get(self, *args, **kwargs):         # TODO: Move to POST
+        offer = Offer.objects.get(slug=self.kwargs["slug"])
+
+        profile = self.request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
+        cart = profile.get_cart()
+        cart.remove_offer(offer)
+
+        messages.info(self.request, _("Removed item from cart."))
+
+        return redirect('vendor:cart')      # Redirect to cart on success
+
+
+class CheckoutView(LoginRequiredMixin, TemplateView):
+    '''
+    Review items and submit Payment
+    '''
+    template_name = "vendor/checkout.html"
+    # billing_address_form_class = BillingAddressForm
+    # card_form_class = CreditCardForm
+    # payment_processor = PaymentProcessor
+
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+
+    #     profile = self.request.user.customer_profile.get(site=settings.SITE_ID) 
+    #     invoice = profile.invoices.get(status=Invoice.InvoiceStatus.CART)
+
+    #     processor = self.payment_processor(invoice)
+
+    #     context = processor.get_checkout_context(context=context)
+
+    #     context['billing_form'] = self.billing_form_class()
+    #     # TODO: Set below in the PaymentProcessor Context. It should set the address form and card form?
+    #     context['address_form'] = self.address_form_class(prefix='addr')
+    #     context['card_form'] = self.card_form_class(prefix='card')
+
+    #     return context
+
+    def get(self, request, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile = self.request.user.customer_profile.get(site=settings.SITE_ID) 
+        invoice = profile.invoices.get(status=Invoice.InvoiceStatus.CART)
+
+        processor = payment_processor(invoice)
+
+        context = processor.get_checkout_context(context=context)
+
+        return render(request, self.template_name, context)
+
+
+    def post(self, request, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile = request.user.customer_profile.get(site=settings.SITE_ID) 
+        invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
+                
+        credit_card_form = CreditCardForm(request.POST, prefix='credit-card')
+        billing_address_form = BillingAddressForm(request.POST, prefix='billing-address')
+        
+        if not (billing_address_form.is_valid() or credit_card_form.is_valid()):
+            return render(request, self.template_name, processor.get_checkout_context(context))
+        
+        processor = payment_processor(invoice)
+
+        processor.process_payment(request)
+        if processor.transaction_submitted:
+            return redirect('vendor:purchase-summary', pk=invoice.pk)   # redirect to the summary page for the above invoice
+            # TODO: invoices should have a UUID attached to them
+            # return redirect('vendor:purchase-summary', pk=processor.invoice.payments.filter(success=True).values_list('pk'))    # TODO: broken
+        else:
+            return render(request, self.template_name, processor.get_checkout_context(request, context))
+
+        
+class PaymentView(LoginRequiredMixin, DetailView):
+    model = Payment
+
+>>>>>>> origin/develop
 
 ######################
 # Order History Views

@@ -37,7 +37,7 @@ class ProductModelBase(CreateUpdateModelBase):
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="products")        # For multi-site support
     slug = AutoSlugField(populate_from='name', unique_with='site__id')                                                                         # Gets set in the save
     available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))        # This can be forced to be unavailable if there is no prices attached.
-    description = models.TextField(blank=True, null=True)
+    description = models.JSONField(_("Description"), default=dict, blank=True, null=True)
     meta = models.CharField(_("Meta"), max_length=150, validators=[validate_msrp_format], blank=True, null=True, help_text=_("Eg: USD,10.99\n(iso4217 Country Code), (MSRP Price)"))                                          # allows for things like a MSRP in multiple currencies. Not JSONField to force a db
     classification = models.ManyToManyField("vendor.TaxClassifier", blank=True)                                        # What taxes can apply to this item
 

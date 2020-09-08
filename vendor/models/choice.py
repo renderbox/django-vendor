@@ -12,7 +12,7 @@ CURRENCY_CHOICES = [(c.name, c.value) for c in Currency ]
 class TermType(models.IntegerChoices):
     PERPETUAL = 0, _("Perpetual")
     SUBSCRIPTION = 10, _("Subscription")
-    ONE_TIME_USER = 20, _("One-Time Use")
+    ONE_TIME_USE = 20, _("One-Time Use")
 
 class PurchaseStatus(models.IntegerChoices):
     QUEUED = 1, _("Queued")
