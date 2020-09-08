@@ -74,6 +74,9 @@ class PaymentProcessorBase(object):
             self.invoice.status = Invoice.InvoiceStatus.FAILED
         self.invoice.save()
 
+    def create_reciepts(self):
+        pass
+
     def amount(self):   # Retrieves the total amount from the invoice
         self.invoice.update_totals()
         return self.invoice.total

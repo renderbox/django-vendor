@@ -294,7 +294,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         else:
             self.transaction_message['msg'] = "Subscription Tansaction Failed"
 
-        
     def save_payment_transaction(self):       
         self.payment.success = self.transaction_submitted
         self.payment.transaction = self.transaction_response.get('transId', "Transaction Faild")
@@ -303,7 +302,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             response.pop('errors')
         if 'messages' in response:
             response.pop('messages')
-        self.payment.result = str({**self.transaction_message, **response})
+        self.payment.result = {'raw': str({**self.transaction_message, **response})}
         self.payment.payee_full_name = self.payment_info.data.get('credit-card-full_name')
         self.payment.payee_company = self.billing_address.data.get('billing-address-company')
         billing_address = self.billing_address.save(commit=False)
