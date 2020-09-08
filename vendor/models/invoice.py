@@ -30,8 +30,8 @@ class Invoice(CreateUpdateModelBase):
     profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="invoices")                      # For multi-site support
     status = models.IntegerField(_("Status"), choices=InvoiceStatus.choices, default=InvoiceStatus.CART)
-    customer_notes = models.TextField(blank=True, null=True)
-    vendor_notes = models.TextField(blank=True, null=True)
+    customer_notes = models.JSONField(_("Customer Notes"), default=dict, blank=True, null=True)
+    vendor_notes = models.JSONField(_("Vendor Notes"), default=dict, blank=True, null=True)
     ordered_date = models.DateTimeField(_("Ordered Date"), blank=True, null=True)               # When was the purchase made?
     subtotal = models.FloatField(default=0.0)                                   
     tax = models.FloatField(blank=True, null=True)                              # Set on checkout

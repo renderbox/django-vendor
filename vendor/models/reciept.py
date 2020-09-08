@@ -20,10 +20,10 @@ class Reciept(CreateUpdateModelBase):
     start_date = models.DateTimeField(_("Start Date"), blank=True, null=True)
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True)
     auto_renew = models.BooleanField(_("Auto Renew"), default=False)        # For subscriptions
-    vendor_notes = models.TextField()
+    vendor_notes = models.JSONField(_("Vendor Notes"), default=dict)
     transaction = models.CharField(_("Transaction"), max_length=80)
     status = models.IntegerField(_("Status"), choices=PurchaseStatus.choices, default=0)       # Fulfilled, Refund
-    meta = models.TextField()
+    meta = models.JSONField()
     class Meta:
         verbose_name = _("Reciept")
         verbose_name_plural = _("Reciepts")
