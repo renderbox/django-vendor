@@ -122,7 +122,7 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
         processor = payment_processor(invoice)
 
         processor.process_payment(request)
-        if processor.transaction_result:
+        if processor.transaction_submitted:
             return redirect('vendor:purchase-summary', pk=invoice.pk)   # redirect to the summary page for the above invoice
             # TODO: invoices should have a UUID attached to them
             # return redirect('vendor:purchase-summary', pk=processor.invoice.payments.filter(success=True).values_list('pk'))    # TODO: broken

@@ -13,6 +13,8 @@ from autoslug import AutoSlugField
 
 from .base import CreateUpdateModelBase
 
+from .choice import TermType
+
 #########
 # OFFER
 #########
@@ -23,11 +25,6 @@ class Offer(CreateUpdateModelBase):
     This is so more than one offer can be made per product, with different 
     priorities.
     '''
-    class TermType(models.IntegerChoices):
-        PERPETUAL = 0, _("Perpetual")
-        SUBSCRIPTION = 10, _("Subscription")
-        ONE_TIME_USER = 20, _("One-Time Use")
-
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)                                # Used to track the product
     slug = AutoSlugField(populate_from='name', unique_with='site__id')                                               # SEO friendly 
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="product_offers")                      # For multi-site support
@@ -37,7 +34,7 @@ class Offer(CreateUpdateModelBase):
     start_date = models.DateTimeField(_("Start Date"), help_text="What date should this offer become available?")
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="Expiration Date?")
     terms =  models.IntegerField(_("Terms"), default=0, choices=TermType.choices)
-    term_details = models.JSONField(_("Details"), default=dict, blank=True, null=True)
+    term_details = models.JSONField(_("Term Details"), default=dict, blank=True, null=True)
     term_start_date = models.DateTimeField(_("Term Start Date"), help_text="When is this product available to use?", blank=True, null=True) # Useful for Event Tickets or Pre-Orders
     available = models.BooleanField(_("Available"), default=False, help_text="Is this currently available?")
 
