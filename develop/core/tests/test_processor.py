@@ -19,7 +19,7 @@ from unittest import skipIf
 # Test constants
 ###############################
 
-@skipIf((settings.AUTHORIZE_NET_API_ID or settings.AUTHORIZE_NET_TRANSACTION_KEY) == None, "Authorize.Net enviornment variables not set, skipping tests")
+@skipIf((settings.AUTHORIZE_NET_API_ID == None) or (settings.AUTHORIZE_NET_TRANSACTION_KEY == None), "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
     
     fixtures = ['user','unit_test']
@@ -178,7 +178,7 @@ class AuthorizeNetProcessorTests(TestCase):
     # Reference: https://support.authorize.net/s/article/What-Are-the-Different-Address-Verification-Service-AVS-Response-Codes
     ##########
 
-    def test_process_payment_avs_a(self):
+    def test_process_payment_avs_addr_match_zipcode_no_match(self):
         """
         A = Street Address: Match -- First 5 Digits of ZIP: No Match
         Postal Code: 46201
@@ -194,7 +194,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'A'", self.processor.payment.result)
 
-    def test_process_payment_avs_e(self):
+    def test_process_payment_avs_service_error(self):
         """
         E = AVS Error
         Postal Code: 46203
@@ -211,7 +211,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'E'", self.processor.payment.result)
 
-    def test_process_payment_avs_g(self):
+    def test_process_payment_avs_non_us_card(self):
         """
         G = Non U.S. Card Issuing Bank
         Postal Code: 46204
@@ -228,7 +228,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'G'", self.processor.payment.result)
 
-    def test_process_payment_avs_n(self):
+    def test_process_payment_avs_addr_no_match_zipcode_no_match(self):
         """
         N = Street Address: No Match -- First 5 Digits of ZIP: No Match
         Postal Code: 46205
@@ -245,7 +245,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'N'", self.processor.payment.result)
 
-    def test_process_payment_avs_r(self):
+    def test_process_payment_avs_retry_service_unavailable(self):
         """
         R = Retry, System Is Unavailable
         Postal Code: 46207
@@ -264,7 +264,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertFalse(self.processor.payment.success)
         self.assertEquals(Invoice.InvoiceStatus.FAILED, self.processor.invoice.status) 
 
-    def test_process_payment_avs_s(self):
+    def test_process_payment_avs_not_supported(self):
         """
         S = AVS Not Supported by Card Issuing Bank
         Postal Code: 46208
@@ -279,7 +279,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'S'", self.processor.payment.result)
 
-    def test_process_payment_avs_u(self):
+    def test_process_payment_avs_addrs_info_unavailable(self):
         """
         U = Address Information For This Cardholder Is Unavailable
         Postal Code: 46209
@@ -296,7 +296,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'U'", self.processor.payment.result)
 
-    def test_process_payment_avs_w(self):
+    def test_process_payment_avs_addr_no_match_zipcode_match_9_digits(self):
         """
         W = Street Address: No Match -- All 9 Digits of ZIP: Match
         Postal Code: 46211
@@ -313,7 +313,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'W'", self.processor.payment.result)
 
-    def test_process_payment_avs_x(self):
+    def test_process_payment_avs_addr_match_zipcode_match(self):
         """
         X = Street Address: Match -- All 9 Digits of ZIP: Match
         Postal Code: 46214
@@ -330,7 +330,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'X'", self.processor.payment.result)
 
-    def test_process_payment_avs_z(self):
+    def test_process_payment_avs_addr_no_match_zipcode_match_5_digits(self):
         """
         Z = Street Address: No Match - First 5 Digits of ZIP: Match
         Postal Code: 46217
