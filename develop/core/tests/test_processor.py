@@ -6,14 +6,15 @@ from django.http import HttpRequest, QueryDict
 from django.test import TestCase, Client
 from django.urls import reverse
 from core.models import Product
-from random import randrange
-from vendor.models import Invoice, Payment, Offer
+from random import randrange, choice
+from vendor.models import Invoice, Payment, Offer, Price
 from vendor.models.address import Country
 from vendor.models.choice import TermType
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.processors.authorizenet import AuthorizeNetProcessor
 from unittest import skipIf
 
+from string import ascii_letters
 
 ###############################
 # Test constants
@@ -122,6 +123,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
+        self.processor.invoice.total = randrange(1,100)
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
@@ -137,6 +139,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
+        self.processor.invoice.total = randrange(1,100)
         self.processor.process_payment(request)
         
         self.assertIsNotNone(self.processor.payment)
@@ -153,6 +156,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
+        self.processor.invoice.total = randrange(1,100)
         self.processor.process_payment(request)
         
         self.assertIsNotNone(self.processor.payment)
@@ -168,6 +172,7 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
+        self.processor.invoice.total = randrange(1,100)
         self.processor.process_payment(request)
         
         self.assertIsNotNone(self.processor.payment)
@@ -468,13 +473,20 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.existing_invoice.add_offer(Offer.objects.get(pk=4))
         self.existing_invoice.add_offer(Offer.objects.get(pk=4))
+        price = Price()
+        price.offer = Offer.objects.get(pk=4)
+        price.cost = randrange(1,100)
+        price.start_date = datetime.now() - timedelta(days=1)
+        price.save()
         self.existing_invoice.save()
 
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
         
         subscription_list = self.existing_invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
-
-        self.processor.process_subscription(request, subscription_list[0])
+        subscription = subscription_list[0]
+        subscription.offer.name = "".join([ choice(ascii_letters) for i in range(0, 10) ])
+        self.processor.process_subscription(request, subscription)
+        
 
         print(self.processor.transaction_message)
         self.assertTrue(self.processor.transaction_submitted)
