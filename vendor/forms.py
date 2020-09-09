@@ -3,7 +3,6 @@ from datetime import datetime
 from django import forms
 from django.utils.translation import ugettext as _
 from django.db.models import IntegerChoices
-from address.models import Country, State 
 from .models import OrderItem, Address
 from vendor.models.choice import PaymentTypes
 
