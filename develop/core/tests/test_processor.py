@@ -84,7 +84,7 @@ class AuthorizeNetProcessorTests(TestCase):
         
         self.processor.process_payment(request)
 
-        print(self.processor.transaction_message)
+        # print(self.processor.transaction_message)
         self.assertIsNotNone(self.processor.payment)
         self.assertTrue(self.processor.payment.success)
         self.assertEquals(Invoice.InvoiceStatus.COMPLETE, self.processor.invoice.status)
@@ -408,7 +408,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.result = str({ 'accountNumber': successfull_transactions[-1].accountNumber.text})
 
         self.processor.refund_payment(payment)
-        print(f'Message: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}')
+        # print(f'Message: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}')
         self.assertEquals(Invoice.InvoiceStatus.REFUNDED, self.existing_invoice.status)
 
     def test_refund_fail_invalid_account_number(self):
@@ -521,7 +521,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_subscription(request, subscription)
         
 
-        print(self.processor.transaction_message)
+        # print(self.processor.transaction_message)
         self.assertTrue(self.processor.transaction_submitted)
         self.assertIsNotNone(self.processor.transaction_response.subscriptionId)
 
@@ -540,7 +540,6 @@ class AuthorizeNetProcessorTests(TestCase):
             self.assertTrue(self.processor.transaction_submitted)
         else:
             print("No active Subscriptions, Skipping Test")
-            pass
 
 @skipIf((settings.STRIPE_TEST_SECRET_KEY or settings.STRIPE_TEST_PUBLIC_KEY) == None, "Strip enviornment variables not set, skipping tests")
 class StripeProcessorTests(TestCase):
