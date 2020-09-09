@@ -8,8 +8,8 @@ from datetime import datetime
 from django.db.models import Sum
 from django.conf import settings
 from django.utils import timezone
-from vendor.models import Payment, Invoice
-from vendor.models.choice import PurchaseStatus
+from vendor.models import Payment, Invoice, Receipt
+from vendor.models.choice import PurchaseStatus, TermType
 ##########
 # SIGNALS
 
@@ -74,8 +74,31 @@ class PaymentProcessorBase(object):
             self.invoice.status = Invoice.InvoiceStatus.FAILED
         self.invoice.save()
 
-    def create_reciepts(self):
-        pass
+    def create_receipts(self):
+        if self.payment.success and self.invoice.status == Invoice.InvoiceStatus.COMPLETE:
+            for order_item in self.invoice.order_items.all():
+                receipt = Receipt()
+                receipt.profile = self.invoice.profile
+                receipt.order_item = order_item
+                receipt.product = order_item.offer.product
+                receipt.transaction = self.payment.transaction
+                receipt.status = PurchaseStatus.COMPLETE
+                receipt.start_date = timezone.now()
+                # TODO: This should be a function
+                if order_item.offer.terms == TermType.SUBSCRIPTION:
+                    total_months = order_item.offer.term_details['period_length'] * order_item.offer.term_details['payment_occurrences']
+                    receipt.end_date = timezone.now() + timedelta(days=(total_months*31)
+                    receipt.auto_renew = True
+                elif order_item.offer.terms == TermType.PERPETUAL:
+                    receipt.auto_renew = False
+                elif order_item.offer.terms == TermType.ONE_TIME_USE:
+                    receipt.auto_renew = False
+                receipt.save()
+    
+    def update_subscription_receipt(self, subscription, subscription_id):
+        subscription_receipt = self.invoice.receipts.get(order_item=subscription)
+        subscription_receipt.meta['subscription_id'] = subscription_id
+        subscription_receipt.save()
 
     def amount(self):   # Retrieves the total amount from the invoice
         self.invoice.update_totals()

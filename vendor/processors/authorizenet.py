@@ -347,6 +347,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 
+        self.create_receipts()
+
     def process_subscription(self, request, subscription):
         """
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
@@ -384,6 +386,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
 
         self.check_subscription_response(response)
+        if self.transaction_submitted:
+            self.update_subscription_receipt(subscription, self.transaction_response.subscriptionId)
 
     def process_update_subscription(self, request, subscription_id):
         
