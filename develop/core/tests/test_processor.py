@@ -23,7 +23,7 @@ from string import ascii_letters
 @skipIf((settings.AUTHORIZE_NET_API_ID == None) or (settings.AUTHORIZE_NET_TRANSACTION_KEY == None), "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
     
-    fixtures = ['user','unit_test']
+    fixtures = ['user', 'unit_test']
 
     VALID_CARD_NUMBERS = [
         '370000000000002',
