@@ -230,7 +230,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             response.pop('errors')
         if 'messages' in response:
             response.pop('messages')
-        self.payment.result = str({**self.transaction_message, **response})
+        self.payment.result = {'raw': str({**self.transaction_message, **response})}
         self.payment.payee_full_name = self.payment_info.data.get(
             'credit-card-full_name')
         self.payment.payee_company = self.billing_address.data.get(
@@ -436,8 +436,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_type.refTransId = payment.transaction
 
         creditCard = apicontractsv1.creditCardType()
-        creditCard.cardNumber = ast.literal_eval(
-            payment.result).get('accountNumber')[-4:]
+        creditCard.cardNumber = ast.literal_eval(payment.result['raw']).get('accountNumber')[-4:]
         creditCard.expirationDate = "XXXX"
 
         payment_type = apicontractsv1.paymentType()

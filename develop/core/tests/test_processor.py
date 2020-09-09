@@ -148,7 +148,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if self.processor.transaction_response.cvvResultCode.text:
             self.assertEquals("N", self.processor.transaction_response.cvvResultCode.text)
         else:
-            print(f'test_process_payment_fail_cvv_no_match: Response: {self.payment.result}')
+            print(f'test_process_payment_fail_cvv_no_match: Response: {self.payment.result["raw"]}')
 
     def test_process_payment_fail_cvv_should_not_be_on_card(self):
         """
@@ -168,7 +168,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if self.processor.transaction_response.cvvResultCode.text:
             self.assertEquals("S", self.processor.transaction_response.cvvResultCode.text)
         else:
-            print(f'test_process_payment_fail_cvv_should_not_be_on_card: Response: {self.payment.result}')
+            print(f'test_process_payment_fail_cvv_should_not_be_on_card: Response: {self.payment.result["raw"]}')
 
     def test_process_payment_fail_cvv_not_certified(self):
         """
@@ -189,8 +189,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if self.processor.transaction_response.cvvResultCode.text:
             self.assertEquals("U", self.processor.transaction_response.cvvResultCode.text)
         else:
-            print(f'test_process_payment_fail_cvv_not_certified: Response: {self.payment.result}')
-
+            print(f'test_process_payment_fail_cvv_not_certified: Response: {self.payment.result["raw"]}')
 
     def test_process_payment_fail_cvv_not_processed(self):
         """
@@ -210,9 +209,8 @@ class AuthorizeNetProcessorTests(TestCase):
         if self.processor.transaction_response.cvvResultCode.text:
             self.assertEquals("P", self.processor.transaction_response.cvvResultCode.text)
         else:
-            print(f'test_process_payment_fail_cvv_not_processed Response: {self.payment.result}')
+            print(f'test_process_payment_fail_cvv_not_processed Response: {self.payment.result["raw"]}')
 
-    
     ##########
     # AVS Tests
     # Reference: https://support.authorize.net/s/article/What-Are-the-Different-Address-Verification-Service-AVS-Response-Codes
@@ -232,7 +230,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
-        self.assertIn("'avsResultCode': 'A'", self.processor.payment.result)
+        self.assertIn("'avsResultCode': 'A'", self.processor.payment.result["raw"])
 
     def test_process_payment_avs_service_error(self):
         """
@@ -249,7 +247,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
-        self.assertIn("'avsResultCode': 'E'", self.processor.payment.result)
+        self.assertIn("'avsResultCode': 'E'", self.processor.payment.result["raw"])
 
     def test_process_payment_avs_non_us_card(self):
         """
@@ -266,7 +264,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
-        self.assertIn("'avsResultCode': 'G'", self.processor.payment.result)
+        self.assertIn("'avsResultCode': 'G'", self.processor.payment.result["raw"])
 
     def test_process_payment_avs_addr_no_match_zipcode_no_match(self):
         """
@@ -283,7 +281,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
-        self.assertIn("'avsResultCode': 'N'", self.processor.payment.result)
+        self.assertIn("'avsResultCode': 'N'", self.processor.payment.result["raw"])
 
     def test_process_payment_avs_retry_service_unavailable(self):
         """
@@ -300,7 +298,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
-        self.assertIn("'avsResultCode': 'R'", self.processor.payment.result)
+        self.assertIn("'avsResultCode': 'R'", self.processor.payment.result["raw"])
         self.assertFalse(self.processor.payment.success)
         self.assertEquals(Invoice.InvoiceStatus.FAILED, self.processor.invoice.status) 
 
@@ -317,7 +315,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
-        self.assertIn("'avsResultCode': 'S'", self.processor.payment.result)
+        self.assertIn("'avsResultCode': 'S'", self.processor.payment.result["raw"])
 
     def test_process_payment_avs_addrs_info_unavailable(self):
         """
@@ -334,7 +332,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
-        self.assertIn("'avsResultCode': 'U'", self.processor.payment.result)
+        self.assertIn("'avsResultCode': 'U'", self.processor.payment.result["raw"])
 
     def test_process_payment_avs_addr_no_match_zipcode_match_9_digits(self):
         """
@@ -351,7 +349,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
-        self.assertIn("'avsResultCode': 'W'", self.processor.payment.result)
+        self.assertIn("'avsResultCode': 'W'", self.processor.payment.result["raw"])
 
     def test_process_payment_avs_addr_match_zipcode_match(self):
         """
@@ -368,7 +366,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
-        self.assertIn("'avsResultCode': 'X'", self.processor.payment.result)
+        self.assertIn("'avsResultCode': 'X'", self.processor.payment.result["raw"])
 
     def test_process_payment_avs_addr_no_match_zipcode_match_5_digits(self):
         """
@@ -385,7 +383,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.process_payment(request)
 
         self.assertIsNotNone(self.processor.payment)
-        self.assertIn("'avsResultCode': 'Z'", self.processor.payment.result)
+        self.assertIn("'avsResultCode': 'Z'", self.processor.payment.result["raw"])
     
     ##########
     # Refund Transactin Tests
@@ -407,7 +405,7 @@ class AuthorizeNetProcessorTests(TestCase):
         # Hard coding minimum amount so the test can run multiple times.
         payment.amount = 0.01
         payment.transaction = successfull_transactions[-1].transId.text
-        payment.result = str({ 'accountNumber': successfull_transactions[-1].accountNumber.text})
+        payment.result["raw"] = str({ 'accountNumber': successfull_transactions[-1].accountNumber.text})
 
         self.processor.refund_payment(payment)
         # print(f'Message: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}')
@@ -427,7 +425,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment = Payment()
         payment.amount = 0.01
         payment.transaction = transaction_list[-1].transId.text
-        payment.result = str({ 'accountNumber': '6699'})
+        payment.result["raw"] = str({ 'accountNumber': '6699'})
 
         self.processor.refund_payment(payment)
 
@@ -448,7 +446,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment = Payment()
         payment.amount = 1000000.00
         payment.transaction = transaction_list[-1].transId.text
-        payment.result = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+        payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
 
         self.processor.refund_payment(payment)
 
@@ -470,7 +468,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment = Payment()
         payment.amount = 0.01
         payment.transaction = '111222333412'
-        payment.result = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+        payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
 
         self.processor.refund_payment(payment)
 
