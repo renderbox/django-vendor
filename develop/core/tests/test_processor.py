@@ -1,4 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
+
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -395,7 +397,7 @@ class AuthorizeNetProcessorTests(TestCase):
         The test will get a settle payment and test refund transaction.
         """
         # Get Settled payment
-        start_date, end_date = (datetime.now() - timedelta(days=31)), datetime.now()
+        start_date, end_date = (timezone.now() - timedelta(days=31)), timezone.now()
         batch_list = self.processor.get_settled_batch_list(start_date, end_date)
         transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
         successfull_transactions = [ t for t in transaction_list if t['transactionStatus'] == 'settledSuccessfully' ]
@@ -418,7 +420,7 @@ class AuthorizeNetProcessorTests(TestCase):
         status_before_transaction = self.existing_invoice.status
 
         # Get Settled payment
-        start_date, end_date = (datetime.now() - timedelta(days=31)), datetime.now()
+        start_date, end_date = (timezone.now() - timedelta(days=31)), timezone.now()
         batch_list = self.processor.get_settled_batch_list(start_date, end_date)
         transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
 
@@ -439,7 +441,7 @@ class AuthorizeNetProcessorTests(TestCase):
         status_before_transaction = self.existing_invoice.status
 
         # Get Settled payment
-        start_date, end_date = (datetime.now() - timedelta(days=31)), datetime.now()
+        start_date, end_date = (timezone.now() - timedelta(days=31)), timezone.now()
         batch_list = self.processor.get_settled_batch_list(start_date, end_date)
         transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
 
@@ -461,7 +463,7 @@ class AuthorizeNetProcessorTests(TestCase):
         status_before_transaction = self.existing_invoice.status
 
         # Get Settled payment
-        start_date, end_date = (datetime.now() - timedelta(days=31)), datetime.now()
+        start_date, end_date = (timezone.now() - timedelta(days=31)), timezone.now()
         batch_list = self.processor.get_settled_batch_list(start_date, end_date)
         transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
 
@@ -509,7 +511,7 @@ class AuthorizeNetProcessorTests(TestCase):
         price = Price()
         price.offer = Offer.objects.get(pk=4)
         price.cost = randrange(1,1000)
-        price.start_date = datetime.now() - timedelta(days=1)
+        price.start_date = timezone.now() - timedelta(days=1)  # 
         price.save()
         self.existing_invoice.save()
 
