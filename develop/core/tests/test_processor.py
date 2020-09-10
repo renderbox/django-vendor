@@ -408,7 +408,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if self.processor.transaction_response.cvvResultCode.text:
             self.assertEquals("U", self.processor.transaction_response.cvvResultCode.text)
         else:
-            print(f'test_process_payment_fail_cvv_not_certified: Response: {self.payment.result["raw"]}')
+            print(f'test_process_payment_fail_cvv_not_certified: Response: {self.processor.payment.result["raw"]}')
 
     def test_process_payment_fail_cvv_not_processed(self):
         """
