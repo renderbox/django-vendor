@@ -99,7 +99,11 @@ class PaymentProcessorBase(object):
                 receipt.save()
 
     def update_subscription_receipt(self, subscription, subscription_id):
-        subscription_receipt = self.invoice.order_items.get(offer=subscription).receipts.first()
+        """
+        subscription: OrderItem
+        subscription_id: int
+        """
+        subscription_receipt = self.invoice.order_items.get(offer=subscription.offer).receipts.get(transaction=self.payment.transaction)
         subscription_receipt.meta['subscription_id'] = subscription_id
         subscription_receipt.save()
 

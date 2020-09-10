@@ -356,9 +356,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.get_billing_address_form_data(request.POST, BillingAddressForm,'billing-address')
         self.get_payment_info_form_data(request.POST, CreditCardForm, 'credit-card')
 
-        period_length = str(ast.literal_eval(subscription.offer.term_details).get('period_length'))
-        payment_occurrences = ast.literal_eval(subscription.offer.term_details).get('payment_occurrences')
-        trail_occurrences = ast.literal_eval(subscription.offer.term_details).get('trial_occurrences', 0)
+        period_length = subscription.offer.term_details['period_length']
+        payment_occurrences = subscription.offer.term_details['payment_occurrences']
+        trail_occurrences = subscription.offer.term_details.get('trial_occurrences', 0)
         
         # Setting billing information
         billto = apicontractsv1.nameAndAddressType()
@@ -387,7 +387,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.check_subscription_response(response)
         if self.transaction_submitted:
-            self.update_subscription_receipt(subscription, self.transaction_response.subscriptionId)
+            self.update_subscription_receipt(subscription, self.transaction_response.subscriptionId.pyval)
 
     def process_update_subscription(self, request, subscription_id):
         

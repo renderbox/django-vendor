@@ -108,7 +108,10 @@ class BaseProcessorTests(TestCase):
         self.base_processor.payment = Payment.objects.get(pk=1)
         self.base_processor.create_receipts()
 
-        self.base_processor.update_subscription_receipt(self.subscription_offer, subscription_id)
+        subscription_list = self.existing_invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
+        subscription = subscription_list[0]
+
+        self.base_processor.update_subscription_receipt(subscription, subscription_id)
         receipt = Receipt.objects.get(meta__subscription_id=subscription_id)
         
         self.assertIsNotNone(receipt)
@@ -256,7 +259,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.existing_invoice = Invoice.objects.get(pk=1)
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
         self.form_data = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10', mutable=True)
-        
+        self.subscription_offer = Offer.objects.get(pk=4)
 
     
     ##########
@@ -421,7 +424,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if self.processor.transaction_response.cvvResultCode.text:
             self.assertEquals("P", self.processor.transaction_response.cvvResultCode.text)
         else:
-            print(f'test_process_payment_fail_cvv_not_processed Response: {self.payment.result["raw"]}')
+            print(f'test_process_payment_fail_cvv_not_processed Response: {self.processor.payment.result["raw"]}')
 
     ##########
     # AVS Tests
@@ -716,10 +719,10 @@ class AuthorizeNetProcessorTests(TestCase):
         request = HttpRequest()
         request.POST = self.form_data
 
-        self.existing_invoice.add_offer(Offer.objects.get(pk=4))
-        self.existing_invoice.add_offer(Offer.objects.get(pk=4))
+        self.existing_invoice.add_offer(self.subscription_offer)
+        self.existing_invoice.add_offer(self.subscription_offer)
         price = Price()
-        price.offer = Offer.objects.get(pk=4)
+        price.offer = self.subscription_offer
         price.cost = randrange(1,1000)
         price.start_date = timezone.now() - timedelta(days=1)
         price.save()
@@ -730,6 +733,12 @@ class AuthorizeNetProcessorTests(TestCase):
         subscription_list = self.existing_invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
         subscription = subscription_list[0]
         subscription.offer.name = "".join([ choice(ascii_letters) for i in range(0, 10) ])
+        subscription.offer.save()
+
+        self.processor.invoice.status = Invoice.InvoiceStatus.COMPLETE
+        self.processor.payment = Payment.objects.get(pk=1)
+        self.processor.create_receipts()
+
         self.processor.process_subscription(request, subscription)
         
 
