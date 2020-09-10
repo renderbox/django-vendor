@@ -32,28 +32,34 @@ class BillingAddressForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['name'].widget.attrs.update({
-            'class': 'form-control'
+            'class': 'form-control',
+            'placeholder': _('Marina Home')
             })
         self.fields['company'].widget.attrs.update({
-            'class': 'form-control'
+            'class': 'form-control',
+            'placeholder': _('Company\'s Name (Optional)')
             })
         self.fields['country'].widget.attrs.update({
-            'class': 'form-control'
+            'class': 'form-control',
             })
         self.fields['address_1'].widget.attrs.update({
-            'class': 'form-control'
+            'class': 'form-control',
+            'placeholder': _('Address Line 1')
             })
         self.fields['address_2'].widget.attrs.update({
-            'class': 'form-control'
+            'class': 'form-control',
+            'placeholder': _('Address Line 2')
             })
         self.fields['locality'].widget.attrs.update({
-            'class': 'form-control'
+            'class': 'form-control',
+            'placeholder': _('Locality/City')
             })
         self.fields['state'].widget.attrs.update({
-            'class': 'form-control'
+            'class': 'form-control',
             })
         self.fields['postal_code'].widget.attrs.update({
-            'class': 'form-control'
+            'class': 'form-control',
+            'placeholder': _('Postal Code')
             })
 class CreditCardField(forms.CharField):
 
