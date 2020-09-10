@@ -29,7 +29,32 @@ class BillingAddressForm(forms.ModelForm):
         model = Address
         fields = ['name', 'company', 'address_1', 'address_2', 'locality', 'state', 'country', 'postal_code']
 
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].widget.attrs.update({
+            'class': 'form-control'
+            })
+        self.fields['company'].widget.attrs.update({
+            'class': 'form-control'
+            })
+        self.fields['country'].widget.attrs.update({
+            'class': 'form-control'
+            })
+        self.fields['address_1'].widget.attrs.update({
+            'class': 'form-control'
+            })
+        self.fields['address_2'].widget.attrs.update({
+            'class': 'form-control'
+            })
+        self.fields['locality'].widget.attrs.update({
+            'class': 'form-control'
+            })
+        self.fields['state'].widget.attrs.update({
+            'class': 'form-control'
+            })
+        self.fields['postal_code'].widget.attrs.update({
+            'class': 'form-control'
+            })
 class CreditCardField(forms.CharField):
 
     # validates almost all of the example cards from PayPal

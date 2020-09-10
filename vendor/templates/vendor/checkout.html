@@ -125,8 +125,11 @@
     <form method="post">
       <h4 class="mb-3">Billing Information</h4>
       {% csrf_token %}
-        {% include "./includes/billing_address_form.html" with billing_address_form=billing_address_form %}
-      {{ credit_card_form.as_p }}
+      {% include "./includes/billing_address_form.html" with billing_address_form=billing_address_form %}
+      {% comment %}
+      {{ billing_address_form }}
+      {% endcomment %}
+      {{ credit_card_form }}
       <button class="btn btn-primary btn-lg btn-block" type="submit" >Submit Payment</button>
     </form>
   </div>

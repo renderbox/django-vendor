@@ -2,45 +2,151 @@
 
 
 {% for hidden_field in billing_address_form.hidden_fields %}
-    {{ hidden_field }}
+{{ hidden_field }}
 {% endfor %}
 
 {% if billing_address_form.non_field_errors %}
 <div class="alert alert-danger" role="alert">
-{% for error in billing_address_form.non_field_errors %}
+    {% for error in billing_address_form.non_field_errors %}
     {{ error }}
-{% endfor %}
+    {% endfor %}
 </div>
 {% endif %}
 
-
-<div class="form-group">
-    {{ billing_address_form.name.label_tag }}
-
-    {% if billing_address_form.is_bound %}
-        {% if billing_address_form.name.errors %}
-            <div class='form-control is-invalid'>
-                {{ billing_address_form.name }}
-            </div>
-            {% for error in billing_address_form.name.errors %}
-            <div class="invalid-feedback">
-                {{ error }}
-            </div>
-            {% endfor %}
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Country -->
+        {{ billing_address_form.country.label_tag }}
+        {% if billing_address_form.is_bound %}
         {% else %}
-            <div class='form-control is-valid'>
-                {{ billing_address_form.name }}
-            </div>
+        {{ billing_address_form.country }}
         {% endif %}
-    {% else %}
-        <div class='form-control'>
-            {{ billing_address_form.name }}
-        </div>
-    {% endif %}
 
-    {% if billing_address_form.name.help_text %}
-    <small class="form-text text-muted">
-        {{ billing_address_form.name.help_text }}
-    </small>
-    {% endif %}
+        {% if billing_address_form.country.help_text %}
+        <small class="form-text text-muted">
+            {{ billing_address_form.country.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Name -->
+        {{ billing_address_form.name.label_tag }}
+        {% if billing_address_form.is_bound %}
+        {% else %}
+        {{ billing_address_form.name }}
+        {% endif %}
+
+        {% if billing_address_form.name.help_text %}
+        <small class="form-text text-muted">
+            {{ billing_address_form.name.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Company -->
+        {{ billing_address_form.company.label_tag }}
+        {% if billing_address_form.is_bound %}
+        {% else %}
+        {{ billing_address_form.company }}
+        {% endif %}
+
+        {% if billing_address_form.company.help_text %}
+        <small class="form-text text-muted">
+            {{ billing_address_form.company.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Address 1 -->
+        {{ billing_address_form.address_1.label_tag }}
+        {% if billing_address_form.is_bound %}
+        {% else %}
+        {{ billing_address_form.address_1 }}
+        {% endif %}
+
+        {% if billing_address_form.address_1.help_text %}
+        <small class="form-text text-muted">
+            {{ billing_address_form.address_1.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Address 2 -->
+        {{ billing_address_form.address_2.label_tag }}
+        {% if billing_address_form.is_bound %}
+        {% else %}
+        {{ billing_address_form.address_2 }}
+        {% endif %}
+
+        {% if billing_address_form.address_2.help_text %}
+        <small class="form-text text-muted">
+            {{ billing_address_form.address_2.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Locality -->
+        {{ billing_address_form.locality.label_tag }}
+        {% if billing_address_form.is_bound %}
+        {% else %}
+        {{ billing_address_form.locality }}
+        {% endif %}
+
+        {% if billing_address_form.locality.help_text %}
+        <small class="form-text text-muted">
+            {{ billing_address_form.locality.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <div class='row'>
+            <div class='col'>
+                <!-- State -->
+                {{ billing_address_form.state.label_tag }}
+                {% if billing_address_form.is_bound %}
+                {% else %}
+                {{ billing_address_form.state }}
+                {% endif %}
+                
+                {% if billing_address_form.state.help_text %}
+                <small class="form-text text-muted">
+                    {{ billing_address_form.state.help_text }}
+                </small>
+                {% endif %}
+            </div>
+
+            <div class='col'>
+                <!-- Postal Code -->
+                {{ billing_address_form.postal_code.label_tag }}
+                {% if billing_address_form.is_bound %}
+                {% else %}
+                {{ billing_address_form.postal_code }}
+                {% endif %}
+                
+                {% if billing_address_form.postal_code.help_text %}
+                <small class="form-text text-muted">
+                    {{ billing_address_form.postal_code.help_text }}
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
