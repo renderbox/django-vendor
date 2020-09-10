@@ -103,10 +103,13 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
         credit_card_form = CreditCardForm(request.POST, prefix='credit-card')
         billing_address_form = BillingAddressForm(request.POST, prefix='billing-address')
         
-        if not (billing_address_form.is_valid() or credit_card_form.is_valid()):
-            return render(request, self.template_name, processor.get_checkout_context(context))
-        
         processor = payment_processor(invoice)
+        
+        if billing_address_form.is_valid() or credit_card_form.is_valid():
+            context['billing_address_form'] = billing_address_form
+            context['credit_card_form'] = credit_card_form
+            return render(request, self.template_name, processor.get_checkout_context(context=context))
+        
 
         processor.process_payment(request)
 

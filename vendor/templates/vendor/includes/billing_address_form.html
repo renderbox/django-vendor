@@ -1,5 +1,5 @@
 {% load i18n %}
-
+<h3 class="mb-3">Billing Information</h3>
 
 {% for hidden_field in billing_address_form.hidden_fields %}
 {{ hidden_field }}
@@ -18,14 +18,14 @@
         <!-- Country -->
         {{ billing_address_form.country.label_tag }}
         {% if billing_address_form.is_bound %}
-        {% if billing_address_form.rob.errors %}
-        {% for error in billing_address_form.rob.errors %}
+        {% if billing_address_form.country.errors %}
+        {% for error in billing_address_form.country.errors %}
         <div class='invalid-feedback'>
             {{ error }}
         </div>
         {% endfor %}
         {% else %}
-        {{ billing_address_form.rob }}
+        {{ billing_address_form.country }}
         {% endif %}
 
         {% else %}

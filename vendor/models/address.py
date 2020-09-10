@@ -47,7 +47,7 @@ class Address(models.Model):
     """
 
 
-    name = models.CharField(_("Address Name"), max_length=80, blank=True, default="Home")                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
+    name = models.CharField(_("Address Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="addresses")
     address_1 = models.CharField(_("Address 1"), max_length=40, blank=False)
     address_2 = models.CharField(_("Address 2"), max_length=40, blank=True, null=True)
