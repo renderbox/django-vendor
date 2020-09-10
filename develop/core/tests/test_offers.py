@@ -17,7 +17,7 @@ class ModelOfferTests(TestCase):
     def test_create_offer(self):
         offer = Offer()
         offer.name = 'test-offer'
-        offer.product = Product.objects.all().first()
+        offer.products.add(Product.objects.all().first())
 
     def test_change_offer_to_unavailable_product_change_to_unavailable(self):
         # TODO: Implement Tests
