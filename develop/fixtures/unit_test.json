@@ -99,7 +99,7 @@
         "slug": "hulk-mug",
         "available": false,
         "description": "",
-        "meta": "MXN,21.12",
+        "meta": "{'msrp':{'default':'usd', 'usd':10.00, 'mxn':21.12}}",
         "classification": [],
         "offers": [
             4

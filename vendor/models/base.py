@@ -18,7 +18,7 @@ from vendor.config import VENDOR_PRODUCT_MODEL
 ##################
 
 def product_meta_default():
-    return {'msrp':{'default':10.00}}
+    return {'msrp':{'default':'usd', 'usd':10.00}}
 
 ##################
 # BASE MODELS
@@ -49,7 +49,7 @@ class ProductModelBase(CreateUpdateModelBase):
     meta = models.JSONField(_("Meta"), default=product_meta_default, blank=True, null=True, help_text=_("Eg: { 'msrp':{'usd':10.99} }\n(iso4217 Country Code):(MSRP Price)"))
     classification = models.ManyToManyField("vendor.TaxClassifier", blank=True)                                        # What taxes can apply to this item
     offers = models.ManyToManyField("vendor.Offer", related_name="products")
-    reciepts = models.ManyToManyField(VENDOR_PRODUCT_MODEL, blank=True)
+    reciepts = models.ManyToManyField("vendor.Receipt", blank=True, related_name="products")
 
     objects = models.Manager()
     on_site = CurrentSiteManager()
