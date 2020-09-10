@@ -16,7 +16,7 @@ from vendor.models.address import Country
 from vendor.models.choice import TermType
 from vendor.processors.base import PaymentProcessorBase
 from vendor.processors.authorizenet import AuthorizeNetProcessor
-
+from vendor.processors import PaymentProcessor
 
 ###############################
 # Test constants
@@ -209,34 +209,38 @@ class BaseProcessorTests(TestCase):
         pass
 
 class SupportedProcessorsSetupTests(TestCase):
-
+    
     fixtures = ['user', 'unit_test']
 
     def setUp(self):
-        pass
+        self.invoice = Invoice.objects.get(pk=1)
 
     def test_configured_processor_setup(self):
-        # TODO: Implement Test
-        pass
-
-    def test_authorize_net_setup(self):
-        # TODO: Implement Test
-        pass
+        """
+        Test the initialized of the PaymentProcessor defined in the setting file
+        """
+        try:
+            processor = PaymentProcessor(self.invoice)
+        except:
+            print("Warning PaymentProcessor defined in settings file did not pass init")
+        finally:
+            pass
 
     def test_authorize_net_init(self):
-        # TODO: Implement Test
-        pass
-
-    def test_stripe_setup(self):
-        # TODO: Implement Test
-        pass
+        try:
+            if not (settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID):
+                raise ValueError(
+                "Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID")
+            processor = AuthorizeNetProcessor(self.invoice)
+        except:
+            print("AuthorizeNetProcessor did not initalized correctly")
+        finally:
+            pass
 
     def test_stripe_init(self):
         # TODO: Implement Test
         pass
     
-
-
 @skipIf((settings.AUTHORIZE_NET_API_ID == None) or (settings.AUTHORIZE_NET_TRANSACTION_KEY == None), "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
     
