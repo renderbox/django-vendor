@@ -165,7 +165,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='Reciept',
+            name='Receipt',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created', models.DateTimeField(auto_now_add=True, verbose_name='date created')),
@@ -177,13 +177,13 @@ class Migration(migrations.Migration):
                 ('transaction', models.CharField(max_length=80, verbose_name='Transaction')),
                 ('status', models.IntegerField(choices=[(1, 'Queued'), (2, 'Active'), (10, 'Authorized'), (15, 'Captured'), (20, 'Completed'), (30, 'Canceled'), (35, 'Refunded')], default=0, verbose_name='Status')),
                 ('meta', models.JSONField()),
-                ('order_item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reciepts', to='vendor.orderitem', verbose_name='Order Item')),
-                ('product', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reciepts', to='core.product')),
-                ('profile', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reciepts', to='vendor.customerprofile', verbose_name='Purchase Profile')),
+                ('order_item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='receipts', to='vendor.orderitem', verbose_name='Order Item')),
+                ('product', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='receipts', to='core.product')),
+                ('profile', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='receipts', to='vendor.customerprofile', verbose_name='Purchase Profile')),
             ],
             options={
-                'verbose_name': 'Reciept',
-                'verbose_name_plural': 'Reciepts',
+                'verbose_name': 'Receipt',
+                'verbose_name_plural': 'Receipts',
             },
         ),
         migrations.CreateModel(

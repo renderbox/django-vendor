@@ -160,9 +160,6 @@ class OrderHistoryDetailView(LoginRequiredMixin, DetailView):
     slug_url_kwarg = 'uuid'
 
 
-
-
-
 # class PaymentView(LoginRequiredMixin, TemplateView):
 # class CheckoutView(TemplateView):
 #     '''

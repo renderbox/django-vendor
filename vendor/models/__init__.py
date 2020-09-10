@@ -9,6 +9,6 @@ from .offer import Offer
 from .payment import Payment
 from .price import Price
 from .profile import CustomerProfile
-from .reciept import Reciept
+from .receipt import Receipt
 from .tax import TaxClassifier
 from .wishlist import Wishlist, WishlistItem

@@ -1,8 +1,7 @@
 asgiref==3.2.10
-Django==3.1
-django-address==0.2.4
+Django==3.1.1
 django-autoslug==1.9.8
-django-extensions==3.0.5
+django-extensions==3.0.8
 iso4217==1.6.20180829
 pytz==2020.1
 sqlparse==0.3.1
