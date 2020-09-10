@@ -37,7 +37,7 @@ class CustomerProfile(CreateUpdateModelBase):
 
     def has_product(self, product):
         """
-        returns true/false if the user has a reciept to a given product
+        returns true/false if the user has a receipt to a given product
         it also checks against elegibility start/end/empty dates on consumable products and subscriptions
         """
         return True    # TODO: Build out to check if the person really has access to the given product

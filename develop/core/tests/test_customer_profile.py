@@ -4,13 +4,13 @@ from django.test import TestCase, Client
 from django.urls import reverse
 
 from core.models import Product
-from vendor.models import Offer, Price, Invoice, OrderItem, Reciept, CustomerProfile
+from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerProfile
 
 
 
 class ModelCustomerProfileTests(TestCase):
     
-    fixtures = ['group', 'user', 'unit_test']
+    fixtures = ['user', 'unit_test']
 
     def setUp(self):
         pass

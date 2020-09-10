@@ -266,7 +266,7 @@
         "start_date": "2020-06-30T02:38:16Z",
         "end_date": null,
         "terms": 10,
-        "term_details": "{'period_length': 1, 'payment_occurrences': 3}",
+        "term_details": {"period_length": 1, "payment_occurrences": 3},
         "term_start_date": null,
         "available": false,
         "bundle": [4]
