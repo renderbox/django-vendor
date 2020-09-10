@@ -4,14 +4,14 @@ from django.conf import settings
 from django.contrib import admin
 
 from vendor.models import TaxClassifier, Offer, Price, CustomerProfile, \
-                    Invoice, OrderItem, Reciept, Wishlist, WishlistItem, Address
+                    Invoice, OrderItem, Receipt, Wishlist, WishlistItem, Address
 
 ###############
 # INLINES
 ###############
 
-class RecieptInline(admin.TabularInline):
-    model = Reciept
+class ReceiptInline(admin.TabularInline):
+    model = Receipt
     extra = 1
 
 
@@ -49,7 +49,7 @@ class TaxClassifierAdmin(admin.ModelAdmin):
 
 class CustomerProfileAdmin(admin.ModelAdmin):
     inlines = [
-        RecieptInline,
+        ReceiptInline,
         InvoiceInline,
         WishlistInline,
     ]

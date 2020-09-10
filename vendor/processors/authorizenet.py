@@ -230,7 +230,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             response.pop('errors')
         if 'messages' in response:
             response.pop('messages')
-        self.payment.result = str({**self.transaction_message, **response})
+        self.payment.result = {'raw': str({**self.transaction_message, **response})}
         self.payment.payee_full_name = self.payment_info.data.get(
             'credit-card-full_name')
         self.payment.payee_company = self.billing_address.data.get(
@@ -294,7 +294,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         else:
             self.transaction_message['msg'] = "Subscription Tansaction Failed"
 
-        
     def save_payment_transaction(self):       
         self.payment.success = self.transaction_submitted
         self.payment.transaction = self.transaction_response.get('transId', "Transaction Faild")
@@ -303,7 +302,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             response.pop('errors')
         if 'messages' in response:
             response.pop('messages')
-        self.payment.result = str({**self.transaction_message, **response})
+        self.payment.result = {'raw': str({**self.transaction_message, **response})}
         self.payment.payee_full_name = self.payment_info.data.get('credit-card-full_name')
         self.payment.payee_company = self.billing_address.data.get('billing-address-company')
         billing_address = self.billing_address.save(commit=False)
@@ -348,6 +347,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 
+        self.create_receipts()
+
     def process_subscription(self, request, subscription):
         """
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
@@ -355,9 +356,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.get_billing_address_form_data(request.POST, BillingAddressForm,'billing-address')
         self.get_payment_info_form_data(request.POST, CreditCardForm, 'credit-card')
 
-        period_length = str(ast.literal_eval(subscription.offer.term_details).get('period_length'))
-        payment_occurrences = ast.literal_eval(subscription.offer.term_details).get('payment_occurrences')
-        trail_occurrences = ast.literal_eval(subscription.offer.term_details).get('trial_occurrences', 0)
+        period_length = subscription.offer.term_details['period_length']
+        payment_occurrences = subscription.offer.term_details['payment_occurrences']
+        trail_occurrences = subscription.offer.term_details.get('trial_occurrences', 0)
         
         # Setting billing information
         billto = apicontractsv1.nameAndAddressType()
@@ -385,6 +386,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
 
         self.check_subscription_response(response)
+        if self.transaction_submitted:
+            self.update_subscription_receipt(subscription, self.transaction_response.subscriptionId.pyval)
 
     def process_update_subscription(self, request, subscription_id):
         
@@ -437,8 +440,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_type.refTransId = payment.transaction
 
         creditCard = apicontractsv1.creditCardType()
-        creditCard.cardNumber = ast.literal_eval(
-            payment.result).get('accountNumber')[-4:]
+        creditCard.cardNumber = ast.literal_eval(payment.result['raw']).get('accountNumber')[-4:]
         creditCard.expirationDate = "XXXX"
 
         payment_type = apicontractsv1.paymentType()
