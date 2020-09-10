@@ -12,4 +12,4 @@ from .profile import CustomerProfile
 from .receipt import Receipt
 from .tax import TaxClassifier
 from .wishlist import Wishlist, WishlistItem
-from .product import Product
+# from .product import Product

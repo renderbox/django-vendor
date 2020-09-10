@@ -171,7 +171,7 @@ STATICFILES_DIRS = [
 ]
 
 # Django Vendor Settings
-# VENDOR_PRODUCT_MODEL = 'vendor.Product'
+VENDOR_PRODUCT_MODEL = 'core.Product'
 VENDOR_PAYMENT_PROCESSOR = "authorizenet.AuthorizeNetProcessor"
 DEFAULT_CURRENCY = Currency.usd.name
 

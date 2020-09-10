@@ -66,3 +66,13 @@ to dump unit test data
 ./manage.py dumpdata --indent 4 auth.user --natural-foreign > fixtures/user.json
 ./manage.py dumpdata --indent 4 -e contenttypes -e auth.permission -e sessions -e admin.logentry -e authtoken.token -e account.emailaddress -e auth.group -e auth.user > fixtures/unit_test.json
 ```
+
+
+
+The install process
+1) Add the app to your project
+2) Create your Product model that inherits from the ProductModelBase base class.
+3) Change the settings.py value for VENDOR_PRODUCT_MODEL to point to your model
+4) Make migrations
+5) Migrate
+
