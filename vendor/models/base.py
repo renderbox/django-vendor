@@ -41,7 +41,7 @@ class ProductModelBase(CreateUpdateModelBase):
     description = models.JSONField(_("Description"), default=dict, blank=True, null=True)
     meta = models.CharField(_("Meta"), max_length=150, validators=[validate_msrp_format], blank=True, null=True, help_text=_("Eg: USD,10.99\n(iso4217 Country Code), (MSRP Price)"))                                          # allows for things like a MSRP in multiple currencies. Not JSONField to force a db
     classification = models.ManyToManyField("vendor.TaxClassifier", blank=True)                                        # What taxes can apply to this item
-    offers = models.ForeignKey("vendor.Offer", on_delete=models.CASCADE, related_name="product", blank=True, null=True)
+    offers = models.ManyToManyField("vendor.Offer", related_name="products")
     reciepts = models.ManyToManyField(VENDOR_PRODUCT_MODEL, blank=True)
 
     objects = models.Manager()
