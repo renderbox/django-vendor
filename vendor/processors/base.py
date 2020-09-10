@@ -4,7 +4,7 @@ Base Payment processor used by all derived processors.
 import django.dispatch
 
 from copy import deepcopy
-from datetime import datetime
+from datetime import timedelta
 from django.db.models import Sum
 from django.conf import settings
 from django.utils import timezone
@@ -74,29 +74,32 @@ class PaymentProcessorBase(object):
             self.invoice.status = Invoice.InvoiceStatus.FAILED
         self.invoice.save()
 
+    def create_receipt_by_term_type(self, order_item, term_type):
+        receipt = Receipt()
+        receipt.profile = self.invoice.profile
+        receipt.order_item = order_item
+        receipt.product = order_item.offer.product
+        receipt.transaction = self.payment.transaction
+        receipt.status = PurchaseStatus.COMPLETE
+        receipt.start_date = timezone.now()
+        if term_type == TermType.SUBSCRIPTION:
+            total_months = int(order_item.offer.term_details['period_length']) * int(order_item.offer.term_details['payment_occurrences'])
+            receipt.end_date = timezone.now() + timedelta(days=(total_months*31))
+            receipt.auto_renew = True
+        elif term_type == TermType.PERPETUAL:
+            receipt.auto_renew = False
+        elif term_type == TermType.ONE_TIME_USE:
+            receipt.auto_renew = False
+        return receipt
+
     def create_receipts(self):
         if self.payment.success and self.invoice.status == Invoice.InvoiceStatus.COMPLETE:
             for order_item in self.invoice.order_items.all():
-                receipt = Receipt()
-                receipt.profile = self.invoice.profile
-                receipt.order_item = order_item
-                receipt.product = order_item.offer.product
-                receipt.transaction = self.payment.transaction
-                receipt.status = PurchaseStatus.COMPLETE
-                receipt.start_date = timezone.now()
-                # TODO: This should be a function
-                if order_item.offer.terms == TermType.SUBSCRIPTION:
-                    total_months = order_item.offer.term_details['period_length'] * order_item.offer.term_details['payment_occurrences']
-                    receipt.end_date = timezone.now() + timedelta(days=(total_months*31)
-                    receipt.auto_renew = True
-                elif order_item.offer.terms == TermType.PERPETUAL:
-                    receipt.auto_renew = False
-                elif order_item.offer.terms == TermType.ONE_TIME_USE:
-                    receipt.auto_renew = False
+                receipt = self.create_receipt_by_term_type(order_item, order_item.offer.terms)
                 receipt.save()
-    
+
     def update_subscription_receipt(self, subscription, subscription_id):
-        subscription_receipt = self.invoice.receipts.get(order_item=subscription)
+        subscription_receipt = self.invoice.order_items.get(offer=subscription).receipts.first()
         subscription_receipt.meta['subscription_id'] = subscription_id
         subscription_receipt.save()
 
@@ -105,12 +108,10 @@ class PaymentProcessorBase(object):
         return self.invoice.total
 
     def amount_without_subscriptions(self):
-        subscription_total = self.invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION).aggregate(Sum('offer__total'))
-        
-        subscription_total = sum([ s.total for s in subscriptions ])
+        subscription_total = sum([ oi.total for oi in self.invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)])
 
         amount = self.invoice.total - subscription_total
-        return self.to_valid_decimal(amount)
+        return amount
 
     def get_transaction_id(self):
         return "{}-{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk, str(self.invoice.payments.last().created)[-12:-6])
