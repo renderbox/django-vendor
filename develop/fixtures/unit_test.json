@@ -101,7 +101,7 @@
         "description": "",
         "meta": "MXN,21.12",
         "classification": [],
-        "offers": [],
+        "offers": [4],
         "reciepts": []
     }
 },
@@ -268,14 +268,13 @@
         "slug": "hulk-mug",
         "site": 1,
         "name": "Hulk Mug Subscription",
-        "product": 4,
         "start_date": "2020-06-30T02:38:16Z",
         "end_date": null,
         "terms": 10,
         "term_details": {"period_length": 1, "payment_occurrences": 3},
         "term_start_date": null,
         "available": false,
-        "bundle": [4]
+        "bundle": false
     }
 },
 {
