@@ -31,13 +31,17 @@
         "updated": "2020-06-30T00:48:03.710Z",
         "sku": null,
         "uuid": "188e45aa-0fdf-4877-ba84-f4c39c0fc41b",
+        "name": "Mouse T-Shirt",
         "site": 1,
         "slug": "mouse-t-shirt",
         "available": false,
         "description": "Powerful T-Shirt",
         "meta": "{}",
-        "name": "Mouse T-Shirt",
-        "classification": []
+        "classification": [],
+        "offers": [
+            1
+        ],
+        "reciepts": []
     }
 },
 {
@@ -48,13 +52,17 @@
         "updated": "2020-06-30T02:33:10.492Z",
         "sku": null,
         "uuid": "3faee1ef-1611-44d3-8e96-e98535fa00e8",
+        "name": "Wheel of Cheddar",
         "site": 1,
         "slug": "wheel-of-cheddar",
         "available": false,
         "description": "This is a food item",
         "meta": "{}",
-        "name": "Wheel of Cheddar",
-        "classification": []
+        "classification": [],
+        "offers": [
+            2
+        ],
+        "reciepts": []
     }
 },
 {
@@ -65,13 +73,17 @@
         "updated": "2020-06-30T02:33:35.109Z",
         "sku": null,
         "uuid": "def0d4f5-fd8f-4aa4-b25a-c043a846a732",
+        "name": "Hamster Wheel",
         "site": 1,
         "slug": "hamster-wheel",
         "available": false,
         "description": "",
         "meta": "{}",
-        "name": "Hamster Wheel",
-        "classification": []
+        "classification": [],
+        "offers": [
+            3
+        ],
+        "reciepts": []
     }
 },
 {
@@ -81,14 +93,16 @@
         "created": "2020-06-30T02:33:35.109Z",
         "updated": "2020-06-30T02:33:35.109Z",
         "sku": null,
-        "uuid": "defdd4f5-fd8f-4aa4-b25a-c043a846a732",
+        "uuid": "defdd4f5-fd8f-4aa4-b25a-c043a846a734",
+        "name": "Hulk Mug",
         "site": 1,
         "slug": "hulk-mug",
         "available": false,
         "description": "",
         "meta": "MXN,21.12",
-        "name": "Hulk Mug",
-        "classification": []
+        "classification": [],
+        "offers": [],
+        "reciepts": []
     }
 },
 {
@@ -111,6 +125,7 @@
     "fields": {
         "created": "2020-06-30T01:20:01.616Z",
         "updated": "2020-08-12T19:32:32.910Z",
+        "uuid": "954b55b1-bad2-40c8-97ae-06e0b006c4fc",
         "profile": 1,
         "site": 1,
         "status": 0,
@@ -196,16 +211,13 @@
         "slug": "mouse-t-shirt",
         "site": 1,
         "name": "Mouse T-Shirt",
-        "product": 1,
         "start_date": "2020-06-30T00:53:23Z",
         "end_date": null,
         "terms": 0,
         "term_details": null,
         "term_start_date": "2020-06-30T00:53:31Z",
         "available": false,
-        "bundle": [
-            1
-        ]
+        "bundle": false
     }
 },
 {
@@ -218,16 +230,13 @@
         "slug": "wheel-of-wensleydale",
         "site": 1,
         "name": "Wheel of Wensleydale",
-        "product": 2,
         "start_date": "2020-06-30T02:34:32Z",
         "end_date": null,
         "terms": 0,
         "term_details": "{}",
         "term_start_date": null,
         "available": false,
-        "bundle": [
-            2
-        ]
+        "bundle": false
     }
 },
 {
@@ -240,16 +249,13 @@
         "slug": "hamster-wheel",
         "site": 1,
         "name": "Hamster Wheel",
-        "product": 3,
         "start_date": "2020-06-30T02:38:16Z",
         "end_date": null,
         "terms": 0,
         "term_details": "{}",
         "term_start_date": null,
         "available": false,
-        "bundle": [
-            2
-        ]
+        "bundle": false
     }
 },
 {
