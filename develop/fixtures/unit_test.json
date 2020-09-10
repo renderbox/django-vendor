@@ -24,7 +24,7 @@
     }
 },
 {
-    "model": "core.product",
+    "model": "vendor.product",
     "pk": 1,
     "fields": {
         "created": "2020-06-30T00:48:03.710Z",
@@ -41,7 +41,7 @@
     }
 },
 {
-    "model": "core.product",
+    "model": "vendor.product",
     "pk": 2,
     "fields": {
         "created": "2020-06-30T02:32:37.655Z",
@@ -58,7 +58,7 @@
     }
 },
 {
-    "model": "core.product",
+    "model": "vendor.product",
     "pk": 3,
     "fields": {
         "created": "2020-06-30T02:33:35.109Z",
@@ -75,7 +75,7 @@
     }
 },
 {
-    "model": "core.product",
+    "model": "vendor.product",
     "pk": 4,
     "fields": {
         "created": "2020-06-30T02:33:35.109Z",

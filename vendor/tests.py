@@ -8,7 +8,7 @@
 # from django.contrib.auth.models import User
 
 # from vendor.models import Offer, Price, Invoice, OrderItem, Refund
-# from core.models import Product
+# from vendor.models import Product
 
 
 # ########################

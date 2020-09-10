@@ -8,7 +8,7 @@ from iso4217 import Currency
 
 from vendor.models import generate_sku, validate_msrp_format
 
-from core.models import Product
+from vendor.models import Product
 
 
 class ModelProductTests(TestCase):

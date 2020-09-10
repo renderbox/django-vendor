@@ -3,7 +3,7 @@ from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from core.models import Product
+from vendor.models import Product
 from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerProfile
 
 

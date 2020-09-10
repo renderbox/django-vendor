@@ -11,6 +11,8 @@ from django.utils.translation import ugettext as _
 
 from autoslug import AutoSlugField
 
+from vendor.config import VENDOR_PRODUCT_MODEL
+
 from .base import CreateUpdateModelBase
 
 from .choice import TermType
@@ -29,8 +31,8 @@ class Offer(CreateUpdateModelBase):
     slug = AutoSlugField(populate_from='name', unique_with='site__id')                                               # SEO friendly 
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="product_offers")                      # For multi-site support
     name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
-    product = models.ForeignKey(settings.VENDOR_PRODUCT_MODEL, on_delete=models.CASCADE, related_name="offers", blank=True, null=True)         # TODO: Combine with bundle field?
-    bundle = models.ManyToManyField(settings.VENDOR_PRODUCT_MODEL, related_name="bundles", blank=False)  # Used in the case of a bundles/packages.  Bundles override individual products
+    product = models.ForeignKey(VENDOR_PRODUCT_MODEL, on_delete=models.CASCADE, related_name="offers", blank=True, null=True)         # TODO: Combine with bundle field?
+    bundle = models.ManyToManyField(VENDOR_PRODUCT_MODEL, related_name="bundles", blank=False)  # Used in the case of a bundles/packages.  Bundles override individual products
     start_date = models.DateTimeField(_("Start Date"), help_text="What date should this offer become available?")
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="Expiration Date?")
     terms =  models.IntegerField(_("Terms"), default=0, choices=TermType.choices)

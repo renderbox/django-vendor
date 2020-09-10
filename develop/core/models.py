@@ -27,11 +27,11 @@ class Catalog(models.Model):
 # PRODUCT
 ##########
 
-class Product(ProductModelBase):
-    '''
-    An Example Product use for Development
-    '''
-    name = models.CharField(_("Name"), max_length=80, blank=True)
+# class Product(ProductModelBase):
+#     '''
+#     An Example Product use for Development
+#     '''
+#     name = models.CharField(_("Name"), max_length=80, blank=True)
 
 
 
