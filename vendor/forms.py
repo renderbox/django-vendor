@@ -152,7 +152,6 @@ class PaymentFrom(forms.Form):
     payment_type = forms.ChoiceField(label=_("Payment Type"), choices=PaymentTypes.choices, widget=forms.widgets.HiddenInput)
 
 
-
 class CreditCardForm(PaymentFrom):
     full_name = forms.CharField(required=True, label=_("Card Holder"), max_length=80)
     card_number = CreditCardField(placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)

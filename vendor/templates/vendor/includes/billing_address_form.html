@@ -1,0 +1,47 @@
+{% load i18n %}
+
+
+{% for hidden_field in billing_address_form.hidden_fields %}
+    {{ hidden_field }}
+{% endfor %}
+
+{% if billing_address_form.non_field_errors %}
+<div class="alert alert-danger" role="alert">
+{% for error in billing_address_form.non_field_errors %}
+    {{ error }}
+{% endfor %}
+</div>
+{% endif %}
+
+
+<div class="form-group">
+    {{ billing_address_form.name.label_tag }}
+
+
+    {% if billing_address_form.is_bound %}
+        {% if billing_address_form.name.errors %}
+            <div class='form-control is-invalid'>
+                {{ billing_address_form.name }}
+            </div>
+            {% for error in billing_address_form.name.errors %}
+            <div class="invalid-feedback">
+                {{ error }}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class='form-control is-valid'>
+                {{ billing_address_form.name }}
+            </div>
+        {% endif %}
+    {% else %}
+        <div class='form-control'>
+            {{ billing_address_form.name }}
+        </div>
+    {% endif %}
+
+    {% if billing_address_form.name.help_text %}
+    <small class="form-text text-muted">
+        {{ billing_address_form.name.help_text }}
+    </small>
+    {% endif %}
+</div>
