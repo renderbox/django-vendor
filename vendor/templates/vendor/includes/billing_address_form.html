@@ -18,6 +18,16 @@
         <!-- Country -->
         {{ billing_address_form.country.label_tag }}
         {% if billing_address_form.is_bound %}
+        {% if billing_address_form.rob.errors %}
+        {% for error in billing_address_form.rob.errors %}
+        <div class='invalid-feedback'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% else %}
+        {{ billing_address_form.rob }}
+        {% endif %}
+
         {% else %}
         {{ billing_address_form.country }}
         {% endif %}
@@ -35,6 +45,16 @@
         <!-- Name -->
         {{ billing_address_form.name.label_tag }}
         {% if billing_address_form.is_bound %}
+        {% if billing_address_form.name.errors %}
+        {% for error in billing_address_form.name.errors %}
+        <div class='invalid-feedback'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% else %}
+        {{ billing_address_form.name }}
+        {% endif %}
+
         {% else %}
         {{ billing_address_form.name }}
         {% endif %}
@@ -52,6 +72,16 @@
         <!-- Company -->
         {{ billing_address_form.company.label_tag }}
         {% if billing_address_form.is_bound %}
+        {% if billing_address_form.company.errors %}
+        {% for error in billing_address_form.company.errors %}
+        <div class='invalid-feedback'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% else %}
+        {{ billing_address_form.company }}
+        {% endif %}
+
         {% else %}
         {{ billing_address_form.company }}
         {% endif %}
@@ -69,6 +99,16 @@
         <!-- Address 1 -->
         {{ billing_address_form.address_1.label_tag }}
         {% if billing_address_form.is_bound %}
+        {% if billing_address_form.address_1.errors %}
+        {% for error in billing_address_form.address_1.errors %}
+        <div class='invalid-feedback'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% else %}
+        {{ billing_address_form.address_1 }}
+        {% endif %}
+
         {% else %}
         {{ billing_address_form.address_1 }}
         {% endif %}
@@ -86,6 +126,16 @@
         <!-- Address 2 -->
         {{ billing_address_form.address_2.label_tag }}
         {% if billing_address_form.is_bound %}
+        {% if billing_address_form.address_2.errors %}
+        {% for error in billing_address_form.address_2.errors %}
+        <div class='invalid-feedback'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% else %}
+        {{ billing_address_form.address_2 }}
+        {% endif %}
+
         {% else %}
         {{ billing_address_form.address_2 }}
         {% endif %}
@@ -103,6 +153,16 @@
         <!-- Locality -->
         {{ billing_address_form.locality.label_tag }}
         {% if billing_address_form.is_bound %}
+        {% if billing_address_form.locality.errors %}
+        {% for error in billing_address_form.locality.errors %}
+        <div class='invalid-feedback'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% else %}
+        {{ billing_address_form.locality }}
+        {% endif %}
+
         {% else %}
         {{ billing_address_form.locality }}
         {% endif %}
@@ -122,10 +182,20 @@
                 <!-- State -->
                 {{ billing_address_form.state.label_tag }}
                 {% if billing_address_form.is_bound %}
+                {% if billing_address_form.state.errors %}
+                {% for error in billing_address_form.state.errors %}
+                <div class='invalid-feedback'>
+                    {{ error }}
+                </div>
+                {% endfor %}
                 {% else %}
                 {{ billing_address_form.state }}
                 {% endif %}
-                
+
+                {% else %}
+                {{ billing_address_form.state }}
+                {% endif %}
+
                 {% if billing_address_form.state.help_text %}
                 <small class="form-text text-muted">
                     {{ billing_address_form.state.help_text }}
@@ -137,10 +207,20 @@
                 <!-- Postal Code -->
                 {{ billing_address_form.postal_code.label_tag }}
                 {% if billing_address_form.is_bound %}
+                {% if billing_address_form.postal_code.errors %}
+                {% for error in billing_address_form.postal_code.errors %}
+                <div class='invalid-feedback'>
+                    {{ error }}
+                </div>
+                {% endfor %}
                 {% else %}
                 {{ billing_address_form.postal_code }}
                 {% endif %}
-                
+
+                {% else %}
+                {{ billing_address_form.postal_code }}
+                {% endif %}
+
                 {% if billing_address_form.postal_code.help_text %}
                 <small class="form-text text-muted">
                     {{ billing_address_form.postal_code.help_text }}
