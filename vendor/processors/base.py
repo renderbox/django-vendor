@@ -78,7 +78,7 @@ class PaymentProcessorBase(object):
         receipt = Receipt()
         receipt.profile = self.invoice.profile
         receipt.order_item = order_item
-        receipt.product = order_item.offer.product
+        receipt.product = order_item.offer.products.first()
         receipt.transaction = self.payment.transaction
         receipt.status = PurchaseStatus.COMPLETE
         receipt.start_date = timezone.now()
