@@ -58,18 +58,19 @@ class Offer(CreateUpdateModelBase):
         price_before_tax, price_after_tax = 0, 0
 
         # TODO: first check for customer profile currency setting for each product to decide if default msrp or user currency
+        prices = self.prices.filter(start_date__lte=now, end_date__gte=now).order_by('priority')
 
-        price_before_tax = self.prices.filter(start_date__lte=now, end_date__gte=now).order_by('priority').last().cost
+        if not prices:
+            prices = self.prices.filter(start_date__lte=now).order_by('priority')
 
-        if price_before_tax:
-            price_before_tax = self.prices.filter(start_date__lte=now).order_by('priority').last().cost
-
-        if price_before_tax:
+        if not prices:
             if sum([ 1 for product in self.products.all() if 'msrp' in product.meta ]):
                 price_before_tax = sum([ product.meta['msrp'][product.meta['msrp']['default']] for product in self.products.all() ])          # No prices default to product MSRP
             else:                    
                 raise FieldError(_("There is no price set on Offer or MSRP on Product"))
-        
+        else:
+            price_before_tax = prices.last().cost
+
         # price_after_tax = price_before_tax * self.product.tax_classifier.tax_rule.tax   TODO: implement tax_classifier and tax rule and bundle
         price_after_tax = price_before_tax
         
