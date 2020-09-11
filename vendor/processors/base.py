@@ -74,11 +74,11 @@ class PaymentProcessorBase(object):
             self.invoice.status = Invoice.InvoiceStatus.FAILED
         self.invoice.save()
 
-    def create_receipt_by_term_type(self, order_item, term_type):
+    def create_receipt_by_term_type(self, product, order_item, term_type):
         receipt = Receipt()
         receipt.profile = self.invoice.profile
         receipt.order_item = order_item
-        receipt.product = order_item.offer.product
+        receipt.product = product
         receipt.transaction = self.payment.transaction
         receipt.status = PurchaseStatus.COMPLETE
         receipt.start_date = timezone.now()
@@ -95,8 +95,9 @@ class PaymentProcessorBase(object):
     def create_receipts(self):
         if self.payment.success and self.invoice.status == Invoice.InvoiceStatus.COMPLETE:
             for order_item in self.invoice.order_items.all():
-                receipt = self.create_receipt_by_term_type(order_item, order_item.offer.terms)
-                receipt.save()
+                for product in order_item.offer.products.all():
+                    receipt = self.create_receipt_by_term_type(product, order_item, order_item.offer.terms)
+                    receipt.save()
 
     def update_subscription_receipt(self, subscription, subscription_id):
         """

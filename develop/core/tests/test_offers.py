@@ -2,7 +2,7 @@ from django.contrib.auth.models import User  #TODO: CHANGE TO GET_USER_MODEL
 from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse
-
+from django.utils import timezone
 from core.models import Product
 from vendor.models import Offer, Price, OrderItem
 
@@ -17,6 +17,8 @@ class ModelOfferTests(TestCase):
     def test_create_offer(self):
         offer = Offer()
         offer.name = 'test-offer'
+        offer.start_date = timezone.now()
+        offer.save()
         offer.products.add(Product.objects.all().first())
 
     def test_change_offer_to_unavailable_product_change_to_unavailable(self):

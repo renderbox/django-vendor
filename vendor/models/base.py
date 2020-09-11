@@ -17,6 +17,8 @@ from vendor.config import VENDOR_PRODUCT_MODEL
 # DEFAULTS
 ##################
 
+# TODO: Nice to have class MSRP(NestedModels)
+
 def product_meta_default():
     return {'msrp':{'default':'usd', 'usd':10.00}}
 

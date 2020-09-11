@@ -1,5 +1,6 @@
 import uuid
 
+from autoslug import AutoSlugField
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
@@ -8,14 +9,14 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import ugettext as _
-
-from autoslug import AutoSlugField
+from iso4217 import Currency
 
 from vendor.config import VENDOR_PRODUCT_MODEL
 
 from .base import CreateUpdateModelBase
-
 from .choice import TermType
+
+
 
 #########
 # OFFER
@@ -55,22 +56,21 @@ class Offer(CreateUpdateModelBase):
         '''
         now = timezone.now()
         price_before_tax, price_after_tax = 0, 0
-        
-        if self.prices.all().count() == 0:                                                         # Check if offer has prices
-            price_before_tax = float(self.product.meta.split(',')[1])# TODO: Implement MSRP from product/bundles                        # No prices default to product MSRP
+
+        # TODO: first check for customer profile currency setting for each product to decide if default msrp or user currency
+        prices = self.prices.filter(start_date__lte=now, end_date__gte=now).order_by('priority')
+
+        if not prices:
+            prices = self.prices.filter(start_date__lte=now).order_by('priority')
+
+        if not prices:
+            if sum([ 1 for product in self.products.all() if 'msrp' in product.meta ]):
+                price_before_tax = sum([ product.meta['msrp'][product.meta['msrp']['default']] for product in self.products.all() ])          # No prices default to product MSRP
+            else:                    
+                raise FieldError(_("There is no price set on Offer or MSRP on Product"))
         else:
-            if self.prices.filter(start_date__lte=now):                         # Check if offer start date is less than or equal to now
-                if self.prices.filter(start_date__lte=now, end_date__gte=now):  # Check if is between two start and end date. return depending on priority
-                    price_before_tax = self.prices.filter(start_date__lte=now, end_date__gte=now).order_by('priority').last().cost
-                else:                                                           # Return acording to start date and priority
-                    price_before_tax = self.prices.filter(start_date__lte=now).order_by('priority').last().cost
-            else:                
-                # TODO: need to validate if it is a bundle                        # Only future start date. Default to MSRP
-                if self.product.meta:
-                    price_before_tax = float(self.product.meta.split(',')[1]) # TODO: Implement MSRP from product with country code 
-                else:                    
-                    raise FieldError(_("There is no price set on Offer or MSRP on Product"))
-        
+            price_before_tax = prices.last().cost
+
         # price_after_tax = price_before_tax * self.product.tax_classifier.tax_rule.tax   TODO: implement tax_classifier and tax rule and bundle
         price_after_tax = price_before_tax
         
@@ -81,3 +81,10 @@ class Offer(CreateUpdateModelBase):
 
     def remove_from_cart_link(self):
         return reverse("vendor:remove-from-cart", kwargs={"slug":self.slug})
+    
+    def set_name_if_empty(self):
+        product_names = [ product.name for product in self.products.all() ]
+        if len(product_names) == 1:
+            self.name = product_names[0]
+        else:
+            self.name = "Bundle: " + ", ".join(product_names)
