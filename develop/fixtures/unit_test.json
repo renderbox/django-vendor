@@ -36,7 +36,7 @@
         "slug": "mouse-t-shirt",
         "available": false,
         "description": "Powerful T-Shirt",
-        "meta": "{}",
+        "meta": { "msrp": { "default": "usd", "usd":19.99 }},
         "classification": [],
         "offers": [
             1
@@ -57,7 +57,7 @@
         "slug": "wheel-of-cheddar",
         "available": false,
         "description": "This is a food item",
-        "meta": "{}",
+        "meta": {"msrp": {"default": "usd", "usd": 75.00}},
         "classification": [],
         "offers": [
             2
@@ -78,7 +78,7 @@
         "slug": "hamster-wheel",
         "available": false,
         "description": "",
-        "meta": "{}",
+        "meta": {"msrp": {"default": "usd", "usd": 25.00 }},
         "classification": [],
         "offers": [
             3
@@ -99,7 +99,7 @@
         "slug": "hulk-mug",
         "available": false,
         "description": "",
-        "meta": "{'msrp':{'default':'usd', 'usd':10.00, 'mxn':21.12}}",
+        "meta": {"msrp": {"default": "mxn", "usd": 10.00, "mxn": 21.12}},
         "classification": [],
         "offers": [
             4
