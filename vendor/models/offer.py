@@ -87,4 +87,4 @@ class Offer(CreateUpdateModelBase):
         if len(product_names) == 1:
             self.name = product_names[0]
         else:
-            self.name = "Bundle: " + ",".join(product_names)
+            self.name = "Bundle: " + ", ".join(product_names)
