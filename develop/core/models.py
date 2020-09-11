@@ -31,7 +31,8 @@ class Product(ProductModelBase):
     '''
     An Example Product use for Development
     '''
-    name = models.CharField(_("Name"), max_length=80, blank=True)
+    # name = models.CharField(_("Name"), max_length=80, blank=True)
+    pass
 
 
 

@@ -31,13 +31,17 @@
         "updated": "2020-06-30T00:48:03.710Z",
         "sku": null,
         "uuid": "188e45aa-0fdf-4877-ba84-f4c39c0fc41b",
+        "name": "Mouse T-Shirt",
         "site": 1,
         "slug": "mouse-t-shirt",
         "available": false,
         "description": "Powerful T-Shirt",
-        "meta": "{}",
-        "name": "Mouse T-Shirt",
-        "classification": []
+        "meta": { "msrp": { "default": "usd", "usd":19.99 }},
+        "classification": [],
+        "offers": [
+            1
+        ],
+        "reciepts": []
     }
 },
 {
@@ -48,13 +52,17 @@
         "updated": "2020-06-30T02:33:10.492Z",
         "sku": null,
         "uuid": "3faee1ef-1611-44d3-8e96-e98535fa00e8",
+        "name": "Wheel of Cheddar",
         "site": 1,
         "slug": "wheel-of-cheddar",
         "available": false,
         "description": "This is a food item",
-        "meta": "{}",
-        "name": "Wheel of Cheddar",
-        "classification": []
+        "meta": {"msrp": {"default": "usd", "usd": 75.00}},
+        "classification": [],
+        "offers": [
+            2
+        ],
+        "reciepts": []
     }
 },
 {
@@ -65,13 +73,17 @@
         "updated": "2020-06-30T02:33:35.109Z",
         "sku": null,
         "uuid": "def0d4f5-fd8f-4aa4-b25a-c043a846a732",
+        "name": "Hamster Wheel",
         "site": 1,
         "slug": "hamster-wheel",
         "available": false,
         "description": "",
-        "meta": "{}",
-        "name": "Hamster Wheel",
-        "classification": []
+        "meta": {"msrp": {"default": "usd", "usd": 25.00 }},
+        "classification": [],
+        "offers": [
+            3
+        ],
+        "reciepts": []
     }
 },
 {
@@ -81,28 +93,18 @@
         "created": "2020-06-30T02:33:35.109Z",
         "updated": "2020-06-30T02:33:35.109Z",
         "sku": null,
-        "uuid": "defdd4f5-fd8f-4aa4-b25a-c043a846a732",
+        "uuid": "defdd4f5-fd8f-4aa4-b25a-c043a846a734",
+        "name": "Hulk Mug",
         "site": 1,
         "slug": "hulk-mug",
         "available": false,
         "description": "",
-        "meta": "MXN,21.12",
-        "name": "Hulk Mug",
-        "classification": []
-    }
-},
-{
-    "model": "vendor.address",
-    "pk": 1,
-    "fields": {
-        "name": "Home",
-        "profile_id": 1,
-        "address_1": "221B Baker Street",
-        "address_2": "",
-        "locality": "Marylebone",
-        "state": "California",
-        "country": 581,
-        "postal_code": "90292"
+        "meta": {"msrp": {"default": "mxn", "usd": 10.00, "mxn": 21.12}},
+        "classification": [],
+        "offers": [
+            4
+        ],
+        "reciepts": []
     }
 },
 {
@@ -111,6 +113,7 @@
     "fields": {
         "created": "2020-06-30T01:20:01.616Z",
         "updated": "2020-08-12T19:32:32.910Z",
+        "uuid": "954b55b1-bad2-40c8-97ae-06e0b006c4fc",
         "profile": 1,
         "site": 1,
         "status": 0,
@@ -123,23 +126,6 @@
         "total": 408.43,
         "currency": "jpy",
         "shipping_address": null
-    }
-},
-{
-    "model": "vendor.payment",
-    "pk": 1,
-    "fields": {
-        "invoice": 1,
-        "created": "2020-06-30T01:20:01.616Z",
-        "transaction": "1-1-1",
-        "provider": "AuthorizeNetProcessor",
-        "amount": 408.43,
-        "profile": 1,
-        "billing_address": 1, 
-        "result": "{'msg': 'Payment Complete', 'trans_id': 40053987215, 'response_code': 1, 'code': 1, 'message': 'This transaction has been approved.', 'responseCode': 1, 'authCode': 'A3YXNW', 'avsResultCode': 'Y', 'cvvResultCode': 'P', 'cavvResultCode': 2, 'transId': 40053987215, 'refTransID': '1234567890', 'transHash': '', 'testRequest': 0, 'accountNumber': 'XXXX0015', 'accountType': 'MasterCard', 'transHashSha2': '', 'networkTransId': 'LAHTAFS7B44MPV2SMDCBB85'}",
-        "success": true, 
-        "payee_full_name": "Bob Ross",
-        "payee_company": "Whitemoon Dreams"
     }
 },
 {
@@ -187,6 +173,20 @@
     }
 },
 {
+    "model": "vendor.address",
+    "pk": 1,
+    "fields": {
+        "name": "Home",
+        "profile": 1,
+        "address_1": "221B Baker Street",
+        "address_2": "",
+        "locality": "Marylebone",
+        "state": "California",
+        "country": 581,
+        "postal_code": "90292"
+    }
+},
+{
     "model": "vendor.offer",
     "pk": 1,
     "fields": {
@@ -196,16 +196,13 @@
         "slug": "mouse-t-shirt",
         "site": 1,
         "name": "Mouse T-Shirt",
-        "product": 1,
         "start_date": "2020-06-30T00:53:23Z",
         "end_date": null,
         "terms": 0,
         "term_details": null,
         "term_start_date": "2020-06-30T00:53:31Z",
         "available": false,
-        "bundle": [
-            1
-        ]
+        "bundle": false
     }
 },
 {
@@ -218,16 +215,13 @@
         "slug": "wheel-of-wensleydale",
         "site": 1,
         "name": "Wheel of Wensleydale",
-        "product": 2,
         "start_date": "2020-06-30T02:34:32Z",
         "end_date": null,
         "terms": 0,
         "term_details": "{}",
         "term_start_date": null,
         "available": false,
-        "bundle": [
-            2
-        ]
+        "bundle": false
     }
 },
 {
@@ -240,16 +234,13 @@
         "slug": "hamster-wheel",
         "site": 1,
         "name": "Hamster Wheel",
-        "product": 3,
         "start_date": "2020-06-30T02:38:16Z",
         "end_date": null,
         "terms": 0,
         "term_details": "{}",
         "term_start_date": null,
         "available": false,
-        "bundle": [
-            2
-        ]
+        "bundle": false
     }
 },
 {
@@ -262,14 +253,33 @@
         "slug": "hulk-mug",
         "site": 1,
         "name": "Hulk Mug Subscription",
-        "product": 4,
         "start_date": "2020-06-30T02:38:16Z",
         "end_date": null,
         "terms": 10,
-        "term_details": {"period_length": 1, "payment_occurrences": 3},
+        "term_details": {
+            "period_length": 1,
+            "payment_occurrences": 3
+        },
         "term_start_date": null,
         "available": false,
-        "bundle": [4]
+        "bundle": false
+    }
+},
+{
+    "model": "vendor.payment",
+    "pk": 1,
+    "fields": {
+        "invoice": 1,
+        "created": "2020-06-30T01:20:01.616Z",
+        "transaction": "1-1-1",
+        "provider": "AuthorizeNetProcessor",
+        "amount": 408.43,
+        "profile": 1,
+        "billing_address": 1,
+        "result": "{'msg': 'Payment Complete', 'trans_id': 40053987215, 'response_code': 1, 'code': 1, 'message': 'This transaction has been approved.', 'responseCode': 1, 'authCode': 'A3YXNW', 'avsResultCode': 'Y', 'cvvResultCode': 'P', 'cavvResultCode': 2, 'transId': 40053987215, 'refTransID': '1234567890', 'transHash': '', 'testRequest': 0, 'accountNumber': 'XXXX0015', 'accountType': 'MasterCard', 'transHashSha2': '', 'networkTransId': 'LAHTAFS7B44MPV2SMDCBB85'}",
+        "success": true,
+        "payee_full_name": "Bob Ross",
+        "payee_company": "Whitemoon Dreams"
     }
 },
 {

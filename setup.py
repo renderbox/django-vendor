@@ -45,7 +45,7 @@ setup(
     include_package_data=True,
     python_requires=">=3.6",
     install_requires=[
-        'Django>=3.1, <3.2',
+        'Django>=3.1,<3.2',
         'django-autoslug',
         'django-extensions',
         'iso4217',

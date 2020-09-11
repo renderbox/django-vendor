@@ -5,6 +5,8 @@ from django.utils.translation import ugettext as _
 from .base import CreateUpdateModelBase
 from vendor.models.choice import PurchaseStatus
 
+from vendor.config import VENDOR_PRODUCT_MODEL
+
 #####################
 # TAX CLASSIFIER
 #####################
@@ -16,7 +18,6 @@ class Receipt(CreateUpdateModelBase):
     '''
     profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Purchase Profile"), null=True, on_delete=models.CASCADE, related_name="receipts")
     order_item = models.ForeignKey('vendor.OrderItem', verbose_name=_("Order Item"), on_delete=models.CASCADE, related_name="receipts")
-    product = models.ForeignKey(settings.VENDOR_PRODUCT_MODEL, on_delete=models.CASCADE, related_name="receipts", blank=True, null=True)           # TODO:  Goal is to make it easier to check to see if a user owns the product. WHAT IF IT IS A BUNDLE
     start_date = models.DateTimeField(_("Start Date"), blank=True, null=True)
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True)
     auto_renew = models.BooleanField(_("Auto Renew"), default=False)        # For subscriptions
@@ -30,3 +31,6 @@ class Receipt(CreateUpdateModelBase):
 
     def __str__(self):
         return "%s - %s - %s" % (self.profile.user.username, self.order_item.offer.name, self.created.strftime('%Y-%m-%d %H:%M'))
+
+
+

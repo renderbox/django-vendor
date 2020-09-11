@@ -6,6 +6,8 @@ from django.contrib import admin
 from vendor.models import TaxClassifier, Offer, Price, CustomerProfile, \
                     Invoice, OrderItem, Receipt, Wishlist, WishlistItem, Address
 
+from vendor.config import VENDOR_PRODUCT_MODEL
+
 ###############
 # INLINES
 ###############
@@ -57,7 +59,7 @@ class CustomerProfileAdmin(admin.ModelAdmin):
 class OfferAdminForm(forms.ModelForm):
     
     def clean_name(self):
-        product_model = apps.get_model(settings.VENDOR_PRODUCT_MODEL)
+        product_model = apps.get_model(VENDOR_PRODUCT_MODEL)
         name = self.cleaned_data['name']
         bundle = self.data.getlist('bundle')
         

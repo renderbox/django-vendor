@@ -80,8 +80,8 @@ class BaseProcessorTests(TestCase):
 
         order_item_subscription = self.base_processor.invoice.order_items.get(offer__pk=4)
         self.base_processor.payment = Payment.objects.get(pk=1)
-
-        self.base_processor.create_receipt_by_term_type(order_item_subscription, order_item_subscription.offer.terms)
+        for product in order_item_subscription.offer.products.all():
+            self.base_processor.create_receipt_by_term_type(product, order_item_subscription, order_item_subscription.offer.terms)
 
         self.assertIsNotNone(Receipt.objects.all())
 
@@ -367,7 +367,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if self.processor.transaction_response.cvvResultCode.text:
             self.assertEquals("N", self.processor.transaction_response.cvvResultCode.text)
         else:
-            print(f'test_process_payment_fail_cvv_no_match: Response: {self.payment.result["raw"]}')
+            print(f'test_process_payment_fail_cvv_no_match: Response: {self.processor.payment.result["raw"]}')
 
     def test_process_payment_fail_cvv_should_not_be_on_card(self):
         """
@@ -387,7 +387,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if self.processor.transaction_response.cvvResultCode.text:
             self.assertEquals("S", self.processor.transaction_response.cvvResultCode.text)
         else:
-            print(f'test_process_payment_fail_cvv_should_not_be_on_card: Response: {self.payment.result["raw"]}')
+            print(f'test_process_payment_fail_cvv_should_not_be_on_card: Response: {self.processor.payment.result["raw"]}')
 
     def test_process_payment_fail_cvv_not_certified(self):
         """
@@ -408,7 +408,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if self.processor.transaction_response.cvvResultCode.text:
             self.assertEquals("U", self.processor.transaction_response.cvvResultCode.text)
         else:
-            print(f'test_process_payment_fail_cvv_not_certified: Response: {self.payment.result["raw"]}')
+            print(f'test_process_payment_fail_cvv_not_certified: Response: {self.processor.payment.result["raw"]}')
 
     def test_process_payment_fail_cvv_not_processed(self):
         """
