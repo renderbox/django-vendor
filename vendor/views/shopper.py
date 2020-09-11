@@ -105,23 +105,25 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
         
         processor = payment_processor(invoice)
         
-        if billing_address_form.is_valid() or credit_card_form.is_valid():
+        if not (billing_address_form.is_valid() or credit_card_form.is_valid()):
             context['billing_address_form'] = billing_address_form
             context['credit_card_form'] = credit_card_form
             return render(request, self.template_name, processor.get_checkout_context(context=context))
-        
 
         processor.process_payment(request)
 
-        # if invoice.order_list.filter(offer__term=TermType.SUBSCRIPTION).count():
-        #     invoice.process_subscriptions()
+        for order_item_subscription in [ order_item for order_item in processor.invoice.order_items.all() if order_item.offer.terms == TermType.SUBSCRIPTION ]:
+            processor.process_subscription(request, order_item_subscription)
         
-        if processor.transaction_result:
+        if processor.transaction_submitted:
             return redirect('vendor_shopper:purchase-summary', pk=invoice.pk)   # redirect to the summary page for the above invoice
             # TODO: invoices should have a UUID attached to them
             # return redirect('vendor_shopper:purchase-summary', pk=processor.invoice.payments.filter(success=True).values_list('pk'))    # TODO: broken
         else:
-            return render(request, self.template_name, processor.get_checkout_context(request, context))
+            messages.info(self.request, _("The payment gateway did not authroize payment."))
+            context['billing_address_form'] = billing_address_form
+            context['credit_card_form'] = credit_card_form
+            return render(request, self.template_name, processor.get_checkout_context(context=context))
 
 
 

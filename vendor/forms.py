@@ -228,12 +228,14 @@ class CreditCardForm(PaymentFrom):
         expire_month = cleaned_data.get('expire_month')
         expire_year = cleaned_data.get('expire_year')
 
-        self.validate_expiration_date(expire_month, expire_year)
+        if not self.expiration_date_valid(expire_month, expire_year):
+            del(cleaned_data['expire_month'])
+            del(cleaned_data['expire_year'])
 
         for error_key in self.errors.keys():
             self.fields[error_key].widget.attrs['class'] += ' is-invalid'
 
-        for clean_data_key in self.cleaned_data.keys():
+        for clean_data_key in cleaned_data.keys():
             self.fields[clean_data_key].widget.attrs['class'] += ' is-valid'
 
         
@@ -255,7 +257,7 @@ class CreditCardForm(PaymentFrom):
 
         return expire_year
 
-    def validate_expiration_date(self, expire_month, expire_year):
+    def expiration_date_valid(self, expire_month, expire_year):
         year = int(expire_year)
         month = int(expire_month)
 
@@ -265,6 +267,6 @@ class CreditCardForm(PaymentFrom):
 
         if datetime.now() > expire:
             self._errors["expire_year"] = self.error_class([_("The expiration date you entered is in the past.")])
-
-        del(self.cleaned_data['expire_month'])
-        del(self.cleaned_data['expire_year'])
+            self._errors["expire_month"] = self.error_class([_("")])
+            return False
+        return True

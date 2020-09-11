@@ -17,7 +17,7 @@
     <div class='col-md-6'>
         <!-- Full Name -->
         {{ credit_card_form.full_name.label_tag }}
-        {% if credit_card_form.is_bound %}
+        {{ credit_card_form.full_name }}
         {% if credit_card_form.full_name.errors %}
         {% for error in credit_card_form.full_name.errors %}
         <div class='invalid-feedback'>
@@ -25,11 +25,6 @@
         </div>
         {% endfor %}
         {% else %}
-        {{ credit_card_form.full_name }}
-        {% endif %}
-
-        {% else %}
-        {{ credit_card_form.full_name }}
         {% endif %}
 
         {% if credit_card_form.full_name.help_text %}
@@ -44,19 +39,13 @@
     <div class='col-md-6'>
         <!-- Card Number -->
         {{ credit_card_form.card_number.label_tag }}
-        {% if credit_card_form.is_bound %}
+        {{ credit_card_form.card_number }}
         {% if credit_card_form.card_number.errors %}
         {% for error in credit_card_form.card_number.errors %}
         <div class='invalid-feedback'>
             {{ error }}
         </div>
         {% endfor %}
-        {% else %}
-        {{ credit_card_form.card_number }}
-        {% endif %}
-
-        {% else %}
-        {{ credit_card_form.card_number }}
         {% endif %}
 
         {% if credit_card_form.card_number.help_text %}
@@ -74,50 +63,42 @@
             <div class='col'>
                 <!-- Expire Month -->
                 {{ credit_card_form.expire_month.label_tag }}
-                {% if credit_card_form.is_bound %}
-                {% if credit_card_form.expire_month.errors %}
-                {% for error in credit_card_form.expire_month.errors %}
-                <div class='invalid-feedback'>
-                    {{ error }}
-                </div>
-                {% endfor %}
-                {% else %}
                 {{ credit_card_form.expire_month }}
-                {% endif %}
-
-                {% else %}
-                {{ credit_card_form.expire_month }}
-                {% endif %}
                 
                 {% if credit_card_form.expire_month.help_text %}
                 <small class="form-text text-muted">
                     {{ credit_card_form.expire_month.help_text }}
                 </small>
-                {% endif %}                
+                {% endif %}
             </div>
-
+            
             <div class='col'>
                 <!-- Expire Year -->
                 {{ credit_card_form.expire_year.label_tag }}
-                {% if credit_card_form.is_bound %}
-                {% if credit_card_form.expire_year.errors %}
-                {% for error in credit_card_form.expire_year.errors %}
-                <div class='invalid-feedback'>
-                    {{ error }}
-                </div>
-                {% endfor %}
-                {% else %}
                 {{ credit_card_form.expire_year }}
-                {% endif %}
-                
-                {% else %}
-                {{ credit_card_form.expire_year }}
-                {% endif %}
                 
                 {% if credit_card_form.expire_year.help_text %}
                 <small class="form-text text-muted">
                     {{ credit_card_form.expire_year.help_text }}
                 </small>
+                {% endif %}
+            </div>
+        </div>
+        <div class='row'>
+            <div class='col'>
+                {% if credit_card_form.expire_month.errors %}
+                {% for error in credit_card_form.expire_month.errors %}
+                <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                    {{ error }}
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% if credit_card_form.expire_year.errors %}
+                {% for error in credit_card_form.expire_year.errors %}
+                <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                    {{ error }}
+                </div>
+                {% endfor %}
                 {% endif %}
             </div>
         </div>
@@ -128,23 +109,15 @@
     <div class='col-md-6'>
         <!-- CVV Number -->
         {{ credit_card_form.cvv_number.label_tag }}
-        {% if credit_card_form.is_bound %}
-            {% if credit_card_form.cvv_number.errors %}
-                
-                {{ credit_card_form.cvv_number }}
-                {% for error in credit_card_form.cvv_number.errors %}
-                    <div class='invalid-feedback'>
-                        {{ error }}
-                    </div>
-                {% endfor %}
-            {% else %}
-                {{ credit_card_form.cvv_number }}
-            {% endif %}
-        
-        {% else %}
-            {{ credit_card_form.cvv_number }}
+        {{ credit_card_form.cvv_number }}
+        {% if credit_card_form.cvv_number.errors %}
+        {% for error in credit_card_form.cvv_number.errors %}
+        <div class='invalid-feedback'>
+            {{ error }}
+        </div>
+        {% endfor %}
         {% endif %}
-        
+
         {% if credit_card_form.cvv_number.help_text %}
         <small class="form-text text-muted">
             {{ credit_card_form.cvv_number.help_text }}
