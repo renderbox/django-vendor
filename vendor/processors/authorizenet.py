@@ -152,25 +152,25 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def set_transaction_request_client_ip(self, client_ip):
         raise NotImplementedError
 
-    def create_line_item(self, item):
+    def create_line_item(self, order_item):
         """
-        Create a single line item (products) that is attached to a line item array
+        Create a single line order_item (products) that is attached to a line order_item array
         """
         line_item = apicontractsv1.lineItemType()
-        line_item.itemId = str(item.pk)
-        line_item.name = item.name
-        line_item.description = item.offer.product.description
-        line_item.quantity = str(item.quantity)
-        line_item.unitPrice = str(item.price)
+        line_item.itemId = str(order_item.pk)
+        line_item.name = order_item.name
+        line_item.description = order_item.offer.products.first().description
+        line_item.quantity = str(order_item.quantity)
+        line_item.unitPrice = str(order_item.price)
         return line_item
 
-    def create_line_item_array(self, items):
+    def create_line_item_array(self, order_items):
         """
-        Creates a list o line items(products) that are attached to the transaction type
+        Creates a list o line order_items(products) that are attached to the transaction type
         """
         line_items = apicontractsv1.ArrayOfLineItem()
-        for item in items:
-            line_items.lineItem.append(self.create_line_item(item))
+        for order_item in order_items:
+            line_items.lineItem.append(self.create_line_item(order_item))
         return line_items
 
     def create_tax(self, tax):
