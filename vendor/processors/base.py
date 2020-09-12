@@ -71,7 +71,7 @@ class PaymentProcessorBase(object):
         if self.transaction_submitted:
             self.invoice.status = new_status
         else:
-            self.invoice.status = Invoice.InvoiceStatus.FAILED
+            self.invoice.status = Invoice.InvoiceStatus.CART
         self.invoice.save()
 
     def create_receipt_by_term_type(self, product, order_item, term_type):
