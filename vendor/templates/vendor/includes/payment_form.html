@@ -20,7 +20,7 @@
         {{ credit_card_form.full_name }}
         {% if credit_card_form.full_name.errors %}
         {% for error in credit_card_form.full_name.errors %}
-        <div class='invalid-feedback'>
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
             {{ error }}
         </div>
         {% endfor %}
@@ -42,7 +42,7 @@
         {{ credit_card_form.card_number }}
         {% if credit_card_form.card_number.errors %}
         {% for error in credit_card_form.card_number.errors %}
-        <div class='invalid-feedback'>
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
             {{ error }}
         </div>
         {% endfor %}
@@ -112,7 +112,7 @@
         {{ credit_card_form.cvv_number }}
         {% if credit_card_form.cvv_number.errors %}
         {% for error in credit_card_form.cvv_number.errors %}
-        <div class='invalid-feedback'>
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
             {{ error }}
         </div>
         {% endfor %}

@@ -105,7 +105,7 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
         
         processor = payment_processor(invoice)
         
-        if not (billing_address_form.is_valid() or credit_card_form.is_valid()):
+        if not (billing_address_form.is_valid() and credit_card_form.is_valid()):
             context['billing_address_form'] = billing_address_form
             context['credit_card_form'] = credit_card_form
             return render(request, self.template_name, processor.get_checkout_context(context=context))

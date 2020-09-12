@@ -29,49 +29,6 @@ class BillingAddressForm(forms.ModelForm):
         model = Address
         fields = ['name', 'company', 'address_1', 'address_2', 'locality', 'state', 'country', 'postal_code']
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['name'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': _('Marina Home')
-            })
-        self.fields['company'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': _('Company\'s Name (Optional)')
-            })
-        self.fields['country'].widget.attrs.update({
-            'class': 'form-control',
-            })
-        self.fields['address_1'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': _('Address Line 1')
-            })
-        self.fields['address_2'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': _('Address Line 2')
-            })
-        self.fields['locality'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': _('Locality/City')
-            })
-        self.fields['state'].widget.attrs.update({
-            'class': 'form-control',
-            })
-        self.fields['postal_code'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': _('Postal Code')
-            })
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        for error_key in self.errors.keys():
-            self.fields[error_key].widget.attrs['class'] += ' is-invalid'
-
-        for clean_data_key in self.cleaned_data.keys():
-            self.fields[clean_data_key].widget.attrs['class'] += ' is-valid'
-
-        return cleaned_data
 class CreditCardField(forms.CharField):
 
     # validates almost all of the example cards from PayPal
@@ -201,28 +158,6 @@ class CreditCardForm(PaymentFrom):
     expire_year = forms.ChoiceField(required=True, choices=[(x, x) for x in range(datetime.now().year, datetime.now().year + 15)])
     cvv_number = forms.IntegerField(required=True, label=_("CVV Number"), max_value=9999, widget=forms.TextInput(attrs={'size': '4'}))
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['payment_type'].widget.attrs.update({
-            'class': ''
-            })
-        self.fields['full_name'].widget.attrs.update({
-            'class': 'form-control'
-            })
-        self.fields['card_number'].widget.attrs.update({
-            'class': 'form-control'
-            })
-        self.fields['expire_month'].widget.attrs.update({
-            'class': 'form-control'
-            })
-        self.fields['expire_year'].widget.attrs.update({
-            'class': 'form-control'
-            })
-        self.fields['cvv_number'].widget.attrs.update({
-            'class': 'form-control'
-            })
-
-
     def clean(self):
         cleaned_data = super(CreditCardForm, self).clean()
         expire_month = cleaned_data.get('expire_month')
@@ -231,12 +166,6 @@ class CreditCardForm(PaymentFrom):
         if not self.expiration_date_valid(expire_month, expire_year):
             del(cleaned_data['expire_month'])
             del(cleaned_data['expire_year'])
-
-        for error_key in self.errors.keys():
-            self.fields[error_key].widget.attrs['class'] += ' is-invalid'
-
-        for clean_data_key in cleaned_data.keys():
-            self.fields[clean_data_key].widget.attrs['class'] += ' is-valid'
 
         
         return cleaned_data
