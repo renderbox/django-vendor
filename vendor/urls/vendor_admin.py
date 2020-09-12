@@ -1,8 +1,8 @@
 from django.urls import path
 
-from vendor.views import admin as admin_views
+from vendor.views import vendor_admin as admin_views
 
-app_name = "vendor"
+app_name = "vendor_admin"
 
 urlpatterns = [
     path('manage/', admin_views.AdminDashboardView.as_view(), name="manager-dashboard"),

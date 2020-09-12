@@ -77,10 +77,10 @@ class Offer(CreateUpdateModelBase):
         return price_after_tax
 
     def add_to_cart_link(self):
-        return reverse("vendor_shopper:add-to-cart", kwargs={"slug":self.slug})
+        return reverse("vendor:add-to-cart", kwargs={"slug":self.slug})
 
     def remove_from_cart_link(self):
-        return reverse("vendor_shopper:remove-from-cart", kwargs={"slug":self.slug})
+        return reverse("vendor:remove-from-cart", kwargs={"slug":self.slug})
     
     def set_name_if_empty(self):
         product_names = [ product.name for product in self.products.all() ]

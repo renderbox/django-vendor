@@ -79,7 +79,7 @@ class ViewOfferTests(TestCase):
         response = self.client.get(url)
 
         self.assertEquals(response.status_code, 302)
-        self.assertEquals(response.url, reverse('vendor_shopper:cart'))
+        self.assertEquals(response.url, reverse('vendor:cart'))
         
     
     def test_check_remove_from_cart_link_request(self):
@@ -88,7 +88,7 @@ class ViewOfferTests(TestCase):
         response = self.client.get(url)
 
         self.assertEquals(response.status_code, 302)
-        self.assertEquals(response.url, reverse('vendor_shopper:cart'))
+        self.assertEquals(response.url, reverse('vendor:cart'))
     
 
     def test_view_only_available_offers(self):

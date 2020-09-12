@@ -21,7 +21,7 @@ from vendor.models.choice import TermType
 from vendor.processors import PaymentProcessor
 from vendor.forms import BillingAddressForm, CreditCardForm
 
-from .admin import AdminDashboardView, AdminInvoiceDetailView, AdminInvoiceListView
+from .vendor_admin import AdminDashboardView, AdminInvoiceDetailView, AdminInvoiceListView
 
 
 payment_processor = PaymentProcessor              # The Payment Processor configured in settings.py
@@ -51,7 +51,7 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
 
         messages.info(self.request, _("Added item to cart."))
 
-        return redirect('vendor_shopper:cart')      # Redirect to cart on success
+        return redirect('vendor:cart')      # Redirect to cart on success
 
 
 class RemoveFromCartView(LoginRequiredMixin, DeleteView):
@@ -68,7 +68,7 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
 
         messages.info(self.request, _("Removed item from cart."))
 
-        return redirect('vendor_shopper:cart')      # Redirect to cart on success
+        return redirect('vendor:cart')      # Redirect to cart on success
 
 
 
@@ -116,9 +116,9 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
             processor.process_subscription(request, order_item_subscription)
         
         if processor.transaction_submitted:
-            return redirect('vendor_shopper:purchase-summary', pk=invoice.pk)   # redirect to the summary page for the above invoice
+            return redirect('vendor:purchase-summary', pk=invoice.pk)   # redirect to the summary page for the above invoice
             # TODO: invoices should have a UUID attached to them
-            # return redirect('vendor_shopper:purchase-summary', pk=processor.invoice.payments.filter(success=True).values_list('pk'))    # TODO: broken
+            # return redirect('vendor:purchase-summary', pk=processor.invoice.payments.filter(success=True).values_list('pk'))    # TODO: broken
         else:
             messages.info(self.request, _("The payment gateway did not authroize payment."))
             context['billing_address_form'] = billing_address_form

@@ -132,6 +132,7 @@ class BaseProcessorTests(TestCase):
         self.assertNotEquals(self.existing_invoice.total, self.base_processor.amount_without_subscriptions())
 
     def test_get_transaction_id_success(self):
+        self.base_processor.payment = Payment.objects.get(pk=1)
         self.assertIn(str(settings.SITE_ID), self.base_processor.get_transaction_id())
         self.assertIn(str(self.existing_invoice.profile.pk), self.base_processor.get_transaction_id())
         self.assertIn(str(self.existing_invoice.pk), self.base_processor.get_transaction_id())
@@ -625,6 +626,9 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 0.01
         payment.transaction = successfull_transactions[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': successfull_transactions[-1].accountNumber.text})
+        payment.created = timezone.now()
+        self.processor.payment = payment
+
 
         self.processor.refund_payment(payment)
         # print(f'Message: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}')
@@ -645,6 +649,8 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 0.01
         payment.transaction = transaction_list[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': '6699'})
+        payment.created = timezone.now()
+        self.processor.payment = payment
 
         self.processor.refund_payment(payment)
 
@@ -666,6 +672,8 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 1000000.00
         payment.transaction = transaction_list[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+        payment.created = timezone.now()
+        self.processor.payment = payment
 
         self.processor.refund_payment(payment)
 
@@ -688,6 +696,8 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 0.01
         payment.transaction = '111222333412'
         payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+        payment.created = timezone.now()
+        self.processor.payment = payment
 
         self.processor.refund_payment(payment)
 

@@ -20,7 +20,7 @@ from vendor.models.address import Address as GoogleAddress
 from vendor.processors import PaymentProcessor
 from vendor.forms import BillingAddressForm, CreditCardForm
 
-from .admin import AdminDashboardView, AdminInvoiceDetailView, AdminInvoiceListView
+from .vendor_admin import AdminDashboardView, AdminInvoiceDetailView, AdminInvoiceListView
 
 
 payment_processor = PaymentProcessor              # The Payment Processor configured in settings.py
