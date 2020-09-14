@@ -626,7 +626,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 0.01
         payment.transaction = successfull_transactions[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': successfull_transactions[-1].accountNumber.text})
-        payment.created = timezone.now()
+        payment.save()
         self.processor.payment = payment
 
 
@@ -649,7 +649,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 0.01
         payment.transaction = transaction_list[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': '6699'})
-        payment.created = timezone.now()
+        payment.save()
         self.processor.payment = payment
 
         self.processor.refund_payment(payment)
@@ -672,7 +672,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 1000000.00
         payment.transaction = transaction_list[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
-        payment.created = timezone.now()
+        payment.save()
         self.processor.payment = payment
 
         self.processor.refund_payment(payment)
@@ -696,7 +696,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 0.01
         payment.transaction = '111222333412'
         payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
-        payment.created = timezone.now()
+        payment.save()
         self.processor.payment = payment
 
         self.processor.refund_payment(payment)
