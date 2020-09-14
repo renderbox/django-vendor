@@ -7,6 +7,7 @@ from django.utils.translation import ugettext as _
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES
 from .invoice import Invoice
+from vendor.config import DEFAULT_CURRENCY
 
 #####################
 # CUSTOMER PROFILE
@@ -18,7 +19,7 @@ class CustomerProfile(CreateUpdateModelBase):
     This is what the Invoices are attached to.  This is abstracted from the user model directly do it can be mre flexible in the future.
     '''
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), null=True, on_delete=models.SET_NULL, related_name="customer_profile")
-    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=settings.DEFAULT_CURRENCY)      # User's default currency
+    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY)      # User's default currency
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="customer_profile")                      # For multi-site support
 
     objects = models.Manager()
