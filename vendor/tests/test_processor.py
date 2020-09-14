@@ -624,6 +624,7 @@ class AuthorizeNetProcessorTests(TestCase):
         # payment.amount = transaction_detail.authAmount.pyval
         # Hard coding minimum amount so the test can run multiple times.
         payment.amount = 0.01
+        payment.invoice = self.existing_invoice
         payment.transaction = successfull_transactions[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': successfull_transactions[-1].accountNumber.text})
         payment.save()
@@ -646,6 +647,7 @@ class AuthorizeNetProcessorTests(TestCase):
         transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
 
         payment = Payment()
+        payment.invoice = self.existing_invoice
         payment.amount = 0.01
         payment.transaction = transaction_list[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': '6699'})
@@ -669,6 +671,7 @@ class AuthorizeNetProcessorTests(TestCase):
         transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
 
         payment = Payment()
+        payment.invoice = self.existing_invoice
         payment.amount = 1000000.00
         payment.transaction = transaction_list[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
@@ -693,6 +696,7 @@ class AuthorizeNetProcessorTests(TestCase):
         transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
 
         payment = Payment()
+        payment.invoice = self.existing_invoice
         payment.amount = 0.01
         payment.transaction = '111222333412'
         payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
