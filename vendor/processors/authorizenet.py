@@ -2,16 +2,27 @@
 Payment processor for Authorize.net.
 """
 import ast
-
-from authorizenet import apicontractsv1
-from authorizenet.apicontrollers import *
 from datetime import datetime
 from decimal import Decimal, ROUND_DOWN
+
 from django.conf import settings
+
+from vendor.config import VENDOR_PAYMENT_PROCESSOR
+
+try:
+    from authorizenet import apicontractsv1
+    from authorizenet.apicontrollers import *
+except ModuleNotFoundError:
+    if VENDOR_PAYMENT_PROCESSOR == "authorizenet.AuthorizeNetProcessor":
+        print("WARNING: authorizenet module not found.  Install the library if you want to use the AuthorizeNetProcessor.")
+        raise
+    pass
+
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models.choice import TransactionTypes, PaymentTypes, TermType
 from vendor.models.invoice import Invoice
 from vendor.models.address import Country
+
 from .base import PaymentProcessorBase
 
 
@@ -47,10 +58,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def get_checkout_context(self, request=None, context={}):
         context = super().get_checkout_context(context=context)
         # TODO: prefix should be defined somewhere
-        context['credit_card_form'] = CreditCardForm(
-            prefix='credit-card', initial={'payment_type': PaymentTypes.CREDIT_CARD})
-        context['billing_address_form'] = BillingAddressForm(
-            prefix='billing-address')
+        if 'credit_card_form' not in context:
+            context['credit_card_form'] = CreditCardForm(
+                prefix='credit-card', initial={'payment_type': PaymentTypes.CREDIT_CARD})
+        if 'billing_address_form' not in context:
+            context['billing_address_form'] = BillingAddressForm(
+                prefix='billing-address')
         return context
 
     def processor_setup(self):

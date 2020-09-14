@@ -71,7 +71,7 @@ class PaymentProcessorBase(object):
         if self.transaction_submitted:
             self.invoice.status = new_status
         else:
-            self.invoice.status = Invoice.InvoiceStatus.FAILED
+            self.invoice.status = Invoice.InvoiceStatus.CART
         self.invoice.save()
 
     def create_receipt_by_term_type(self, product, order_item, term_type):
@@ -119,7 +119,7 @@ class PaymentProcessorBase(object):
         return amount
 
     def get_transaction_id(self):
-        return "{}-{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk, str(self.invoice.payments.last().created)[-12:-6])
+        return "{}-{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk, str(self.payment.created)[-12:-6])
 
     def get_billing_address_form_data(self, form_data, form_class, prefix=""):
         self.billing_address = form_class(form_data, prefix=prefix)

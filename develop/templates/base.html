@@ -48,9 +48,9 @@
       <h5 class="my-0 mr-md-auto font-weight-normal">Django Vendor</h5>
       <nav class="my-2 my-md-0 mr-md-3">
         <a class="p-2 text-dark" href="/">Home</a>
-        <a class="p-2 text-dark" href="{% url 'vendor:order-list' %}">My Orders</a>
+        <a class="p-2 text-dark" href="{% url 'vendor_admin:manager-order-list' %}">My Orders</a>
         {% if perms.vendor.can_view_site_purchases %}
-        <a class="p-2 text-dark" href="{% url 'vendor:manager-dashboard' %}">Purchase Dashboard</a>
+        <a class="p-2 text-dark" href="{% url 'vendor_admin:manager-dashboard' %}">Purchase Dashboard</a>
         {% endif %}
         <a class="p-2 text-dark" href="{% url 'vendor:cart' %}">Cart</a>
       </nav>

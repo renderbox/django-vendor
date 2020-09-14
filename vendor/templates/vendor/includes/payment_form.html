@@ -1,0 +1,127 @@
+{% load i18n %}
+<h3 class="mb-3">Payment Method</h3>
+
+{% for hidden_field in credit_card_form.hidden_fields %}
+{{ hidden_field }}
+{% endfor %}
+
+{% if credit_card_form.non_field_errors %}
+<div class="alert alert-danger" role="alert">
+    {% for error in credit_card_form.non_field_errors %}
+    {{ error }}
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Full Name -->
+        {{ credit_card_form.full_name.label_tag }}
+        {{ credit_card_form.full_name }}
+        {% if credit_card_form.full_name.errors %}
+        {% for error in credit_card_form.full_name.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% else %}
+        {% endif %}
+
+        {% if credit_card_form.full_name.help_text %}
+        <small class="form-text text-muted">
+            {{ credit_card_form.full_name.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Card Number -->
+        {{ credit_card_form.card_number.label_tag }}
+        {{ credit_card_form.card_number }}
+        {% if credit_card_form.card_number.errors %}
+        {% for error in credit_card_form.card_number.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if credit_card_form.card_number.help_text %}
+        <small class="form-text text-muted">
+            {{ credit_card_form.card_number.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <div class='row'>
+            <div class='col'>
+                <!-- Expire Month -->
+                {{ credit_card_form.expire_month.label_tag }}
+                {{ credit_card_form.expire_month }}
+                
+                {% if credit_card_form.expire_month.help_text %}
+                <small class="form-text text-muted">
+                    {{ credit_card_form.expire_month.help_text }}
+                </small>
+                {% endif %}
+            </div>
+            
+            <div class='col'>
+                <!-- Expire Year -->
+                {{ credit_card_form.expire_year.label_tag }}
+                {{ credit_card_form.expire_year }}
+                
+                {% if credit_card_form.expire_year.help_text %}
+                <small class="form-text text-muted">
+                    {{ credit_card_form.expire_year.help_text }}
+                </small>
+                {% endif %}
+            </div>
+        </div>
+        <div class='row'>
+            <div class='col'>
+                {% if credit_card_form.expire_month.errors %}
+                {% for error in credit_card_form.expire_month.errors %}
+                <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                    {{ error }}
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% if credit_card_form.expire_year.errors %}
+                {% for error in credit_card_form.expire_year.errors %}
+                <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                    {{ error }}
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- CVV Number -->
+        {{ credit_card_form.cvv_number.label_tag }}
+        {{ credit_card_form.cvv_number }}
+        {% if credit_card_form.cvv_number.errors %}
+        {% for error in credit_card_form.cvv_number.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if credit_card_form.cvv_number.help_text %}
+        <small class="form-text text-muted">
+            {{ credit_card_form.cvv_number.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>

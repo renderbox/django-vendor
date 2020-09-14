@@ -1,4 +1,4 @@
-{% extends "vendor/base.html" %}
+{% extends "vendor/admin_base.html" %}
 
 
 {% block content %}
@@ -36,6 +36,6 @@
 
 </table>
 
-<a href="{% url 'vendor:manager-order-list' %}" class="btn btn-primary">Back to List</a>
+<a href="{% url 'vendor_admin:manager-order-list' %}" class="btn btn-primary">Back to List</a>
 {% endblock %}
 

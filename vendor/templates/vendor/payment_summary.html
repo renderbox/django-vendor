@@ -1,0 +1,19 @@
+{% extends "vendor/base.html" %}
+
+{% block content %}
+<h2>PURCHASE DETAILS</h2>
+Invoice: {{ object.pk }}
+
+
+
+{% for payment in object.payments.all %}
+<p>
+{{payment.result}}</p>
+{% endfor %}
+
+{% for order_item in object.order_items.all %}
+<p>
+    {{order_item}}</p>
+{% endfor %}
+
+{% endblock %}

@@ -6,8 +6,10 @@ from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
 from django.utils.translation import ugettext as _
 
+
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES
+from vendor.config import DEFAULT_CURRENCY
 
 #####################
 # INVOICE
@@ -37,7 +39,7 @@ class Invoice(CreateUpdateModelBase):
     tax = models.FloatField(blank=True, null=True)                              # Set on checkout
     shipping = models.FloatField(blank=True, null=True)                         # Set on checkout
     total = models.FloatField(blank=True, null=True)                            # Set on purchase
-    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=settings.DEFAULT_CURRENCY)      # User's default currency
+    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY)      # User's default currency
     shipping_address = models.ForeignKey("vendor.Address", verbose_name=_("Shipping Address"), on_delete=models.CASCADE, blank=True, null=True)
     # paid = models.BooleanField(_("Paid"))                 # May be Useful for quick filtering on invoices that are outstanding
     # settle_date = models.DateTimeField(_("Settle Date"))
