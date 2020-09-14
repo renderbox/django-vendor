@@ -326,7 +326,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertIsNotNone(self.processor.payment)
         self.assertFalse(self.processor.payment.success)
-        self.assertEquals(Invoice.InvoiceStatus.FAILED, self.processor.invoice.status)
+        self.assertEquals(Invoice.InvoiceStatus.CART, self.processor.invoice.status)
 
     def test_process_payment_transaction_fail_invalid_expiration(self):
         """
@@ -344,7 +344,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertIsNotNone(self.processor.payment)
         self.assertFalse(self.processor.payment.success)
-        self.assertEquals(Invoice.InvoiceStatus.FAILED, self.processor.invoice.status)      
+        self.assertEquals(Invoice.InvoiceStatus.CART, self.processor.invoice.status)      
 
     ##########
     # CVV Tests
@@ -520,7 +520,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'R'", self.processor.payment.result["raw"])
         self.assertFalse(self.processor.payment.success)
-        self.assertEquals(Invoice.InvoiceStatus.FAILED, self.processor.invoice.status) 
+        self.assertEquals(Invoice.InvoiceStatus.CART, self.processor.invoice.status) 
 
     def test_process_payment_avs_not_supported(self):
         """
