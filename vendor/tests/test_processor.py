@@ -132,6 +132,7 @@ class BaseProcessorTests(TestCase):
         self.assertNotEquals(self.existing_invoice.total, self.base_processor.amount_without_subscriptions())
 
     def test_get_transaction_id_success(self):
+        self.base_processor.payment = Payment.objects.get(pk=1)
         self.assertIn(str(settings.SITE_ID), self.base_processor.get_transaction_id())
         self.assertIn(str(self.existing_invoice.profile.pk), self.base_processor.get_transaction_id())
         self.assertIn(str(self.existing_invoice.pk), self.base_processor.get_transaction_id())
@@ -325,7 +326,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertIsNotNone(self.processor.payment)
         self.assertFalse(self.processor.payment.success)
-        self.assertEquals(Invoice.InvoiceStatus.FAILED, self.processor.invoice.status)
+        self.assertEquals(Invoice.InvoiceStatus.CART, self.processor.invoice.status)
 
     def test_process_payment_transaction_fail_invalid_expiration(self):
         """
@@ -343,7 +344,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertIsNotNone(self.processor.payment)
         self.assertFalse(self.processor.payment.success)
-        self.assertEquals(Invoice.InvoiceStatus.FAILED, self.processor.invoice.status)      
+        self.assertEquals(Invoice.InvoiceStatus.CART, self.processor.invoice.status)      
 
     ##########
     # CVV Tests
@@ -519,7 +520,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'R'", self.processor.payment.result["raw"])
         self.assertFalse(self.processor.payment.success)
-        self.assertEquals(Invoice.InvoiceStatus.FAILED, self.processor.invoice.status) 
+        self.assertEquals(Invoice.InvoiceStatus.CART, self.processor.invoice.status) 
 
     def test_process_payment_avs_not_supported(self):
         """
@@ -623,8 +624,12 @@ class AuthorizeNetProcessorTests(TestCase):
         # payment.amount = transaction_detail.authAmount.pyval
         # Hard coding minimum amount so the test can run multiple times.
         payment.amount = 0.01
+        payment.invoice = self.existing_invoice
         payment.transaction = successfull_transactions[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': successfull_transactions[-1].accountNumber.text})
+        payment.save()
+        self.processor.payment = payment
+
 
         self.processor.refund_payment(payment)
         # print(f'Message: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}')
@@ -642,9 +647,12 @@ class AuthorizeNetProcessorTests(TestCase):
         transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
 
         payment = Payment()
+        payment.invoice = self.existing_invoice
         payment.amount = 0.01
         payment.transaction = transaction_list[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': '6699'})
+        payment.save()
+        self.processor.payment = payment
 
         self.processor.refund_payment(payment)
 
@@ -663,9 +671,12 @@ class AuthorizeNetProcessorTests(TestCase):
         transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
 
         payment = Payment()
+        payment.invoice = self.existing_invoice
         payment.amount = 1000000.00
         payment.transaction = transaction_list[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+        payment.save()
+        self.processor.payment = payment
 
         self.processor.refund_payment(payment)
 
@@ -685,9 +696,12 @@ class AuthorizeNetProcessorTests(TestCase):
         transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
 
         payment = Payment()
+        payment.invoice = self.existing_invoice
         payment.amount = 0.01
         payment.transaction = '111222333412'
         payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+        payment.save()
+        self.processor.payment = payment
 
         self.processor.refund_payment(payment)
 

@@ -47,10 +47,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def get_checkout_context(self, request=None, context={}):
         context = super().get_checkout_context(context=context)
         # TODO: prefix should be defined somewhere
-        context['credit_card_form'] = CreditCardForm(
-            prefix='credit-card', initial={'payment_type': PaymentTypes.CREDIT_CARD})
-        context['billing_address_form'] = BillingAddressForm(
-            prefix='billing-address')
+        if 'credit_card_form' not in context:
+            context['credit_card_form'] = CreditCardForm(
+                prefix='credit-card', initial={'payment_type': PaymentTypes.CREDIT_CARD})
+        if 'billing_address_form' not in context:
+            context['billing_address_form'] = BillingAddressForm(
+                prefix='billing-address')
         return context
 
     def processor_setup(self):

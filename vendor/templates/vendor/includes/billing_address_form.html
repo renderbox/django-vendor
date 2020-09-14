@@ -1,0 +1,184 @@
+{% load i18n %}
+<h3 class="mb-3">Billing Information</h3>
+
+{% for hidden_field in billing_address_form.hidden_fields %}
+{{ hidden_field }}
+{% endfor %}
+
+{% if billing_address_form.non_field_errors %}
+<div class="alert alert-danger" role="alert">
+    {% for error in billing_address_form.non_field_errors %}
+    {{ error }}
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Country -->
+        {{ billing_address_form.country.label_tag }}
+        {{ billing_address_form.country }}
+        {% if billing_address_form.country.errors %}
+        {% for error in billing_address_form.country.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if billing_address_form.country.help_text %}
+        <small class="form-text text-muted">
+            {{ billing_address_form.country.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Name -->
+        {{ billing_address_form.name.label_tag }}
+        {{ billing_address_form.name }}
+        {% if billing_address_form.name.errors %}
+        {% for error in billing_address_form.name.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if billing_address_form.name.help_text %}
+        <small class="form-text text-muted">
+            {{ billing_address_form.name.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Company -->
+        {{ billing_address_form.company.label_tag }}
+        {{ billing_address_form.company }}
+        {% if billing_address_form.company.errors %}
+        {% for error in billing_address_form.company.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if billing_address_form.company.help_text %}
+        <small class="form-text text-muted">
+            {{ billing_address_form.company.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Address 1 -->
+        {{ billing_address_form.address_1.label_tag }}
+        {{ billing_address_form.address_1 }}
+        {% if billing_address_form.address_1.errors %}
+        {% for error in billing_address_form.address_1.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if billing_address_form.address_1.help_text %}
+        <small class="form-text text-muted">
+            {{ billing_address_form.address_1.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Address 2 -->
+        {{ billing_address_form.address_2.label_tag }}
+        {{ billing_address_form.address_2 }}
+        {% if billing_address_form.address_2.errors %}
+        {% for error in billing_address_form.address_2.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if billing_address_form.address_2.help_text %}
+        <small class="form-text text-muted">
+            {{ billing_address_form.address_2.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Locality -->
+        {{ billing_address_form.locality.label_tag }}
+        {{ billing_address_form.locality }}
+        {% if billing_address_form.locality.errors %}
+        {% for error in billing_address_form.locality.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if billing_address_form.locality.help_text %}
+        <small class="form-text text-muted">
+            {{ billing_address_form.locality.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <div class='row'>
+            <div class='col'>
+                <!-- State -->
+                {{ billing_address_form.state.label_tag }}
+                {{ billing_address_form.state }}
+                {% if billing_address_form.state.errors %}
+                {% for error in billing_address_form.state.errors %}
+                <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                    {{ error }}
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% if billing_address_form.state.help_text %}
+                <small class="form-text text-muted">
+                    {{ billing_address_form.state.help_text }}
+                </small>
+                {% endif %}
+            </div>
+
+            <div class='col'>
+                <!-- Postal Code -->
+                {{ billing_address_form.postal_code.label_tag }}
+                {{ billing_address_form.postal_code }}
+                {% if billing_address_form.postal_code.errors %}
+                {% for error in billing_address_form.postal_code.errors %}
+                <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                    {{ error }}
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% if billing_address_form.postal_code.help_text %}
+                <small class="form-text text-muted">
+                    {{ billing_address_form.postal_code.help_text }}
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

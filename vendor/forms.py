@@ -29,7 +29,6 @@ class BillingAddressForm(forms.ModelForm):
         model = Address
         fields = ['name', 'company', 'address_1', 'address_2', 'locality', 'state', 'country', 'postal_code']
 
-
 class CreditCardField(forms.CharField):
 
     # validates almost all of the example cards from PayPal
@@ -152,30 +151,42 @@ class PaymentFrom(forms.Form):
     payment_type = forms.ChoiceField(label=_("Payment Type"), choices=PaymentTypes.choices, widget=forms.widgets.HiddenInput)
 
 
-
 class CreditCardForm(PaymentFrom):
-    full_name = forms.CharField(required=True, label=_("Card Holder"), max_length=80)
+    full_name = forms.CharField(required=True, label=_("Card Holder Name"), max_length=80)
     card_number = CreditCardField(placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)
     expire_month = forms.ChoiceField(required=True, choices=[(x, x) for x in range(1, 13)])
     expire_year = forms.ChoiceField(required=True, choices=[(x, x) for x in range(datetime.now().year, datetime.now().year + 15)])
     cvv_number = forms.IntegerField(required=True, label=_("CVV Number"), max_value=9999, widget=forms.TextInput(attrs={'size': '4'}))
-
-    # def __init__(self, *args, **kwargs):
-    #     self.payment_type = PaymentTypes.CREDIT_CARD
-    #     self.payment_data = kwargs.pop('payment_data', None)
-    #     super(CreditCardForm, self).__init__(*args, **kwargs)
 
     def clean(self):
         cleaned_data = super(CreditCardForm, self).clean()
         expire_month = cleaned_data.get('expire_month')
         expire_year = cleaned_data.get('expire_year')
 
-        if not expire_year:
-            self._errors["expire_year"] = self.error_class([_("You must select a valid Expiration year.")])
-            del cleaned_data["expire_year"]
+        if not self.expiration_date_valid(expire_month, expire_year):
+            del(cleaned_data['expire_month'])
+            del(cleaned_data['expire_year'])
+
+        
+        return cleaned_data
+
+    def clean_expire_month(self):
+        expire_month = self.cleaned_data.get('expire_month')
+
         if not expire_month:
-            self._errors["expire_month"] = self.error_class([_("You must select a valid Expiration month.")])
-            del cleaned_data["expire_month"]
+            raise ValidationError(_("You must select a valid expiration month"))
+
+        return expire_month
+
+    def clean_expire_year(self):
+        expire_year = self.cleaned_data.get('expire_year')
+
+        if not expire_year:
+            raise ValidationError(_("You must select a valid expiration year"))
+
+        return expire_year
+
+    def expiration_date_valid(self, expire_month, expire_year):
         year = int(expire_year)
         month = int(expire_month)
 
@@ -185,5 +196,6 @@ class CreditCardForm(PaymentFrom):
 
         if datetime.now() > expire:
             self._errors["expire_year"] = self.error_class([_("The expiration date you entered is in the past.")])
-
-        return cleaned_data
+            self._errors["expire_month"] = self.error_class([_("")])
+            return False
+        return True

@@ -12,7 +12,7 @@
                     <table class="table table-striped">
                         {% for item in object_list %}
                         <tr>
-                                <td><a class="text-primary" href="{% url 'vendor:manager-order-detail' item.uuid %}">{{ item.pk }}</a></td>
+                                <td><a class="text-primary" href="{% url 'vendor_admin:manager-order-detail' item.uuid %}">{{ item.pk }}</a></td>
                                 <td>{{ item.created }}</td>
                             </tr>
                         {% empty %}

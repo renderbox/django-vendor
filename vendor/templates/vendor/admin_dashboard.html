@@ -96,7 +96,7 @@
           <tbody>
             {% for item in object_list %}
             <tr>
-              <td><a class="text-primary" href="{% url 'vendor:manager-order-detail' item.uuid %}">Order</a></td>
+              <td><a class="text-primary" href="{% url 'vendor_admin:manager-order-detail' item.uuid %}">Order</a></td>
               <td>{{ item.created }}</td>
               <td>{{ item.total }}</td>
             </tr>
@@ -113,7 +113,7 @@
       </div>
     </div>
       
-    <p><a href="{% url 'vendor:manager-order-list' %}" class="btn btn-primary">All Purchases</a></p>
+    <p><a href="{% url 'vendor_admin:manager-order-list' %}" class="btn btn-primary">All Purchases</a></p>
 
   </div>
  {% endblock %}   
