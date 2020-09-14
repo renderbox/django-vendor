@@ -2,16 +2,27 @@
 Payment processor for Authorize.net.
 """
 import ast
-
-from authorizenet import apicontractsv1
-from authorizenet.apicontrollers import *
 from datetime import datetime
 from decimal import Decimal, ROUND_DOWN
+
 from django.conf import settings
+
+from vendor.config import VENDOR_PAYMENT_PROCESSOR
+
+try:
+    from authorizenet import apicontractsv1
+    from authorizenet.apicontrollers import *
+except ModuleNotFoundError:
+    if VENDOR_PAYMENT_PROCESSOR == "authorizenet.AuthorizeNetProcessor":
+        print("WARNING: authorizenet module not found.  Install the library if you want to use the AuthorizeNetProcessor.")
+        raise
+    pass
+
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models.choice import TransactionTypes, PaymentTypes, TermType
 from vendor.models.invoice import Invoice
 from vendor.models.address import Country
+
 from .base import PaymentProcessorBase
 
 
