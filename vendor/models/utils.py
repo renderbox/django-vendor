@@ -1,6 +1,8 @@
 import random
 import string
 
+from django.contrib.sites.models import Site
+
 ###########
 # UTILITIES
 ###########
@@ -16,4 +18,6 @@ def random_string(length=8, check=[]):
 def generate_sku():
     return random_string()
 
+def set_default_site_id():
+    return Site.objects.get_current()
 
