@@ -9,6 +9,7 @@ from django.utils.translation import ugettext as _
 
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES
+from .utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
 
 #####################
@@ -30,7 +31,7 @@ class Invoice(CreateUpdateModelBase):
 
     uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
     profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
-    site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID, related_name="invoices")                      # For multi-site support
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, default=set_default_site_id, related_name="invoices")                      # For multi-site support
     status = models.IntegerField(_("Status"), choices=InvoiceStatus.choices, default=InvoiceStatus.CART)
     customer_notes = models.JSONField(_("Customer Notes"), default=dict, blank=True, null=True)
     vendor_notes = models.JSONField(_("Vendor Notes"), default=dict, blank=True, null=True)
