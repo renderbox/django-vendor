@@ -20,6 +20,14 @@ class ModelInvoiceTests(TestCase):
         self.hamster = Offer.objects.get(pk=3)
         self.mug_offer = Offer.objects.get(pk=4)
 
+    
+    def test_default_site_id_saved(self):
+        invoice = Invoice()
+        invoice.profile = CustomerProfile.objects.get(pk=1)
+        invoice.save()
+
+        self.assertEquals(Site.objects.get_current(), invoice.site)
+
     def test_add_offer(self):
         self.existing_invoice.add_offer(Offer.objects.get(pk=4))
         self.new_invoice.add_offer(self.mug_offer)

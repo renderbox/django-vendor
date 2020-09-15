@@ -20,6 +20,17 @@ class ModelOfferTests(TestCase):
         offer.start_date = timezone.now()
         offer.save()
         offer.products.add(Product.objects.all().first())
+        pass
+
+
+    def test_defualt_site_id(self):
+        offer = Offer()
+        offer.name = 'test-offer'
+        offer.start_date = timezone.now()
+        offer.save()
+        offer.products.add(Product.objects.all().first())
+
+        self.assertEquals(Site.objects.get_current(), offer.site)
 
     def test_change_offer_to_unavailable_product_change_to_unavailable(self):
         # TODO: Implement Tests

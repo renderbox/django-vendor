@@ -13,6 +13,12 @@ class ModelCustomerProfileTests(TestCase):
 
     def setUp(self):
         pass
+
+    def test_default_site_id_saved(self):
+        cp = CustomerProfile()
+        cp.user = User.objects.get(pk=1)
+
+        self.assertEquals(Site.objects.get_current(), cp.site)
     
     def test_get_invoice_cart(self):
         cp = CustomerProfile.objects.get(pk=1)
