@@ -50,6 +50,11 @@ class TaxClassifierAdmin(admin.ModelAdmin):
 
 
 class CustomerProfileAdmin(admin.ModelAdmin):
+    # inlines = [
+    #     ReceiptInline,
+    #     InvoiceInline,
+    #     WishlistInline,
+    # ]
     pass
 
 class OfferAdminForm(forms.ModelForm):
