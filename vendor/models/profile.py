@@ -2,10 +2,11 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import ugettext as _
 
 from .base import CreateUpdateModelBase
-from .choice import CURRENCY_CHOICES
+from .choice import CURRENCY_CHOICES, TermType
 from .invoice import Invoice
 from .utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
@@ -41,5 +42,18 @@ class CustomerProfile(CreateUpdateModelBase):
         """
         returns true/false if the user has a receipt to a given product
         it also checks against elegibility start/end/empty dates on consumable products and subscriptions
-        """
-        return True    # TODO: Build out to check if the person really has access to the given product
+        """        
+        now = timezone.now()
+
+        if product.terms == TermType.SUBSCRIPTION:
+            if self.invoices.order_items.reciepts.filter(product=product, start_date__lte=now, end_date__gte=now).count():
+                return True
+        elif product.terms == TermType.PERPETUAL:
+            if self.invoices.order_items.reciepts.filter(product=product).count():
+                return True
+        elif product.terms == TermType.ONE_TIME_USE:
+            # TODO: Implement
+            return True
+        
+        return False
+

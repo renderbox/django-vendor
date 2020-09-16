@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext as _
 from iso4217 import Currency
 
-from vendor.config import VENDOR_PRODUCT_MODEL
+from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
 
 from .base import CreateUpdateModelBase
 from .choice import TermType
@@ -55,26 +55,16 @@ class Offer(CreateUpdateModelBase):
         Check if there are any price options active, otherwise use msrp.
         '''
         now = timezone.now()
-        price_before_tax, price_after_tax = 0, 0
+        total_price = 0
 
         # TODO: first check for customer profile currency setting for each product to decide if default msrp or user currency
         prices = self.prices.filter(start_date__lte=now, end_date__gte=now).order_by('priority')
-
         if not prices:
-            prices = self.prices.filter(start_date__lte=now).order_by('priority')
-
-        if not prices:
-            if sum([ 1 for product in self.products.all() if 'msrp' in product.meta ]):
-                price_before_tax = sum([ product.meta['msrp'][product.meta['msrp']['default']] for product in self.products.all() ])          # No prices default to product MSRP
-            else:                    
-                raise FieldError(_("There is no price set on Offer or MSRP on Product"))
+            total_price = sum([ product.get_msrp(DEFAULT_CURRENCY) for product in self.products.all() ])          # No prices default to product MSRP
         else:
-            price_before_tax = prices.last().cost
+            total_price = prices.last().cost
 
-        # price_after_tax = price_before_tax * self.product.tax_classifier.tax_rule.tax   TODO: implement tax_classifier and tax rule and bundle
-        price_after_tax = price_before_tax
-        
-        return price_after_tax
+        return total_price
 
     def add_to_cart_link(self):
         return reverse("vendor:add-to-cart", kwargs={"slug":self.slug})

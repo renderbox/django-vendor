@@ -57,7 +57,7 @@ class ModelOfferTests(TestCase):
     def test_get_current_price_is_msrp(self):
         offer = Offer.objects.get(pk=4)
         price = offer.current_price()
-        self.assertEquals(price, 21.12)
+        self.assertEquals(price, 10.00)
 
     def test_get_current_price_has_only_start_date(self):
         offer = Offer.objects.get(pk=2)
@@ -70,7 +70,31 @@ class ModelOfferTests(TestCase):
     def test_get_current_price_acording_to_priority(self):
         offer = Offer.objects.get(pk=3)
         self.assertEquals(offer.current_price(), 25.2)
+
+    def test_empty_name_single_product(self):
+        # p1 = Product.objects.get(pk=1)
+        # offer = Offer()
+        # offer.products.add(p1)
+        # offer.start_date = timezone.now()
+        # offer.save()
+        # p1 = Product.objects.get(pk=1)
+
+        # self.assertEquals(p1.name, offer.name)
+        pass
+
+    def test_empty_name_bundle(self):
+        # TODO: Implement Test
+        # p1 = Product.objects.get(pk=1)
+        # p2 = Product.objects.get(pk=2)
+        # offer = Offer()
+        # offer.products.add(p1)
+        # offer.products.add(p2)
+        # offer.start_date = timezone.now()
+        # offer.save()
+        # p1 = Product.objects.get(pk=1)
     
+        # self.assertEquals("Bundle: " + ", ".join([p1,p2]), offer.name)
+        pass
 
 class ViewOfferTests(TestCase):
     
