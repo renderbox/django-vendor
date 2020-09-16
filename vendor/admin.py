@@ -58,8 +58,8 @@ class CustomerProfileAdmin(admin.ModelAdmin):
     # ]
     pass
 
-class OfferAdminForm(forms.ModelForm):
-    pass
+# class OfferAdminForm(forms.ModelForm):
+    # TODO: Proper validation for empty name needed
     # def clean_name(self):
     #     name = self.cleaned_data['name']
     #     if not name:
@@ -76,7 +76,7 @@ class OfferAdmin(admin.ModelAdmin):
     inlines = [
         PriceInline,
     ]
-    form = OfferAdminForm
+    # form = OfferAdminForm
 
 
       
