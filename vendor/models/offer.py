@@ -59,17 +59,8 @@ class Offer(CreateUpdateModelBase):
 
         # TODO: first check for customer profile currency setting for each product to decide if default msrp or user currency
         prices = self.prices.filter(start_date__lte=now, end_date__gte=now).order_by('priority')
-
-        # If not in between dates
         if not prices:
-            prices = self.prices.filter(start_date__lte=now).order_by('priority')
-        # If not on start date
-        if not prices:
-            if sum([ 1 for product in self.products.all() if 'msrp' in product.meta ]):
-                total_price = sum([ product.meta['msrp'][product.meta['msrp']['default']] for product in self.products.all() ])          # No prices default to product MSRP
-            else:                    
-                raise FieldError(_("There is no price set on Offer or MSRP on Product"))
-        # Get the cost with the highest priority
+            total_price = sum([ product.get_msrp(currency) for product in self.products.all() ])          # No prices default to product MSRP
         else:
             total_price = prices.last().cost
 
