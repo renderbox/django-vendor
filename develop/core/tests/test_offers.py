@@ -80,6 +80,7 @@ class ModelOfferTests(TestCase):
         # p1 = Product.objects.get(pk=1)
 
         # self.assertEquals(p1.name, offer.name)
+        pass
 
     def test_empty_name_bundle(self):
         # TODO: Implement Test
@@ -93,6 +94,7 @@ class ModelOfferTests(TestCase):
         # p1 = Product.objects.get(pk=1)
     
         # self.assertEquals("Bundle: " + ", ".join([p1,p2]), offer.name)
+        pass
 
 class ViewOfferTests(TestCase):
     
