@@ -57,7 +57,7 @@ class ModelOfferTests(TestCase):
     def test_get_current_price_is_msrp(self):
         offer = Offer.objects.get(pk=4)
         price = offer.current_price()
-        self.assertEquals(price, 21.12)
+        self.assertEquals(price, 10.00)
 
     def test_get_current_price_has_only_start_date(self):
         offer = Offer.objects.get(pk=2)

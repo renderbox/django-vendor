@@ -57,8 +57,8 @@ class ModelInvoiceTests(TestCase):
         remove_shirt_total = self.existing_invoice.total
 
         self.assertEquals(start_total, 365.18)
-        self.assertEquals(add_mug_total, 386.3)
-        self.assertEquals(remove_shirt_total, 366.31)
+        self.assertEquals(add_mug_total, 375.18)
+        self.assertEquals(remove_shirt_total, 355.19)
 
     def test_add_quantity(self):
         start_quantity = self.existing_invoice.order_items.filter(offer=self.shirt_offer).first().quantity
