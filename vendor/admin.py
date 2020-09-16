@@ -50,6 +50,7 @@ class TaxClassifierAdmin(admin.ModelAdmin):
 
 
 class CustomerProfileAdmin(admin.ModelAdmin):
+    # TODO: Revisit proper way of display Customer Profile on Admin Page.
     # inlines = [
     #     ReceiptInline,
     #     InvoiceInline,
