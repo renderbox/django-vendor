@@ -50,23 +50,19 @@ class TaxClassifierAdmin(admin.ModelAdmin):
 
 
 class CustomerProfileAdmin(admin.ModelAdmin):
-    inlines = [
-        ReceiptInline,
-        InvoiceInline,
-        WishlistInline,
-    ]
+    pass
 
 class OfferAdminForm(forms.ModelForm):
-    
-    def clean_name(self):
-        product_model = apps.get_model(VENDOR_PRODUCT_MODEL)
-        name = self.cleaned_data['name']
-        bundle = self.data.getlist('bundle')
-        
-        if len(self.data.getlist('bundle')) == 1:
-            return product_model.objects.get(pk=bundle[0]).name
-        else:
-            return "Bundle: " + ",".join( [ qs.name for qs in product_model.objects.filter(pk__in=bundle) ] )
+    pass
+    # def clean_name(self):
+    #     name = self.cleaned_data['name']
+    #     if not name:
+    #         product_names = [ product.name for product in self.products.all() ]
+    #         if len(product_names) == 1:
+    #             return product_names[0]
+    #         else:
+    #             return "Bundle: " + ", ".join(product_names)
+                
 
 class OfferAdmin(admin.ModelAdmin):
     # TODO: Only show active Product in new Offers or change Offers
