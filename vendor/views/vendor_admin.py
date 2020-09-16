@@ -41,3 +41,12 @@ class AdminInvoiceDetailView(LoginRequiredMixin, DetailView):
     model = Invoice
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
+
+class AdminAddProductView(LoginRequiredMixin, CreateView):
+    '''
+    Creates a Product to be added to offers
+    '''
+    template_name = "vendor/add_product.html"
+    model = Product
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
