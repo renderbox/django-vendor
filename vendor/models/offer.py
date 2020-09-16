@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext as _
 from iso4217 import Currency
 
-from vendor.config import VENDOR_PRODUCT_MODEL
+from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
 
 from .base import CreateUpdateModelBase
 from .choice import TermType
@@ -60,7 +60,7 @@ class Offer(CreateUpdateModelBase):
         # TODO: first check for customer profile currency setting for each product to decide if default msrp or user currency
         prices = self.prices.filter(start_date__lte=now, end_date__gte=now).order_by('priority')
         if not prices:
-            total_price = sum([ product.get_msrp(currency) for product in self.products.all() ])          # No prices default to product MSRP
+            total_price = sum([ product.get_msrp(DEFAULT_CURRENCY) for product in self.products.all() ])          # No prices default to product MSRP
         else:
             total_price = prices.last().cost
 
