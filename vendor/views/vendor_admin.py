@@ -1,12 +1,15 @@
+from django.apps import apps
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from django.views.generic.list import ListView
-from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import CreateView
+from django.views.generic.list import ListView
 
+from vendor.config import VENDOR_PRODUCT_MODEL
 from vendor.models import Invoice
 
-
+Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
 #############
 # Admin Views
@@ -46,7 +49,8 @@ class AdminAddProductView(LoginRequiredMixin, CreateView):
     '''
     Creates a Product to be added to offers
     '''
-    template_name = "vendor/add_product.html"
+    template_name = "vendor/product_add.html"
     model = Product
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
+    fields = '__all__'

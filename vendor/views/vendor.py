@@ -21,7 +21,7 @@ from vendor.models.choice import TermType
 from vendor.processors import PaymentProcessor
 from vendor.forms import BillingAddressForm, CreditCardForm
 
-from .vendor_admin import AdminDashboardView, AdminInvoiceDetailView, AdminInvoiceListView
+# from .vendor_admin import AdminDashboardView, AdminInvoiceDetailView, AdminInvoiceListView
 
 
 payment_processor = PaymentProcessor              # The Payment Processor configured in settings.py
