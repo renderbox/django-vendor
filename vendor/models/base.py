@@ -20,7 +20,7 @@ from vendor.config import VENDOR_PRODUCT_MODEL
 # TODO: Nice to have class MSRP(NestedModels)
 
 def product_meta_default():
-    return {'msrp':{'default':'usd', 'usd':10.00}}
+    print({'msrp':{'default':'usd', 'usd':10.00}})
 
 ##################
 # BASE MODELS
@@ -61,6 +61,12 @@ class ProductModelBase(CreateUpdateModelBase):
 
     def __str__(self):
         return self.name
+
+    def get_msrp(self, currency):
+        if currency in self.meta['msrp']:
+            return self.meta['msrp'][currency]
+        else:
+            return self.meta['msrp'][self.meta['msrp']['default']]
 
     def add_to_cart_url(self):
         """
