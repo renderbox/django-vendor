@@ -20,4 +20,3 @@ def generate_sku():
 
 def set_default_site_id():
     return Site.objects.get_current()
-
