@@ -1,11 +1,16 @@
 from calendar import monthrange
 from datetime import datetime
 from django import forms
-from django.utils.translation import ugettext as _
+from django.apps import apps
 from django.db.models import IntegerChoices
-from .models import OrderItem, Address
-from vendor.models.choice import PaymentTypes
+from django.forms.widgets import SelectDateWidget
+from django.utils.translation import ugettext as _
 
+from .config import VENDOR_PRODUCT_MODEL
+from .models import Address, Offer, OrderItem
+from .models.choice import PaymentTypes
+
+Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
 # class AddToCartModelForm(forms.ModelForm):
 
@@ -21,6 +26,34 @@ from vendor.models.choice import PaymentTypes
 # #         model = Refund
 # #         fields = ['reason']
 
+
+class ProductForm(forms.ModelForm):
+
+    class Meta:
+        model = Product
+        fields = ['sku', 'name', 'site', 'available', 'description', 'meta']
+
+class OfferForm(forms.ModelForm):
+    # TODO: How to fileter per site?
+    products = forms.ModelMultipleChoiceField(label=_("Available Products:"), required=True, queryset=Product.objects.filter(available=True))
+    start_date = forms.DateField(widget=SelectDateWidget())
+
+    class Meta:
+        model = Offer
+        fields = ['name', 'start_date', 'end_date', 'terms', 'term_details', 'term_start_date', 'available', 'bundle']
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if not cleaned_data['name']:
+            product_names = [ product.name for product in self.cleaned_data['products'] ]
+            if len(product_names) == 1:
+                self.cleaned_data['name'] = product_names[0]
+            else:
+                self.cleaned_data['name'] = "Bundle: " + ", ".join(product_names)
+        
+        return cleaned_data
+        
 class BillingAddressForm(forms.ModelForm):
     company = forms.CharField(label=_('Company'), required=False)
 
