@@ -97,10 +97,38 @@ class TransactionProductTests(TestCase):
         # TODO: Implement Test
         pass
 
+
 class ViewsProductTests(TestCase):
 
+    fixtures = ['user', 'unit_test']
+
     def setUp(self):
-        pass
+        self.product = Product.objects.get(pk=1)
+
+        self.products_list_uri = reverse('vendor_admin:manager-product-list')
+        self.product_create_uri = reverse('vendor_admin:manager-product-create')
+        self.product_update_uri = reverse('vendor_admin:manager-product-update', kwargs={'uuid': self.product.uuid})
+
+
+        self.client = Client()
+        self.user = User.objects.get(pk=1)
+        self.client.force_login(self.user)
+
+    def test_products_list_status_code_success(self):
+        response = self.client.get(self.products_list_uri)
+
+        self.assertEquals(response.status_code, 200)
+
+    def test_product_create_status_code_success(self):
+        response = self.client.get(self.product_create_uri)
+
+        self.assertEquals(response.status_code, 200)
+
+    def test_product_update_status_code_success(self):
+        response = self.client.get(self.product_update_uri)
+
+        self.assertEquals(response.status_code, 200)
+    
 
     def test_view_uplaod_csv_product(self):
         # TODO: Implement Test
