@@ -132,7 +132,7 @@ class ViewOfferTests(TestCase):
         self.assertContains(response, self.mug_offer.name)
 
     def test_offers_list_has_no_content(self):
-        self.client.force_login(User.objects.get(pk=2))
+        Offer.objects.all().delete()
 
         response = self.client.get(self.offers_list_uri)
 

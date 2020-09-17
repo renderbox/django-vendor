@@ -1,6 +1,6 @@
-{% extends "vendor/admin_base.html" %}
+{% extends "vendor/manage/base.html" %}
 
-{% block vendor_admin_content %}
+{% block vendor_content %}
   <div class="container-fluid">
 
     <nav aria-label="breadcrumb">
@@ -77,6 +77,16 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+    <div class='row'>
+      <div class='col-2'>
+        <a href="{% url 'vendor_admin:manager-product-list' %}" class="btn btn-primary">Product List</a>
+      </div>
+      <div class='col-2'>
+        <a href="{% url 'vendor_admin:manager-offer-list' %}" class="btn btn-primary">Offer List</a>
+      </div>
+      <div class='col'>
       </div>
     </div>
 

@@ -20,7 +20,7 @@ class AdminDashboardView(LoginRequiredMixin, ListView):
     '''
     List of the most recent invoices generated on the current site.
     '''
-    template_name = "vendor/admin_dashboard.html"
+    template_name = "vendor/manage/dashboard.html"
     model = Invoice
 
     def get_queryset(self):
@@ -31,7 +31,7 @@ class AdminInvoiceListView(LoginRequiredMixin, ListView):
     '''
     List of all the invoices generated on the current site.
     '''
-    template_name = "vendor/invoice_admin_list.html"
+    template_name = "vendor/manage/invoice_list.html"
     model = Invoice
 
     def get_queryset(self):
@@ -42,7 +42,7 @@ class AdminInvoiceDetailView(LoginRequiredMixin, DetailView):
     '''
     Details of an invoice generated on the current site.
     '''
-    template_name = "vendor/invoice_admin_detail.html"
+    template_name = "vendor/manage/invoice_detail.html"
     model = Invoice
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
@@ -51,7 +51,7 @@ class AdminProductListView(LoginRequiredMixin, ListView):
     '''
     Creates a Product to be added to offers
     '''
-    template_name = "vendor/products.html"
+    template_name = "vendor/manage/products.html"
     model = Product
     queryset = Product.on_site.all()
 
@@ -60,7 +60,7 @@ class AdminProductUpdateView(LoginRequiredMixin, UpdateView):
     '''
     Details of an invoice generated on the current site.
     '''
-    template_name = "vendor/product.html"
+    template_name = "vendor/manage/product.html"
     model = Product
     form_class = ProductForm
     slug_field = 'uuid'
@@ -76,7 +76,7 @@ class AdminProductCreateView(LoginRequiredMixin, CreateView):
     '''
     Creates a Product to be added to offers
     '''
-    template_name = "vendor/product.html"
+    template_name = "vendor/manage/product.html"
     form_class = ProductForm
 
     def form_valid(self, form):
@@ -88,7 +88,7 @@ class AdminOfferListView(LoginRequiredMixin, ListView):
     '''
     Creates a Product to be added to offers
     '''
-    template_name = "vendor/offers.html"
+    template_name = "vendor/manage/offers.html"
     model = Offer
     queryset = Offer.on_site.all()
 
@@ -97,7 +97,7 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
     '''
     Details of an invoice generated on the current site.
     '''
-    template_name = "vendor/offer.html"
+    template_name = "vendor/manage/offer.html"
     model = Offer
     form_class = OfferForm
     slug_field = 'uuid'
@@ -111,7 +111,7 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
     '''
     Creates a Product to be added to offers
     '''
-    template_name = "vendor/offer.html"
+    template_name = "vendor/manage/offer.html"
     form_class = OfferForm    
 
     def form_valid(self, form):
