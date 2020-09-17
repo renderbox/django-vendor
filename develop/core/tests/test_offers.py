@@ -119,15 +119,58 @@ class ViewOfferTests(TestCase):
 
         self.assertEquals(response.status_code, 200)
 
+    def test_offers_list_status_code_fail_no_login(self):
+        client = Client()
+        response = client.get(self.offers_list_uri)
+
+        self.assertEquals(response.status_code, 302)
+        self.assertIn('login', response.url)
+
+    def test_offers_list_has_content(self):
+        response = self.client.get(self.offers_list_uri)
+
+        self.assertContains(response, self.offer.name)
+
+    def test_offers_list_has_no_content(self):
+        self.client.force_login(User.objects.get(pk=2))
+
+        response = self.client.get(self.offers_list_uri)
+
+        self.assertContains(response, 'No Offers')
+
+    def test_offers_list_has_create_offer(self):
+        response = self.client.get(self.offers_list_uri)
+
+        self.assertContains(response, self.offer_create_uri)
+
+    def test_offers_list_has_update_offer(self):
+        response = self.client.get(self.offers_list_uri)
+
+        self.assertContains(response, self.offer_update_uri)
+
     def test_offer_create_status_code_success(self):
         response = self.client.get(self.offer_create_uri)
 
         self.assertEquals(response.status_code, 200)
 
+    def test_offer_create_status_code_fail_no_login(self):
+        client = Client()
+        response = client.get(self.offer_create_uri)
+
+        self.assertEquals(response.status_code, 302)
+        self.assertIn('login', response.url)
+
     def test_offer_update_status_code_success(self):
         response = self.client.get(self.offer_update_uri)
 
         self.assertEquals(response.status_code, 200)
+
+    def test_offer_update_status_code_fail_no_login(self):
+        client = Client()
+        response = client.get(self.offer_update_uri)
+
+        self.assertEquals(response.status_code, 302)
+        self.assertIn('login', response.url)
 
     def test_check_add_cart_link_status_code(self):
         url = self.mug_offer.add_to_cart_link()

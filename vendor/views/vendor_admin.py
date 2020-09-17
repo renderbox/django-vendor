@@ -9,7 +9,7 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
 
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import Invoice, Offer
+from vendor.models import Invoice, Offer, CustomerProfile
 from vendor.forms import ProductForm, OfferForm
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
@@ -54,6 +54,9 @@ class AdminProductListView(LoginRequiredMixin, ListView):
     '''
     template_name = "vendor/products.html"
     model = Product
+    
+    def get_queryset(self, **kwargs):
+        return Product.objects.filter(site=CustomerProfile.objects.get(user=self.request.user).site)
 
 
 class AdminProductUpdateView(LoginRequiredMixin, UpdateView):

@@ -119,15 +119,58 @@ class ViewsProductTests(TestCase):
 
         self.assertEquals(response.status_code, 200)
 
+    def test_products_list_status_code_fail_no_login(self):
+        client = Client()
+        response = client.get(self.products_list_uri)
+
+        self.assertEquals(response.status_code, 302)
+        self.assertIn('login', response.url)
+
+    def test_products_list_has_no_content(self):
+        self.client.force_login(User.objects.get(pk=2))
+
+        response = self.client.get(self.products_list_uri)
+
+        self.assertContains(response, 'No Products')
+
+    def test_products_list_has_content(self):
+        response = self.client.get(self.products_list_uri)
+
+        self.assertContains(response, self.product.name)
+
+    def test_products_list_has_create_product(self):
+        response = self.client.get(self.products_list_uri)
+
+        self.assertContains(response, self.product_create_uri)
+
+    def test_products_list_has_update_product(self):
+        response = self.client.get(self.products_list_uri)
+
+        self.assertContains(response, self.product_update_uri)
+
     def test_product_create_status_code_success(self):
         response = self.client.get(self.product_create_uri)
 
         self.assertEquals(response.status_code, 200)
 
+    def test_products_create_status_code_fail_no_login(self):
+        client = Client()
+        response = client.get(self.product_create_uri)
+
+        self.assertEquals(response.status_code, 302)
+        self.assertIn('login', response.url)
+
     def test_product_update_status_code_success(self):
         response = self.client.get(self.product_update_uri)
 
         self.assertEquals(response.status_code, 200)
+
+    def test_products_update_status_code_fail_no_login(self):
+        client = Client()
+        response = client.get(self.product_update_uri)
+
+        self.assertEquals(response.status_code, 302)
+        self.assertIn('login', response.url)
     
 
     def test_view_uplaod_csv_product(self):
