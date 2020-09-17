@@ -173,6 +173,17 @@
     }
 },
 {
+    "model": "vendor.customerprofile",
+    "pk": 2,
+    "fields": {
+        "created": "2020-06-30T01:15:00.350Z",
+        "updated": "2020-06-30T01:15:00.350Z",
+        "user": 2,
+        "currency": "mxn",
+        "site": 2
+    }
+},
+{
     "model": "vendor.address",
     "pk": 1,
     "fields": {

@@ -1,0 +1,30 @@
+{% extends "vendor/manage/base.html" %}
+
+{% block vendor_content %}
+
+<div class="container-fluid">
+
+    <nav aria-label="breadcrumb">
+        <h1>Add Offer</h1>
+    </nav>
+
+    <div class="row">
+
+        <div class="col-md-8 order-md-1">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.media }}
+                {{ form.as_p }}
+                <!-- TODO: Add Transalte tag -->
+                <h4>Price</h4>
+                <table>
+                    {{ formset.as_p }}
+                </table>
+                <button class="btn btn-primary btn-lg btn-block" type="submit" >Save Offer</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

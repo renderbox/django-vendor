@@ -1,0 +1,47 @@
+{% extends "vendor/manage/base.html" %}
+
+{% block vendor_content %}
+
+<div class="container-fluid">
+
+    <nav aria-label="breadcrumb">
+        <h1>Products</h1>
+    </nav>
+
+    <div class="row">
+        <div class="col">
+          <h3>Product List</h3>
+          <table class="table table-striped">
+  
+            <thead>
+              <tr>
+                <th scope="col">SKU</th>
+                <th scope="col">Name</th>
+                <th scope="col">site</th>
+              </tr>
+            </thead>
+  
+            <tbody>
+              {% for item in object_list %}
+              <tr>
+                  <td>{{ item.sku }}</td>
+                  <td><a class="text-primary" href="{% url 'vendor_admin:manager-product-update' item.uuid %}">{{ item.name}}</a></td>
+                <td>{{ item.site.name }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td>
+                  No Products
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+  
+          </table>
+        </div>
+      </div>
+      <p><a href="{% url 'vendor_admin:manager-product-create' %}" class="btn btn-primary">Add Product</a></p>
+</div>
+
+
+{% endblock %}

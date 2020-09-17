@@ -1,11 +1,17 @@
 from calendar import monthrange
 from datetime import datetime
 from django import forms
-from django.utils.translation import ugettext as _
+from django.apps import apps
 from django.db.models import IntegerChoices
-from .models import OrderItem, Address
-from vendor.models.choice import PaymentTypes
+from django.forms import inlineformset_factory
+from django.forms.widgets import SelectDateWidget
+from django.utils.translation import ugettext as _
 
+from .config import VENDOR_PRODUCT_MODEL
+from .models import Address, Offer, OrderItem, Price
+from .models.choice import PaymentTypes
+
+Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
 # class AddToCartModelForm(forms.ModelForm):
 
@@ -21,6 +27,57 @@ from vendor.models.choice import PaymentTypes
 # #         model = Refund
 # #         fields = ['reason']
 
+
+class PriceForm(forms.ModelForm):
+    start_date = forms.DateField(widget=SelectDateWidget())
+    end_date = forms.DateField(widget=SelectDateWidget())
+    class Meta:
+        model = Price
+        fields = ['cost', 'currency', 'start_date', 'end_date', 'priority']
+
+
+class ProductForm(forms.ModelForm):
+
+    class Meta:
+        model = Product
+        fields = ['sku', 'name', 'site', 'available', 'description', 'meta']
+
+
+class OfferForm(forms.ModelForm):
+    # TODO: How to fileter per site?
+    products = forms.ModelMultipleChoiceField(label=_("Available Products:"), required=True, queryset=Product.objects.filter(available=True))
+    start_date = forms.DateField(widget=SelectDateWidget())
+    end_date = forms.DateField(widget=SelectDateWidget())
+    term_start_date = forms.DateField(widget=SelectDateWidget())
+
+    class Meta:
+        model = Offer
+        fields = ['name', 'start_date', 'end_date', 'terms', 'term_details', 'term_start_date', 'available', 'bundle']
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if not cleaned_data['name']:
+            product_names = [ product.name for product in self.cleaned_data['products'] ]
+            if len(product_names) == 1:
+                self.cleaned_data['name'] = product_names[0]
+            else:
+                self.cleaned_data['name'] = "Bundle: " + ", ".join(product_names)
+        
+        return cleaned_data
+
+
+PriceFormSet = inlineformset_factory(
+    Offer,
+    Price,
+    form=PriceForm,
+    can_delete=True,
+    exclude=('offer',),
+    validate_max=True,
+    min_num=1,
+    extra=0)
+
+
 class BillingAddressForm(forms.ModelForm):
     company = forms.CharField(label=_('Company'), required=False)
 
@@ -28,6 +85,7 @@ class BillingAddressForm(forms.ModelForm):
     class Meta:
         model = Address
         fields = ['name', 'company', 'address_1', 'address_2', 'locality', 'state', 'country', 'postal_code']
+
 
 class CreditCardField(forms.CharField):
 
