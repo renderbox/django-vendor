@@ -50,21 +50,24 @@ class Offer(CreateUpdateModelBase):
     def __str__(self):
         return self.name
 
+    def get_msrp(self, currency):
+        return sum([p.get_msrp(currency) for p in self.products.all()])
+
     def current_price(self):
         '''
         Check if there are any price options active, otherwise use msrp.
         '''
         now = timezone.now()
-        total_price = 0
+        price = self.prices.filter( Q(start_date__lte=now) | Q(start_date=None),
+                                    Q(end_date__gte=now) | Q(end_date=None)
+                                    ).order_by('-priority').first()            # first()/last() returns the model object or None
 
-        # TODO: first check for customer profile currency setting for each product to decide if default msrp or user currency
-        prices = self.prices.filter(Q(start_date__lte=now) & (Q(end_date=None) | Q(end_date__gte=now))).order_by('priority')
-        if not prices:
-            total_price = sum([ product.get_msrp(DEFAULT_CURRENCY) for product in self.products.all() ])          # No prices default to product MSRP
+        if price:
+            result = price.cost
         else:
-            total_price = prices.last().cost
+            result = self.get_msrp(DEFAULT_CURRENCY)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
 
-        return total_price
+        return result
 
     def add_to_cart_link(self):
         return reverse("vendor:add-to-cart", kwargs={"slug":self.slug})
