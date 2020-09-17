@@ -8,11 +8,10 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
 
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import Invoice, Offer
-from vendor.forms import ProductForm, OfferForm
+from vendor.models import Invoice, Offer, Price
+from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
-
 #############
 # Admin Views
 
@@ -103,9 +102,30 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
 
-    def form_valid(self, form):
-        offer = form.save(commit=False)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['formset'] = PriceFormSet(instance=Offer.objects.get(uuid=context['view'].kwargs['uuid']))
+
+        return context
+
+    def post(self, request, uuid):
+        offer_form = self.form_class(request.POST)
+        offer = offer_form.save(commit=False)
+        price_formset = PriceFormSet(request.POST, request.FILES, instance=Offer.objects.get(uuid=uuid))
+
+        if not (price_formset.is_valid() or offer_form.is_valid()):
+            return render(request, self.template_name, {'form': offer_form, 'formsert': price_formset})
+
         offer.save()
+        for price_form in price_formset:
+            price = price_form.save(commit=False)
+            price.offer = offer
+            price.save()
+
+
+        return redirect('vendor_admin:manager-offer-list')
+
 
 class AdminOfferCreateView(LoginRequiredMixin, CreateView):
     '''
@@ -114,7 +134,26 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
     template_name = "vendor/manage/offer.html"
     form_class = OfferForm    
 
-    def form_valid(self, form):
-        offer = form.save(commit=False)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['formset'] = PriceFormSet()
+
+        return context
+
+    def post(self, request):
+        offer_form = self.form_class(request.POST)
+        price_formset = PriceFormSet(request.POST)
+
+        if not (price_formset.is_valid() or offer_form.is_valid()):
+            return render(request, self.template_name, {'form': offer_form, 'formsert': price_formset})
+
+        offer = offer_form.save(commit=False)
         offer.save()
+        for price_form in price_formset:
+            price = price_form.save(commit=False)
+            price.offer = offer
+            price.save()
+
+
         return redirect('vendor_admin:manager-offer-list')
