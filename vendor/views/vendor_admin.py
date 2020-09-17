@@ -94,6 +94,9 @@ class AdminOfferListView(LoginRequiredMixin, ListView):
     template_name = "vendor/offers.html"
     model = Offer
 
+    def get_queryset(self, **kwargs):
+        return Offer.objects.filter(site=CustomerProfile.objects.get(user=self.request.user).site)
+
 
 class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
     '''
