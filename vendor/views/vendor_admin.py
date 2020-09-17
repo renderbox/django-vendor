@@ -1,12 +1,17 @@
+from django.apps import apps
 from django.contrib.auth.mixins import LoginRequiredMixin
-
-from django.views.generic.list import ListView
-from django.views.generic.detail import DetailView
+from django.shortcuts import redirect
+from django.urls import reverse
 from django.views.generic import TemplateView
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.list import ListView
 
-from vendor.models import Invoice
+from vendor.config import VENDOR_PRODUCT_MODEL
+from vendor.models import Invoice, Offer
+from vendor.forms import ProductForm, OfferForm
 
-
+Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
 #############
 # Admin Views
@@ -41,3 +46,75 @@ class AdminInvoiceDetailView(LoginRequiredMixin, DetailView):
     model = Invoice
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
+
+class AdminProductListView(LoginRequiredMixin, ListView):
+    '''
+    Creates a Product to be added to offers
+    '''
+    template_name = "vendor/products.html"
+    model = Product
+    queryset = Product.on_site.all()
+
+
+class AdminProductUpdateView(LoginRequiredMixin, UpdateView):
+    '''
+    Details of an invoice generated on the current site.
+    '''
+    template_name = "vendor/product.html"
+    model = Product
+    form_class = ProductForm
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
+
+    def form_valid(self, form):
+        product = form.save(commit=False)
+        product.save()
+        return redirect('vendor_admin:manager-product-list')
+
+
+class AdminProductCreateView(LoginRequiredMixin, CreateView):
+    '''
+    Creates a Product to be added to offers
+    '''
+    template_name = "vendor/product.html"
+    form_class = ProductForm
+
+    def form_valid(self, form):
+        product = form.save(commit=False)
+        product.save()
+        return redirect('vendor_admin:manager-product-list')
+
+class AdminOfferListView(LoginRequiredMixin, ListView):
+    '''
+    Creates a Product to be added to offers
+    '''
+    template_name = "vendor/offers.html"
+    model = Offer
+    queryset = Offer.on_site.all()
+
+
+class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
+    '''
+    Details of an invoice generated on the current site.
+    '''
+    template_name = "vendor/offer.html"
+    model = Offer
+    form_class = OfferForm
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
+
+    def form_valid(self, form):
+        offer = form.save(commit=False)
+        offer.save()
+
+class AdminOfferCreateView(LoginRequiredMixin, CreateView):
+    '''
+    Creates a Product to be added to offers
+    '''
+    template_name = "vendor/offer.html"
+    form_class = OfferForm    
+
+    def form_valid(self, form):
+        offer = form.save(commit=False)
+        offer.save()
+        return redirect('vendor_admin:manager-offer-list')
