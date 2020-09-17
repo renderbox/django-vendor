@@ -1,6 +1,5 @@
 from django.apps import apps
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import TemplateView
@@ -9,7 +8,7 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
 
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import Invoice, Offer, CustomerProfile
+from vendor.models import Invoice, Offer
 from vendor.forms import ProductForm, OfferForm
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
@@ -54,9 +53,7 @@ class AdminProductListView(LoginRequiredMixin, ListView):
     '''
     template_name = "vendor/products.html"
     model = Product
-    
-    def get_queryset(self, **kwargs):
-        return Product.objects.filter(site=CustomerProfile.objects.get(user=self.request.user).site)
+    queryset = Product.on_site.all()
 
 
 class AdminProductUpdateView(LoginRequiredMixin, UpdateView):
@@ -93,9 +90,7 @@ class AdminOfferListView(LoginRequiredMixin, ListView):
     '''
     template_name = "vendor/offers.html"
     model = Offer
-
-    def get_queryset(self, **kwargs):
-        return Offer.objects.filter(site=CustomerProfile.objects.get(user=self.request.user).site)
+    queryset = Offer.on_site.all()
 
 
 class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
