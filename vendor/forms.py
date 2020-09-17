@@ -3,11 +3,12 @@ from datetime import datetime
 from django import forms
 from django.apps import apps
 from django.db.models import IntegerChoices
+from django.forms import inlineformset_factory
 from django.forms.widgets import SelectDateWidget
 from django.utils.translation import ugettext as _
 
 from .config import VENDOR_PRODUCT_MODEL
-from .models import Address, Offer, OrderItem
+from .models import Address, Offer, OrderItem, Price
 from .models.choice import PaymentTypes
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
@@ -27,16 +28,27 @@ Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 # #         fields = ['reason']
 
 
+class PriceForm(forms.ModelForm):
+    start_date = forms.DateField(widget=SelectDateWidget())
+    end_date = forms.DateField(widget=SelectDateWidget())
+    class Meta:
+        model = Price
+        fields = ['cost', 'currency', 'start_date', 'end_date', 'priority']
+
+
 class ProductForm(forms.ModelForm):
 
     class Meta:
         model = Product
         fields = ['sku', 'name', 'site', 'available', 'description', 'meta']
 
+
 class OfferForm(forms.ModelForm):
     # TODO: How to fileter per site?
     products = forms.ModelMultipleChoiceField(label=_("Available Products:"), required=True, queryset=Product.objects.filter(available=True))
     start_date = forms.DateField(widget=SelectDateWidget())
+    end_date = forms.DateField(widget=SelectDateWidget())
+    term_start_date = forms.DateField(widget=SelectDateWidget())
 
     class Meta:
         model = Offer
@@ -53,7 +65,19 @@ class OfferForm(forms.ModelForm):
                 self.cleaned_data['name'] = "Bundle: " + ", ".join(product_names)
         
         return cleaned_data
-        
+
+
+PriceFormSet = inlineformset_factory(
+    Offer,
+    Price,
+    form=PriceForm,
+    can_delete=True,
+    exclude=('offer',),
+    validate_max=True,
+    min_num=1,
+    extra=0)
+
+
 class BillingAddressForm(forms.ModelForm):
     company = forms.CharField(label=_('Company'), required=False)
 
@@ -61,6 +85,7 @@ class BillingAddressForm(forms.ModelForm):
     class Meta:
         model = Address
         fields = ['name', 'company', 'address_1', 'address_2', 'locality', 'state', 'country', 'postal_code']
+
 
 class CreditCardField(forms.CharField):
 
