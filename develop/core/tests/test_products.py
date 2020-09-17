@@ -127,8 +127,8 @@ class ViewsProductTests(TestCase):
         self.assertIn('login', response.url)
 
     def test_products_list_has_no_content(self):
-        self.client.force_login(User.objects.get(pk=2))
-
+        Product.objects.all().delete()
+        
         response = self.client.get(self.products_list_uri)
 
         self.assertContains(response, 'No Products')
