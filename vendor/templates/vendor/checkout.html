@@ -119,17 +119,24 @@
     {% endcomment %}
   </div>
   <!-- Billing Info -->
-  <div class="col-md-8 order-md-1">
-    <form method="post">
-      {% csrf_token %}
-      {% include "./includes/billing_address_form.html" with billing_address_form=billing_address_form %}
-      {% include "./includes/payment_form.html" with credit_card_form=credit_card_form %}
-      {% comment %}
-      {{ billing_address_form }}
-      {{ credit_card_form }}
-      {% endcomment %}
-      <button class="btn btn-primary btn-lg btn-block" type="submit" >Submit Payment</button>
-    </form>
+  <div class='card'>
+    <div class='card-header'>
+      Payment
+    </div>
+    <div class='card-body'>
+      <form method="post">
+        {% csrf_token %}
+        <h5 class='card-title'>
+          Billing Address
+        </h5>
+        {% include "./includes/billing_address_form.html" with billing_address_form=billing_address_form %}
+        <h5 class='card-title'>
+          Payment Method
+        </h5>
+        {% include "./includes/payment_form.html" with credit_card_form=credit_card_form %}
+        <button class="btn btn-primary btn-lg btn-block" type="submit">Submit Payment</button>
+      </form>
+    </div>
   </div>
 </div>
 

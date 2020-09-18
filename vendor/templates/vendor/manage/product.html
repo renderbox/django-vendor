@@ -10,14 +10,19 @@
 
     <div class="row">
 
-        <div class="col-md-8 order-md-1">
-            <form method="post">
-                {% csrf_token %}
-                {{ form.media }}
-                {{ form.as_p }}
-                <!-- TODO: Add Transalte tag -->
-                <button class="btn btn-primary btn-lg btn-block" type="submit" >Save Product</button>
-            </form>
+        <div class='card'>
+            <div class='card-header'>
+                Product
+            </div>
+            <div class='card-body'>
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.media }}
+                    {{ form.as_p }}
+                    <!-- TODO: Add Transalte tag -->
+                    <button class="btn btn-primary btn-lg btn-block" type="submit">Save Product</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
