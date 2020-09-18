@@ -14,10 +14,10 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
 from django.http import HttpResponse
-
 from vendor.models import Offer, OrderItem, Invoice, Payment, Address
 from vendor.models.address import Address as GoogleAddress
 from vendor.models.choice import TermType
+from vendor.models.utils import set_default_site_id
 from vendor.processors import PaymentProcessor
 from vendor.forms import BillingAddressForm, CreditCardForm
 
@@ -32,7 +32,7 @@ class CartView(LoginRequiredMixin, DetailView):
     model = Invoice
 
     def get_object(self):
-        profile, created = self.request.user.customer_profile.get_or_create(site=settings.SITE_ID)
+        profile, created = self.request.user.customer_profile.get_or_create(site=set_default_site_id())
         return profile.get_cart()
 
 
@@ -43,7 +43,7 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
 
     def get(self, *args, **kwargs):         # TODO: Move to POST
         offer = Offer.objects.get(slug=self.kwargs["slug"])
-        profile, created = self.request.user.customer_profile.get_or_create(site=settings.SITE_ID)      # Make sure they have a cart
+        profile, created = self.request.user.customer_profile.get_or_create(site=set_default_site_id())
 
         cart = profile.get_cart()
         cart.add_offer(offer)

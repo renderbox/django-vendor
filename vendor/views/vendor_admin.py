@@ -118,11 +118,14 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
             return render(request, self.template_name, {'form': offer_form, 'formsert': price_formset})
 
         offer.save()
+
+        for product in offer_form.cleaned_data['products']:
+            offer.products.add(product)
+
         for price_form in price_formset:
             price = price_form.save(commit=False)
             price.offer = offer
             price.save()
-
 
         return redirect('vendor_admin:manager-offer-list')
 
@@ -150,10 +153,12 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
 
         offer = offer_form.save(commit=False)
         offer.save()
+        for product in offer_form.cleaned_data['products']:
+            offer.products.add(product)
+
         for price_form in price_formset:
             price = price_form.save(commit=False)
             price.offer = offer
             price.save()
-
 
         return redirect('vendor_admin:manager-offer-list')
