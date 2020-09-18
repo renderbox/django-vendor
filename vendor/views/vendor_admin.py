@@ -127,7 +127,6 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
             price.offer = offer
             price.save()
 
-        offer.save()
         return redirect('vendor_admin:manager-offer-list')
 
 
