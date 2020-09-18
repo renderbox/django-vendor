@@ -41,7 +41,7 @@ package_metadata = {
 
 setup(
     packages=find_packages(),
-    package_data={'vendor': ['templates/vendor/*.html']},
+    package_data={'vendor': ['templates/vendor/*.html', 'templates/vendor/*/*.html']},
     include_package_data=True,
     python_requires=">=3.6",
     install_requires=[
