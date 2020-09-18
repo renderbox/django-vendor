@@ -169,8 +169,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         line_item = apicontractsv1.lineItemType()
         line_item.itemId = str(order_item.pk)
-        line_item.name = order_item.name
-        line_item.description = order_item.offer.products.first().description
+        line_item.name = order_item.name[:30]
+        line_item.description = order_item.offer.products.first().description[:250]
         line_item.quantity = str(order_item.quantity)
         line_item.unitPrice = str(order_item.price)
         return line_item
@@ -195,13 +195,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Creates Billing address to improve security in transaction
         """
         billing_address = apicontractsv1.customerAddressType()
-        billing_address.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])
-        billing_address.lastName = self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1]
-        billing_address.company = self.billing_address.data.get('billing-address-company')
-        billing_address.address = ", ".join([self.billing_address.data.get('billing-address-address_1'), self.billing_address.data.get('billing-address-address_2')])
-        billing_address.city = self.billing_address.data.get("billing-address-city", "")
-        billing_address.state = self.billing_address.data.get("billing-address-state", "")
-        billing_address.zip = self.billing_address.data.get("billing-address-postal_code")
+        billing_address.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])[:50]
+        billing_address.lastName = (self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1])[:50]
+        billing_address.company = self.billing_address.data.get('billing-address-company')[:50]
+        billing_address.address = ", ".join([self.billing_address.data.get('billing-address-address_1'), self.billing_address.data.get('billing-address-address_2')])[:60]
+        billing_address.city = self.billing_address.data.get("billing-address-city", "")[:40]
+        billing_address.state = self.billing_address.data.get("billing-address-state", "")[:40]
+        billing_address.zip = self.billing_address.data.get("billing-address-postal_code")[:20]
         country = Country(int(self.billing_address.data.get("billing-address-country")))
         billing_address.country = str(country.name)
         return billing_address
@@ -375,8 +375,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         
         # Setting billing information
         billto = apicontractsv1.nameAndAddressType()
-        billto.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])
-        billto.lastName = self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1]
+        billto.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])[:50]
+        billto.lastName = (self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1])[:50]
 
         # Setting subscription details
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
