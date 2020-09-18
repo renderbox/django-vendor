@@ -162,5 +162,4 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
             price.offer = offer
             price.save()
 
-        offer.save()
         return redirect('vendor_admin:manager-offer-list')
