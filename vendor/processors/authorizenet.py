@@ -245,8 +245,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             response.pop('messages')
 
         self.payment.result = {'raw': str({**self.transaction_message, **response})}
-        self.payment.result['account_number'] = ast.literal_eval(payment.result['raw']).get('accountNumber')[-4:]
-        self.payment.result['account_type'] = ast.literal_eval(payment.result['raw']).get('accountType')
+        self.payment.result['account_number'] = ast.literal_eval(self.payment.result['raw']).get('accountNumber')[-4:]
+        self.payment.result['account_type'] = ast.literal_eval(self.payment.result['raw']).get('accountType')
 
         self.payment.payee_full_name = self.payment_info.data.get(
             'credit-card-full_name')
@@ -310,23 +310,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
                 self.transaction_message['subscription_id'] = response.subscriptionId
         else:
             self.transaction_message['msg'] = "Subscription Tansaction Failed"
-
-    def save_payment_transaction(self):       
-        self.payment.success = self.transaction_submitted
-        self.payment.transaction = self.transaction_response.get('transId', "Transaction Faild")
-        response = self.transaction_response.__dict__
-        if 'errors' in response:
-            response.pop('errors')
-        if 'messages' in response:
-            response.pop('messages')
-        self.payment.result = {'raw': str({**self.transaction_message, **response})}
-        self.payment.payee_full_name = self.payment_info.data.get('credit-card-full_name')
-        self.payment.payee_company = self.billing_address.data.get('billing-address-company')
-        billing_address = self.billing_address.save(commit=False)
-        billing_address.profile = self.invoice.profile
-        billing_address.save()
-        self.payment.billing_address = billing_address
-        self.payment.save()
 
     def to_valid_decimal(self, number):
         return Decimal(number).quantize(Decimal('.00'), rounding=ROUND_DOWN)
