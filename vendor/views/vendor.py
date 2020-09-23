@@ -98,7 +98,7 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         profile = request.user.customer_profile.get(site=settings.SITE_ID) 
         invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
-                
+
         credit_card_form = CreditCardForm(request.POST, prefix='credit-card')
         billing_address_form = BillingAddressForm(request.POST, prefix='billing-address')
         
@@ -110,11 +110,10 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
             return render(request, self.template_name, processor.get_checkout_context(context=context))
 
         processor.process_payment(request)
-
-        for order_item_subscription in [ order_item for order_item in processor.invoice.order_items.all() if order_item.offer.terms == TermType.SUBSCRIPTION ]:
-            processor.process_subscription(request, order_item_subscription)
         
         if processor.transaction_submitted:
+            for order_item_subscription in [ order_item for order_item in processor.invoice.order_items.all() if order_item.offer.terms == TermType.SUBSCRIPTION ]:
+                processor.process_subscription(request, order_item_subscription)
             return redirect('vendor:purchase-summary', pk=invoice.pk)   # redirect to the summary page for the above invoice
             # TODO: invoices should have a UUID attached to them
             # return redirect('vendor:purchase-summary', pk=processor.invoice.payments.filter(success=True).values_list('pk'))    # TODO: broken
