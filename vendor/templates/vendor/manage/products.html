@@ -17,7 +17,8 @@
               <tr>
                 <th scope="col">SKU</th>
                 <th scope="col">Name</th>
-                <th scope="col">site</th>
+                <th scope="col">Site</th>
+                <th scope="col">Description</th>
               </tr>
             </thead>
   
@@ -27,6 +28,7 @@
                   <td>{{ item.sku }}</td>
                   <td><a class="text-primary" href="{% url 'vendor_admin:manager-product-update' item.uuid %}">{{ item.name}}</a></td>
                 <td>{{ item.site.name }}</td>
+                <td>{{ item.description.info|default:""}}</td>
               </tr>
               {% empty %}
               <tr>
