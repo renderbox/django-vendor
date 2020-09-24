@@ -19,11 +19,12 @@ from vendor.models.address import Address as GoogleAddress
 from vendor.models.choice import TermType
 from vendor.models.utils import set_default_site_id
 from vendor.processors import PaymentProcessor
-from vendor.forms import BillingAddressForm, CreditCardForm
+from vendor.forms import BillingAddressForm, CreditCardForm, AccountValidationForm
 
 
+# The Payment Processor configured in settings.py
+payment_processor = PaymentProcessor
 
-payment_processor = PaymentProcessor              # The Payment Processor configured in settings.py
 
 class CartView(LoginRequiredMixin, DetailView):
     '''
@@ -32,7 +33,8 @@ class CartView(LoginRequiredMixin, DetailView):
     model = Invoice
 
     def get_object(self):
-        profile, created = self.request.user.customer_profile.get_or_create(site=set_default_site_id())
+        profile, created = self.request.user.customer_profile.get_or_create(
+            site=set_default_site_id())
         return profile.get_cart()
 
 
@@ -43,7 +45,8 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
 
     def get(self, *args, **kwargs):         # TODO: Move to POST
         offer = Offer.objects.get(slug=self.kwargs["slug"])
-        profile, created = self.request.user.customer_profile.get_or_create(site=set_default_site_id())
+        profile, created = self.request.user.customer_profile.get_or_create(
+            site=set_default_site_id())
 
         cart = profile.get_cart()
         cart.add_offer(offer)
@@ -58,10 +61,12 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
     Reduce the count of items from the cart and delete the order item if you reach 0
     TODO: Change to form/POST for better security & flexibility
     '''
+
     def get(self, *args, **kwargs):         # TODO: Move to POST
         offer = Offer.objects.get(slug=self.kwargs["slug"])
 
-        profile = self.request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
+        profile = self.request.user.customer_profile.get(
+            site=settings.SITE_ID)      # Make sure they have a cart
         cart = profile.get_cart()
         cart.remove_offer(offer)
 
@@ -70,11 +75,32 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
+class AccountValidationView(LoginRequiredMixin, FormView):
+    form_class = AccountValidationForm
+    template_name = 'vendor/checkout.html'
 
-        
-class PaymentSummaryView(LoginRequiredMixin, DetailView):
-    model = Invoice
-    template_name = 'vendor/payment_summary.html'
+    def get(self, request, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile = self.request.user.customer_profile.get(site=settings.SITE_ID)
+        invoice = profile.invoices.get(status=Invoice.InvoiceStatus.CART)
+
+        context['invoice'] = Invoice.objects.get(uuid=kwargs.get('uuid'))
+
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        user_form = self.form_class(request.POST)
+        logged_user = self.request.user
+        if not user_form.is_valid():
+            return render(request, self.template_name, {'form': user_form})
+
+        user_account = user_form.save(commit=False)
+        if user_account.first_name == logged_user.first_name and user_account.last_name == logged_user.last_name and user_account.email == logged_user.email:
+            return redirect('vendor:checkout-payment', uuid=kwargs.get('uuid'))
+        else:
+            messages.info(self.request, _("Invalid Account"))
+            return redirect('vendor:checkout-account', uuid=kwargs.get('uuid'))
+
 
 class CheckoutView(LoginRequiredMixin, TemplateView):
     '''
@@ -83,9 +109,9 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
     template_name = "vendor/checkout.html"
 
     def get(self, request, *args, **kwargs):
-        context = super().get_context_data(**kwargs)
-        profile = self.request.user.customer_profile.get(site=settings.SITE_ID) 
-        invoice = profile.invoices.get(status=Invoice.InvoiceStatus.CART)
+        invoice = Invoice.objects.get(uuid=kwargs.pop('uuid'))
+
+        context = super().get_context_data()
 
         processor = payment_processor(invoice)
 
@@ -93,37 +119,63 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
 
         return render(request, self.template_name, context)
 
-
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        profile = request.user.customer_profile.get(site=settings.SITE_ID) 
-        invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
+        invoice = Invoice.objects.get(uuid=kwargs.get('uuid'))
 
         credit_card_form = CreditCardForm(request.POST, prefix='credit-card')
-        billing_address_form = BillingAddressForm(request.POST, prefix='billing-address')
-        
+        billing_address_form = BillingAddressForm(
+            request.POST, prefix='billing-address')
+
         processor = payment_processor(invoice)
-        
         if not (billing_address_form.is_valid() and credit_card_form.is_valid()):
             context['billing_address_form'] = billing_address_form
             context['credit_card_form'] = credit_card_form
             return render(request, self.template_name, processor.get_checkout_context(context=context))
+        else:
+            request.session['billing_address_form'] = billing_address_form.cleaned_data
+            request.session['credit_card_form'] = credit_card_form.cleaned_data
+            return redirect('vendor:checkout-review', uuid=kwargs.get('uuid'))
+
+
+class ReviewCheckout(LoginRequiredMixin, TemplateView):
+    template_name = 'vendor/checkout.html'
+
+    def get(self, request, *args, **kwargs):
+        invoice = Invoice.objects.get(uuid=kwargs.pop('uuid'))
+
+        context = super().get_context_data()
+
+        processor = payment_processor(invoice)
+
+        context = processor.get_checkout_context(context=context)
+
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        invoice = Invoice.objects.get(uuid=kwargs.get('uuid'))
+        
+        processor = payment_processor(invoice)
 
         processor.process_payment(request)
-        
+
         if processor.transaction_submitted:
-            for order_item_subscription in [ order_item for order_item in processor.invoice.order_items.all() if order_item.offer.terms == TermType.SUBSCRIPTION ]:
-                processor.process_subscription(request, order_item_subscription)
-            return redirect('vendor:purchase-summary', pk=invoice.pk)   # redirect to the summary page for the above invoice
-            # TODO: invoices should have a UUID attached to them
-            # return redirect('vendor:purchase-summary', pk=processor.invoice.payments.filter(success=True).values_list('pk'))    # TODO: broken
+            for order_item_subscription in [order_item for order_item in processor.invoice.order_items.all() if order_item.offer.terms == TermType.SUBSCRIPTION]:
+                processor.process_subscription(
+                    request, order_item_subscription)
+            return redirect('vendor:purchase-summary', pk=invoice.pk)
         else:
-            messages.info(self.request, _("The payment gateway did not authroize payment."))
+            messages.info(self.request, _(
+                "The payment gateway did not authroize payment."))
             context['billing_address_form'] = billing_address_form
             context['credit_card_form'] = credit_card_form
             return render(request, self.template_name, processor.get_checkout_context(context=context))
 
 
+class PaymentSummaryView(LoginRequiredMixin, DetailView):
+    model = Invoice
+    template_name = 'vendor/payment_summary.html'
 
 
 class OrderHistoryListView(LoginRequiredMixin, ListView):
@@ -131,13 +183,15 @@ class OrderHistoryListView(LoginRequiredMixin, ListView):
     List of all the invoices generated by the current user on the current site.
     '''
     model = Invoice
-    #TODO: filter to only include the current user's order history
+    # TODO: filter to only include the current user's order history
 
     def get_queryset(self):
         try:
-            return self.request.user.customer_profile.get().invoices.filter(status__gt=Invoice.InvoiceStatus.CART)  # The profile and user are site specific so this should only return what's on the site for that user excluding the cart
+            # The profile and user are site specific so this should only return what's on the site for that user excluding the cart
+            return self.request.user.customer_profile.get().invoices.filter(status__gt=Invoice.InvoiceStatus.CART)
         except ObjectDoesNotExist:         # Catch the actual error for the exception
             return []   # Return empty list if there is no customer_profile
+
 
 class OrderHistoryDetailView(LoginRequiredMixin, DetailView):
     '''
@@ -147,6 +201,3 @@ class OrderHistoryDetailView(LoginRequiredMixin, DetailView):
     model = Invoice
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
-
-
-
