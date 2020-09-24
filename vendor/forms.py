@@ -9,7 +9,7 @@ from django.utils.translation import ugettext as _
 
 from .config import VENDOR_PRODUCT_MODEL
 from .models import Address, Offer, OrderItem, Price
-from .models.choice import PaymentTypes
+from .models.choice import PaymentTypes, TermType
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
@@ -63,7 +63,10 @@ class OfferForm(forms.ModelForm):
                 self.cleaned_data['name'] = product_names[0]
             else:
                 self.cleaned_data['name'] = "Bundle: " + ", ".join(product_names)
-        
+
+        if self.data['terms'] == TermType.SUBSCRIPTION and not cleaned_data['term_details']:
+            self.add_error('term_details', _("Invalid term details for subscription"))
+
         return cleaned_data
 
 
@@ -232,7 +235,7 @@ class CreditCardForm(PaymentFrom):
         expire_month = self.cleaned_data.get('expire_month')
 
         if not expire_month:
-            raise ValidationError(_("You must select a valid expiration month"))
+            raise forms.ValidationError(_("You must select a valid expiration month"))
 
         return expire_month
 
@@ -240,7 +243,7 @@ class CreditCardForm(PaymentFrom):
         expire_year = self.cleaned_data.get('expire_year')
 
         if not expire_year:
-            raise ValidationError(_("You must select a valid expiration year"))
+            raise forms.ValidationError(_("You must select a valid expiration year"))
 
         return expire_year
 

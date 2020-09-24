@@ -169,8 +169,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         line_item = apicontractsv1.lineItemType()
         line_item.itemId = str(order_item.pk)
-        line_item.name = order_item.name
-        line_item.description = order_item.offer.products.first().description
+        line_item.name = order_item.name[:30]
+        line_item.description = order_item.offer.products.first().description[:250]
         line_item.quantity = str(order_item.quantity)
         line_item.unitPrice = str(order_item.price)
         return line_item
@@ -195,13 +195,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Creates Billing address to improve security in transaction
         """
         billing_address = apicontractsv1.customerAddressType()
-        billing_address.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])
-        billing_address.lastName = self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1]
-        billing_address.company = self.billing_address.data.get('billing-address-company')
-        billing_address.address = ", ".join([self.billing_address.data.get('billing-address-address_1'), self.billing_address.data.get('billing-address-address_2')])
-        billing_address.city = self.billing_address.data.get("billing-address-city", "")
-        billing_address.state = self.billing_address.data.get("billing-address-state", "")
-        billing_address.zip = self.billing_address.data.get("billing-address-postal_code")
+        billing_address.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])[:50]
+        billing_address.lastName = (self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1])[:50]
+        billing_address.company = self.billing_address.data.get('billing-address-company')[:50]
+        billing_address.address = ", ".join([self.billing_address.data.get('billing-address-address_1'), self.billing_address.data.get('billing-address-address_2')])[:60]
+        billing_address.city = self.billing_address.data.get("billing-address-city", "")[:40]
+        billing_address.state = self.billing_address.data.get("billing-address-state", "")[:40]
+        billing_address.zip = self.billing_address.data.get("billing-address-postal_code")[:20]
         country = Country(int(self.billing_address.data.get("billing-address-country")))
         billing_address.country = str(country.name)
         return billing_address
@@ -243,7 +243,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             response.pop('errors')
         if 'messages' in response:
             response.pop('messages')
+
         self.payment.result = {'raw': str({**self.transaction_message, **response})}
+        self.payment.result['account_number'] = ast.literal_eval(self.payment.result['raw']).get('accountNumber')[-4:]
+        self.payment.result['account_type'] = ast.literal_eval(self.payment.result['raw']).get('accountType')
+
         self.payment.payee_full_name = self.payment_info.data.get(
             'credit-card-full_name')
         self.payment.payee_company = self.billing_address.data.get(
@@ -307,23 +311,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         else:
             self.transaction_message['msg'] = "Subscription Tansaction Failed"
 
-    def save_payment_transaction(self):       
-        self.payment.success = self.transaction_submitted
-        self.payment.transaction = self.transaction_response.get('transId', "Transaction Faild")
-        response = self.transaction_response.__dict__
-        if 'errors' in response:
-            response.pop('errors')
-        if 'messages' in response:
-            response.pop('messages')
-        self.payment.result = {'raw': str({**self.transaction_message, **response})}
-        self.payment.payee_full_name = self.payment_info.data.get('credit-card-full_name')
-        self.payment.payee_company = self.billing_address.data.get('billing-address-company')
-        billing_address = self.billing_address.save(commit=False)
-        billing_address.profile = self.invoice.profile
-        billing_address.save()
-        self.payment.billing_address = billing_address
-        self.payment.save()
-
     def to_valid_decimal(self, number):
         return Decimal(number).quantize(Decimal('.00'), rounding=ROUND_DOWN)
     ##########
@@ -375,8 +362,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         
         # Setting billing information
         billto = apicontractsv1.nameAndAddressType()
-        billto.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])
-        billto.lastName = self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1]
+        billto.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])[:50]
+        billto.lastName = (self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1])[:50]
 
         # Setting subscription details
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
@@ -532,4 +519,5 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
         if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
             return response.subscriptionDetails.subscriptionDetail
+
 

@@ -24,7 +24,7 @@ class Payment(models.Model):
     success = models.BooleanField(_("Successful"), default=False)
     payee_full_name = models.CharField(_("Name on Card"), max_length=50)
     payee_company = models.CharField(_("Company"), max_length=50, blank=True, null=True)
-
+    
 
 # class Coupon(models.Model):
 #     pass
