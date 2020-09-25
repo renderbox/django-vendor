@@ -121,8 +121,8 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
         if len(form.cleaned_data['products']):
             offer.bundle=True
         
-        if (not offer.bundle_description) and offer.bundle:
-            offer.bundle_description = str(form.cleaned_data['products'][0].description)
+        if (not offer.offer_description) and offer.bundle:
+            offer.offer_description = str(form.cleaned_data['products'][0].description)
 
         offer.save()
 
@@ -135,6 +135,7 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
             price.save()
 
         return redirect('vendor_admin:manager-offer-list')
+
 
 class AdminOfferCreateView(LoginRequiredMixin, CreateView):
     '''
@@ -161,8 +162,8 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
         if len(offer_form.cleaned_data['products']):
             offer.bundle=True
         
-        if (not offer.bundle_description) and offer.bundle:
-            offer.bundle_description = str(offer_form.cleaned_data['products'][0].description)
+        if (not offer.offer_description) and offer.bundle:
+            offer.offer_description = str(offer_form.cleaned_data['products'][0].description)
 
         offer.save()
         for product in offer_form.cleaned_data['products']:
