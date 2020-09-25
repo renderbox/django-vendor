@@ -164,7 +164,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         line_item = apicontractsv1.lineItemType()
         line_item.itemId = str(order_item.pk)
         line_item.name = order_item.name[:30]
-        line_item.description = str(order_item.offer.products.first().description)[:250]
+        line_item.description = str(order_item.offer.description)[:250]
         line_item.quantity = str(order_item.quantity)
         line_item.unitPrice = str(order_item.price)
         return line_item
