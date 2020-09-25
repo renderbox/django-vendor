@@ -86,6 +86,11 @@ class AccountValidationView(LoginRequiredMixin, FormView):
 
         context['invoice'] = Invoice.objects.get(uuid=kwargs.get('uuid'))
 
+        if 'billing_address_form' in request.session:
+            del(request.session['billing_address_form'])
+        if 'credit_card_form' in request.session:
+            del(request.session['credit_card_form'])
+
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -123,9 +128,8 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         invoice = Invoice.objects.get(uuid=kwargs.get('uuid'))
 
-        credit_card_form = CreditCardForm(request.POST, prefix='credit-card')
-        billing_address_form = BillingAddressForm(
-            request.POST, prefix='billing-address')
+        credit_card_form = CreditCardForm(request.POST)
+        billing_address_form = BillingAddressForm(request.POST)
 
         processor = payment_processor(invoice)
         if not (billing_address_form.is_valid() and credit_card_form.is_valid()):
@@ -133,6 +137,8 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
             context['credit_card_form'] = credit_card_form
             return render(request, self.template_name, processor.get_checkout_context(context=context))
         else:
+            billing_address_form.full_clean()
+            credit_card_form.full_clean()
             request.session['billing_address_form'] = billing_address_form.cleaned_data
             request.session['credit_card_form'] = credit_card_form.cleaned_data
             return redirect('vendor:checkout-review', uuid=kwargs.get('uuid'))
@@ -155,7 +161,7 @@ class ReviewCheckout(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         invoice = Invoice.objects.get(uuid=kwargs.get('uuid'))
-        
+
         processor = payment_processor(invoice)
 
         processor.process_payment(request)
@@ -164,13 +170,13 @@ class ReviewCheckout(LoginRequiredMixin, TemplateView):
             for order_item_subscription in [order_item for order_item in processor.invoice.order_items.all() if order_item.offer.terms == TermType.SUBSCRIPTION]:
                 processor.process_subscription(
                     request, order_item_subscription)
+            del(request.session['billing_address_form'])
+            del(request.session['credit_card_form'])
             return redirect('vendor:purchase-summary', pk=invoice.pk)
         else:
             messages.info(self.request, _(
                 "The payment gateway did not authroize payment."))
-            context['billing_address_form'] = billing_address_form
-            context['credit_card_form'] = credit_card_form
-            return render(request, self.template_name, processor.get_checkout_context(context=context))
+            return redirect('vendor:checkout-account', uuid=kwargs.get('uuid'))
 
 
 class PaymentSummaryView(LoginRequiredMixin, DetailView):

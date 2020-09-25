@@ -57,13 +57,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def get_checkout_context(self, request=None, context={}):
         context = super().get_checkout_context(context=context)
-        # TODO: prefix should be defined somewhere
         if 'credit_card_form' not in context:
-            context['credit_card_form'] = CreditCardForm(
-                prefix='credit-card', initial={'payment_type': PaymentTypes.CREDIT_CARD})
+            context['credit_card_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
         if 'billing_address_form' not in context:
-            context['billing_address_form'] = BillingAddressForm(
-                prefix='billing-address')
+            context['billing_address_form'] = BillingAddressForm()
         return context
 
     def processor_setup(self):
@@ -124,12 +121,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Creates and credit card payment type instance form the payment information set. 
         """
         creditCard = apicontractsv1.creditCardType()
-        creditCard.cardNumber = self.payment_info.data.get(
-            'credit-card-card_number')
-        creditCard.expirationDate = "-".join([self.payment_info.data.get(
-            'credit-card-expire_year'), self.payment_info.data.get('credit-card-expire_month')])
-        creditCard.cardCode = self.payment_info.data.get(
-            'credit-card-cvv_number')
+        creditCard.cardNumber = self.payment_info.data.get('card_number')
+        creditCard.expirationDate = "-".join([self.payment_info.data.get('expire_year'), self.payment_info.data.get('expire_month')])
+        creditCard.cardCode = str(self.payment_info.data.get('cvv_number'))
         return creditCard
 
     def create_bank_account_payment(self):
@@ -147,7 +141,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         payment = apicontractsv1.paymentType()
         payment.creditCard = self.payment_type_switch[int(
-            self.payment_info.data.get('credit-card-payment_type'))]()
+            self.payment_info.data.get('payment_type'))]()
         return payment
 
     def create_customer_data(self):
@@ -170,7 +164,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         line_item = apicontractsv1.lineItemType()
         line_item.itemId = str(order_item.pk)
         line_item.name = order_item.name[:30]
-        line_item.description = order_item.offer.products.first().description[:250]
+        line_item.description = str(order_item.offer.products.first().description)[:250]
         line_item.quantity = str(order_item.quantity)
         line_item.unitPrice = str(order_item.price)
         return line_item
@@ -195,14 +189,14 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Creates Billing address to improve security in transaction
         """
         billing_address = apicontractsv1.customerAddressType()
-        billing_address.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])[:50]
-        billing_address.lastName = (self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1])[:50]
-        billing_address.company = self.billing_address.data.get('billing-address-company')[:50]
-        billing_address.address = ", ".join([self.billing_address.data.get('billing-address-address_1'), self.billing_address.data.get('billing-address-address_2')])[:60]
-        billing_address.city = self.billing_address.data.get("billing-address-city", "")[:40]
-        billing_address.state = self.billing_address.data.get("billing-address-state", "")[:40]
-        billing_address.zip = self.billing_address.data.get("billing-address-postal_code")[:20]
-        country = Country(int(self.billing_address.data.get("billing-address-country")))
+        billing_address.firstName = " ".join(self.payment_info.data.get('full_name', "").split(" ")[:-1])[:50]
+        billing_address.lastName = (self.payment_info.data.get('full_name', "").split(" ")[-1])[:50]
+        billing_address.company = self.billing_address.data.get('company', "")[:50]
+        billing_address.address = ", ".join([self.billing_address.data.get('address_1',""), str(self.billing_address.data.get('address_2', ""))])[:60]
+        billing_address.city = self.billing_address.data.get("city", "")[:40]
+        billing_address.state = self.billing_address.data.get("state", "")[:40]
+        billing_address.zip = self.billing_address.data.get("postal_code")[:20]
+        country = Country(int(self.billing_address.data.get("country")))
         billing_address.country = str(country.name)
         return billing_address
 
@@ -249,9 +243,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.payment.result['account_type'] = ast.literal_eval(self.payment.result['raw']).get('accountType')
 
         self.payment.payee_full_name = self.payment_info.data.get(
-            'credit-card-full_name')
+            'full_name')
         self.payment.payee_company = self.billing_address.data.get(
-            'billing-address-company')
+            'company')
         billing_address = self.billing_address.save(commit=False)
         billing_address.profile = self.invoice.profile
         billing_address.save()
@@ -319,8 +313,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def process_payment(self, request):
         self.create_payment_model()
         # Process form data to set up transaction
-        self.get_billing_address_form_data(request.POST, BillingAddressForm,'billing-address')
-        self.get_payment_info_form_data(request.POST, CreditCardForm, 'credit-card')
+        self.get_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
+        self.get_payment_info_form_data(request.session.get('credit_card_form'), CreditCardForm)
 
         # Init transaction
         self.transaction = self.create_transaction()
@@ -353,8 +347,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
-        self.get_billing_address_form_data(request.POST, BillingAddressForm,'billing-address')
-        self.get_payment_info_form_data(request.POST, CreditCardForm, 'credit-card')
+        self.get_billing_address_form_data(request.session.get['billing_address_form'], BillingAddressForm)
+        self.get_payment_info_form_data(request.session.get['credit_card_form'], CreditCardForm)
 
         period_length = subscription.offer.term_details['period_length']
         payment_occurrences = subscription.offer.term_details['payment_occurrences']
@@ -362,8 +356,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         
         # Setting billing information
         billto = apicontractsv1.nameAndAddressType()
-        billto.firstName = " ".join(self.payment_info.data.get('credit-card-full_name', "").split(" ")[:-1])[:50]
-        billto.lastName = (self.payment_info.data.get('credit-card-full_name', "").split(" ")[-1])[:50]
+        billto.firstName = " ".join(self.payment_info.data.get('full_name', "").split(" ")[:-1])[:50]
+        billto.lastName = (self.payment_info.data.get('full_name', "").split(" ")[-1])[:50]
 
         # Setting subscription details
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
@@ -391,8 +385,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def process_update_subscription(self, request, subscription_id):
         
-        self.get_billing_address_form_data(request.POST, BillingAddressForm,'billing-address')
-        self.get_payment_info_form_data(request.POST, CreditCardForm, 'credit-card')
+        self.get_billing_address_form_data(request.session.get['billing_address_form'], BillingAddressForm)
+        self.get_payment_info_form_data(request.session.get['credit_card_form'], CreditCardForm)
 
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.payment = self.create_authorize_payment()

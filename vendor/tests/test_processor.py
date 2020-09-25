@@ -139,20 +139,20 @@ class BaseProcessorTests(TestCase):
 
     def test_get_billing_address_form_data_fail(self):
         with self.assertRaises(TypeError):
-            self.base_processor.get_billing_address_form_data(self.form_data, "billing-address")
+            self.base_processor.get_billing_address_form_data(self.form_data)
         
     def test_get_billing_address_form_data_success(self):
-        self.base_processor.get_billing_address_form_data(self.form_data, BillingAddressForm, "billing-address")
+        self.base_processor.get_billing_address_form_data(self.form_data, BillingAddressForm)
         
         self.assertIsNotNone(self.base_processor.billing_address)
         self.assertIn(self.form_data['billing-address-address_1'], self.base_processor.billing_address.data['billing-address-address_1'])
 
     def test_get_payment_info_form_data_fail(self):
         with self.assertRaises(TypeError):
-            self.base_processor.get_payment_info_form_data(self.form_data, "credit-card")
+            self.base_processor.get_payment_info_form_data(self.form_data)
 
     def test_get_payment_info_form_data_success(self):
-        self.base_processor.get_payment_info_form_data(self.form_data, CreditCardForm, "credit-card")
+        self.base_processor.get_payment_info_form_data(self.form_data, CreditCardForm)
 
         self.assertIsNotNone(self.base_processor.payment_info)
         self.assertIn(self.form_data['credit-card-cvv_number'], self.base_processor.payment_info.data['credit-card-cvv_number'])
