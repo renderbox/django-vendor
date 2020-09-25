@@ -30,7 +30,12 @@ class BaseProcessorTests(TestCase):
         self.existing_invoice = Invoice.objects.get(pk=1)
         self.base_processor = PaymentProcessorBase(self.existing_invoice)
         self.subscription_offer = Offer.objects.get(pk=4)
-        self.form_data = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10', mutable=True)
+        self.form_data = { 
+            'billing_address_form': 
+                {'name':'Home','company':'Whitemoon Dreams','country':'581','address_1':'221B Baker Street','address_2':'','locality':'Marylebone','state':'California','postal_code':'90292'}, 
+            'credit_card_form': 
+                {'full_name':'Bob Ross','card_number':'5424000000000015','expire_month':'12','expire_year':'2030','cvv_number':'900','payment_type':'10'}
+            }
 
     def test_base_processor_init_fail(self):
         with self.assertRaises(TypeError):
@@ -142,20 +147,20 @@ class BaseProcessorTests(TestCase):
             self.base_processor.get_billing_address_form_data(self.form_data)
         
     def test_get_billing_address_form_data_success(self):
-        self.base_processor.get_billing_address_form_data(self.form_data, BillingAddressForm)
+        self.base_processor.get_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
         
         self.assertIsNotNone(self.base_processor.billing_address)
-        self.assertIn(self.form_data['billing-address-address_1'], self.base_processor.billing_address.data['billing-address-address_1'])
+        self.assertIn(self.form_data['billing_address_form']['address_1'], self.base_processor.billing_address.data['address_1'])
 
     def test_get_payment_info_form_data_fail(self):
         with self.assertRaises(TypeError):
             self.base_processor.get_payment_info_form_data(self.form_data)
 
     def test_get_payment_info_form_data_success(self):
-        self.base_processor.get_payment_info_form_data(self.form_data, CreditCardForm)
+        self.base_processor.get_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
 
         self.assertIsNotNone(self.base_processor.payment_info)
-        self.assertIn(self.form_data['credit-card-cvv_number'], self.base_processor.payment_info.data['credit-card-cvv_number'])
+        self.assertIn(self.form_data['credit_card_form']['cvv_number'], self.base_processor.payment_info.data['cvv_number'])
 
     def test_get_checkout_context_success(self):
         context = self.base_processor.get_checkout_context()
@@ -263,7 +268,12 @@ class AuthorizeNetProcessorTests(TestCase):
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
-        self.form_data = QueryDict('billing-address-name=Home&billing-address-company=Whitemoon Dreams&billing-address-country=581&billing-address-address_1=221B Baker Street&billing-address-address_2=&billing-address-locality=Marylebone&billing-address-state=California&billing-address-postal_code=90292&credit-card-full_name=Bob Ross&credit-card-card_number=5424000000000015&credit-card-expire_month=12&credit-card-expire_year=2030&credit-card-cvv_number=900&credit-card-payment_type=10', mutable=True)
+        self.form_data = { 
+            'billing_address_form': 
+                {'name':'Home','company':'Whitemoon Dreams','country':'581','address_1':'221B Baker Street','address_2':'','locality':'Marylebone','state':'California','postal_code':'90292'}, 
+            'credit_card_form': 
+                {'full_name':'Bob Ross','card_number':'5424000000000015','expire_month':'12','expire_year':'2030','cvv_number':'900','payment_type':'10'}
+            }
         self.subscription_offer = Offer.objects.get(pk=4)
 
     
@@ -302,11 +312,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.existing_invoice.save()
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
         
         self.processor.process_payment(request)
 
-        # print(self.processor.transaction_message)
+        print(self.processor.transaction_message)
         self.assertIsNotNone(self.processor.payment)
         self.assertTrue(self.processor.payment.success)
         self.assertEquals(Invoice.InvoiceStatus.COMPLETE, self.processor.invoice.status)
@@ -317,10 +327,10 @@ class AuthorizeNetProcessorTests(TestCase):
         billing information. The test send an invalid card number to test the 
         transation fails
         """
-        self.form_data['credit-card-card_number'] = '5424000000015'
+        self.form_data['credit_card_form']['card_number'] = '5424000000015'
 
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.process_payment(request)
 
@@ -334,11 +344,11 @@ class AuthorizeNetProcessorTests(TestCase):
         billing information. The test send an invalid expiration date to test the 
         transation fails.
         """
-        self.form_data['credit-card-expire_month'] = '12'
-        self.form_data['credit-card-expire_year'] = '2000'
+        self.form_data['credit_card_form']['expire_month'] = '12'
+        self.form_data['credit_card_form']['expire_year'] = '2000'
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.process_payment(request)
 
@@ -355,11 +365,11 @@ class AuthorizeNetProcessorTests(TestCase):
         Check a failed transaction due to cvv number does not match card number.
         CVV: 901 
         """
-        self.form_data['credit-card-cvv_number'] = '901'
-        self.form_data['credit-card-card_number'] = choice(self.VALID_CARD_NUMBERS)
+        self.form_data['credit_card_form']['cvv_number'] = '901'
+        self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
@@ -375,11 +385,11 @@ class AuthorizeNetProcessorTests(TestCase):
         Check a failed transaction due to cvv number does not match card number.
         CVV: 902
         """
-        self.form_data['credit-card-cvv_number'] = '902'
-        self.form_data['credit-card-card_number'] = choice(self.VALID_CARD_NUMBERS)
+        self.form_data['credit_card_form']['cvv_number'] = '902'
+        self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
@@ -396,11 +406,11 @@ class AuthorizeNetProcessorTests(TestCase):
         Test Guide: https://developer.authorize.net/hello_world/testing_guide.html
         CVV: 903
         """
-        self.form_data['credit-card-cvv_number'] = '903'
-        self.form_data['credit-card-card_number'] = choice(self.VALID_CARD_NUMBERS)
+        self.form_data['credit_card_form']['cvv_number'] = '903'
+        self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
@@ -416,11 +426,11 @@ class AuthorizeNetProcessorTests(TestCase):
         Check a failed transaction due to cvv number is not processed.
         CVV: 904 
         """
-        self.form_data['credit-card-cvv_number'] = '904'
-        self.form_data['credit-card-card_number'] = choice(self.VALID_CARD_NUMBERS)
+        self.form_data['credit_card_form']['cvv_number'] = '904'
+        self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
@@ -441,10 +451,10 @@ class AuthorizeNetProcessorTests(TestCase):
         A = Street Address: Match -- First 5 Digits of ZIP: No Match
         Postal Code: 46201
         """
-        self.form_data['billing-address-postal_code'] = '46201'
+        self.form_data['billing_address_form']['postal_code'] = '46201'
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
@@ -457,11 +467,11 @@ class AuthorizeNetProcessorTests(TestCase):
         E = AVS Error
         Postal Code: 46203
         """
-        self.form_data['billing-address-postal_code'] = '46203'
-        self.form_data['credit-card-card_number'] = '2223000010309711'
+        self.form_data['billing_address_form']['postal_code'] = '46203'
+        self.form_data['credit_card_form']['card_number'] = '2223000010309711'
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
                 
         self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
@@ -474,11 +484,11 @@ class AuthorizeNetProcessorTests(TestCase):
         G = Non U.S. Card Issuing Bank
         Postal Code: 46204
         """
-        self.form_data['billing-address-postal_code'] = '46204'
-        self.form_data['credit-card-card_number'] = '4007000000027'
+        self.form_data['billing_address_form']['postal_code'] = '46204'
+        self.form_data['credit_card_form']['card_number'] = '4007000000027'
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
@@ -491,11 +501,11 @@ class AuthorizeNetProcessorTests(TestCase):
         N = Street Address: No Match -- First 5 Digits of ZIP: No Match
         Postal Code: 46205
         """
-        self.form_data['billing-address-postal_code'] = '46205'
-        self.form_data['credit-card-card_number'] = '2223000010309711'
+        self.form_data['billing_address_form']['postal_code'] = '46205'
+        self.form_data['credit_card_form']['card_number'] = '2223000010309711'
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
@@ -508,11 +518,11 @@ class AuthorizeNetProcessorTests(TestCase):
         R = Retry, System Is Unavailable
         Postal Code: 46207
         """
-        self.form_data['billing-address-postal_code'] = '46207'
-        self.form_data['credit-card-card_number'] = '5424000000000015'
+        self.form_data['billing_address_form']['postal_code'] = '46207'
+        self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
@@ -527,10 +537,10 @@ class AuthorizeNetProcessorTests(TestCase):
         S = AVS Not Supported by Card Issuing Bank
         Postal Code: 46208
         """
-        self.form_data['billing-address-postal_code'] = '46208'
+        self.form_data['billing_address_form']['postal_code'] = '46208'
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.process_payment(request)
 
@@ -542,11 +552,11 @@ class AuthorizeNetProcessorTests(TestCase):
         U = Address Information For This Cardholder Is Unavailable
         Postal Code: 46209
         """
-        self.form_data['billing-address-postal_code'] = '46209'
-        self.form_data['credit-card-card_number'] = '5424000000000015'
+        self.form_data['billing_address_form']['postal_code'] = '46209'
+        self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
@@ -559,11 +569,11 @@ class AuthorizeNetProcessorTests(TestCase):
         W = Street Address: No Match -- All 9 Digits of ZIP: Match
         Postal Code: 46211
         """
-        self.form_data['billing-address-postal_code'] = '46211'
-        self.form_data['credit-card-card_number'] = '5424000000000015'
+        self.form_data['billing_address_form']['postal_code'] = '46211'
+        self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
@@ -576,11 +586,11 @@ class AuthorizeNetProcessorTests(TestCase):
         X = Street Address: Match -- All 9 Digits of ZIP: Match
         Postal Code: 46214
         """
-        self.form_data['billing-address-postal_code'] = '46214'
-        self.form_data['credit-card-card_number'] = '5424000000000015'
+        self.form_data['billing_address_form']['postal_code'] = '46214'
+        self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
@@ -593,11 +603,11 @@ class AuthorizeNetProcessorTests(TestCase):
         Z = Street Address: No Match - First 5 Digits of ZIP: Match
         Postal Code: 46217
         """
-        self.form_data['billing-address-postal_code'] = '46217'
-        self.form_data['credit-card-card_number'] = '5424000000000015'
+        self.form_data['billing_address_form']['postal_code'] = '46217'
+        self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.processor.invoice.total = randrange(1,1000)
         self.processor.process_payment(request)
@@ -735,7 +745,7 @@ class AuthorizeNetProcessorTests(TestCase):
         Test a successfull subscription enrollment.
         """        
         request = HttpRequest()
-        request.POST = self.form_data
+        request.session = self.form_data
 
         self.existing_invoice.add_offer(self.subscription_offer)
         self.existing_invoice.add_offer(self.subscription_offer)

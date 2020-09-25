@@ -347,8 +347,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
-        self.get_billing_address_form_data(request.session.get['billing_address_form'], BillingAddressForm)
-        self.get_payment_info_form_data(request.session.get['credit_card_form'], CreditCardForm)
+        self.get_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
+        self.get_payment_info_form_data(request.session.get('credit_card_form'), CreditCardForm)
 
         period_length = subscription.offer.term_details['period_length']
         payment_occurrences = subscription.offer.term_details['payment_occurrences']
