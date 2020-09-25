@@ -2,6 +2,7 @@ from calendar import monthrange
 from datetime import datetime
 from django import forms
 from django.apps import apps
+from django.contrib.auth import get_user_model
 from django.db.models import IntegerChoices
 from django.forms import inlineformset_factory
 from django.forms.widgets import SelectDateWidget
@@ -12,7 +13,7 @@ from .models import Address, Offer, OrderItem, Price
 from .models.choice import PaymentTypes, TermType
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
-
+UserModel = get_user_model()
 # class AddToCartModelForm(forms.ModelForm):
 
 #     class Meta:
@@ -27,7 +28,13 @@ Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 # #         model = Refund
 # #         fields = ['reason']
 
+class AccountValidationForm(forms.ModelForm):
 
+    class Meta:
+        model = UserModel
+        fields = ['first_name', 'last_name', 'email']
+
+        
 class PriceForm(forms.ModelForm):
     start_date = forms.DateField(widget=SelectDateWidget())
     end_date = forms.DateField(widget=SelectDateWidget())
@@ -52,7 +59,7 @@ class OfferForm(forms.ModelForm):
 
     class Meta:
         model = Offer
-        fields = ['name', 'start_date', 'end_date', 'terms', 'term_details', 'term_start_date', 'available', 'bundle']
+        fields = ['name', 'start_date', 'end_date', 'terms', 'term_details', 'term_start_date', 'available', 'offer_description']
 
     def clean(self):
         cleaned_data = super().clean()

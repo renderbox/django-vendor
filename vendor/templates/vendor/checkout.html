@@ -1,77 +1,130 @@
 {% extends "vendor/base.html" %}
-{% load static %}
-
-{% block extra_css %}
-{% endblock %}
-
-{% block extra_head_js %}
-{% endblock %}
+{% load i18n %}
 
 {% block vendor_content %}
-<div class="py-5 text-center">
-  <h2>Checkout form</h2>
-  <p class="lead">Below is an example form built entirely with Bootstrap’s form controls. Each required form group has a
-    validation state that can be triggered by attempting to submit the form without completing it.</p>
-</div>
-<div class="row">
-  <!-- Table -->
-  {% comment %}
-  <div class='col-12'>
-    <table class="table">
-      <thead>
-        <tr>
-          <th scope="col">#</th>
-          <th scope="col">Item</th>
-          <th scope="col">Price</th>
-          <th scope="col">Quantity</th>
-          <th scope="col">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for order_item in invoice.order_items.all %}
-        <tr class="border">
-          <td>{{ forloop.counter }}</td>
-          <td>{{ order_item.name}}</td>
-          <td>{{ order_item.price}}</td>
-          <td>{{ order_item.quantity}}</td>
-          <td>{{ order_item.total}}</td>
-        </tr>
-        {% endfor %}
-        <tr class="border-0">
-          <td class="border-0"></td>
-          <td class="border-0"></td>
-          <td class="border-0"></td>
-          <td class="border"><strong>Shipping</strong></td>
-          <td class="border">${{ invoice.shipping }}</td>
-        </tr>
-        <tr class="border-0">
-          <td class="border-0"></td>
-          <td class="border-0"></td>
-          <td class="border-0"></td>
-          <td class="border"><strong>Tax</strong></td>
-          <td class="border">${{ invoice.tax }}</td>
-        </tr>
-        <tr class="border-0">
-          <td class="border-0"></td>
-          <td class="border-0"></td>
-          <td class="border-0"></td>
-          <td class="border"><strong>Total</strong></td>
-          <td class="border">${{ invoice.total }}</td>
-        </tr>
-      </tbody>
-    </table>
+<div class='row mx-md-5 px-md-3'>
+  <div class='col-12 my-4'>
+    <h1>{% trans 'SECURE CHECKOUT' %}</h1>
   </div>
-  {% endcomment %}
-  <!-- Cart Summery -->
-  <div class="col-md-4 order-md-2 mb-4">
-    <h4 class="d-flex justify-content-between align-items-center mb-3">
-      <span class="text-muted">Your cart</span>
-      <span class="badge badge-secondary badge-pill">{{ invoice.order_items.all.count}}</span>
-    </h4>
-    <ul class="list-group mb-3">
+  <div class='col-md-8'>
+    <div class="accordion" id="checkout_accordion">
+      <div class="card border-0">
+        <div class="card-header mb-0 text-white p-0 border-0 mb-3" id="account_info">
+          <div class='btn-group w-100'>
+            <button class="btn bg-accent font-weight-bold text-dark rounded-0 border-0 px-3 py-3 m-0" type="button">
+              1
+            </button>
+            <button class="btn btn-block font-weight-bold text-left bg-dark text-white rounded-0 border-0 py-3 m-0"
+              type="button">
+              Info
+            </button>
+          </div>
+        </div>
 
+        {% if 'account' in request.get_full_path %}
+        <div id="collapseOne" class="collapse show" aria-labelledby="account_info" data-parent="#checkout_accordion">
+          <div class="card-body">
+            <form method="post">
+              {% csrf_token %}
+              <h3 class='card-title'>
+                Account Info
+              </h3>
+              {{ form }}
+              <button class="btn btn-primary btn-lg btn-block w-25" type="submit">Continue</button>
+            </form>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card border-0">
+      <div class="card-header mb-0 text-white p-0 border-0 mb-3" id="billing_info">
+        <div class='btn-group w-100'>
+          <button class="btn bg-accent  font-weight-bold text-dark rounded-0 border-0 px-3 py-3 m-0" type="button">
+            2
+          </button>
+          <button class="btn btn-block font-weight-bold text-left bg-dark text-white rounded-0 border-0 py-3 m-0"
+            type="button">
+            Billing
+          </button>
+        </div>
+      </div>
+
+      {% if 'payment' in request.get_full_path %}
+      <div id="collapseTwo" class="collapse show" aria-labelledby="billing_info" data-parent="#checkout_accordion">
+        <div class="card-body">
+          <form id="payment-form" method="post">
+            {% csrf_token %}
+            <h3 class='card-title'>
+              Billing Address
+            </h3>
+            {% include "./includes/billing_address_form.html" with billing_address_form=billing_address_form %}
+            <h3 class='card-title'>
+              Payment Method
+            </h3>
+            {% include "./includes/payment_form.html" with credit_card_form=credit_card_form %}
+          </form>
+          <button form="payment-form" name='only-validate' class="btn btn-primary btn-lg btn-block w-25"
+            type="submit">Continue</button>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="card border-0">
+      <div class="card-header mb-0 text-white p-0 border-0 mb-3" id="review">
+        <div class='btn-group w-100'>
+          <button class="btn bg-accent font-weight-bold text-dark rounded-0 border-0 px-3 py-3 m-0" type="button">
+            3
+          </button>
+          <button class="btn btn-block font-weight-bold text-left bg-dark text-white rounded-0 border-0 py-3 m-0"
+            type="button">
+            Review
+          </button>
+        </div>
+      </div>
+
+      {% if 'review' in request.get_full_path %}
+      <div id="collapseThree" class="collapse show" aria-labelledby="review" data-parent="#checkout_accordion">
+        <div class="card-body">
+          <h3 class='card-title'>
+            Account Info
+          </h3>
+          <p id="review-account-name" class="mb-0">{{user.first_name}} {{user.last_name}}</p>
+          <p id="review-account-email">{{user.email}}</p>
+          <h3 class='card-title'>
+            Billing Address
+          </h3>
+          <p id="review-billing-name" class="mb-0">{{request.session.credit_card_form.full_name}}</p>
+          <p id="review-address-1" class="mb-0">{{request.session.billing_address_form.address_1}},
+            {{request.session.billing_address_form.address_2}}</p>
+          <p id="review-address-2">{{request.session.billing_address_form.state}},
+            {{request.session.billing_address_form.country}},{{request.session.billing_address_form.postal_code}}
+          </p>
+          <h3 class='card-title'>
+            Payment Method
+          </h3>
+          <p id="review-payment-name" class="mb-0">{{request.session.credit_card_form.full_name}}</p>
+          <p id="review-payment-card">Card end in
+            {{request.session.credit_card_form.card_number|slice:"-4:"}}</p>
+          <form method="post">
+            {% csrf_token %}
+            <button class="btn btn-primary btn-lg btn-block w-25" type="submit">Place Order</button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+  <div class="col-md-4 order-md-2 mb-4 mt-2">
+    <h3 class="d-flex justify-content-between align-items-center mb-3">
+      In Your Cart
+    </h3>
+
+    <ul class="list-group mb-3 border-0">
       {% for item in invoice.order_items.all %}
-      <li class="list-group-item d-flex justify-content-between lh-condensed">
+      <li class="px-0 d-flex justify-content-between lh-condensed">
         <div>
           <h6 class="my-0">{{ item.name }}</h6>
           <small class="text-muted">Unit Price: {{item.price}}</small>
@@ -81,31 +134,21 @@
       </li>
       {% endfor %}
 
-      {% comment %}
-      <li class="list-group-item d-flex justify-content-between bg-light">
-        <div class="text-success">
-          <h6 class="my-0">Promo code</h6>
-          <small>EXAMPLECODE</small>
-        </div>
-        <span class="text-success">-$5</span>
-      </li>
-      {% endcomment %}
-
-      <li class="list-group-item d-flex justify-content-between">
-        <span>Shipping</span>
-        <strong>${{ invoice.shipping }}</strong>
+      <li class="px-0 border-0 d-flex justify-content-between">
+        <span>Subtotal</span>
+        <span>${{ invoice.subtotal }}</span>
       </li>
 
-      <li class="list-group-item d-flex justify-content-between">
-        <span>Tax</span>
-        <strong>${{ invoice.tax }}</strong>
+      <li class="px-0 justify-content-between" style="list-style-type: none;">
+        <hr class="my-3 border-dark border-5" />
       </li>
 
-      <li class="list-group-item d-flex justify-content-between">
-        <span>Total (USD)</span>
-        <strong>${{ invoice.total }}</strong>
+      <li class="px-0 border-0 d-flex justify-content-between">
+        <span class="font-weight-bolder">Total (USD)</span>
+        <span class="text-primary">${{ invoice.total }}</span>
       </li>
     </ul>
+
 
     {% comment %}
     <form class="card p-2">
@@ -118,38 +161,6 @@
     </form>
     {% endcomment %}
   </div>
-  <!-- Billing Info -->
-  <div class='card'>
-    <div class='card-header'>
-      Payment
-    </div>
-    <div class='card-body'>
-      <form method="post">
-        {% csrf_token %}
-        <h5 class='card-title'>
-          Billing Address
-        </h5>
-        {% include "./includes/billing_address_form.html" with billing_address_form=billing_address_form %}
-        <h5 class='card-title'>
-          Payment Method
-        </h5>
-        {% include "./includes/payment_form.html" with credit_card_form=credit_card_form %}
-        <button class="btn btn-primary btn-lg btn-block" type="submit">Submit Payment</button>
-      </form>
-    </div>
-  </div>
 </div>
 
-{% endblock %}
-
-
-
-{% block extra_js %}
-
-<!-- <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
-  integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script> -->
-<!-- <script src="/docs/4.4/dist/js/bootstrap.bundle.min.js"
-  integrity="sha384-6khuMg9gaYr5AxOqhkVIODVIvm9ynTT5J4V1cfthmT+emCG6yVmEZsRHdxlotUnm" crossorigin="anonymous"></script> -->
-
-{{ google_address_form.media }}
 {% endblock %}
