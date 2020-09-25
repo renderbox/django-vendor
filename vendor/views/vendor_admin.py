@@ -121,9 +121,6 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
         if len(form.cleaned_data['products']):
             offer.bundle=True
         
-        if (not offer.offer_description) and offer.bundle:
-            offer.offer_description = str(form.cleaned_data['products'][0].description)
-
         offer.save()
 
         for product in form.cleaned_data['products']:
@@ -161,9 +158,6 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
         offer = offer_form.save(commit=False)
         if len(offer_form.cleaned_data['products']):
             offer.bundle=True
-        
-        if (not offer.offer_description) and offer.bundle:
-            offer.offer_description = str(offer_form.cleaned_data['products'][0].description)
 
         offer.save()
         for product in offer_form.cleaned_data['products']:

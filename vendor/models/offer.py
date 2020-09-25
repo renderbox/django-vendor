@@ -39,7 +39,7 @@ class Offer(CreateUpdateModelBase):
     term_start_date = models.DateTimeField(_("Term Start Date"), help_text=_("When is this product available to use?"), blank=True, null=True) # Useful for Event Tickets or Pre-Orders
     available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))
     bundle = models.BooleanField(_("Is a Bundle?"), default=False, help_text=_("Is this a product bundle? (auto-generated)"))  # Auto-generated based on if the count of the products is greater than 1.
-    offer_description = models.TextField(_("Offer Description"), blank=True)
+    offer_description = models.TextField(_("Offer Description"), blank=True, null=True)
 
     objects = models.Manager()
     on_site = CurrentSiteManager()
