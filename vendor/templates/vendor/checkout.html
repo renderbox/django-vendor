@@ -21,8 +21,8 @@
           </div>
         </div>
 
-        <div id="collapseOne" class="collapse {% if 'account' in request.get_full_path %}show{% endif %}"
-          aria-labelledby="account_info" data-parent="#checkout_accordion">
+        {% if 'account' in request.get_full_path %}
+        <div id="collapseOne" class="collapse show" aria-labelledby="account_info" data-parent="#checkout_accordion">
           <div class="card-body">
             <form method="post">
               {% csrf_token %}
@@ -34,6 +34,7 @@
             </form>
           </div>
         </div>
+        {% endif %}
       </div>
     </div>
     <div class="card border-0">
@@ -49,8 +50,8 @@
         </div>
       </div>
 
-      <div id="collapseTwo" class="collapse {% if 'payment' in request.get_full_path %}show{% endif %}"
-        aria-labelledby="billing_info" data-parent="#checkout_accordion">
+      {% if 'payment' in request.get_full_path %}
+      <div id="collapseTwo" class="collapse show" aria-labelledby="billing_info" data-parent="#checkout_accordion">
         <div class="card-body">
           <form id="payment-form" method="post">
             {% csrf_token %}
@@ -67,7 +68,9 @@
             type="submit">Continue</button>
         </div>
       </div>
+      {% endif %}
     </div>
+
     <div class="card border-0">
       <div class="card-header mb-0 text-white p-0 border-0 mb-3" id="review">
         <div class='btn-group w-100'>
@@ -81,9 +84,8 @@
         </div>
       </div>
 
-
-      <div id="collapseThree" class="collapse {% if 'review' in request.get_full_path %}show{% endif %}"
-        aria-labelledby="review" data-parent="#checkout_accordion">
+      {% if 'review' in request.get_full_path %}
+      <div id="collapseThree" class="collapse show" aria-labelledby="review" data-parent="#checkout_accordion">
         <div class="card-body">
           <h3 class='card-title'>
             Account Info
@@ -93,24 +95,26 @@
           <h3 class='card-title'>
             Billing Address
           </h3>
-          <p id="review-billing-name" class="mb-0">{{credit_card_form.cleaned_data.full_name}}</p>
-          <p id="review-address-1" class="mb-0">{{billing_address_form.cleaned_data.address_1}},
-            {{billing_address_form.cleaned_data.address_2}}</p>
-          <p id="review-address-2">{{billing_address_form.cleaned_data.state}},
-            {{billing_address_form.cleaned_data.country}},{{billing_address_form.cleaned_data.postal_code}}
+          <p id="review-billing-name" class="mb-0">{{request.session.credit_card_form.full_name}}</p>
+          <p id="review-address-1" class="mb-0">{{request.session.billing_address_form.address_1}},
+            {{request.session.billing_address_form.address_2}}</p>
+          <p id="review-address-2">{{request.session.billing_address_form.state}},
+            {{request.session.billing_address_form.country}},{{request.session.billing_address_form.postal_code}}
           </p>
           <h3 class='card-title'>
             Payment Method
           </h3>
-          <p id="review-payment-name" class="mb-0">{{credit_card_form.cleaned_data.full_name}}</p>
+          <p id="review-payment-name" class="mb-0">{{request.session.credit_card_form.full_name}}</p>
           <p id="review-payment-card">Card end in
-            {{credit_card_form.cleaned_data.card_number|slice:":3"}}</p>
-            <form method="post">
-              {% csrf_token %}
-              <button class="btn btn-primary btn-lg btn-block w-25" type="submit">Place Order</button>
-            </form>
+            {{request.session.credit_card_form.card_number|slice:"-4:"}}</p>
+          <form method="post">
+            {% csrf_token %}
+            <button class="btn btn-primary btn-lg btn-block w-25" type="submit">Place Order</button>
+          </form>
         </div>
       </div>
+      {% endif %}
+
     </div>
   </div>
   <div class="col-md-4 order-md-2 mb-4 mt-2">
