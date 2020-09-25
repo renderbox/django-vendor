@@ -45,6 +45,7 @@ class AdminInvoiceDetailView(LoginRequiredMixin, DetailView):
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
 
+
 class AdminProductListView(LoginRequiredMixin, ListView):
     '''
     Creates a Product to be added to offers
@@ -108,17 +109,24 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
 
         return context
 
-    def post(self, request, uuid):
-        offer_form = self.form_class(request.POST)
-        offer = offer_form.save(commit=False)
-        price_formset = PriceFormSet(request.POST, request.FILES, instance=Offer.objects.get(uuid=uuid))
 
-        if not (price_formset.is_valid() or offer_form.is_valid()):
-            return render(request, self.template_name, {'form': offer_form, 'formsert': price_formset})
+    def form_valid(self, form):
+        price_formset = PriceFormSet(self.request.POST, self.request.FILES, instance=Offer.objects.get(uuid=self.kwargs['uuid']))
+
+        if not (price_formset.is_valid() or form.is_valid()):
+            return render(self.request, self.template_name, {'form': form, 'formsert': price_formset})
+
+        offer = form.save(commit=False)
+
+        if len(form.cleaned_data['products']):
+            offer.bundle=True
+        
+        if (not offer.bundle_description) and offer.bundle:
+            offer.bundle_description = str(form.cleaned_data['products'][0].description)
 
         offer.save()
 
-        for product in offer_form.cleaned_data['products']:
+        for product in form.cleaned_data['products']:
             offer.products.add(product)
 
         for price_form in price_formset:
@@ -127,7 +135,6 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
             price.save()
 
         return redirect('vendor_admin:manager-offer-list')
-
 
 class AdminOfferCreateView(LoginRequiredMixin, CreateView):
     '''
@@ -151,9 +158,16 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
             return render(request, self.template_name, {'form': offer_form, 'formsert': price_formset})
 
         offer = offer_form.save(commit=False)
+        if len(offer_form.cleaned_data['products']):
+            offer.bundle=True
+        
+        if (not offer.bundle_description) and offer.bundle:
+            offer.bundle_description = str(offer_form.cleaned_data['products'][0].description)
+
         offer.save()
         for product in offer_form.cleaned_data['products']:
             offer.products.add(product)
+
 
         for price_form in price_formset:
             price = price_form.save(commit=False)
