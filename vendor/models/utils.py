@@ -2,6 +2,12 @@ import random
 import string
 
 from django.contrib.sites.models import Site
+from django.utils.module_loading import import_string
+
+from vendor.config import VENDOR_DATA_ENCODER
+
+encode = import_string('{}.encode'.format(VENDOR_DATA_ENCODER))
+decode = import_string('{}.decode'.format(VENDOR_DATA_ENCODER))
 
 ###########
 # UTILITIES

@@ -121,11 +121,11 @@ class PaymentProcessorBase(object):
     def get_transaction_id(self):
         return "{}-{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk, str(self.payment.created)[-12:-6])
 
-    def get_billing_address_form_data(self, form_data, form_class, prefix=""):
-        self.billing_address = form_class(form_data, prefix=prefix)
+    def get_billing_address_form_data(self, form_data, form_class):
+        self.billing_address = form_class(form_data)
     
-    def get_payment_info_form_data(self, form_data, form_class, prefix=""):
-        self.payment_info = form_class(form_data, prefix=prefix)
+    def get_payment_info_form_data(self, form_data, form_class):
+        self.payment_info = form_class(form_data)
 
     #-------------------
     # Data for the View
