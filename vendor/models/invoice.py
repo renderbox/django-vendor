@@ -112,10 +112,6 @@ class Invoice(CreateUpdateModelBase):
     def get_payment_billing_address(self):
         return self.payments.get(success=True).billing_address.get_address()
 
-    # def save(self):
-    #     pass
-    # DEFAULT_CURRENCY
-
 
 class OrderItem(CreateUpdateModelBase):
     '''
