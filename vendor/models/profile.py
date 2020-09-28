@@ -57,3 +57,13 @@ class CustomerProfile(CreateUpdateModelBase):
         
         return False
 
+    def get_cart_items_count(self):
+        invoices = self.invoices.filter(site=Site.objects.get_current(), status=Invoice.InvoiceStatus.CART)
+
+        if invoices:
+            cart = invoices.all().first()
+        else:
+            cart = self.get_cart()
+
+        return cart.order_items.all().count()
+
