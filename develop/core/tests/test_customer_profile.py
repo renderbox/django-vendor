@@ -12,13 +12,19 @@ class ModelCustomerProfileTests(TestCase):
     fixtures = ['user', 'unit_test']
 
     def setUp(self):
-        pass
+        self.user = User(username='test', first_name='Bob', last_name='Ross', password='helloworld')
+        self.user.save()
+        self.customer_profile = CustomerProfile()
+
+        self.customer_profile_user = CustomerProfile()
+        self.customer_profile_user.user = User.objects.get(pk=1)
+        self.customer_profile_user.save()
 
     def test_default_site_id_saved(self):
-        cp = CustomerProfile()
-        cp.user = User.objects.get(pk=1)
+        self.customer_profile.user = User.objects.get(pk=1)
+        self.customer_profile.save()
 
-        self.assertEquals(Site.objects.get_current(), cp.site)
+        self.assertEquals(Site.objects.get_current(), self.customer_profile.site)
     
     def test_get_invoice_cart(self):
         cp = CustomerProfile.objects.get(pk=1)
@@ -27,15 +33,7 @@ class ModelCustomerProfileTests(TestCase):
         self.assertIsNotNone(invoice)
 
     def test_new_invoice_cart(self):
-        new_user = User()
-        new_user.username = 'WMD'
-        new_user.save()
-
-        new_cp = CustomerProfile()
-        new_cp.user = User.objects.get(pk=new_user.pk)
-        new_cp.save()
-
-        new_invoice = new_cp.get_cart()
+        new_invoice = self.customer_profile_user.get_cart()
         
         self.assertIsNotNone(new_invoice)
     
@@ -51,6 +49,23 @@ class ModelCustomerProfileTests(TestCase):
 
         self.assertNotEqual(invoice.pk, new_invoice.pk)
     
+    def test_get_cart_items_count_new_user(self):
+        customer_profile = CustomerProfile(user=self.user)
+        customer_profile.save()
+        self.user.customer_profile.add(customer_profile)
+
+        count = self.user.customer_profile.get(site=Site.objects.get_current()).get_cart_items_count()
+
+        self.assertEquals(count, 0)
+
+    def test_get_cart_items_count_no_items(self):
+        customer_profile = CustomerProfile.objects.get(pk=1)
+
+        count = customer_profile.get_cart_items_count()
+
+        self.assertEquals(count, 3)
+
+
 
 class ViewCustomerProfileTests(TestCase):
     def setUp(self):
