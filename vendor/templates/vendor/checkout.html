@@ -20,8 +20,7 @@
             </button>
           </div>
         </div>
-
-        {% if 'account' in request.get_full_path %}
+        {% if request.resolver_match.url_name == 'checkout-account' %}
         <div id="collapseOne" class="collapse show" aria-labelledby="account_info" data-parent="#checkout_accordion">
           <div class="card-body">
             <form method="post">
@@ -50,7 +49,7 @@
         </div>
       </div>
 
-      {% if 'payment' in request.get_full_path %}
+      {% if request.resolver_match.url_name == 'checkout-payment' %}
       <div id="collapseTwo" class="collapse show" aria-labelledby="billing_info" data-parent="#checkout_accordion">
         <div class="card-body">
           <form id="payment-form" method="post">
@@ -84,7 +83,7 @@
         </div>
       </div>
 
-      {% if 'review' in request.get_full_path %}
+      {% if request.resolver_match.url_name == 'checkout-review' %}
       <div id="collapseThree" class="collapse show" aria-labelledby="review" data-parent="#checkout_accordion">
         <div class="card-body">
           <h3 class='card-title'>
