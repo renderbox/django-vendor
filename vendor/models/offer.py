@@ -26,7 +26,8 @@ class Offer(CreateUpdateModelBase):
     '''
     Offer attaches to a record from the designated VENDOR_PRODUCT_MODEL.  
     This is so more than one offer can be made per product, with different 
-    priorities.
+    priorities.  It also allows for the bundling of several products into
+    a single Offer on the site.
     '''
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)                                # Used to track the product
     slug = AutoSlugField(populate_from='name', unique_with='site__id')                                               # SEO friendly 
@@ -52,11 +53,14 @@ class Offer(CreateUpdateModelBase):
         return self.name
 
     def get_msrp(self, currency):
+        """
+        Grabs the MSRP on all objects included in the offer and returns the sum total.
+        """
         return sum([p.get_msrp(currency) for p in self.products.all()])
 
     def current_price(self):
         '''
-        Check if there are any price options active, otherwise use msrp.
+        Finds the highest priority active price and returns that, otherwise returns msrp total.
         '''
         now = timezone.now()
         price = self.prices.filter( Q(start_date__lte=now) | Q(start_date=None),
