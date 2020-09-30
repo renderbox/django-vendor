@@ -77,7 +77,7 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-class AccountValidationView(LoginRequiredMixin, FormView):
+class AccountInformationView(LoginRequiredMixin, FormView):
     form_class = AccountValidationForm
     template_name = 'vendor/checkout.html'
 
