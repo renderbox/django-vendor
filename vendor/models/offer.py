@@ -89,3 +89,7 @@ class Offer(CreateUpdateModelBase):
             return self.offer_description
         else:
             return self.products.all().first().description
+    @property
+    def savings(self):
+        savings = self.get_msrp(DEFAULT_CURRENCY) - self.get_current_price()
+        return savings
