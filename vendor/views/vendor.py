@@ -122,7 +122,7 @@ class AccountInformationView(LoginRequiredMixin, FormView):
             return redirect('vendor:checkout-account', uuid=kwargs.get('uuid'))
 
 
-class CheckoutView(LoginRequiredMixin, TemplateView):
+class PaymentView(LoginRequiredMixin, TemplateView):
     '''
     Review items and submit Payment
     '''

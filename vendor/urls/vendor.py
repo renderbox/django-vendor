@@ -22,6 +22,6 @@ urlpatterns = [
     # path('retrieve/refund/requests/', vendor_views.RetrieveRefundRequestsView.as_view(), name='vendor-retrieve-refund-requests'),
     # path('issue/refund/<int:id>/', vendor_views.IssueRefundView.as_view(), name='vendor-issue-refund'),
     path('checkout/<uuid:uuid>/account/', vendor_views.AccountInformationView.as_view(), name="checkout-account"),
-    path('checkout/<uuid:uuid>/payment/', vendor_views.CheckoutView.as_view(), name="checkout-payment"),
+    path('checkout/<uuid:uuid>/payment/', vendor_views.PaymentView.as_view(), name="checkout-payment"),
     path('checkout/<uuid:uuid>/review/', vendor_views.ReviewCheckout.as_view(), name="checkout-review"),
 ]
