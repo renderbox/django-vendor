@@ -89,17 +89,17 @@ PriceFormSet = inlineformset_factory(
 
 
 class AddressForm(forms.ModelForm):
-    company = forms.CharField(label=_('Company'), required=False)
-    address_1 = forms.CharField(label=_('Address 1'), required=True)
-    locality = forms.CharField(label=_('City/Locality'), required=True)
-    state = forms.CharField(label=_('State'), required=True)
-    postal_code = forms.CharField(label=_('Postal Code'), required=True)
 
-    field_order = ['name', 'company', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
     class Meta:
         model = Address
-        fields = ['name', 'company', 'address_1', 'address_2', 'locality', 'state', 'country', 'postal_code']
+        fields = '__all__'
 
+
+class BillingAddressForm(AddressForm):
+    same_as_shipping = forms.CheckboxInput(label=_("Same as Shipping Address"))
+    company = forms.CharField(label=_('Company'), required=False)
+
+    field_order = ['same_as_shipping', 'name', 'company', 'first_name', 'last_name', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
 
 class CreditCardField(forms.CharField):
 
