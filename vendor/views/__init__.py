@@ -18,7 +18,7 @@ from django.http import HttpResponse
 from vendor.models import Offer, OrderItem, Invoice, Payment, Address
 from vendor.models.address import Address as GoogleAddress
 from vendor.processors import PaymentProcessor
-from vendor.forms import AddressForm, CreditCardForm
+from vendor.forms import BillingAddressForm, CreditCardForm
 
 from .vendor_admin import AdminDashboardView, AdminInvoiceDetailView, AdminInvoiceListView
 
@@ -75,7 +75,7 @@ payment_processor = PaymentProcessor              # The Payment Processor config
 #     Review items and submit Payment
 #     '''
 #     template_name = "vendor/checkout.html"
-#     # billing_address_form_class = AddressForm
+#     # billing_address_form_class = BillingAddressForm
 #     # card_form_class = CreditCardForm
 #     # payment_processor = PaymentProcessor
 
@@ -114,7 +114,7 @@ payment_processor = PaymentProcessor              # The Payment Processor config
 #         invoice = Invoice.objects.get(profile=profile, status=Invoice.InvoiceStatus.CART)
                 
 #         credit_card_form = CreditCardForm(request.POST, prefix='credit-card')
-#         billing_address_form = AddressForm(request.POST, prefix='billing-address')
+#         billing_address_form = BillingAddressForm(request.POST, prefix='billing-address')
         
 #         if not (billing_address_form.is_valid() or credit_card_form.is_valid()):
 #             return render(request, self.template_name, processor.get_checkout_context(context))

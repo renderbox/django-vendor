@@ -20,7 +20,7 @@ from vendor.models.address import Address as GoogleAddress
 from vendor.models.choice import TermType
 from vendor.models.utils import set_default_site_id
 from vendor.processors import PaymentProcessor
-from vendor.forms import AddressForm, CreditCardForm, AccountValidationForm
+from vendor.forms import BillingAddressForm, CreditCardForm, AccountValidationForm
 
 
 # The Payment Processor configured in settings.py
@@ -144,7 +144,7 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
         invoice = Invoice.objects.get(uuid=kwargs.get('uuid'))
 
         credit_card_form = CreditCardForm(request.POST)
-        billing_address_form = AddressForm(request.POST)
+        billing_address_form = BillingAddressForm(request.POST)
 
         processor = payment_processor(invoice)
         if not (billing_address_form.is_valid() and credit_card_form.is_valid()):

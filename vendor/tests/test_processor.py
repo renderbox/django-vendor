@@ -10,7 +10,7 @@ from django.test import TestCase, Client
 from unittest import skipIf
 from random import randrange, choice
 from string import ascii_letters
-from vendor.forms import CreditCardForm, AddressForm
+from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models import Invoice, Payment, Offer, Price, Receipt
 from vendor.models.address import Country
 from vendor.models.choice import TermType
@@ -147,7 +147,7 @@ class BaseProcessorTests(TestCase):
             self.base_processor.get_billing_address_form_data(self.form_data)
         
     def test_get_billing_address_form_data_success(self):
-        self.base_processor.get_billing_address_form_data(self.form_data['billing_address_form'], AddressForm)
+        self.base_processor.get_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
         
         self.assertIsNotNone(self.base_processor.billing_address)
         self.assertIn(self.form_data['billing_address_form']['address_1'], self.base_processor.billing_address.data['address_1'])
