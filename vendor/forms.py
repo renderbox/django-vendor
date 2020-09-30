@@ -90,7 +90,6 @@ PriceFormSet = inlineformset_factory(
 
 class AddressForm(forms.ModelForm):
     company = forms.CharField(label=_('Company'), required=False)
-    country = forms.CharField(label=_('Country'), required=True)
     address_1 = forms.CharField(label=_('Address 1'), required=True)
     locality = forms.CharField(label=_('City/Locality'), required=True)
     state = forms.CharField(label=_('State'), required=True)
