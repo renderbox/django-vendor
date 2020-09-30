@@ -2,6 +2,7 @@ from django.utils import timezone
 from django.db.models import F
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse, reverse_lazy
 from django.conf import settings
@@ -19,12 +20,13 @@ from vendor.models.address import Address as GoogleAddress
 from vendor.models.choice import TermType
 from vendor.models.utils import set_default_site_id
 from vendor.processors import PaymentProcessor
-from vendor.forms import BillingAddressForm, CreditCardForm, AccountValidationForm
+from vendor.forms import AddressForm, CreditCardForm, AccountValidationForm
 
 
 # The Payment Processor configured in settings.py
 payment_processor = PaymentProcessor
 
+UserModel = get_user_model()
 
 class CartView(LoginRequiredMixin, DetailView):
     '''
@@ -79,12 +81,15 @@ class AccountValidationView(LoginRequiredMixin, FormView):
     form_class = AccountValidationForm
     template_name = 'vendor/checkout.html'
 
+
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         profile = self.request.user.customer_profile.get(site=settings.SITE_ID)
-        invoice = profile.invoices.get(status=Invoice.InvoiceStatus.CART)
+        invoice = Invoice.objects.get(uuid=kwargs.get('uuid'))
 
-        context['invoice'] = Invoice.objects.get(uuid=kwargs.get('uuid'))
+        context['form'] = self.form_class(initial={'first_name': request.user.first_name, 'last_name': request.user.last_name, 'email': request.user.email})
+
+        context['invoice'] = invoice
 
         if 'billing_address_form' in request.session:
             del(request.session['billing_address_form'])
@@ -99,8 +104,18 @@ class AccountValidationView(LoginRequiredMixin, FormView):
         if not user_form.is_valid():
             return render(request, self.template_name, {'form': user_form})
 
-        user_account = user_form.save(commit=False)
-        if user_account.first_name == logged_user.first_name and user_account.last_name == logged_user.last_name and user_account.email == logged_user.email:
+        account_form = user_form.save(commit=False)
+
+        # TODO: This if else probably needs some refactoring.
+        if account_form.first_name == logged_user.first_name and account_form.last_name == logged_user.last_name and account_form.email == logged_user.email:
+            invoice = Invoice.objects.get(uuid=kwargs.get('uuid'))
+            invoice.customer_notes['remittance_email'] = account_form.email
+            # TODO: Should also add name to the fileter. Don't want to create empty address for every purchase
+            shipping_address, created = Address.objects.get_or_create(first_name=account_form.first_name, last_name=account_form.last_name)
+            if created:
+                shipping_address.save()
+                invoice.shipping_address = shipping_address
+            invoice.save()
             return redirect('vendor:checkout-payment', uuid=kwargs.get('uuid'))
         else:
             messages.info(self.request, _("Invalid Account"))
@@ -129,7 +144,7 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
         invoice = Invoice.objects.get(uuid=kwargs.get('uuid'))
 
         credit_card_form = CreditCardForm(request.POST)
-        billing_address_form = BillingAddressForm(request.POST)
+        billing_address_form = AddressForm(request.POST)
 
         processor = payment_processor(invoice)
         if not (billing_address_form.is_valid() and credit_card_form.is_valid()):
