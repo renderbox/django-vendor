@@ -47,14 +47,14 @@ class Address(models.Model):
     """
     name = models.CharField(_("Address Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="addresses")
-    first_name = models.CharField(_("First Name"), max_length=150, blank=True, null=True)
-    last_name = models.CharField(_("Last Name"), max_length=150, blank=True, null=True)
-    address_1 = models.CharField(_("Address 1"), max_length=40, blank=True, null=True)
+    first_name = models.CharField(_("First Name"), max_length=150, blank=True)
+    last_name = models.CharField(_("Last Name"), max_length=150, blank=True)
+    address_1 = models.CharField(_("Address 1"), max_length=40, blank=False)
     address_2 = models.CharField(_("Address 2"), max_length=40, blank=True, null=True)
-    locality = models.CharField(_("City"), max_length=40, blank=True, null=True)
-    state = models.CharField(_("State"), max_length=40, blank=True, null=True)
+    locality = models.CharField(_("City"), max_length=40, blank=False)
+    state = models.CharField(_("State"), max_length=40, blank=False)
     country = models.IntegerField(_("Country"), choices=COUNTRY_CHOICE, default=COUNTRY_DEFAULT)
-    postal_code = models.CharField(_("Postal Code"), max_length=16, blank=True, null=True)
+    postal_code = models.CharField(_("Postal Code"), max_length=16, blank=True)
 
     # def create_address_from_billing_form(self, billing_form, profile):
     #     locality = Locality()
