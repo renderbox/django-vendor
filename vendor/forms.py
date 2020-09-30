@@ -88,8 +88,13 @@ PriceFormSet = inlineformset_factory(
     extra=0)
 
 
-class BillingAddressForm(forms.ModelForm):
+class AddressForm(forms.ModelForm):
     company = forms.CharField(label=_('Company'), required=False)
+    country = forms.CharField(label=_('Country'), required=True)
+    address_1 = forms.CharField(label=_('Address 1'), required=True)
+    locality = forms.CharField(label=_('City/Locality'), required=True)
+    state = forms.CharField(label=_('State'), required=True)
+    postal_code = forms.CharField(label=_('Postal Code'), required=True)
 
     field_order = ['name', 'company', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
     class Meta:

@@ -18,7 +18,7 @@ except ModuleNotFoundError:
         raise
     pass
 
-from vendor.forms import CreditCardForm, BillingAddressForm
+from vendor.forms import CreditCardForm, AddressForm
 from vendor.models.choice import TransactionTypes, PaymentTypes, TermType
 from vendor.models.invoice import Invoice
 from vendor.models.address import Country
@@ -60,7 +60,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if 'credit_card_form' not in context:
             context['credit_card_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
         if 'billing_address_form' not in context:
-            context['billing_address_form'] = BillingAddressForm()
+            context['billing_address_form'] = AddressForm()
         return context
 
     def processor_setup(self):
@@ -313,7 +313,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def process_payment(self, request):
         self.create_payment_model()
         # Process form data to set up transaction
-        self.get_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
+        self.get_billing_address_form_data(request.session.get('billing_address_form'), AddressForm)
         self.get_payment_info_form_data(request.session.get('credit_card_form'), CreditCardForm)
 
         # Init transaction
@@ -347,7 +347,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
-        self.get_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
+        self.get_billing_address_form_data(request.session.get('billing_address_form'), AddressForm)
         self.get_payment_info_form_data(request.session.get('credit_card_form'), CreditCardForm)
 
         period_length = subscription.offer.term_details['period_length']
@@ -385,7 +385,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def process_update_subscription(self, request, subscription_id):
         
-        self.get_billing_address_form_data(request.session.get['billing_address_form'], BillingAddressForm)
+        self.get_billing_address_form_data(request.session.get['billing_address_form'], AddressForm)
         self.get_payment_info_form_data(request.session.get['credit_card_form'], CreditCardForm)
 
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
