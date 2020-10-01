@@ -634,7 +634,7 @@ class AuthorizeNetProcessorTests(TestCase):
                 break
         
         if not successfull_transactions:
-            print("No Transactions to refudn Skipping\n")
+            print("No Transactions to refund Skipping\n")
             return
 
         payment = Payment()
