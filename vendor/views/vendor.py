@@ -1,32 +1,27 @@
-from django.utils import timezone
-from django.db.models import F
-from django.shortcuts import get_object_or_404, render, redirect
+from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ObjectDoesNotExist
 
-from django.views import View
-from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
+from django.views.generic.edit import DeleteView
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
-from django.http import HttpResponse
-from vendor.models import Offer, OrderItem, Invoice, Payment, Address
-from vendor.models.address import Address as GoogleAddress
+
+from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile
 from vendor.models.choice import TermType
 from vendor.models.utils import set_default_site_id
 from vendor.processors import PaymentProcessor
-from vendor.forms import BillingAddressForm, CreditCardForm, AccountValidationForm
+from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm
 
+# from vendor.models.address import Address as GoogleAddress
 
 # The Payment Processor configured in settings.py
 payment_processor = PaymentProcessor
 
-UserModel = get_user_model()
 
 class CartView(LoginRequiredMixin, DetailView):
     '''
@@ -77,17 +72,22 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-class AccountInformationView(LoginRequiredMixin, FormView):
-    form_class = AccountValidationForm
+class AccountInformationView(LoginRequiredMixin, TemplateView):
     template_name = 'vendor/checkout.html'
-
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        profile = self.request.user.customer_profile.get(site=settings.SITE_ID)
-        invoice = Invoice.objects.get(uuid=kwargs.get('uuid'))
+        invoice = CustomerProfile.objects.get(user=request.user).get_cart()
 
-        context['form'] = self.form_class(initial={'first_name': request.user.first_name, 'last_name': request.user.last_name, 'email': request.user.email})
+        existing_account_address = Address.objects.filter(profile__user=request.user)
+
+        if existing_account_address:
+            # TODO: In future the user will be able to select from multiple saved address
+            form = AccountInformationForm(initial={'email': request.user.email}, instance=existing_account_address[0])
+        else:
+            form = AccountInformationForm(initial={
+                                          'first_name': request.user.first_name, 'last_name': request.user.last_name, 'email': request.user.email})
+        context['form'] = form
 
         context['invoice'] = invoice
 
@@ -99,27 +99,27 @@ class AccountInformationView(LoginRequiredMixin, FormView):
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
-        user_form = self.form_class(request.POST)
-        logged_user = self.request.user
-        if not user_form.is_valid():
-            return render(request, self.template_name, {'form': user_form})
+        form = AccountInformationForm(request.POST)
 
-        account_form = user_form.save(commit=False)
+        if not form.is_valid():
+            return render(request, self.template_name, {'form': form})
 
-        # TODO: This if else probably needs some refactoring.
-        if account_form.first_name == logged_user.first_name and account_form.last_name == logged_user.last_name and account_form.email == logged_user.email:
-            invoice = Invoice.objects.get(uuid=kwargs.get('uuid'))
-            invoice.customer_notes['remittance_email'] = account_form.email
-            # TODO: Should also add name to the fileter. Don't want to create empty address for every purchase
-            shipping_address, created = Address.objects.get_or_create(first_name=account_form.first_name, last_name=account_form.last_name)
-            if created:
-                shipping_address.save()
-                invoice.shipping_address = shipping_address
-            invoice.save()
-            return redirect('vendor:checkout-payment', uuid=kwargs.get('uuid'))
-        else:
-            messages.info(self.request, _("Invalid Account"))
-            return redirect('vendor:checkout-account', uuid=kwargs.get('uuid'))
+        account_form = form.save(commit=False)
+
+        invoice = CustomerProfile.objects.get(user=request.user).get_cart()
+        invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
+        existing_account_address = Address.objects.filter(
+            profile__user=request.user, name=account_form.name, first_name=account_form.first_name, last_name=account_form.last_name)
+        # TODO: Need to add a drop down to select existing address
+        if existing_account_address:
+            account_form.pk = existing_account_address.first().pk
+
+        account_form.profile = invoice.profile
+        account_form.save()
+        invoice.shipping_address = account_form
+        invoice.save()
+
+        return redirect('vendor:checkout-payment')
 
 
 class PaymentView(LoginRequiredMixin, TemplateView):
@@ -129,7 +129,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
     template_name = "vendor/checkout.html"
 
     def get(self, request, *args, **kwargs):
-        invoice = Invoice.objects.get(uuid=kwargs.pop('uuid'))
+        invoice = CustomerProfile.objects.get(user=request.user).get_cart()
 
         context = super().get_context_data()
 
@@ -141,13 +141,18 @@ class PaymentView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        invoice = Invoice.objects.get(uuid=kwargs.get('uuid'))
+        invoice = CustomerProfile.objects.get(user=request.user).get_cart()
 
         credit_card_form = CreditCardForm(request.POST)
-        billing_address_form = BillingAddressForm(request.POST)
+        if request.POST.get('same_as_shipping') == 'on':
+            billing_address_form = BillingAddressForm(instance=invoice.shipping_address)
+            billing_address_form.data = billing_address_form.initial
+            billing_address_form.is_bound = True
+        else:
+            billing_address_form = BillingAddressForm(request.POST)
 
-        processor = payment_processor(invoice)
         if not (billing_address_form.is_valid() and credit_card_form.is_valid()):
+            processor = payment_processor(invoice)
             context['billing_address_form'] = billing_address_form
             context['credit_card_form'] = credit_card_form
             return render(request, self.template_name, processor.get_checkout_context(context=context))
@@ -156,14 +161,14 @@ class PaymentView(LoginRequiredMixin, TemplateView):
             credit_card_form.full_clean()
             request.session['billing_address_form'] = billing_address_form.cleaned_data
             request.session['credit_card_form'] = credit_card_form.cleaned_data
-            return redirect('vendor:checkout-review', uuid=kwargs.get('uuid'))
+            return redirect('vendor:checkout-review')
 
 
 class ReviewCheckout(LoginRequiredMixin, TemplateView):
     template_name = 'vendor/checkout.html'
 
     def get(self, request, *args, **kwargs):
-        invoice = Invoice.objects.get(uuid=kwargs.pop('uuid'))
+        invoice = CustomerProfile.objects.get(user=request.user).get_cart()
 
         context = super().get_context_data()
 
@@ -175,7 +180,7 @@ class ReviewCheckout(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        invoice = Invoice.objects.get(uuid=kwargs.get('uuid'))
+        invoice = CustomerProfile.objects.get(user=request.user).get_cart()
 
         processor = payment_processor(invoice)
 
@@ -191,7 +196,7 @@ class ReviewCheckout(LoginRequiredMixin, TemplateView):
         else:
             messages.info(self.request, _(
                 "The payment gateway did not authroize payment."))
-            return redirect('vendor:checkout-account', uuid=kwargs.get('uuid'))
+            return redirect('vendor:checkout-account')
 
 
 class PaymentSummaryView(LoginRequiredMixin, DetailView):

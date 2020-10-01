@@ -13,7 +13,6 @@ from .models import Address, Offer, OrderItem, Price
 from .models.choice import PaymentTypes, TermType
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
-UserModel = get_user_model()
 # class AddToCartModelForm(forms.ModelForm):
 
 #     class Meta:
@@ -27,12 +26,6 @@ UserModel = get_user_model()
 # #     class Meta:
 # #         model = Refund
 # #         fields = ['reason']
-
-class AccountValidationForm(forms.ModelForm):
-
-    class Meta:
-        model = UserModel
-        fields = ['first_name', 'last_name', 'email']
 
         
 class PriceForm(forms.ModelForm):
@@ -92,14 +85,23 @@ class AddressForm(forms.ModelForm):
 
     class Meta:
         model = Address
-        fields = '__all__'
+        fields = ['name',  'first_name', 'last_name', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
 
+
+class AccountInformationForm(AddressForm):
+    email = forms.EmailField(label=_('email'), required=True)
+
+    class Meta:
+        model = Address
+        fields = ['name',  'first_name', 'last_name', 'email', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
 
 class BillingAddressForm(AddressForm):
-    same_as_shipping = forms.CheckboxInput(label=_("Same as Shipping Address"))
+    same_as_shipping = forms.BooleanField(label=_("Billing Address is the same as Account Address"), required=False)
     company = forms.CharField(label=_('Company'), required=False)
 
-    field_order = ['same_as_shipping', 'name', 'company', 'first_name', 'last_name', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
+    class Meta:
+        model = Address
+        fields = ['same_as_shipping', 'name', 'company', 'first_name', 'last_name', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
 
 class CreditCardField(forms.CharField):
 
