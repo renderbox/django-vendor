@@ -71,6 +71,22 @@ class ModelOfferTests(TestCase):
         offer = Offer.objects.get(pk=3)
         self.assertEquals(offer.current_price(), 25.2)
 
+    def test_offer_negative_savings(self):
+        offer = Offer.objects.get(pk=3)
+        self.assertEquals(offer.savings, 0.00)
+
+    def test_offer_savings(self):
+        offer = Offer.objects.get(pk=1)
+        self.assertEquals(offer.savings, 10.00)
+
+    def test_offer_description_from_product(self):
+        offer = Offer.objects.get(pk=3)
+        self.assertEquals(offer.description, offer.products.all().first().description)
+
+    def test_offer_description(self):
+        offer = Offer.objects.get(pk=4)
+        self.assertEquals(offer.description, offer.offer_description)
+
     def test_empty_name_single_product(self):
         # p1 = Product.objects.get(pk=1)
         # offer = Offer()

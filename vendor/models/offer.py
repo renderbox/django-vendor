@@ -1,6 +1,7 @@
 import uuid
 
 from autoslug import AutoSlugField
+from decimal import Decimal, ROUND_UP
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
@@ -17,7 +18,6 @@ from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
 from .base import CreateUpdateModelBase
 from .choice import TermType
 from .utils import set_default_site_id
-
 #########
 # OFFER
 #########
@@ -91,5 +91,7 @@ class Offer(CreateUpdateModelBase):
             return self.products.all().first().description
     @property
     def savings(self):
-        savings = self.get_msrp(DEFAULT_CURRENCY) - self.get_current_price()
-        return savings
+        savings = self.get_msrp(DEFAULT_CURRENCY) - self.current_price()
+        if savings < 0:
+            return Decimal(0).quantize(Decimal('.00'), rounding=ROUND_UP)
+        return Decimal(savings).quantize(Decimal('.00'), rounding=ROUND_UP)
