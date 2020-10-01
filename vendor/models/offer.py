@@ -1,6 +1,7 @@
 import uuid
 
 from autoslug import AutoSlugField
+from decimal import Decimal, ROUND_UP
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
@@ -17,7 +18,6 @@ from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
 from .base import CreateUpdateModelBase
 from .choice import TermType
 from .utils import set_default_site_id
-
 #########
 # OFFER
 #########
@@ -52,13 +52,10 @@ class Offer(CreateUpdateModelBase):
     def __str__(self):
         return self.name
 
-    def get_msrp(self, currency):
-        """
-        Grabs the MSRP on all objects included in the offer and returns the sum total.
-        """
+    def get_msrp(self, currency=DEFAULT_CURRENCY):
         return sum([p.get_msrp(currency) for p in self.products.all()])
 
-    def current_price(self):
+    def current_price(self, currency=DEFAULT_CURRENCY):
         '''
         Finds the highest priority active price and returns that, otherwise returns msrp total.
         '''
@@ -70,7 +67,7 @@ class Offer(CreateUpdateModelBase):
         if price:
             result = price.cost
         else:
-            result = self.get_msrp(DEFAULT_CURRENCY)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
+            result = self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
 
         return result
 
@@ -93,3 +90,9 @@ class Offer(CreateUpdateModelBase):
             return self.offer_description
         else:
             return self.products.all().first().description
+    
+    def savings(self, currency=DEFAULT_CURRENCY):
+        savings = self.get_msrp(currency) - self.current_price()
+        if savings < 0:
+            return Decimal(0).quantize(Decimal('.00'), rounding=ROUND_UP)
+        return Decimal(savings).quantize(Decimal('.00'), rounding=ROUND_UP)

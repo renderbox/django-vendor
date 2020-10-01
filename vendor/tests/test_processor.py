@@ -627,8 +627,15 @@ class AuthorizeNetProcessorTests(TestCase):
         # Get Settled payment
         start_date, end_date = (timezone.now() - timedelta(days=31)), timezone.now()
         batch_list = self.processor.get_settled_batch_list(start_date, end_date)
-        transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
-        successfull_transactions = [ t for t in transaction_list if t['transactionStatus'] == 'settledSuccessfully' ]
+        for batch in batch_list:
+            transaction_list = self.processor.get_transaction_batch_list(str(batch.batchId))
+            successfull_transactions = [ t for t in transaction_list if t['transactionStatus'] == 'settledSuccessfully' ]
+            if len(successfull_transactions) > 0:
+                break
+        
+        if not successfull_transactions:
+            print("No Transactions to refund Skipping\n")
+            return
 
         payment = Payment()
         # payment.amount = transaction_detail.authAmount.pyval
@@ -785,7 +792,7 @@ class AuthorizeNetProcessorTests(TestCase):
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         
         if active_subscriptions:
-            self.processor.process_cancel_subscription(active_subscriptions[0])
+            self.processor.process_cancel_subscription(active_subscriptions[0].id.pyval)
             self.assertTrue(self.processor.transaction_submitted)
         else:
             print("No active Subscriptions, Skipping Test")

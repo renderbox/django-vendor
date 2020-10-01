@@ -70,7 +70,7 @@ payment_processor = PaymentProcessor              # The Payment Processor config
 #         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-# class CheckoutView(LoginRequiredMixin, TemplateView):
+# class PaymentView(LoginRequiredMixin, TemplateView):
 #     '''
 #     Review items and submit Payment
 #     '''
@@ -161,7 +161,7 @@ class OrderHistoryDetailView(LoginRequiredMixin, DetailView):
 
 
 # class PaymentView(LoginRequiredMixin, TemplateView):
-# class CheckoutView(TemplateView):
+# class PaymentView(TemplateView):
 #     '''
 #     Review items and submit Payment
 #     '''

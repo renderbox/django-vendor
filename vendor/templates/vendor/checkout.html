@@ -7,45 +7,54 @@
     <h1>{% trans 'SECURE CHECKOUT' %}</h1>
   </div>
   <div class='col-md-8'>
-    <div class="accordion" id="checkout_accordion">
-      <div class="card border-0">
-        <div class="card-header mb-0 text-white p-0 border-0 mb-3" id="account_info">
-          <div class='btn-group w-100'>
-            <button class="btn bg-accent font-weight-bold text-dark rounded-0 border-0 px-3 py-3 m-0" type="button">
-              1
-            </button>
-            <button class="btn btn-block font-weight-bold text-left bg-dark text-white rounded-0 border-0 py-3 m-0"
-              type="button">
-              Info
-            </button>
+    <div class="card border-0">
+      <div class="card-header mb-0 text-white p-0 border-0 mb-3" id="account_info">
+        <div
+          class="btn-group w-100 {% if request.resolver_match.url_name == 'checkout-account' %}bg-accent{% else %}bg-accenthover{% endif %}">
+          <div class="bg-white font-weight-bold text-dark border-0 px-3 py-3 m-0" style="opacity: .5;">
+            1
           </div>
-        </div>
-        {% if request.resolver_match.url_name == 'checkout-account' %}
-        <div id="collapseOne" class="collapse show" aria-labelledby="account_info" data-parent="#checkout_accordion">
-          <div class="card-body">
-            <form method="post">
-              {% csrf_token %}
-              <h3 class='card-title'>
-                Account Info
-              </h3>
-              {{ form }}
-              <button class="btn btn-primary btn-lg btn-block w-25" type="submit">Continue</button>
-            </form>
+          <div class="font-weight-bold text-left text-white border-0 py-3 ml-3">
+            Info
           </div>
+          {% if request.resolver_match.url_name != 'checkout-account' %}
+          <div class='d-flex ml-auto mr-3 align-items-center'>
+            <iconify-icon data-icon="ic-baseline-check" class="check"></iconify-icon>
+          </div>
+          {% endif %}
         </div>
-        {% endif %}
       </div>
+
+      {% if request.resolver_match.url_name == 'checkout-account' %}
+      <div id="collapseOne" class="collapse show" aria-labelledby="account_info" data-parent="#checkout_accordion">
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            <h3 class='card-title'>
+              Account Address
+            </h3>
+            {% include "./includes/account_info_form.html" with account_information_form=form %}
+            <button class="btn btn-primary" type="submit">Continue</button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
     </div>
     <div class="card border-0">
       <div class="card-header mb-0 text-white p-0 border-0 mb-3" id="billing_info">
-        <div class='btn-group w-100'>
-          <button class="btn bg-accent  font-weight-bold text-dark rounded-0 border-0 px-3 py-3 m-0" type="button">
+        <div
+          class="btn-group w-100 {% if request.resolver_match.url_name == 'checkout-payment' %}bg-accent{% else %}bg-accenthover{% endif %}">
+          <div class="bg-white font-weight-bold text-dark rounded-0 border-0 px-3 py-3 m-0" style="opacity: .5;">
             2
-          </button>
-          <button class="btn btn-block font-weight-bold text-left bg-dark text-white rounded-0 border-0 py-3 m-0"
-            type="button">
+          </div>
+          <div class="font-weight-bold text-left text-white rounded-0 border-0 py-3 ml-3">
             Billing
-          </button>
+          </div>
+          {% if request.resolver_match.url_name == 'checkout-review' %}
+          <div class='d-flex ml-auto mr-3 align-items-center'>
+            <iconify-icon data-icon="ic-baseline-check" class="check"></iconify-icon>
+          </div>
+          {% endif %}
         </div>
       </div>
 
@@ -58,28 +67,33 @@
               Billing Address
             </h3>
             {% include "./includes/billing_address_form.html" with billing_address_form=billing_address_form %}
+            <div id="shipping-address" class='d-none'>
+              <p class="mb-0">{{invoice.shipping_address.address_1}},
+                {{invoice.shipping_address.address_2|default_if_none:""}}</p>
+              <p>{{invoice.shipping_address.state}},
+                {{invoice.shipping_address.get_country_display}},{{invoice.shipping_address.postal_code}}
+              </p>
+            </div>
             <h3 class='card-title'>
               Payment Method
             </h3>
             {% include "./includes/payment_form.html" with credit_card_form=credit_card_form %}
           </form>
-          <button form="payment-form" name='only-validate' class="btn btn-primary btn-lg btn-block w-25"
-            type="submit">Continue</button>
+          <button form="payment-form" name='only-validate' class="btn btn-primary" type="submit">Continue</button>
         </div>
       </div>
       {% endif %}
     </div>
-
     <div class="card border-0">
       <div class="card-header mb-0 text-white p-0 border-0 mb-3" id="review">
-        <div class='btn-group w-100'>
-          <button class="btn bg-accent font-weight-bold text-dark rounded-0 border-0 px-3 py-3 m-0" type="button">
+        <div
+          class="btn-group w-100 {% if request.resolver_match.url_name == 'checkout-review' %}bg-accent{% else %}bg-accenthover{% endif %}">
+          <div class="bg-white font-weight-bold text-dark rounded-0 border-0 px-3 py-3 m-0" style="opacity: .5;">
             3
-          </button>
-          <button class="btn btn-block font-weight-bold text-left bg-dark text-white rounded-0 border-0 py-3 m-0"
-            type="button">
+          </div>
+          <div class="font-weight-bold text-left text-white rounded-0 border-0 py-3 ml-3">
             Review
-          </button>
+          </div>
         </div>
       </div>
 
@@ -87,28 +101,47 @@
       <div id="collapseThree" class="collapse show" aria-labelledby="review" data-parent="#checkout_accordion">
         <div class="card-body">
           <h3 class='card-title'>
-            Account Info
+            <div class='d-flex flex-row align-items-center'>
+              <div>Account Address</div>
+              <div class="ml-auto">
+                <a class="text-primary" href="{% url 'vendor:checkout-account' %}">
+                  <i class="fas fa-pen" style="display: inline-block; width: 21px; height: 21px;"></i>
+                </a>
+              </i>
+            </div>
           </h3>
           <p id="review-account-name" class="mb-0">{{user.first_name}} {{user.last_name}}</p>
-          <p id="review-account-email">{{user.email}}</p>
+          <p id="review-account-email" class="mb-0">{{user.email}}</p>
+          <p class="mb-0">{{invoice.shipping_address.address_1}},
+            {{invoice.shipping_address.address_2|default_if_none:""}}</p>
+          <p>{{invoice.shipping_address.state}},
+            {{invoice.shipping_address.country}},{{invoice.shipping_address.postal_code}}
+          </p>
           <h3 class='card-title'>
-            Billing Address
+            <div class='d-flex flex-row align-items-center'>
+              <div>Billing Address</div>
+              <div class="ml-auto">
+                <a href="{% url 'vendor:checkout-payment' %}">
+                  <iconify-icon data-icon="ic-baseline-edit" class="text-primary" style="height: 21px;"></iconify-icon>
+                </a>
+              </div>
+            </div>
           </h3>
-          <p id="review-billing-name" class="mb-0">{{request.session.credit_card_form.full_name}}</p>
-          <p id="review-address-1" class="mb-0">{{request.session.billing_address_form.address_1}},
-            {{request.session.billing_address_form.address_2}}</p>
-          <p id="review-address-2">{{request.session.billing_address_form.state}},
+
+          <p class="mb-0">{{request.session.billing_address_form.address_1}},
+            {{request.session.billing_address_form.address_2|default_if_none:""}}</p>
+          <p>{{request.session.billing_address_form.state}},
             {{request.session.billing_address_form.country}},{{request.session.billing_address_form.postal_code}}
           </p>
           <h3 class='card-title'>
             Payment Method
           </h3>
-          <p id="review-payment-name" class="mb-0">{{request.session.credit_card_form.full_name}}</p>
-          <p id="review-payment-card">Card end in
+          <p class="mb-0">{{request.session.credit_card_form.full_name}}</p>
+          <p>Card end in
             {{request.session.credit_card_form.card_number|slice:"-4:"}}</p>
           <form method="post">
             {% csrf_token %}
-            <button class="btn btn-primary btn-lg btn-block w-25" type="submit">Place Order</button>
+            <button class=" btn btn-primary" type="submit">Place Order</button>
           </form>
         </div>
       </div>
@@ -161,5 +194,32 @@
     {% endcomment %}
   </div>
 </div>
+
+{% block extra_js %}
+<script>
+  $('#id_same_as_shipping').prop("checked", false);
+  $('#id_same_as_shipping').change(function () {
+    console.log('in event');
+    console.log($('#id_same_as_shipping').val());
+    if ($('#id_same_as_shipping').val()) {
+      $('.billing-address-form').toggleClass('d-none');
+      $('#shipping-address').toggleClass('d-none');
+    }
+    // TODO: This needs to change in the future, very easy to break.
+    if ($(".billing-address-form").hasClass('d-none')){
+      $("#id_address_1").removeAttr('required');
+      $("#id_locality").removeAttr('required');
+      $("#id_state").removeAttr('required');
+      $("#id_postal_code").removeAttr('required');
+    }
+    else {
+      $("#id_address_1").attr('required', "");
+      $("#id_locality").attr('required', "");
+      $("#id_state").attr('required', "");
+      $("#id_postal_code").attr('required', "");
+    }
+  });
+</script>
+{% endblock %}
 
 {% endblock %}

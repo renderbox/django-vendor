@@ -504,7 +504,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def get_list_of_subscriptions(self):
         self.transaction = apicontractsv1.ARBGetSubscriptionListRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.searchType = apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionInactive
+        self.transaction.searchType = apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionActive
 
         self.controller = ARBGetSubscriptionListController(self.transaction)
         self.controller.execute()

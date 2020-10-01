@@ -1,0 +1,219 @@
+{% load i18n %}
+
+{% for hidden_field in account_information_form.hidden_fields %}
+{{ hidden_field }}
+{% endfor %}
+
+{% if account_information_form.non_field_errors %}
+<div class="alert alert-danger" role="alert">
+    {% for error in account_information_form.non_field_errors %}
+    {{ error }}
+    {% endfor %}
+</div>
+{% endif %}
+<div class='form-row mb-2'>
+    <div class='d-flex flex-row w-100'>
+        <div>
+            {{ account_information_form.first_name.label_tag }}
+            {{ account_information_form.first_name }}
+            {% if account_information_form.first_name.errors %}
+            {% for error in account_information_form.first_name.errors %}
+            <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                {{ error }}
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+        <div class='mx-3'>
+            {{ account_information_form.last_name.label_tag }}
+            {{ account_information_form.last_name }}
+            {% if account_information_form.last_name.errors %}
+            {% for error in account_information_form.last_name.errors %}
+            <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                {{ error }}
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+        <div class='w-25'>
+            {{ account_information_form.email.label_tag }}
+            {{ account_information_form.email }}
+            {% if account_information_form.email.errors %}
+            {% for error in account_information_form.email.errors %}
+            <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                {{ error }}
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Country -->
+        {{ account_information_form.country.label_tag }}
+        {{ account_information_form.country }}
+        {% if account_information_form.country.errors %}
+        {% for error in account_information_form.country.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if account_information_form.country.help_text %}
+        <small class="form-text text-muted">
+            {{ account_information_form.country.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Name -->
+        {{ account_information_form.name.label_tag }}
+        {{ account_information_form.name }}
+        {% if account_information_form.name.errors %}
+        {% for error in account_information_form.name.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if account_information_form.name.help_text %}
+        <small class="form-text text-muted">
+            {{ account_information_form.name.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Company -->
+        {{ account_information_form.company.label_tag }}
+        {{ account_information_form.company }}
+        {% if account_information_form.company.errors %}
+        {% for error in account_information_form.company.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if account_information_form.company.help_text %}
+        <small class="form-text text-muted">
+            {{ account_information_form.company.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Address 1 -->
+        {{ account_information_form.address_1.label_tag }}
+        {{ account_information_form.address_1 }}
+        {% if account_information_form.address_1.errors %}
+        {% for error in account_information_form.address_1.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if account_information_form.address_1.help_text %}
+        <small class="form-text text-muted">
+            {{ account_information_form.address_1.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Address 2 -->
+        {{ account_information_form.address_2.label_tag }}
+        {{ account_information_form.address_2 }}
+        {% if account_information_form.address_2.errors %}
+        {% for error in account_information_form.address_2.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if account_information_form.address_2.help_text %}
+        <small class="form-text text-muted">
+            {{ account_information_form.address_2.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <!-- Locality -->
+        {{ account_information_form.locality.label_tag }}
+        {{ account_information_form.locality }}
+        {% if account_information_form.locality.errors %}
+        {% for error in account_information_form.locality.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if account_information_form.locality.help_text %}
+        <small class="form-text text-muted">
+            {{ account_information_form.locality.help_text }}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<div class='form-row mb-2'>
+    <div class='col-md-6'>
+        <div class='row'>
+            <div class='col'>
+                <!-- State -->
+                {{ account_information_form.state.label_tag }}
+                {{ account_information_form.state }}
+                {% if account_information_form.state.errors %}
+                {% for error in account_information_form.state.errors %}
+                <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                    {{ error }}
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% if account_information_form.state.help_text %}
+                <small class="form-text text-muted">
+                    {{ account_information_form.state.help_text }}
+                </small>
+                {% endif %}
+            </div>
+
+            <div class='col'>
+                <!-- Postal Code -->
+                {{ account_information_form.postal_code.label_tag }}
+                {{ account_information_form.postal_code }}
+                {% if account_information_form.postal_code.errors %}
+                {% for error in account_information_form.postal_code.errors %}
+                <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                    {{ error }}
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% if account_information_form.postal_code.help_text %}
+                <small class="form-text text-muted">
+                    {{ account_information_form.postal_code.help_text }}
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

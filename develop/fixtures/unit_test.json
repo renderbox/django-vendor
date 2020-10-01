@@ -213,7 +213,8 @@
         "term_details": null,
         "term_start_date": "2020-06-30T00:53:31Z",
         "available": false,
-        "bundle": false
+        "bundle": false,
+        "offer_description": ""
     }
 },
 {
@@ -232,7 +233,8 @@
         "term_details": "{}",
         "term_start_date": null,
         "available": false,
-        "bundle": false
+        "bundle": false,
+        "offer_description": ""
     }
 },
 {
@@ -251,7 +253,8 @@
         "term_details": "{}",
         "term_start_date": null,
         "available": false,
-        "bundle": false
+        "bundle": false,
+        "offer_description": ""
     }
 },
 {
@@ -273,7 +276,8 @@
         },
         "term_start_date": null,
         "available": false,
-        "bundle": false
+        "bundle": false,
+        "offer_description": "Best deal on a Hulk Mug"
     }
 },
 {
@@ -298,7 +302,7 @@
     "pk": 1,
     "fields": {
         "offer": 1,
-        "cost": 19.99,
+        "cost": 9.99,
         "currency": "usd",
         "start_date": "2020-06-30T00:55:21Z",
         "end_date": null,
