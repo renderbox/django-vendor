@@ -51,10 +51,10 @@ class Offer(CreateUpdateModelBase):
     def __str__(self):
         return self.name
 
-    def get_msrp(self, currency):
+    def get_msrp(self, currency=DEFAULT_CURRENCY):
         return sum([p.get_msrp(currency) for p in self.products.all()])
 
-    def current_price(self):
+    def current_price(self, currency=DEFAULT_CURRENCY):
         '''
         Check if there are any price options active, otherwise use msrp.
         '''
@@ -66,7 +66,7 @@ class Offer(CreateUpdateModelBase):
         if price:
             result = price.cost
         else:
-            result = self.get_msrp(DEFAULT_CURRENCY)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
+            result = self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
 
         return result
 
@@ -89,9 +89,9 @@ class Offer(CreateUpdateModelBase):
             return self.offer_description
         else:
             return self.products.all().first().description
-    @property
-    def savings(self):
-        savings = self.get_msrp(DEFAULT_CURRENCY) - self.current_price()
+    
+    def savings(self, currency=DEFAULT_CURRENCY):
+        savings = self.get_msrp(currency) - self.current_price()
         if savings < 0:
             return Decimal(0).quantize(Decimal('.00'), rounding=ROUND_UP)
         return Decimal(savings).quantize(Decimal('.00'), rounding=ROUND_UP)
