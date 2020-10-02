@@ -38,20 +38,20 @@ class CustomerProfile(CreateUpdateModelBase):
         cart, created = self.invoices.get_or_create(status=Invoice.InvoiceStatus.CART)
         return cart
 
-    def has_product(self, product):
+    def has_offer(self, offer):
         """
         returns true/false if the user has a receipt to a given product
         it also checks against elegibility start/end/empty dates on consumable products and subscriptions
         """        
         now = timezone.now()
 
-        if product.terms == TermType.SUBSCRIPTION:
-            if self.invoices.order_items.reciepts.filter(product=product, start_date__lte=now, end_date__gte=now).count():
+        if offer.terms == TermType.SUBSCRIPTION:
+            if self.receipts.filter(order_item__offer=offer, start_date__lte=now, end_date__gte=now).count():
                 return True
-        elif product.terms == TermType.PERPETUAL:
-            if self.invoices.order_items.reciepts.filter(product=product).count():
+        elif offer.terms == TermType.PERPETUAL:
+            if self.receipts.filter(order_item__offer=offer).count():
                 return True
-        elif product.terms == TermType.ONE_TIME_USE:
+        elif offer.terms == TermType.ONE_TIME_USE:
             # TODO: Implement
             return True
         
