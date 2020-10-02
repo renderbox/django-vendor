@@ -16,6 +16,8 @@ class ModelCustomerProfileTests(TestCase):
         self.user.save()
         self.customer_profile = CustomerProfile()
 
+        self.customer_profile_existing = CustomerProfile.objects.get(pk=1)
+
         self.customer_profile_user = CustomerProfile()
         self.customer_profile_user.user = User.objects.get(pk=1)
         self.customer_profile_user.save()
@@ -66,12 +68,12 @@ class ModelCustomerProfileTests(TestCase):
         self.assertEquals(count, 3)
 
     def test_owns_product_true(self):
-        # TODO: Implement Test
-        pass
+        offer = Offer.objects.get(pk=2)
+        self.assertTrue(self.customer_profile_existing.has_offer(offer))
 
     def test_owns_product_false(self):
-        # TODO: Implement Test
-        pass
+        offer = Offer.objects.get(pk=1)
+        self.assertFalse(self.customer_profile_existing.has_offer(offer))
     
 
 
