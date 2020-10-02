@@ -230,8 +230,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     ##########
     def save_payment_transaction(self):
         self.payment.success = self.transaction_submitted
-        self.payment.transaction = self.transaction_response.get(
-            'transId', "Transaction Faild")
+        self.payment.transaction = self.transaction_response.transId.text
         response = self.transaction_response.__dict__
         if 'errors' in response:
             response.pop('errors')
