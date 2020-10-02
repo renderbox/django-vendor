@@ -65,6 +65,14 @@ class ModelCustomerProfileTests(TestCase):
 
         self.assertEquals(count, 3)
 
+    def test_owns_product_true(self):
+        # TODO: Implement Test
+        pass
+
+    def test_owns_product_false(self):
+        # TODO: Implement Test
+        pass
+    
 
 
 class ViewCustomerProfileTests(TestCase):
