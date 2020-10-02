@@ -78,7 +78,6 @@ class PaymentProcessorBase(object):
         receipt = Receipt()
         receipt.profile = self.invoice.profile
         receipt.order_item = order_item
-        receipt.product = product
         receipt.transaction = self.payment.transaction
         receipt.status = PurchaseStatus.COMPLETE
         receipt.start_date = timezone.now()
@@ -98,6 +97,7 @@ class PaymentProcessorBase(object):
                 for product in order_item.offer.products.all():
                     receipt = self.create_receipt_by_term_type(product, order_item, order_item.offer.terms)
                     receipt.save()
+                    receipt.products.add(product)
 
     def update_subscription_receipt(self, subscription, subscription_id):
         """

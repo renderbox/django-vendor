@@ -3,6 +3,8 @@ from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse
 
+from core.models import Product
+
 from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerProfile
 
 
@@ -15,6 +17,8 @@ class ModelCustomerProfileTests(TestCase):
         self.user = User(username='test', first_name='Bob', last_name='Ross', password='helloworld')
         self.user.save()
         self.customer_profile = CustomerProfile()
+
+        self.customer_profile_existing = CustomerProfile.objects.get(pk=1)
 
         self.customer_profile_user = CustomerProfile()
         self.customer_profile_user.user = User.objects.get(pk=1)
@@ -65,6 +69,14 @@ class ModelCustomerProfileTests(TestCase):
 
         self.assertEquals(count, 3)
 
+    def test_owns_product_true(self):
+        product = Product.objects.get(pk=2)
+        self.assertTrue(self.customer_profile_existing.has_product(product))
+
+    def test_owns_product_false(self):
+        product = Product.objects.get(pk=1)
+        self.assertFalse(self.customer_profile_existing.has_product(product))
+    
 
 
 class ViewCustomerProfileTests(TestCase):
