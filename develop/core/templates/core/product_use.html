@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+{% if owens_product %}
+
+
+<h2>Access</h2>
+
+<div class="card-deck mb-3 text-center">
+
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header">
+      <h4 class="my-0 font-weight-normal">{{ object.name }}</h4>
+    </div>
+    <div class="card-body">
+      Product Description
+      <p>{{ object.description }}</p>
+    </div>
+  </div>
+
+</div>
+{% else %}
+<div class="card-deck mb-3 text-center">
+
+  <h1>You do not own this product, please purchase</h1>
+
+</div>
+{% endif %}
+{% endblock %}

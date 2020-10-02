@@ -62,7 +62,7 @@
         "offers": [
             2
         ],
-        "reciepts": []
+        "reciepts": [1]
     }
 },
 {
@@ -355,6 +355,23 @@
         "start_date": "2000-06-30T02:38:30Z",
         "end_date": "2120-06-30T02:38:30Z",
         "priority": 2
+    }
+},
+{
+    "model": "vendor.receipt",
+    "pk": 1,
+    "fields": {
+        "created": "2020-10-02T16:53:37.438Z",
+        "updated": "2020-10-02T16:53:37.438Z",
+        "profile": 1,
+        "order_item": 2,
+        "start_date": "2020-10-02T16:53:37.437Z",
+        "end_date": null,
+        "auto_renew": false,
+        "vendor_notes": {},
+        "transaction": "60152455734",
+        "status": 20,
+        "meta": {}
     }
 }
 ]

@@ -2,9 +2,9 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import ugettext as _
-
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES, TermType
 from .invoice import Invoice
@@ -45,14 +45,11 @@ class CustomerProfile(CreateUpdateModelBase):
         """        
         now = timezone.now()
 
-        if product.terms == TermType.SUBSCRIPTION:
-            if self.invoices.order_items.reciepts.filter(product=product, start_date__lte=now, end_date__gte=now).count():
-                return True
-        elif product.terms == TermType.PERPETUAL:
-            if self.invoices.order_items.reciepts.filter(product=product).count():
-                return True
-        elif product.terms == TermType.ONE_TIME_USE:
-            # TODO: Implement
+        count = self.receipts.filter( Q(products=product),
+                              Q(start_date__lte=now) | Q(start_date=None),
+                              Q(end_date__gte=now) | Q(end_date=None)).count() 
+
+        if count:
             return True
         
         return False
