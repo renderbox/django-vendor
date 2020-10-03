@@ -1,19 +1,19 @@
 {% extends "vendor/base.html" %}
-
+{% load i18n %}
 
 {% block vendor_content %}
 
-<h2>Order Details</h2>
+<h2>{% trans 'Order Details' %}</h2>
 
 <table class="table table-bordered">
 
   <thead>
     <tr>
-      <th scope="col">#</th>
-      <th scope="col">Item</th>
-      <th scope="col">Price</th>
-      <th scope="col">Quantity</th>
-      <th scope="col">Total</th>
+      <th scope="col">{% trans '#' %}</th>
+      <th scope="col">{% trans 'Item' %}</th>
+      <th scope="col">{% trans 'Price' %}</th>
+      <th scope="col">{% trans 'Quantity' %}</th>
+      <th scope="col">{% trans 'Total' %}</th>
     </tr>
   </thead>
 
@@ -29,13 +29,13 @@
     {% endfor %}
     <tr>
       <td colspan=3></td>
-      <td>Subtotal</td>
+      <td>{% trans 'Subtotal' %}</td>
       <td>${{ object.subtotal|floatformat:2 }}</td>
     </tr>
   </tbody>
 
 </table>
 
-<a href="{% url 'vendor_admin:manager-order-list' %}" class="btn btn-primary">Back to List</a>
+<a href="{% url 'vendor_admin:manager-order-list' %}" class="btn btn-primary">{% trans 'Back to List' %}</a>
 {% endblock %}
 
