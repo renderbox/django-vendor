@@ -1,25 +1,26 @@
 {% extends "vendor/manage/base.html" %}
+{% load i18n %}
 
 {% block vendor_content %}
 
 <div class="container-fluid">
 
     <nav aria-label="breadcrumb">
-        <h1>Offers</h1>
+        <h1>{% trans 'Offers' %}</h1>
     </nav>
 
     <div class="row">
         <div class="col">
-          <h3>Offer List</h3>
+          <h3>{% trans 'Offer List' %}</h3>
           <table class="table table-striped">
   
             <thead>
               <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Start Date</th>
-                <th scope="col">End Date</th>
-                <th scope="col">Term</th>
-                <th scope="col">Available</th>
+                <th scope="col">{% trans 'Name' %}</th>
+                <th scope="col">{% trans 'Start Date' %}</th>
+                <th scope="col">{% trans 'End Date' %}</th>
+                <th scope="col">{% trans 'Term' %}</th>
+                <th scope="col">{% trans 'Available' %}</th>
               </tr>
             </thead>
   
@@ -35,7 +36,7 @@
               {% empty %}
               <tr>
                 <td>
-                  No Offers
+                  {% trans 'No Offers' %}
                 </td>
               </tr>
               {% endfor %}
@@ -44,7 +45,7 @@
           </table>
         </div>
       </div>
-      <p><a href="{% url 'vendor_admin:manager-offer-create' %}" class="btn btn-primary">Add Offer</a></p>
+      <p><a href="{% url 'vendor_admin:manager-offer-create' %}" class="btn btn-primary">{% trans 'Add Offer' %}</a></p>
 </div>
 
 

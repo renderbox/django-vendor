@@ -1,24 +1,25 @@
 {% extends "vendor/manage/base.html" %}
+{% load i18n %}
 
 {% block vendor_content %}
 
 <div class="container-fluid">
 
     <nav aria-label="breadcrumb">
-        <h1>Products</h1>
+        <h1>{% trans 'Products' %}</h1>
     </nav>
 
     <div class="row">
         <div class="col">
-          <h3>Product List</h3>
+          <h3>{% trans 'Product List' %}</h3>
           <table class="table table-striped">
   
             <thead>
               <tr>
-                <th scope="col">SKU</th>
-                <th scope="col">Name</th>
-                <th scope="col">Site</th>
-                <th scope="col">Description</th>
+                <th scope="col">{% trans 'SKU' %}</th>
+                <th scope="col">{% trans 'Name' %}</th>
+                <th scope="col">{% trans 'Site' %}</th>
+                <th scope="col">{% trans 'Description' %}</th>
               </tr>
             </thead>
   
@@ -33,7 +34,7 @@
               {% empty %}
               <tr>
                 <td>
-                  No Products
+                  {% trans 'No Products' %}
                 </td>
               </tr>
               {% endfor %}
@@ -42,7 +43,7 @@
           </table>
         </div>
       </div>
-      <p><a href="{% url 'vendor_admin:manager-product-create' %}" class="btn btn-primary">Add Product</a></p>
+      <p><a href="{% url 'vendor_admin:manager-product-create' %}" class="btn btn-primary">{% trans 'Add Product' %}</a></p>
 </div>
 
 

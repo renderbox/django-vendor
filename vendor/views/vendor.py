@@ -187,7 +187,7 @@ class ReviewCheckout(LoginRequiredMixin, TemplateView):
         processor.process_payment(request)
 
         if processor.transaction_submitted:
-            for order_item_subscription in [order_item for order_item in processor.invoice.order_items.all() if order_item.offer.terms == TermType.SUBSCRIPTION]:
+            for order_item_subscription in [order_item for order_item in processor.invoice.order_items.all() if order_item.offer.terms >= TermType.SUBSCRIPTION and order_item.offer.terms < TermType.ONE_TIME_USE]:
                 processor.process_subscription(
                     request, order_item_subscription)
             del(request.session['billing_address_form'])
