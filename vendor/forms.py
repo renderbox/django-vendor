@@ -96,7 +96,7 @@ class AccountInformationForm(AddressForm):
         fields = ['name',  'first_name', 'last_name', 'email', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
 
 class BillingAddressForm(AddressForm):
-    same_as_shipping = forms.BooleanField(label=_("Billing Address is the same as Account Address"), required=False)
+    same_as_shipping = forms.BooleanField(label=_("Billing Address is the same as Shipping Address"), required=False)
     company = forms.CharField(label=_('Company'), required=False)
 
     class Meta:
