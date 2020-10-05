@@ -3,7 +3,7 @@
 
 {% block vendor_content %}
 <form class="p-5 form" method="post">{% csrf_token %}
-        <p class="form-text">{% blocktrans with product_namer=object.offer.product.name %}Are you sure you want to remove? {{ product_name }} from the cart{% endblocktrans %}</p>
+        <p class="form-text">{% blocktrans with product_name=object.offer.product.name %}Are you sure you want to remove? {{ product_name }} from the cart{% endblocktrans %}</p>
         <input class="btn btn-danger" type="submit" value="Confirm">
     </form>
 

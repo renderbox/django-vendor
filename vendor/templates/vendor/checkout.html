@@ -137,7 +137,7 @@
             {% trans 'Payment Method' %}
           </h3>
           <p class="mb-0">{{request.session.credit_card_form.full_name}}</p>
-          <p>{% trans 'Card end in' %}
+          <p>{% trans 'Card ending in' %}
             {{request.session.credit_card_form.card_number|slice:"-4:"}}</p>
           <form method="post">
             {% csrf_token %}
@@ -176,7 +176,7 @@
       </li>
 
       <li class="px-0 border-0 d-flex justify-content-between">
-        <span class="font-weight-bolder">{% trans 'Total (USD)' %}</span>
+        <span class="font-weight-bolder">{% blocktrans %}Total ({{ invoice.get_currency_display }}) {% endblocktrans %}</span>
         <span class="text-primary">${{ invoice.total }}</span>
       </li>
     </ul>
