@@ -23,7 +23,7 @@
             </tr>
             {% endfor %}
         </table>
-        <h2>{% trans 'Total number of items' %}: {{item_count}}</h2>
+        <h2>{% blocktrans with item_count=item_count %}Total number of items: {{item_count}} {% endblocktrans %}</h2>
         <h2>{% trans 'Order Total' %}: {{order_total}}</h2>
         <form action="{% url 'vendor-payment-processing' %}" method="post">
                 {% csrf_token %}

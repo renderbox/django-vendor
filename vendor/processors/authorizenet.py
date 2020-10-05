@@ -203,7 +203,31 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def create_customer(self):
         raise NotImplementedError
 
-    def create_payment_scheduale_interval_type(self, period_length, payment_occurrences, trial_occurrences=0):
+    def get_payment_occurrences(self, subscription, subscription_type):
+        if subscription_type == TermType.SUBSCRIPTION:
+            return subscription.offer.term_details['payment_occurrences']
+        elif subscription_type == TermType.MONTHLY_SUBSCRIPTION:
+            return 1
+        elif subscription_type == TermType.QUATERLY_SUBSCRIPTION:
+            return 1
+        elif subscription_type == TermType.SEMIANNUAL_SUBSCRIPTION:
+            return 1
+        elif subscription_type == TermType.ANNUAL_SUBSCRIPTION:
+            return 1
+
+    def get_period_length(self, subscription, subscription_type):
+        if subscription_type == TermType.SUBSCRIPTION:
+            return subscription.offer.term_details['period_length']
+        elif subscription_type == TermType.MONTHLY_SUBSCRIPTION:
+            return 1
+        elif subscription_type == TermType.QUATERLY_SUBSCRIPTION:
+            return 4
+        elif subscription_type == TermType.SEMIANNUAL_SUBSCRIPTION:
+            return 6
+        elif subscription_type == TermType.ANNUAL_SUBSCRIPTION:
+            return 12
+
+    def create_payment_scheduale_interval_type(self, subscription, subscription_type):
         """
         Create an interval schedule with fixed months.
         period_length: The period length the service paided mor last 
@@ -213,14 +237,17 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         trial_occurrences: The number of ignored payments out of the payment_occurrences
         """
         # Payment offset is set to 1 because first payment is paided in full with the process_payment
+        trial_occurrences = 0
+
         payment_offset = 1
 
         payment_schedule = apicontractsv1.paymentScheduleType()
         payment_schedule.interval = apicontractsv1.paymentScheduleTypeInterval()
-        payment_schedule.interval.length = period_length
         payment_schedule.interval.unit = apicontractsv1.ARBSubscriptionUnitEnum.months
         payment_schedule.startDate = datetime.now()
-        payment_schedule.totalOccurrences = payment_occurrences
+
+        payment_schedule.interval.length = self.get_period_length(subscription, subscription_type)
+        payment_schedule.totalOccurrences = self.get_payment_occurrences(subscription, subscription_type)
         payment_schedule.trialOccurrences = trial_occurrences + payment_offset
 
         return payment_schedule
@@ -348,10 +375,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         self.get_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
         self.get_payment_info_form_data(request.session.get('credit_card_form'), CreditCardForm)
-
-        period_length = subscription.offer.term_details['period_length']
-        payment_occurrences = subscription.offer.term_details['payment_occurrences']
-        trail_occurrences = subscription.offer.term_details.get('trial_occurrences', 0)
         
         # Setting billing information
         billto = apicontractsv1.nameAndAddressType()
@@ -361,7 +384,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         # Setting subscription details
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.name = subscription.offer.name
-        self.transaction_type.paymentSchedule = self.create_payment_scheduale_interval_type(period_length, payment_occurrences, trail_occurrences)
+        self.transaction_type.paymentSchedule = self.create_payment_scheduale_interval_type(subscription, subscription.offer.terms)
         self.transaction_type.amount = self.to_valid_decimal(subscription.total)
         self.transaction_type.trialAmount = Decimal('0.00')
         self.transaction_type.billTo = billto
