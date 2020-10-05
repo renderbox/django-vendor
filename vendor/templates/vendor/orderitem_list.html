@@ -1,7 +1,7 @@
 {% extends "vendor/base.html" %}
-{% load l10n %}
+{% load i18n %}
 
-{% block title %}Cart{% endblock %}
+{% block title %}{% trans 'Cart' %}{% endblock %}
 
 {% block vendor_content %}
 <div class="container-fluid">
@@ -10,16 +10,16 @@
     </nav>
 
     {% if invoice %}
-    <h1>Your Cart</h1>
+    <h1>{% trans 'Your Cart' %}</h1>
         {% if object_list %}
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th scope="col">Product</th>
-                    <th scope="col">Quantity</th>
-                    <th scope="col">Per Item Cost</th>
-                    <th scope="col">Cost</th>
-                    <th scope="col">Delete</th>
+                    <th scope="col">{% trans 'Product' %}</th>
+                    <th scope="col">{% trans 'Quantity' %}</th>
+                    <th scope="col">{% trans 'Per Item Cost' %}</th>
+                    <th scope="col">{% trans 'Cost' %}</th>
+                    <th scope="col">{% trans 'Delete' %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -34,22 +34,22 @@
                           </form></td>
                     <td>{{ items.price|localize }}</td>
                     <td>{{ items.total|localize }}</td>
-                    <td><a class="text-danger" href="{% url 'vendor-remove-from-cart' items.offer.sku %}">Remove Item</a></td>
+                    <td><a class="text-danger" href="{% url 'vendor-remove-from-cart' items.offer.sku %}">{% trans 'Remove Item' %}</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
 
-        <h2>Total number of cart items: {{ item_count }}</h2>
+        <h2>{% trans 'Total number of items' %}: {{ item_count }}</h2>
         
-        <h2><a class="btn btn-success" href="{% url 'vendor-order-summary-retrieve' %}">Checkout</a></h2>
+        <h2><a class="btn btn-success" href="{% url 'vendor-order-summary-retrieve' %}">{% trans 'Checkout' %}</a></h2>
         {% else %}
-        <h2>No items in the cart </h2>
+        <h2>{% trans 'No items in the cart' %}</h2>
         {% endif %}
 
     {% else %}
-    <h1>No active Cart </h1>
+    <h1>{% trans 'No active Cart' %}</h1>
     {% endif %}
-    <a class="btn btn-warning" href="{% url 'vendor_index' %}">Add item</a>
+    <a class="btn btn-warning" href="{% url 'vendor_index' %}">{% trans 'Add item' %}</a>
 </div>
 {% endblock %}

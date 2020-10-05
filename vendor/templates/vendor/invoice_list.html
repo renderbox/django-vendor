@@ -1,11 +1,12 @@
 {% extends "vendor/base.html" %}
+{% load i18n %}
 
 {% block vendor_content %}
   <div class="container-fluid">
 
     <nav aria-label="breadcrumb">
       <!-- <ol class="breadcrumb"> -->
-      <h1>My Orders</h1>
+      <h1>{% trans 'My Orders' %}</h1>
       <!-- </ol> -->
     </nav>
 
@@ -15,16 +16,16 @@
 
           <thead>
             <tr>
-              <th scope="col">#</th>
-              <th scope="col">Date</th>
-              <th scope="col">Total</th>
+              <th scope="col">{% trans '#' %}</th>
+              <th scope="col">{% trans 'Date' %}</th>
+              <th scope="col">{% trans 'Total' %}</th>
             </tr>
           </thead>
 
           <tbody>
             {% for item in object_list %}
             <tr>
-              <td><a class="text-primary" href="{% url 'vendor_admin:manager-order-detail' item.uuid %}">Order</a></td>
+              <td><a class="text-primary" href="{% url 'vendor_admin:manager-order-detail' item.uuid %}">{% trans 'Order' %}</a></td>
               <td>{{ item.created }}</td>
               <td>{{ item.total }}</td>
             </tr>
