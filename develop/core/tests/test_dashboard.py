@@ -5,6 +5,7 @@ from django.urls import reverse
 
 User = get_user_model()
 
+
 class DashboardViewTests(TestCase):
 
     fixtures = ['user', 'unit_test']
@@ -18,4 +19,11 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse("vendor_admin:manager-dashboard"))
 
         self.assertEquals(response.status_code, 200)
-    
+        self.assertContains(response, 'Admin Purchase Dashboard')
+
+    def test_offers_list_status_code_fail_no_login(self):
+        client = Client()
+        response = client.get(reverse("vendor_admin:manager-dashboard"))
+        
+        self.assertEquals(response.status_code, 302)
+        self.assertIn('login', response.url)
