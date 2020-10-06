@@ -33,7 +33,7 @@ class CheckoutViewTests(TestCase):
         self.assertEquals(response.status_code, 200)
         self.assertContains(response, 'Review')
 
-    def test_offers_list_status_code_fail_no_login(self):
+    def test_view_checkout_status_code_fail_no_login(self):
         client = Client()
         response = client.get(reverse("vendor:checkout-review"))
         

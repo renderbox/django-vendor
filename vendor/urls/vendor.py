@@ -9,7 +9,6 @@ urlpatterns = [
     path('cart/add/<slug:slug>/', vendor_views.AddToCartView.as_view(), name="add-to-cart"),
     path('cart/remove/<slug:slug>/', vendor_views.RemoveFromCartView.as_view(), name="remove-from-cart"),
     path('cart/summary/<int:pk>/', vendor_views.PaymentSummaryView.as_view(), name="purchase-summary"),
-    path('invoice/history/', vendor_views.OrderHistoryDetailView.as_view(), name="invoice-history"),
     # path('cart/remove/<slug:slug>/', vendor_views.TransactionSummary.as_view(), name="transaction-summary"),
     # path('cart-item/edit/<int:id>/', vendor_views.CartItemQuantityEditView.as_view(), name='vendor-cart-item-quantity-edit'),
     # path('retrieve/cart/', vendor_views.RetrieveCartView.as_view(), name='vendor-user-cart-retrieve'),
