@@ -23,6 +23,8 @@ from vendor.processors import PaymentProcessor
 ###############################
 
 User = get_user_model()
+
+
 class BaseProcessorTests(TestCase):
 
     fixtures = ['user', 'unit_test']
