@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
@@ -10,6 +10,7 @@ from vendor.models import generate_sku, validate_msrp_format
 
 from core.models import Product
 
+User = get_user_model()
 
 class ModelProductTests(TestCase):
 
