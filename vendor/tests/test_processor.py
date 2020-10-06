@@ -22,6 +22,7 @@ from vendor.processors import PaymentProcessor
 # Test constants
 ###############################
 
+User = get_user_model()
 class BaseProcessorTests(TestCase):
 
     fixtures = ['user', 'unit_test']
@@ -276,6 +277,9 @@ class AuthorizeNetProcessorTests(TestCase):
             }
         self.subscription_offer = Offer.objects.get(pk=4)
 
+        self.client = Client()
+        self.user = User.objects.get(pk=1)
+        self.client.force_login(self.user)
     
     ##########
     # Processor Initialization Tests
@@ -796,6 +800,34 @@ class AuthorizeNetProcessorTests(TestCase):
             self.assertTrue(self.processor.transaction_submitted)
         else:
             print("No active Subscriptions, Skipping Test")
+
+    ##########
+    # Transaction View Tests
+    ##########
+    def test_view_checkout_account_success_code(self):
+        response = self.client.get(reverse("vendor:checkout-account"))
+
+        self.assertEquals(response.status_code, 200)
+        self.assertContains(response, 'Shipping Address')
+
+    def test_view_checkout_payment_success_code(self):
+        response = self.client.get(reverse("vendor:checkout-payment"))
+
+        self.assertEquals(response.status_code, 200)
+        self.assertContains(response, 'Billing Address')
+
+    def test_view_checkout_review_success_code(self):
+        response = self.client.get(reverse("vendor:checkout-review"))
+
+        self.assertEquals(response.status_code, 200)
+        self.assertContains(response, 'Review')
+
+    def test_view_checkout_status_code_fail_no_login(self):
+        client = Client()
+        response = client.get(reverse("vendor:checkout-review"))
+        
+        self.assertEquals(response.status_code, 302)
+        self.assertIn('login', response.url)
 
 @skipIf((settings.STRIPE_TEST_SECRET_KEY or settings.STRIPE_TEST_PUBLIC_KEY) == None, "Strip enviornment variables not set, skipping tests")
 class StripeProcessorTests(TestCase):

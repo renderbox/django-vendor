@@ -11,34 +11,7 @@ class CheckoutViewTests(TestCase):
     fixtures = ['user', 'unit_test']
     
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.get(pk=1)
-        self.client.force_login(self.user)
-
-    def test_view_checkout_account_success_code(self):
-        response = self.client.get(reverse("vendor:checkout-account"))
-
-        self.assertEquals(response.status_code, 200)
-        self.assertContains(response, 'Shipping Address')
-
-    def test_view_checkout_payment_success_code(self):
-        response = self.client.get(reverse("vendor:checkout-payment"))
-
-        self.assertEquals(response.status_code, 200)
-        self.assertContains(response, 'Billing Address')
-
-    def test_view_checkout_review_success_code(self):
-        response = self.client.get(reverse("vendor:checkout-review"))
-
-        self.assertEquals(response.status_code, 200)
-        self.assertContains(response, 'Review')
-
-    def test_view_checkout_status_code_fail_no_login(self):
-        client = Client()
-        response = client.get(reverse("vendor:checkout-review"))
-        
-        self.assertEquals(response.status_code, 302)
-        self.assertIn('login', response.url)
+        pass
     
     def test_fail_view_checkout_pay_no_address(self):
         # TODO: Implement Tests
