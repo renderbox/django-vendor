@@ -1,11 +1,11 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse
 
 from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerProfile
 
-
+User = get_user_model()
 class ModelInvoiceTests(TestCase):
 
     fixtures = ['user', 'unit_test']
@@ -110,49 +110,6 @@ class ViewInvoiceTests(TestCase):
         pass
 
     def test_view_cart_status_code_redirect_remove_offer(self):
-        # TODO: Implement Tests
-        pass
-    
-    def test_view_checkout(self):
-        # TODO: Implement Tests
-        pass
-    
-    def test_view_checkout_pay(self):
-        '''
-        In order to pay the total and shiping address should have been filled.
-        '''
-        # TODO: Implement Tests
-        pass
-    
-    def test_fail_view_checkout_pay_no_address(self):
-        # TODO: Implement Tests
-        pass
-    
-    def test_fail_view_checkout_pay_no_card_info(self):
-        # TODO: Implement Tests
-        pass
-    
-    def test_fail_view_checkout_error_tax(self):
-        # TODO: Implement Tests
-        pass
-    
-    def test_fail_view_checkout_pay_process_failed(self):
-        # TODO: Implement Tests
-        pass
-    
-    def test_success_view_checkout_payment_processed(self):
-        # TODO: Implement Tests
-        pass
-    
-    def test_view_wait_screen(self):
-        # TODO: Implement Tests
-        pass
-    
-    def test_view_failed_transaction(self):
-        # TODO: Implement Tests
-        pass
-    
-    def test_view_purchase_complete(self):
         # TODO: Implement Tests
         pass
     
