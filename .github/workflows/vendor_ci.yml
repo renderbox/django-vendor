@@ -44,13 +44,29 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install m2r
         python -m pip install -e .[dev,authorizenet,stripe,test,build]
-    - name: Run Tests
+    - name: Run Core Tests
       run: |
         cd develop
         python manage.py test
       env: 
         DJANGO_DEBUG: 1
         DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
+    - name: Run Base Processor Tests
+      run: |
+        python manage.py test vendor.tests.test_processor.BaseProcessorTests
+      env: 
+        DJANGO_DEBUG: 1
+        DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
+    - name: Run Authorize.Net Tests
+      run: |
+        cd develop
+        python manage.py test
+      env: 
+        DJANGO_DEBUG: 1
+        DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
+        AUTHORIZE_NET_API_ID: ${{ secrets.AUTHORIZE_NET_API_ID }}
+        AUTHORIZE_NET_TRANSACTION_KEY: ${{ secrets.AUTHORIZE_NET_TRANSACTION_KEY }}
+        AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT: "authCaptureTransaction"
     - name: Build Package
       run: |
         python setup.py sdist bdist_wheel
