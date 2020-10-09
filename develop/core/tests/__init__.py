@@ -1,3 +1,4 @@
+from .test_module import *
 from .test_checkout import *
 from .test_customer_profile import *
 from .test_invoice import *
