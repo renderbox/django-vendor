@@ -101,5 +101,7 @@ admin.site.register(Offer, OfferAdmin)
 admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(Wishlist, WishlistAdmin)
 admin.site.register(Address)
+admin.site.register(Receipt)
+admin.site.register(OrderItem)
 
 
