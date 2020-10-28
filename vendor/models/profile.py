@@ -58,7 +58,7 @@ class CustomerProfile(CreateUpdateModelBase):
         returns true/false if the user has a receipt to a given product(s)
         it also checks against elegibility start/end/empty dates on consumable products and subscriptions
         """        
-        return bool(filter_products(products).count())
+        return bool(self.filter_products(products).count())
 
     def get_cart_items_count(self):
         invoices = self.invoices.filter(site=Site.objects.get_current(), status=Invoice.InvoiceStatus.CART)
