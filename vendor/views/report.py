@@ -1,6 +1,7 @@
 import csv
 
 from django.http import StreamingHttpResponse
+from django.utils.timezone import localtime
 # from django.shortcuts import render, redirect
 # from django.contrib import messages
 # from django.contrib.auth.mixins import LoginRequiredMixin
@@ -45,60 +46,58 @@ class Echo:
     """An object that implements just the write method of the file-like
     interface.
     """
+    
     def write(self, value):
         """Write the value by returning it, instead of storing in a buffer."""
         return value
 
 
 # class RecieptListCSV(PermissionRequiredMixin, BaseListView):
-class RecieptListCSV(BaseListView):
+class CSVStreamRowView(BaseListView):
     """A base view for displaying a list of objects."""
+
+    filename = "reciept_list.csv"
+    # headers = 
 
     def get_queryset(self):
         return super().get_queryset()
     
-    def get(self, request, *args, **kwargs):
-        # self.object_list = self.get_queryset()
-        # allow_empty = self.get_allow_empty()
-
-        # if not allow_empty:
-        #     # When pagination is enabled and object_list is a queryset,
-        #     # it's better to do a cheap query than to load the unpaginated
-        #     # queryset in memory.
-        #     if self.get_paginate_by(self.object_list) is not None and hasattr(self.object_list, 'exists'):
-        #         is_empty = not self.object_list.exists()
-        #     else:
-        #         is_empty = not self.object_list
-        #     if is_empty:
-        #         raise Http404(_('Empty list and “%(class_name)s.allow_empty” is False.') % {
-        #             'class_name': self.__class__.__name__,
-        #         })
-        # context = self.get_context_data()
-        # return self.render_to_response(context)
+    def get_row_data(self):
         rows = (["Row {}".format(idx), str(idx)] for idx in range(500))
+        return rows
+
+    def get(self, request, *args, **kwargs):
+        rows = self.get_row_data()
         pseudo_buffer = Echo()
         writer = csv.writer(pseudo_buffer)
+        #TODO: Figure out what to prepend the header without breaking the streaming generator
         response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+
         # Set the filename
-        response['Content-Disposition'] = 'attachment; filename="reciepts.csv"'
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(self.filename)
         return response
 
 
-# class InvoiceListCSV(PermissionRequiredMixin, BaseListView):
-#     def get(self, request, *args, **kwargs):
-#         self.object_list = self.get_queryset()
-#         allow_empty = self.get_allow_empty()
+class RecieptListCSV(CSVStreamRowView):
+    filename = "reciepts.csv"
+    model = Receipt
 
+    def get_row_data(self):
+        object_list = self.get_queryset()
+        # header = ["INVOICE_ID", "CREATED_TIME(ISO)", "USERNAME", "INVOICE_ID", "ORDER_ITEM", "OFFER_ID", "QUANTITY", "TRANSACTION_ID", "STATUS"]
+        rows = [[str(obj.pk), obj.created.isoformat(), obj.profile.user.username, obj.order_item.invoice.pk, obj.order_item.offer, obj.order_item.pk, obj.order_item.quantity, obj.transaction, obj.get_status_display()] for obj in object_list]
+        return rows
 
-def some_streaming_csv_view(request):
-    """A view that streams a large CSV file."""
-    # Generate a sequence of rows. The range is based on the maximum number of
-    # rows that can be handled by a single sheet in most spreadsheet
-    # applications.
-    rows = (["Row {}".format(idx), str(idx)] for idx in range(65536))
-    pseudo_buffer = Echo()
-    writer = csv.writer(pseudo_buffer)
-    response = StreamingHttpResponse((writer.writerow(row) for row in rows),
-                                     content_type="text/csv")
-    response['Content-Disposition'] = 'attachment; filename="somefilename.csv"'
-    return response
+ 
+class InvoiceListCSV(CSVStreamRowView):
+    filename = "invoices.csv"
+    model = Invoice
+
+    def get_queryset(self):
+        # return super().get_queryset()
+        return self.model.on_site.all()
+    
+    def get_row_data(self):
+        object_list = self.get_queryset()
+        rows = ([str(obj.pk), obj.created.isoformat(), str(obj.profile.user.username), obj.currency, obj.total] for obj in object_list)
+        return rows
