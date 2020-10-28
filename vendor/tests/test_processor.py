@@ -11,7 +11,7 @@ from unittest import skipIf
 from random import randrange, choice
 from string import ascii_letters
 from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models import Invoice, Payment, Offer, Price, Receipt
+from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile
 from vendor.models.address import Country
 from vendor.models.choice import TermType
 from vendor.processors.base import PaymentProcessorBase
@@ -168,6 +168,23 @@ class BaseProcessorTests(TestCase):
     def test_get_checkout_context_success(self):
         context = self.base_processor.get_checkout_context()
         self.assertIn('invoice', context)
+
+    def test_free_payment_success(self):
+        customer = CustomerProfile.objects.get(pk=2)
+        invoice = Invoice(profile=customer)
+        invoice.save()
+        invoice.add_offer(Offer.objects.get(pk=5))
+
+        base_processor = PaymentProcessorBase(invoice)
+
+        base_processor.process_free_payment()
+
+        self.assertTrue(invoice.payments.count())
+        self.assertTrue(customer.receipts.count())
+
+    def test_free_payment_fail(self):
+        # TODO: Implement Test
+        pass
 
     def test_get_header_javascript_success(self):
         # TODO: Implement Test
