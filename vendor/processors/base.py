@@ -65,10 +65,7 @@ class PaymentProcessorBase(object):
                             )
 
     def save_payment_transaction(self):
-        self.payment.success = True
-        self.payment.transation = f"{self.payment.pk}-free"
-        self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
-        self.payment.save()
+        pass
 
     def update_invoice_status(self, new_status):
         if self.transaction_submitted:
@@ -207,7 +204,10 @@ class PaymentProcessorBase(object):
         self.transaction_submitted = True
         self.create_payment_model()
 
-        self.save_payment_transaction()
+        self.payment.success = True
+        self.payment.transation = f"{self.payment.pk}-free"
+        self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+        self.payment.save()
         
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 

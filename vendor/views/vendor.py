@@ -53,22 +53,22 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-class CreateFreePaymentView(LoginRequiredMixin, TemplateView):
+class ProcessFreeOffer(LoginRequiredMixin, TemplateView):
     '''
     Create an order item and add it to the order
     '''
 
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart()
         # TODO: Taxable should not be the decision maker but if it is a hard good.
-        if invoice.total or invoice.order_items.offer.products.filter(classification__taxable=True):
+        if invoice.total:
             return redirect('vendor:checkout-account')
 
         processor = payment_processor(invoice)
 
-        processor.process_free_payment(request)
+        processor.process_free_payment()
 
-        return redirect('vendor:purchase-summary', {'pk': invoice.id})
+        return redirect('vendor:purchase-summary', pk=invoice.pk)
 
 
 

@@ -182,10 +182,6 @@ class BaseProcessorTests(TestCase):
         self.assertTrue(invoice.payments.count())
         self.assertTrue(customer.receipts.count())
 
-    def test_free_payment_fail(self):
-        # TODO: Implement Test
-        pass
-
     def test_get_header_javascript_success(self):
         # TODO: Implement Test
         pass
