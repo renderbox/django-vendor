@@ -2,6 +2,7 @@ import csv
 
 from django.http import StreamingHttpResponse
 from django.utils.timezone import localtime
+from django.contrib.sites.models import Site
 # from django.shortcuts import render, redirect
 # from django.contrib import messages
 # from django.contrib.auth.mixins import LoginRequiredMixin
@@ -82,9 +83,13 @@ class RecieptListCSV(CSVStreamRowView):
     filename = "reciepts.csv"
     model = Receipt
 
+    def get_queryset(self):
+        # TODO: Update to handle ranges from a POST
+        return self.model.objects.filter(profile__site=Site.objects.get_current())      # Return reciepts only for profiles on this site
+
     def get_row_data(self):
         object_list = self.get_queryset()
-        # header = ["INVOICE_ID", "CREATED_TIME(ISO)", "USERNAME", "INVOICE_ID", "ORDER_ITEM", "OFFER_ID", "QUANTITY", "TRANSACTION_ID", "STATUS"]
+        # header = ["RECIEPT_ID", "CREATED_TIME(ISO)", "USERNAME", "INVOICE_ID", "ORDER_ITEM", "OFFER_ID", "QUANTITY", "TRANSACTION_ID", "STATUS"]
         rows = [[str(obj.pk), obj.created.isoformat(), obj.profile.user.username, obj.order_item.invoice.pk, obj.order_item.offer, obj.order_item.pk, obj.order_item.quantity, obj.transaction, obj.get_status_display()] for obj in object_list]
         return rows
 
@@ -94,10 +99,11 @@ class InvoiceListCSV(CSVStreamRowView):
     model = Invoice
 
     def get_queryset(self):
-        # return super().get_queryset()
+        # TODO: Update to handle ranges from a POST
         return self.model.on_site.all()
     
     def get_row_data(self):
         object_list = self.get_queryset()
+        # header = ["INVOICE_ID", "CREATED_TIME(ISO)", "USERNAME", "CURRENCY", "TOTAL"]
         rows = ([str(obj.pk), obj.created.isoformat(), str(obj.profile.user.username), obj.currency, obj.total] for obj in object_list)
         return rows
