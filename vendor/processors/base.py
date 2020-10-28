@@ -65,7 +65,10 @@ class PaymentProcessorBase(object):
                             )
 
     def save_payment_transaction(self):
-        pass
+        self.payment.success = True
+        self.payment.transation = f"{self.payment.pk}-free"
+        self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+        self.payment.save()
 
     def update_invoice_status(self, new_status):
         if self.transaction_submitted:
@@ -194,6 +197,22 @@ class PaymentProcessorBase(object):
         """
         # Gateway Transaction goes here...
         pass
+            
+
+    def process_free_payment(self):
+        """
+        Called to handle an invoice with total zero.  
+        This are the base internal steps to process a free payment.
+        """
+        self.transaction_submitted = True
+        self.create_payment_model()
+
+        self.save_payment_transaction()
+        
+        self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+
+        self.create_receipts()
+
 
     def post_authorization(self):
         """
