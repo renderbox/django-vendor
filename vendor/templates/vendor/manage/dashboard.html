@@ -87,8 +87,15 @@
       <div class='col-2'>
         <a href="{% url 'vendor_admin:manager-offer-list' %}" class="btn btn-primary">{% trans 'Offer List' %}</a>
       </div>
-      <div class='col'>
+      <div class='col-4'>
       </div>
+      <div class='col-2'>
+        <a href="{% url 'vendor_admin:manager-reciept-download' %}" class="btn btn-primary">{% trans 'Reciept Report CSV' %}</a>
+      </div>
+      <div class='col-2'>
+        <a href="{% url 'vendor_admin:manager-invoice-download' %}" class="btn btn-primary">{% trans 'Invoice Report CSV' %}</a>
+      </div>
+
     </div>
 
     <div class="row">

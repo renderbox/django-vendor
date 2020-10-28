@@ -25,6 +25,8 @@ class Receipt(CreateUpdateModelBase):
     transaction = models.CharField(_("Transaction"), max_length=80)
     status = models.IntegerField(_("Status"), choices=PurchaseStatus.choices, default=0)       # Fulfilled, Refund
     meta = models.JSONField(default=dict)
+    # TODO: Add final purchase price to the reciept for tracking.
+    # TODO: Add Site field for easier tracking?
     # the product connection comes from the ProductModelBase to not trigger a migration on subclassing PMB
 
     class Meta:
