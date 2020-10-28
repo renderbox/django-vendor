@@ -38,29 +38,27 @@ class CustomerProfile(CreateUpdateModelBase):
         cart, created = self.invoices.get_or_create(status=Invoice.InvoiceStatus.CART)
         return cart
 
-    def filter_product(self, product):
+    def filter_products(self, products):
         """
         returns the list of products that the user has a license for filtered by the products provided.
         """        
         now = timezone.now()
 
-        if isinstance(product, QuerySet):
-            pass
-        elif isinstance(product, list):
-            pass
-        else:
-            items = self.receipts.filter( Q(products=product),
+        if isinstance(products, QuerySet) or isinstance(products, list):
+            return self.receipts.filter( Q(products__in=products),
                                 Q(start_date__lte=now) | Q(start_date=None),
                                 Q(end_date__gte=now) | Q(end_date=None))
-        
-        return items
 
-    def has_product(self, product):
+        return self.receipts.filter( Q(products=products),
+                            Q(start_date__lte=now) | Q(start_date=None),
+                            Q(end_date__gte=now) | Q(end_date=None))
+
+    def has_product(self, products):
         """
-        returns true/false if the user has a receipt to a given product
+        returns true/false if the user has a receipt to a given product(s)
         it also checks against elegibility start/end/empty dates on consumable products and subscriptions
         """        
-        return bool(filter_product(product).count())
+        return bool(filter_products(products).count())
 
     def get_cart_items_count(self):
         invoices = self.invoices.filter(site=Site.objects.get_current(), status=Invoice.InvoiceStatus.CART)
