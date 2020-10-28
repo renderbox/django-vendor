@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse
+from django.conf import settings
 
 from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerProfile
 
@@ -100,6 +101,35 @@ class ViewInvoiceTests(TestCase):
 
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200)
+
+    @override_settings(SITE_ID=2)
+    def test_view_process_free_product_redirect_summary(self):
+        url = reverse('vendor:checkout-free')
+        client = Client()
+        user = User.objects.get(pk=2)
+        client.force_login(user)
+
+        invoice = Invoice(profile=CustomerProfile.objects.get(user=user))
+        invoice.save()
+        invoice.add_offer(Offer.objects.get(pk=5))
+        response = client.get(url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('vendor:purchase-summary', kwargs={'pk':invoice.pk}))
+        
+    
+    def test_view_process_free_product_redirect_account(self):
+        url = reverse('vendor:checkout-free')
+        client = Client()
+        user = User.objects.get(pk=1)
+        client.force_login(user)
+
+        response = client.get(url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('vendor:checkout-account'))
+        
+
 
     def test_view_cart_no_shipping_address(self):
         # TODO: Implement Test
