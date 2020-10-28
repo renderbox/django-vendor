@@ -40,7 +40,7 @@ class CustomerProfile(CreateUpdateModelBase):
 
     def filter_products(self, products):
         """
-        returns the list of products that the user has a reciept for filtered by the products provided.
+        returns the list of reciepts that the user has a reciept for filtered by the products provided.
         """        
         now = timezone.now()
 
@@ -48,7 +48,7 @@ class CustomerProfile(CreateUpdateModelBase):
             return self.receipts.filter( Q(products__in=products),
                                 Q(start_date__lte=now) | Q(start_date=None),
                                 Q(end_date__gte=now) | Q(end_date=None))
-
+ 
         return self.receipts.filter( Q(products=products),
                             Q(start_date__lte=now) | Q(start_date=None),
                             Q(end_date__gte=now) | Q(end_date=None))
