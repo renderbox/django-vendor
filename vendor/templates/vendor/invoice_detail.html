@@ -21,7 +21,8 @@
       <th scope="row">{{ forloop.counter }}</th>
       <td>{{item.name}}</td>
       <td>${{item.price|floatformat:2}}</td>
-      <td><a class="btn btn-success btn-sm" href="{{ item.offer.add_to_cart_link }}">add</a>{{item.quantity}} <a class="btn btn-success btn-sm" href="{{ item.offer.remove_from_cart_link }}">remove</a></td>
+      <td><a class="btn btn-success btn-sm" href="{{ item.offer.add_to_cart_link }}">add</a>{{item.quantity}} <a
+          class="btn btn-success btn-sm" href="{{ item.offer.remove_from_cart_link }}">remove</a></td>
       <td>${{item.total|floatformat:2}}</td>
     </tr>
     {% endfor %}
@@ -50,8 +51,12 @@
 
 
 </table>
-
+{% if object.total == 0 %}
+{% comment %}TODO check if it should always go to this view to check the invoice{% endcomment %}
+<a href="{% url 'vendor:checkout-free' %}" class="btn btn-success">{% trans 'Check Out' %}</a>
+{% else %}
 <a href="{% url 'vendor:checkout-account' %}" class="btn btn-success">{% trans 'Check Out' %}</a>
+{% endif %}
+
 
 {% endblock %}
-

@@ -53,6 +53,26 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
+class CreateFreePaymentView(LoginRequiredMixin, TemplateView):
+    '''
+    Create an order item and add it to the order
+    '''
+
+    def get(self, *args, **kwargs):
+        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart()
+        # TODO: Taxable should not be the decision maker but if it is a hard good.
+        if invoice.total or invoice.order_items.offer.products.filter(classification__taxable=True):
+            return redirect('vendor:checkout-account')
+
+        processor = payment_processor(invoice)
+
+        processor.process_free_payment(request)
+
+        return redirect('vendor:purchase-summary', {'pk': invoice.id})
+
+
+
+
 class RemoveFromCartView(LoginRequiredMixin, DeleteView):
     '''
     Reduce the count of items from the cart and delete the order item if you reach 0
