@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 from .base import CreateUpdateModelBase
@@ -38,21 +38,29 @@ class CustomerProfile(CreateUpdateModelBase):
         cart, created = self.invoices.get_or_create(status=Invoice.InvoiceStatus.CART)
         return cart
 
+    def filter_product(self, product):
+        """
+        returns the list of products that the user has a license for filtered by the products provided.
+        """        
+        now = timezone.now()
+
+        if isinstance(product, QuerySet):
+            pass
+        elif isinstance(product, list):
+            pass
+        else:
+            items = self.receipts.filter( Q(products=product),
+                                Q(start_date__lte=now) | Q(start_date=None),
+                                Q(end_date__gte=now) | Q(end_date=None))
+        
+        return items
+
     def has_product(self, product):
         """
         returns true/false if the user has a receipt to a given product
         it also checks against elegibility start/end/empty dates on consumable products and subscriptions
         """        
-        now = timezone.now()
-
-        count = self.receipts.filter( Q(products=product),
-                              Q(start_date__lte=now) | Q(start_date=None),
-                              Q(end_date__gte=now) | Q(end_date=None)).count() 
-
-        if count:
-            return True
-        
-        return False
+        return bool(filter_product(product).count())
 
     def get_cart_items_count(self):
         invoices = self.invoices.filter(site=Site.objects.get_current(), status=Invoice.InvoiceStatus.CART)
@@ -63,4 +71,3 @@ class CustomerProfile(CreateUpdateModelBase):
             cart = self.get_cart()
 
         return cart.order_items.all().count()
-
