@@ -90,16 +90,48 @@ class ViewInvoiceTests(TestCase):
         self.client = Client()
         self.user = User.objects.get(pk=1)
         self.client.force_login(self.user)
+
+        self.invoice = Invoice.objects.get(pk=1)
         
         self.mug_offer = Offer.objects.get(pk=4)
         self.shirt_offer = Offer.objects.get(pk=1)
 
+        self.cart_url = reverse('vendor:cart')
 
     def test_view_cart_status_code(self):
-        url = reverse('vendor:cart')
-
-        response = self.client.get(url)
+        response = self.client.get(self.cart_url)
         self.assertEquals(response.status_code, 200)
+
+    def test_view_cart_content_loads(self):
+        response = self.client.get(self.cart_url)
+
+        self.assertContains(response, self.invoice.subtotal)
+        self.assertContains(response, self.invoice.tax)
+        self.assertContains(response, self.invoice.shipping)
+        self.assertContains(response, self.invoice.total)
+        self.assertContains(response, self.invoice.get_currency_display())
+
+    def test_view_cart_empty(self):
+        self.invoice.order_items.all().delete()
+        response = self.client.get(self.cart_url)
+
+        self.assertContains(response, 'Empty Cart')
+        self.assertNotContains(response, 'Check Out')
+    
+    def test_view_cart_updates_on_adding_items(self):
+        response = self.client.get(self.cart_url)
+        self.assertContains(response, self.invoice.total)
+
+        add_mug_url = reverse("vendor:add-to-cart", kwargs={'slug': self.mug_offer.slug})
+        self.client.get(add_mug_url)
+        self.assertContains(response, self.invoice.total)
+
+        remove_shirt_url = reverse("vendor:remove-from-cart", kwargs={'slug': self.shirt_offer.slug})
+        self.assertContains(response, self.invoice.total)
+
+
+
+        
 
     def test_view_cart_no_shipping_address(self):
         # TODO: Implement Test
