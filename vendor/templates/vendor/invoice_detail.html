@@ -39,31 +39,9 @@
         <span class="text-success">-$5</span>
       </li>
       {% endcomment %}
-
-      <li class="px-0 border-0 d-flex justify-content-between">
-        <span>{% trans 'Subtotal' %}</span>
-        <span>${{ object.subtotal|floatformat:2|default_if_none:"0.00" }}</span>
-      </li>
-
-      <li class="px-0 border-0 d-flex justify-content-between">
-        <span>{% trans 'Estimated Shipping' %}</span>
-        <span>${{ object.shipping|default_if_none:"0.00" }}</span>
-      </li>
-
-      <li class="px-0 border-0 d-flex justify-content-between">
-        <span>{% trans 'Estimated Tax' %}</span>
-        <span>${{ object.tax|floatformat:2|default_if_none:"0.00" }}</span>
-      </li>
-      <li class="px-0 justify-content-between" style="list-style-type: none;">
-        <hr class="my-3 border-dark border-5" />
-      </li>
-
-      <li class="px-0 border-0 d-flex justify-content-between">
-        {% with invoice.get_currency_display as currency %}
-        <span class="font-weight-bolder">{% blocktrans %}Total ({{ currency }}) {% endblocktrans %}</span>
-        {% endwith  %}
-        <span class="text-primary">${{ object.total|floatformat:2|default_if_none:"0.00" }}</span>
-      </li>
+      
+      {% include "./includes/cost_overview.html" with invoice=invoice %}
+      
     </ul>
     {% if object.order_items.all %}
     <a href="{% url 'vendor:checkout-account' %}" class="btn btn-primary">{% trans 'Check Out' %}</a>
