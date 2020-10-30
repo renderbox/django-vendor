@@ -22,7 +22,7 @@ from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationF
 # The Payment Processor configured in settings.py
 payment_processor = PaymentProcessor
 
-
+# TODO: Need to remove the login required
 class CartView(LoginRequiredMixin, DetailView):
     '''
     View items in the cart
@@ -32,7 +32,7 @@ class CartView(LoginRequiredMixin, DetailView):
     def get_object(self):
         profile, created = self.request.user.customer_profile.get_or_create(
             site=set_default_site_id())
-        return profile.get_cart()
+        return profile.get_cart_or_checkout()
 
 
 class AddToCartView(LoginRequiredMixin, TemplateView):
@@ -45,9 +45,12 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
         profile, created = self.request.user.customer_profile.get_or_create(
             site=set_default_site_id())
 
-        cart = profile.get_cart()
-        cart.add_offer(offer)
+        cart = profile.get_cart_or_checkout()
 
+        if cart.status = Invoice.InvoiceStatus.CHECKOUT:
+            messages.info(self.request, _("You have a pending cart in checkout"))
+
+        cart.add_offer(offer)
         messages.info(self.request, _("Added item to cart."))
 
         return redirect('vendor:cart')      # Redirect to cart on success
@@ -61,10 +64,14 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
 
     def get(self, *args, **kwargs):         # TODO: Move to POST
         offer = Offer.objects.get(slug=self.kwargs["slug"])
-
         profile = self.request.user.customer_profile.get(
             site=settings.SITE_ID)      # Make sure they have a cart
-        cart = profile.get_cart()
+
+        cart = profile.get_cart_or_checkout()
+
+        if cart.status = Invoice.InvoiceStatus.CHECKOUT:
+            messages.info(self.request, _("You have a pending cart in checkout"))
+
         cart.remove_offer(offer)
 
         messages.info(self.request, _("Removed item from cart."))
@@ -77,7 +84,8 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart()
+        
+        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart_or_checkout()
 
         existing_account_address = Address.objects.filter(profile__user=request.user)
 
@@ -106,7 +114,8 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
         account_form = form.save(commit=False)
 
-        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart()
+        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart_or_checkout()
+        invoice.status = Invoice.InvoiceStatus.CHECKOUT
         invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
         existing_account_address = Address.objects.filter(
             profile__user=request.user, name=account_form.name, first_name=account_form.first_name, last_name=account_form.last_name)
@@ -129,7 +138,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
     template_name = "vendor/checkout.html"
 
     def get(self, request, *args, **kwargs):
-        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart()
+        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_checkout_cart()
 
         context = super().get_context_data()
 
@@ -141,7 +150,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart()
+        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_checkout_cart()
 
         credit_card_form = CreditCardForm(request.POST)
         if request.POST.get('same_as_shipping') == 'on':
@@ -168,7 +177,7 @@ class ReviewCheckout(LoginRequiredMixin, TemplateView):
     template_name = 'vendor/checkout.html'
 
     def get(self, request, *args, **kwargs):
-        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart()
+        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_checkout_cart()
 
         context = super().get_context_data()
 
@@ -180,7 +189,7 @@ class ReviewCheckout(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart()
+        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_checkout_cart()
 
         processor = payment_processor(invoice)
 
