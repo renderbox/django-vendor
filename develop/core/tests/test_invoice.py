@@ -130,8 +130,16 @@ class ViewInvoiceTests(TestCase):
         self.assertContains(response, self.invoice.total)
 
 
+class AccountInformationViewTests(TestCase):
 
-        
+    fixtures = ['user', 'unit_test']
+    
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.get(pk=1)
+        self.client.force_login(self.user)
+
+        self.invoice = Invoice.objects.get(pk=1)
 
     def test_view_cart_no_shipping_address(self):
         # TODO: Implement Test
@@ -144,7 +152,74 @@ class ViewInvoiceTests(TestCase):
     def test_view_cart_status_code_redirect_remove_offer(self):
         # TODO: Implement Tests
         pass
+
+    def test_cart_updates_to_zero_items(self):
+        # TODO: Implement Test
+        pass
+
+class PaymentViewTests(TestCase):
+
+    fixtures = ['user', 'unit_test']
+    
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.get(pk=1)
+        self.client.force_login(self.user)
+
+        self.invoice = Invoice.objects.get(pk=1)
+
+    def test_view_cart_no_shipping_address(self):
+        # TODO: Implement Test
+        pass
+
+    def test_view_cart_status_code_redirect_add_offer(self):
+        # TODO: Implement Tests
+        pass
+
+    def test_view_cart_status_code_redirect_remove_offer(self):
+        # TODO: Implement Tests
+        pass
+
+    def test_cart_updates_to_zero_items(self):
+        # TODO: Implement Test
+        pass
+
+class ReviewCheckoutViewTests(TestCase):
+
+    fixtures = ['user', 'unit_test']
+    
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.get(pk=1)
+        self.client.force_login(self.user)
+
+        self.invoice = Invoice.objects.get(pk=1)
+
+    def test_view_cart_no_shipping_address(self):
+        # TODO: Implement Test
+        pass
+
+    def test_view_cart_status_code_redirect_add_offer(self):
+        # TODO: Implement Tests
+        pass
+
+    def test_view_cart_status_code_redirect_remove_offer(self):
+        # TODO: Implement Tests
+        pass
+
+    def test_cart_updates_to_zero_items(self):
+        # TODO: Implement Test
+        pass
     
 
 
+class PaymentSummaryViewTests(TestCase):
 
+    fixtures = ['user', 'unit_test']
+    
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.get(pk=1)
+        self.client.force_login(self.user)
+
+        self.invoice = Invoice.objects.get(pk=1)
