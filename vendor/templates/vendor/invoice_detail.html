@@ -41,10 +41,10 @@
       {% endcomment %}
       
       {% include "./includes/cost_overview.html" with invoice=invoice %}
-      
+
     </ul>
     {% if object.order_items.all %}
-    <a href="{% url 'vendor:checkout-account' %}" class="btn btn-primary">{% trans 'Check Out' %}</a>
+    <a href="{% url 'vendor:checkout-account' %}" class="btn btn-primary">{% trans 'PROCEED TO CHECKOUT' %}</a>
     {% endif %}
 
 

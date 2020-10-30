@@ -82,7 +82,7 @@ class ModelInvoiceTests(TestCase):
         self.assertNotEquals(start_quantity, end_quantity)
 
 
-class ViewInvoiceTests(TestCase):
+class CartViewTests(TestCase):
 
     fixtures = ['user', 'unit_test']
     
@@ -128,6 +128,11 @@ class ViewInvoiceTests(TestCase):
 
         remove_shirt_url = reverse("vendor:remove-from-cart", kwargs={'slug': self.shirt_offer.slug})
         self.assertContains(response, self.invoice.total)
+    
+    def test_view_displays_login_instead_checkout(self):
+        # TODO: Implement Test
+        pass
+    
 
 
 class AccountInformationViewTests(TestCase):
@@ -138,8 +143,18 @@ class AccountInformationViewTests(TestCase):
         self.client = Client()
         self.user = User.objects.get(pk=1)
         self.client.force_login(self.user)
-
+        self.view_url = reverse('vendor:checkout-account')
         self.invoice = Invoice.objects.get(pk=1)
+
+    def test_view_status_code_200(self):
+        response = self.client.get(self.view_url)
+        self.assertEquals(response.status_code, 200)
+
+    def test_view_redirect_login(self):
+        self.client.logout()
+        response = self.client.get(self.view_url)
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
 
     def test_view_cart_no_shipping_address(self):
         # TODO: Implement Test
@@ -165,8 +180,20 @@ class PaymentViewTests(TestCase):
         self.client = Client()
         self.user = User.objects.get(pk=1)
         self.client.force_login(self.user)
-
+        self.view_url = reverse('vendor:checkout-payment')
         self.invoice = Invoice.objects.get(pk=1)
+
+    
+    def test_view_status_code_200(self):
+        response = self.client.get(self.view_url)
+        self.assertEquals(response.status_code, 200)
+
+    def test_view_redirect_login(self):
+        self.client.logout()
+        response = self.client.get(self.view_url)
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
+    
 
     def test_view_cart_no_shipping_address(self):
         # TODO: Implement Test
@@ -192,8 +219,19 @@ class ReviewCheckoutViewTests(TestCase):
         self.client = Client()
         self.user = User.objects.get(pk=1)
         self.client.force_login(self.user)
-
+        self.view_url = reverse('vendor:checkout-review')
         self.invoice = Invoice.objects.get(pk=1)
+
+    def test_view_status_code_200(self):
+        response = self.client.get(self.view_url)
+        self.assertEquals(response.status_code, 200)
+
+    def test_view_redirect_login(self):
+        self.client.logout()
+        response = self.client.get(self.view_url)
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
+    
 
     def test_view_cart_no_shipping_address(self):
         # TODO: Implement Test
@@ -221,5 +259,15 @@ class PaymentSummaryViewTests(TestCase):
         self.client = Client()
         self.user = User.objects.get(pk=1)
         self.client.force_login(self.user)
-
         self.invoice = Invoice.objects.get(pk=1)
+        self.view_url = reverse('vendor:purchase-summary', kwargs={'pk': self.invoice.pk})
+
+    def test_view_status_code_200(self):
+        response = self.client.get(self.view_url)
+        self.assertEquals(response.status_code, 200)
+
+    def test_view_redirect_login(self):
+        self.client.logout()
+        response = self.client.get(self.view_url)
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
