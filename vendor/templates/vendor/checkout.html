@@ -156,7 +156,7 @@
 
     <ul class="list-group mb-3 border-0">
       {% for item in invoice.order_items.all %}
-      <li class="px-0 d-flex justify-content-between lh-condensed">
+      <li class="px-0 d-flex justify-content-between lh-condensed mb-3">
         <div>
           <h6 class="my-0">{{ item.name }}</h6>
           <small class="text-muted">{% trans 'Unit Price' %}: {{item.price|default_if_none:"0.00"|floatformat:2}}</small>
