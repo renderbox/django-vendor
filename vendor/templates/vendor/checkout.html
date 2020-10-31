@@ -115,7 +115,7 @@
           <p class="mb-0">{{invoice.shipping_address.address_1}},
             {{invoice.shipping_address.address_2|default_if_none:""}}</p>
           <p>{{invoice.shipping_address.state}},
-            {{invoice.shipping_address.get_country_display}},{{invoice.shipping_address.postal_code}}
+             {{invoice.shipping_address.get_country_display}}, {{invoice.shipping_address.postal_code}}
           </p>
           <h3 class='card-title'>
             <div class='d-flex flex-row align-items-center'>
@@ -128,17 +128,17 @@
             </div>
           </h3>
 
-          <p class="mb-0">{{request.session.billing_address_form.address_1}},
-            {{request.session.billing_address_form.address_2|default_if_none:""}}</p>
-          <p>{{request.session.billing_address_form.state}},
-            {{request.session.billing_address_form.get_country_display}},{{request.session.billing_address_form.postal_code}}
+          <p class="mb-0">{{billing_address_form.address_1}},
+            {{billing_address_form.address_2|default_if_none:""}}</p>
+          <p>{{billing_address_form.state}},
+            {{billing_address_form.get_country_display}},{{billing_address_form.postal_code}}
           </p>
           <h3 class='card-title'>
             {% trans 'Payment Method' %}
           </h3>
-          <p class="mb-0">{{request.session.credit_card_form.full_name}}</p>
+          <p class="mb-0">{{credit_card_form.full_name}}</p>
           <p>{% trans 'Card ending in' %}
-            {{request.session.credit_card_form.card_number|slice:"-4:"}}</p>
+            {{credit_card_form.card_number|slice:"-4:"}}</p>
           <form method="post">
             {% csrf_token %}
             <button class=" btn btn-primary" type="submit">Place Order</button>

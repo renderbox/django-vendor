@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ObjectDoesNotExist
+from django.template import RequestContext
 
 from django.views.generic.edit import DeleteView
 from django.views.generic.list import ListView
@@ -42,7 +43,7 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
     Create an order item and add it to the order
     '''
 
-    def post(self, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         offer = Offer.objects.get(slug=self.kwargs["slug"])
         profile, created = self.request.user.customer_profile.get_or_create(
             site=set_default_site_id())
@@ -51,6 +52,7 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
 
         if cart.status == Invoice.InvoiceStatus.CHECKOUT:
             messages.info(self.request, _("You have a pending cart in checkout"))
+            return redirect(request.META.get('HTTP_REFERER'))
 
         cart.add_offer(offer)
         messages.info(self.request, _("Added item to cart."))
@@ -60,7 +62,7 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
 
 class RemoveFromCartView(LoginRequiredMixin, DeleteView):
     
-    def post(self, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         offer = Offer.objects.get(slug=self.kwargs["slug"])
         profile = self.request.user.customer_profile.get(
             site=settings.SITE_ID)      # Make sure they have a cart
@@ -69,6 +71,7 @@ class RemoveFromCartView(LoginRequiredMixin, DeleteView):
 
         if cart.status == Invoice.InvoiceStatus.CHECKOUT:
             messages.info(self.request, _("You have a pending cart in checkout"))
+            return redirect(request.META.get('HTTP_REFERER'))
 
         cart.remove_offer(offer)
 
@@ -180,6 +183,12 @@ class ReviewCheckout(LoginRequiredMixin, TemplateView):
         context = super().get_context_data()
 
         processor = payment_processor(invoice)
+        if 'billing_address_form' in request.session:
+            context['billing_address_form'] = request.session['billing_address_form']
+            del(request.session['billing_address_form'])
+        if 'credit_card_form' in request.session:
+            context['credit_card_form'] = request.session['credit_card_form']
+            del(request.session['credit_card_form'])
 
         context = processor.get_checkout_context(context=context)
 
