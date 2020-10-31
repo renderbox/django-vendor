@@ -76,7 +76,28 @@ class ModelCustomerProfileTests(TestCase):
     def test_owns_product_false(self):
         product = Product.objects.get(pk=1)
         self.assertFalse(self.customer_profile_existing.has_product(product))
+
+    def test_get_checkout_cart(self):
+        cp = CustomerProfile.objects.get(pk=1)
+        invoice = cp.get_cart()
+        invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        invoice.save()
+
+        self.assertIsNotNone(cp.get_checkout_cart())
+        self.assertEqual(cp.get_checkout_cart().status, Invoice.InvoiceStatus.CHECKOUT)
+
+    def test_gets_cart(self):
+        cart = self.customer_profile_existing.get_cart_or_checkout_cart()
     
+        self.assertEqual(cart.status, Invoice.InvoiceStatus.CART)
+
+    def test_gets_checkout_cart(self):
+        invoice = Invoice.objects.get(pk=1)
+        self.customer_profile_existing.invoices.add(Invoice.objects.create(status=Invoice.InvoiceStatus.CHECKOUT))
+
+        cart = self.customer_profile_existing.get_cart_or_checkout_cart()
+    
+        self.assertEqual(cart.status, Invoice.InvoiceStatus.CHECKOUT)
 
 
 class ViewCustomerProfileTests(TestCase):
