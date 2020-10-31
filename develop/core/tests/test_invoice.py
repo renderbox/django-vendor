@@ -123,7 +123,7 @@ class CartViewTests(TestCase):
         self.assertContains(response, self.invoice.total)
 
         add_mug_url = reverse("vendor:add-to-cart", kwargs={'slug': self.mug_offer.slug})
-        self.client.get(add_mug_url)
+        self.client.post(add_mug_url)
         self.assertContains(response, self.invoice.total)
 
         remove_shirt_url = reverse("vendor:remove-from-cart", kwargs={'slug': self.shirt_offer.slug})

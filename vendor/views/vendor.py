@@ -23,6 +23,8 @@ from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationF
 payment_processor = PaymentProcessor
 
 # TODO: Need to remove the login required
+
+
 class CartView(LoginRequiredMixin, DetailView):
     '''
     View items in the cart
@@ -32,7 +34,7 @@ class CartView(LoginRequiredMixin, DetailView):
     def get_object(self):
         profile, created = self.request.user.customer_profile.get_or_create(
             site=set_default_site_id())
-        return profile.get_cart_or_checkout()
+        return profile.get_cart_or_checkout_cart()
 
 
 class AddToCartView(LoginRequiredMixin, TemplateView):
@@ -40,14 +42,14 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
     Create an order item and add it to the order
     '''
 
-    def get(self, *args, **kwargs):         # TODO: Move to POST
+    def post(self, *args, **kwargs):
         offer = Offer.objects.get(slug=self.kwargs["slug"])
         profile, created = self.request.user.customer_profile.get_or_create(
             site=set_default_site_id())
 
-        cart = profile.get_cart_or_checkout()
+        cart = profile.get_cart_or_checkout_cart()
 
-        if cart.status = Invoice.InvoiceStatus.CHECKOUT:
+        if cart.status == Invoice.InvoiceStatus.CHECKOUT:
             messages.info(self.request, _("You have a pending cart in checkout"))
 
         cart.add_offer(offer)
@@ -57,19 +59,15 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
 
 
 class RemoveFromCartView(LoginRequiredMixin, DeleteView):
-    '''
-    Reduce the count of items from the cart and delete the order item if you reach 0
-    TODO: Change to form/POST for better security & flexibility
-    '''
-
-    def get(self, *args, **kwargs):         # TODO: Move to POST
+    
+    def post(self, *args, **kwargs):
         offer = Offer.objects.get(slug=self.kwargs["slug"])
         profile = self.request.user.customer_profile.get(
             site=settings.SITE_ID)      # Make sure they have a cart
 
-        cart = profile.get_cart_or_checkout()
+        cart = profile.get_cart_or_checkout_cart()
 
-        if cart.status = Invoice.InvoiceStatus.CHECKOUT:
+        if cart.status == Invoice.InvoiceStatus.CHECKOUT:
             messages.info(self.request, _("You have a pending cart in checkout"))
 
         cart.remove_offer(offer)
@@ -85,7 +83,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart_or_checkout()
+        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart_or_checkout_cart()
 
         existing_account_address = Address.objects.filter(profile__user=request.user)
 
@@ -114,7 +112,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
         account_form = form.save(commit=False)
 
-        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart_or_checkout()
+        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart_or_checkout_cart()
         invoice.status = Invoice.InvoiceStatus.CHECKOUT
         invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
         existing_account_address = Address.objects.filter(

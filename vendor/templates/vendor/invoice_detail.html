@@ -17,7 +17,10 @@
         <span>{{product.description}}</span>
         {% endfor %}
         <p class="font-weight-bolder mt-3 mb-2">{{ item.offer.get_terms_display }}</p>
-        <a class="text-primary" href="{{ item.offer.remove_from_cart_link }}">{% trans 'Remove' %}</a>
+        <form action="{{ item.offer.remove_from_cart_link }}" method="post">
+          {% csrf_token %}
+          <button class="btn btn-link p-0" type="submit">{% trans 'Remove' %}</button>
+        </form>
       </div>
     </div>
     {% empty %}
