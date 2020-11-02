@@ -24,6 +24,7 @@ class ProductRequiredMixin():
         """
         
         if not self.user_has_product():
+            print("No Product Ownership")
             return self.handle_no_product()
         return super().dispatch(request, *args, **kwargs)
 
@@ -37,7 +38,10 @@ class ProductRequiredMixin():
         if self.request.user.is_anonymous:
             return False
 
-        return self.request.user.customer_profile.filter(site=Site.objects.get_current()).get().has_product(self.get_product_queryset())
+        products = self.get_product_queryset()
+        print(products)
+
+        return self.request.user.customer_profile.filter(site=Site.objects.get_current()).get().has_product(products)
 
     def get_product_queryset(self):
         """

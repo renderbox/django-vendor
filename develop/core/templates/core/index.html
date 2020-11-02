@@ -17,6 +17,7 @@
         {% csrf_token %}
         <button class="btn btn-lg btn-block btn-outline-primary" type="submit"> {% trans 'Add to Cart' %}</button>
       </form>
+      <a href="{% url 'product-access' slug=item.slug %}">Check Ownership</a>
     </div>
   </div>
   {% endfor %}
