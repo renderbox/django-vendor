@@ -4,6 +4,9 @@ from django.views.generic.list import ListView
 
 # from vendor.mixins import UserOwnsProductMixin
 from vendor.models import Offer
+from vendor.views.mixin import ProductRequiredMixin
+
+
 class VendorIndexView(ListView):
     template_name = "core/index.html"
     model = Offer
