@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _
 from django.http import Http404
 from django.contrib.sites.models import Site
+from django.shortcuts import redirect
 
 
 class ProductRequiredMixin():
@@ -22,7 +23,7 @@ class ProductRequiredMixin():
         Verify that the current user owns the product.  Checks on all HTTP methods.
         """
         
-        if not self.user_has_product(request.user):
+        if not self.user_has_product():
             return self.handle_no_product()
         return super().dispatch(request, *args, **kwargs)
 
@@ -32,6 +33,9 @@ class ProductRequiredMixin():
 
         TODO: move this to some kind of caching or session variable to avoid hitting the DB on every request.
         """
+
+        if self.request.user.is_anonymous:
+            return False
 
         return self.request.user.customer_profile.filter(site=Site.objects.get_current()).get().has_product(self.get_product_queryset())
 
@@ -67,4 +71,4 @@ class ProductRequiredMixin():
                     {'verbose_name': product_queryset.model._meta.verbose_name})
 
         messages.info(self.request, _("Product Purchase required."))
-        return self.product_redirect
+        return redirect(self.product_redirect)
