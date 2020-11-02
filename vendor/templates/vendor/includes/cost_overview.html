@@ -1,0 +1,26 @@
+{% load i18n %}
+
+<li class="px-0 border-0 d-flex justify-content-between">
+    <span>{% trans 'Subtotal' %}</span>
+    <span>${{ invoice.subtotal|default_if_none:"0.00"|floatformat:2 }}</span>
+  </li>
+
+  <li class="px-0 border-0 d-flex justify-content-between">
+    <span>{% trans 'Estimated Shipping' %}</span>
+    <span>${{ invoice.shipping|default_if_none:"0.00"|floatformat:2 }}</span>
+  </li>
+
+  <li class="px-0 border-0 d-flex justify-content-between">
+    <span>{% trans 'Estimated Tax' %}</span>
+    <span>${{ invoice.tax|default_if_none:"0.00"|floatformat:2 }}</span>
+  </li>
+  <li class="px-0 justify-content-between" style="list-style-type: none;">
+    <hr class="my-3 border-dark border-5" />
+  </li>
+
+  <li class="px-0 border-0 d-flex justify-content-between">
+    {% with invoice.get_currency_display as currency %}
+    <span class="font-weight-bolder">{% blocktrans %}Total ({{ currency }}) {% endblocktrans %}</span>
+    {% endwith  %}
+    <span class="text-primary">${{ invoice.total|default_if_none:"0.00"|floatformat:2 }}</span>
+  </li>
