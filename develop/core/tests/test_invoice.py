@@ -36,8 +36,7 @@ class ModelInvoiceTests(TestCase):
         self.assertEquals(OrderItem.objects.filter(invoice=self.existing_invoice).count(), 4)
 
     def test_fail_add_unavailable_offer(self):
-        # TODO: Implement Tests
-        pass
+        raise NotImplementedError()
 
     def test_remove_offer(self):
         self.existing_invoice.remove_offer(Offer.objects.get(pk=3))
@@ -105,11 +104,11 @@ class CartViewTests(TestCase):
     def test_view_cart_content_loads(self):
         response = self.client.get(self.cart_url)
 
-        self.assertContains(response, self.invoice.subtotal)
-        self.assertContains(response, self.invoice.tax)
-        self.assertContains(response, self.invoice.shipping)
-        self.assertContains(response, self.invoice.total)
-        self.assertContains(response, self.invoice.get_currency_display())
+        self.assertContains(response, f'<span>${self.invoice.subtotal:.2f}</span>')
+        self.assertContains(response, f'<span>${self.invoice.tax:.2f}</span>')
+        self.assertContains(response, f'<span>${self.invoice.shipping:.2f}</span>')
+        self.assertContains(response, f'<span class="text-primary">${self.invoice.total:.2f}</span>')
+        self.assertContains(response, f'<span class="font-weight-bolder">Total ({self.invoice.get_currency_display()}) </span>')
 
     def test_view_cart_empty(self):
         self.invoice.order_items.all().delete()
@@ -120,18 +119,17 @@ class CartViewTests(TestCase):
     
     def test_view_cart_updates_on_adding_items(self):
         response = self.client.get(self.cart_url)
-        self.assertContains(response, self.invoice.total)
+        self.assertContains(response, f'<span class="text-primary">${self.invoice.total}</span>')
 
         add_mug_url = reverse("vendor:add-to-cart", kwargs={'slug': self.mug_offer.slug})
         self.client.post(add_mug_url)
-        self.assertContains(response, self.invoice.total)
+        self.assertContains(response, f'<span class="text-primary">${self.invoice.total}</span>')
 
         remove_shirt_url = reverse("vendor:remove-from-cart", kwargs={'slug': self.shirt_offer.slug})
-        self.assertContains(response, self.invoice.total)
+        self.assertContains(response, f'<span class="text-primary">${self.invoice.total}</span>')
     
     def test_view_displays_login_instead_checkout(self):
-        # TODO: Implement Test
-        pass
+        raise NotImplementedError()
     
 
 
@@ -157,20 +155,16 @@ class AccountInformationViewTests(TestCase):
         self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
 
     def test_view_cart_no_shipping_address(self):
-        # TODO: Implement Test
-        pass
+        raise NotImplementedError()
 
     def test_view_cart_status_code_redirect_add_offer(self):
-        # TODO: Implement Tests
-        pass
+        raise NotImplementedError()
 
     def test_view_cart_status_code_redirect_remove_offer(self):
-        # TODO: Implement Tests
-        pass
+        raise NotImplementedError()
 
     def test_cart_updates_to_zero_items(self):
-        # TODO: Implement Test
-        pass
+        raise NotImplementedError()
 
 class PaymentViewTests(TestCase):
 
@@ -196,20 +190,16 @@ class PaymentViewTests(TestCase):
     
 
     def test_view_cart_no_shipping_address(self):
-        # TODO: Implement Test
-        pass
+        raise NotImplementedError()
 
     def test_view_cart_status_code_redirect_add_offer(self):
-        # TODO: Implement Tests
-        pass
+        raise NotImplementedError()
 
     def test_view_cart_status_code_redirect_remove_offer(self):
-        # TODO: Implement Tests
-        pass
+        raise NotImplementedError()
 
     def test_cart_updates_to_zero_items(self):
-        # TODO: Implement Test
-        pass
+        raise NotImplementedError()
 
 class ReviewCheckoutViewTests(TestCase):
 
@@ -234,20 +224,16 @@ class ReviewCheckoutViewTests(TestCase):
     
 
     def test_view_cart_no_shipping_address(self):
-        # TODO: Implement Test
-        pass
+        raise NotImplementedError()
 
     def test_view_cart_status_code_redirect_add_offer(self):
-        # TODO: Implement Tests
-        pass
+        raise NotImplementedError()
 
     def test_view_cart_status_code_redirect_remove_offer(self):
-        # TODO: Implement Tests
-        pass
+        raise NotImplementedError()
 
     def test_cart_updates_to_zero_items(self):
-        # TODO: Implement Test
-        pass
+        raise NotImplementedError()
     
 
 
