@@ -133,7 +133,6 @@ class CartViewTests(TestCase):
         # raise NotImplementedError()
     
 
-
 class AccountInformationViewTests(TestCase):
 
     fixtures = ['user', 'unit_test']
@@ -178,7 +177,6 @@ class PaymentViewTests(TestCase):
         self.view_url = reverse('vendor:checkout-payment')
         self.invoice = Invoice.objects.get(pk=1)
 
-    
     def test_view_status_code_200(self):
         response = self.client.get(self.view_url)
         self.assertEquals(response.status_code, 200)
@@ -189,7 +187,6 @@ class PaymentViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
     
-
     # def test_view_cart_no_shipping_address(self):
         # raise NotImplementedError()
 
@@ -230,32 +227,18 @@ class ReviewCheckoutViewTests(TestCase):
         response = client.get(url)
 
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('vendor:purchase-summary', kwargs={'pk':invoice.pk}))
+        self.assertRedirects(response, reverse('vendor:purchase-summary', kwargs={'pk':invoice.pk}))            
         
-    
-    def test_view_process_free_product_redirect_account(self):
-        url = reverse('vendor:checkout-free')
-        client = Client()
-        user = User.objects.get(pk=1)
-        client.force_login(user)
-
-        response = client.get(url)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('vendor:checkout-account'))
-        
-
-
     def test_view_cart_no_shipping_address(self):
         # TODO: Implement Test
         pass
+    
     def test_view_redirect_login(self):
         self.client.logout()
         response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
     
-
     # def test_view_cart_no_shipping_address(self):
         # raise NotImplementedError()
 
@@ -268,7 +251,6 @@ class ReviewCheckoutViewTests(TestCase):
     # def test_cart_updates_to_zero_items(self):
         # raise NotImplementedError()
     
-
 
 class PaymentSummaryViewTests(TestCase):
 
