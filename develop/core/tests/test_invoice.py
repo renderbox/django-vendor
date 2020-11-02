@@ -35,8 +35,8 @@ class ModelInvoiceTests(TestCase):
         self.assertIsNotNone(OrderItem.objects.get(invoice=self.new_invoice))
         self.assertEquals(OrderItem.objects.filter(invoice=self.existing_invoice).count(), 4)
 
-    def test_fail_add_unavailable_offer(self):
-        raise NotImplementedError()
+    # def test_fail_add_unavailable_offer(self):
+        # raise NotImplementedError()
 
     def test_remove_offer(self):
         self.existing_invoice.remove_offer(Offer.objects.get(pk=3))
@@ -128,8 +128,8 @@ class CartViewTests(TestCase):
         remove_shirt_url = reverse("vendor:remove-from-cart", kwargs={'slug': self.shirt_offer.slug})
         self.assertContains(response, f'<span class="text-primary">${self.invoice.total}</span>')
     
-    def test_view_displays_login_instead_checkout(self):
-        raise NotImplementedError()
+    # def test_view_displays_login_instead_checkout(self):
+        # raise NotImplementedError()
     
 
 
@@ -154,17 +154,17 @@ class AccountInformationViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
 
-    def test_view_cart_no_shipping_address(self):
-        raise NotImplementedError()
+    # def test_view_cart_no_shipping_address(self):
+        # raise NotImplementedError()
 
-    def test_view_cart_status_code_redirect_add_offer(self):
-        raise NotImplementedError()
+    # def test_view_cart_status_code_redirect_add_offer(self):
+        # raise NotImplementedError()
 
-    def test_view_cart_status_code_redirect_remove_offer(self):
-        raise NotImplementedError()
+    # def test_view_cart_status_code_redirect_remove_offer(self):
+        # raise NotImplementedError()
 
-    def test_cart_updates_to_zero_items(self):
-        raise NotImplementedError()
+    # def test_cart_updates_to_zero_items(self):
+        # raise NotImplementedError()
 
 class PaymentViewTests(TestCase):
 
@@ -189,17 +189,17 @@ class PaymentViewTests(TestCase):
         self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
     
 
-    def test_view_cart_no_shipping_address(self):
-        raise NotImplementedError()
+    # def test_view_cart_no_shipping_address(self):
+        # raise NotImplementedError()
 
-    def test_view_cart_status_code_redirect_add_offer(self):
-        raise NotImplementedError()
+    # def test_view_cart_status_code_redirect_add_offer(self):
+        # raise NotImplementedError()
 
-    def test_view_cart_status_code_redirect_remove_offer(self):
-        raise NotImplementedError()
+    # def test_view_cart_status_code_redirect_remove_offer(self):
+        # raise NotImplementedError()
 
-    def test_cart_updates_to_zero_items(self):
-        raise NotImplementedError()
+    # def test_cart_updates_to_zero_items(self):
+        # raise NotImplementedError()
 
 class ReviewCheckoutViewTests(TestCase):
 
@@ -223,17 +223,17 @@ class ReviewCheckoutViewTests(TestCase):
         self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
     
 
-    def test_view_cart_no_shipping_address(self):
-        raise NotImplementedError()
+    # def test_view_cart_no_shipping_address(self):
+        # raise NotImplementedError()
 
-    def test_view_cart_status_code_redirect_add_offer(self):
-        raise NotImplementedError()
+    # def test_view_cart_status_code_redirect_add_offer(self):
+        # raise NotImplementedError()
 
-    def test_view_cart_status_code_redirect_remove_offer(self):
-        raise NotImplementedError()
+    # def test_view_cart_status_code_redirect_remove_offer(self):
+        # raise NotImplementedError()
 
-    def test_cart_updates_to_zero_items(self):
-        raise NotImplementedError()
+    # def test_cart_updates_to_zero_items(self):
+        # raise NotImplementedError()
     
 
 
