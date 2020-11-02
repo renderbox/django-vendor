@@ -163,7 +163,7 @@ class PaymentProcessorBase(object):
     #-------------------
     # Process a Payment
 
-    def authorize_payment(self):
+    def authorize_payment(self, request=None):
         """
         This runs the chain of events in a transaction.
         
@@ -174,7 +174,11 @@ class PaymentProcessorBase(object):
         self.pre_authorization()
 
         self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
-        self.process_payment()
+        
+        if self.invoice.total:
+            self.process_payment(request)
+        else:
+            self.free_payment()
 
         vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()
@@ -227,13 +231,13 @@ class PaymentProcessorBase(object):
     #-------------------
     # Process a Subscription
     
-    def process_subscription(self):
+    def subscription_payment(self):
         pass
 
-    def process_update_subscription(self):
+    def update_subscription_payment(self):
         pass
 
-    def process_cancel_subscription(self):
+    def cancel_subscription_payment(self):
         pass
 
     #-------------------

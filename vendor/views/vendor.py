@@ -66,24 +66,6 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-class ProcessFreeOffer(LoginRequiredMixin, TemplateView):
-    '''
-    Create an order item and add it to the order
-    '''
-
-    def get(self, request, *args, **kwargs):
-        invoice = request.user.customer_profile.get(site=settings.SITE_ID).get_cart()
-        # TODO: Taxable should not be the decision maker but if it is a hard good.
-        if invoice.total:
-            return redirect('vendor:checkout-account')
-
-        processor = payment_processor(invoice)
-
-        processor.free_payment()
-
-        return redirect('vendor:purchase-summary', pk=invoice.pk)
-
-
 class RemoveFromCartView(LoginRequiredMixin, DeleteView):
     
     def post(self, request, *args, **kwargs):
@@ -198,7 +180,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
             return redirect('vendor:checkout-review')
 
 
-class ReviewCheckout(LoginRequiredMixin, TemplateView):
+class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
     template_name = 'vendor/checkout.html'
 
     def get(self, request, *args, **kwargs):
@@ -224,11 +206,11 @@ class ReviewCheckout(LoginRequiredMixin, TemplateView):
 
         processor = payment_processor(invoice)
 
-        processor.process_payment(request)
+        processor.authorize_payment(request)
 
         if processor.transaction_submitted:
             for order_item_subscription in [order_item for order_item in processor.invoice.order_items.all() if order_item.offer.terms >= TermType.SUBSCRIPTION and order_item.offer.terms < TermType.ONE_TIME_USE]:
-                processor.process_subscription(
+                processor.subscription_payment(
                     request, order_item_subscription)
             del(request.session['billing_address_form'])
             del(request.session['credit_card_form'])

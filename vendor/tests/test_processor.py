@@ -214,15 +214,15 @@ class BaseProcessorTests(TestCase):
         # TODO: Implement Test
         pass
 
-    def test_process_subscription_success(self):
+    def test_subscription_payment_success(self):
         # TODO: Implement Test
         pass
 
-    def test_process_update_subscription_success(self):
+    def test_update_subscription_payment_success(self):
         # TODO: Implement Test
         pass
 
-    def test_process_cancel_subscription_success(self):
+    def test_cancel_subscription_payment_success(self):
         # TODO: Implement Test
         pass
 
@@ -793,7 +793,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.payment = Payment.objects.get(pk=1)
         self.processor.create_receipts()
 
-        self.processor.process_subscription(request, subscription)
+        self.processor.subscription_payment(request, subscription)
         
 
         # print(self.processor.transaction_message)
@@ -811,7 +811,7 @@ class AuthorizeNetProcessorTests(TestCase):
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         
         if active_subscriptions:
-            self.processor.process_cancel_subscription(active_subscriptions[0].id.pyval)
+            self.processor.cancel_subscription_payment(active_subscriptions[0].id.pyval)
             self.assertTrue(self.processor.transaction_submitted)
         else:
             print("No active Subscriptions, Skipping Test")
