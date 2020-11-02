@@ -29,7 +29,8 @@ def get_purchase_invoice(user):
     """
     Return an invoice that is in checkout or cart state or a newly create invoice in cart state.
     """
-    return user.customer_profile.get_or_create(site=settings.SITE_ID).get_cart_or_checkout_cart()
+    profile, created = user.customer_profile.get_or_create(site=settings.SITE_ID)
+    return profile.get_cart_or_checkout_cart()
 
 class CartView(LoginRequiredMixin, DetailView):
     '''
@@ -164,7 +165,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
     template_name = "vendor/checkout.html"
 
     def get(self, request, *args, **kwargs):
-        invoice = get_purchase_invoicerequest.user)
+        invoice = get_purchase_invoice(request.user)
 
         context = super().get_context_data()
 
