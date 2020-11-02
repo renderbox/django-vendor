@@ -17,7 +17,7 @@ class ProductAccessView(ProductRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        if context['owens_product']:
+        if context['owns_product']:
             context['object'] = Offer.objects.get(slug=kwargs['slug'])
 
         return render(request, self.template_name, context)
