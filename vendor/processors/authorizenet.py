@@ -227,6 +227,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         elif subscription_type == TermType.ANNUAL_SUBSCRIPTION:
             return 12
 
+    def get_trail_occurrences(self, subscription):
+        return subscription.offer.term_details.get('trial_occurrences', 0)
+
     def create_payment_scheduale_interval_type(self, subscription, subscription_type):
         """
         Create an interval schedule with fixed months.
@@ -236,10 +239,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             eg: payment_occurrences = 6. There will be six payments made at each period_length.
         trial_occurrences: The number of ignored payments out of the payment_occurrences
         """
-        # Payment offset is set to 1 because first payment is paided in full with the process_payment
-        trial_occurrences = 0
-
-        payment_offset = 1
+        trial_occurrences = self.get_trail_occurrences(subscription)
 
         payment_schedule = apicontractsv1.paymentScheduleType()
         payment_schedule.interval = apicontractsv1.paymentScheduleTypeInterval()
@@ -248,7 +248,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         payment_schedule.interval.length = self.get_period_length(subscription, subscription_type)
         payment_schedule.totalOccurrences = self.get_payment_occurrences(subscription, subscription_type)
-        payment_schedule.trialOccurrences = trial_occurrences + payment_offset
+        payment_schedule.trialOccurrences = trial_occurrences
 
         return payment_schedule
 

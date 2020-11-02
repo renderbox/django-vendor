@@ -34,7 +34,7 @@
               {% trans 'Shipping Address' %}
             </h3>
             {% include "./includes/account_info_form.html" with account_information_form=form %}
-            <button class="btn btn-primary" type="submit">{% trans 'Continue' %}</button>
+            <button class="btn btn-primary p-0" type="submit">{% trans 'Continue' %}</button>
           </form>
         </div>
       </div>
@@ -115,7 +115,7 @@
           <p class="mb-0">{{invoice.shipping_address.address_1}},
             {{invoice.shipping_address.address_2|default_if_none:""}}</p>
           <p>{{invoice.shipping_address.state}},
-            {{invoice.shipping_address.country}},{{invoice.shipping_address.postal_code}}
+             {{invoice.shipping_address.get_country_display}}, {{invoice.shipping_address.postal_code}}
           </p>
           <h3 class='card-title'>
             <div class='d-flex flex-row align-items-center'>
@@ -128,17 +128,17 @@
             </div>
           </h3>
 
-          <p class="mb-0">{{request.session.billing_address_form.address_1}},
-            {{request.session.billing_address_form.address_2|default_if_none:""}}</p>
-          <p>{{request.session.billing_address_form.state}},
-            {{request.session.billing_address_form.country}},{{request.session.billing_address_form.postal_code}}
+          <p class="mb-0">{{billing_address_form.address_1}},
+            {{billing_address_form.address_2|default_if_none:""}}</p>
+          <p>{{billing_address_form.state}},
+            {{billing_address_form.get_country_display}},{{billing_address_form.postal_code}}
           </p>
           <h3 class='card-title'>
             {% trans 'Payment Method' %}
           </h3>
-          <p class="mb-0">{{request.session.credit_card_form.full_name}}</p>
+          <p class="mb-0">{{credit_card_form.full_name}}</p>
           <p>{% trans 'Card ending in' %}
-            {{request.session.credit_card_form.card_number|slice:"-4:"}}</p>
+            {{credit_card_form.card_number|slice:"-4:"}}</p>
           <form method="post">
             {% csrf_token %}
             <button class=" btn btn-primary" type="submit">Place Order</button>
@@ -156,29 +156,16 @@
 
     <ul class="list-group mb-3 border-0">
       {% for item in invoice.order_items.all %}
-      <li class="px-0 d-flex justify-content-between lh-condensed">
+      <li class="px-0 d-flex justify-content-between lh-condensed mb-3">
         <div>
           <h6 class="my-0">{{ item.name }}</h6>
-          <small class="text-muted">{% trans 'Unit Price' %}: {{item.price}}</small>
+          <small class="text-muted">{% trans 'Unit Price' %}: {{item.price|default_if_none:"0.00"|floatformat:2}}</small>
           <small class="text-muted">{% trans 'Quantity' %}: {{item.quantity}}</small>
         </div>
-        <span class="text-muted">${{ item.total }}</span>
+        <span class="text-muted">${{ item.total|default_if_none:"0.00"|floatformat:2 }}</span>
       </li>
       {% endfor %}
-
-      <li class="px-0 border-0 d-flex justify-content-between">
-        <span>{% trans 'Subtotal' %}</span>
-        <span>${{ invoice.subtotal }}</span>
-      </li>
-
-      <li class="px-0 justify-content-between" style="list-style-type: none;">
-        <hr class="my-3 border-dark border-5" />
-      </li>
-
-      <li class="px-0 border-0 d-flex justify-content-between">
-        <span class="font-weight-bolder">{% blocktrans %}Total ({{ invoice.get_currency_display }}) {% endblocktrans %}</span>
-        <span class="text-primary">${{ invoice.total }}</span>
-      </li>
+      {% include "./includes/cost_overview.html" with invoice=invoice %}
     </ul>
 
 
