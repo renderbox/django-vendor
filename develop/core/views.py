@@ -5,6 +5,7 @@ from django.views.generic.list import ListView
 # from vendor.mixins import UserOwnsProductMixin
 from vendor.models import Offer
 from vendor.views.mixin import ProductRequiredMixin
+from .models import Product
 
 
 class VendorIndexView(ListView):
@@ -21,4 +22,10 @@ class ProductAccessView(ProductRequiredMixin, TemplateView):
             context['object'] = Offer.objects.get(slug=kwargs['slug'])
 
         return render(request, self.template_name, context)
+
+    def get_product_queryset(self):
+        """
+        Method to get the Product(s) needed for the check.  Can be overridden to handle complex queries.
+        """
+        return Product.objects.filter(slug=self.kwargs['slug'])
 
