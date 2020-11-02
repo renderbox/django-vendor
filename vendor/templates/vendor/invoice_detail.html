@@ -36,15 +36,15 @@
       {% trans 'Summary' %}
     </h3>
     <ul class="list-group mb-3 border-0">
-      {% comment %}
+      {% if promo_code %}
       <li class="px-0 border-0 d-flex justify-content-between bg-light">
         <div class="text-success">
-          <h6 class="my-0">Promo code</h6>
-          <small>EXAMPLECODE</small>
+          <h6 class="my-0">{{promo_code.name}}</h6>
+          <small>{{promo_code.description}}</small>
         </div>
-        <span class="text-success">-$5</span>
+        <span class="text-success">-{{ promo_code.amount }}</span>
       </li>
-      {% endcomment %}
+      {% endif %}
       
       {% include "./includes/cost_overview.html" with invoice=invoice %}
 
@@ -54,7 +54,7 @@
     {% endif %}
 
 
-    {% comment %}
+    {% if promo_code %}
     <form class="card p-2">
       <div class="input-group">
         <input type="text" class="form-control" placeholder="Promo code">
@@ -63,7 +63,7 @@
         </div>
       </div>
     </form>
-    {% endcomment %}
+    {% endif %}
   </div>
 </div>
 {% endblock %}
