@@ -195,8 +195,7 @@ class PaymentProcessorBase(object):
         # Gateway Transaction goes here...
         pass
             
-
-    def process_free_payment(self):
+    def free_payment(self):
         """
         Called to handle an invoice with total zero.  
         This are the base internal steps to process a free payment.
@@ -212,7 +211,6 @@ class PaymentProcessorBase(object):
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 
         self.create_receipts()
-
 
     def post_authorization(self):
         """

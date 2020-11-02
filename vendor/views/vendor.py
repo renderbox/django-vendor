@@ -79,11 +79,9 @@ class ProcessFreeOffer(LoginRequiredMixin, TemplateView):
 
         processor = payment_processor(invoice)
 
-        processor.process_free_payment()
+        processor.free_payment()
 
         return redirect('vendor:purchase-summary', pk=invoice.pk)
-
-
 
 
 class RemoveFromCartView(LoginRequiredMixin, DeleteView):

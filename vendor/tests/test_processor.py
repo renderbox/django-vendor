@@ -177,7 +177,7 @@ class BaseProcessorTests(TestCase):
 
         base_processor = PaymentProcessorBase(invoice)
 
-        base_processor.process_free_payment()
+        base_processor.free_payment()
 
         self.assertTrue(invoice.payments.count())
         self.assertTrue(customer.receipts.count())
