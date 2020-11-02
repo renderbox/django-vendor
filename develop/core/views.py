@@ -11,10 +11,9 @@ class VendorIndexView(ListView):
     template_name = "core/index.html"
     model = Offer
 
-class ProductAccessView(TemplateView):
+class ProductAccessView(ProductRequiredMixin, TemplateView):
     model = Offer
     template_name = "core/product_use.html"
-
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -22,3 +21,4 @@ class ProductAccessView(TemplateView):
             context['object'] = Offer.objects.get(slug=kwargs['slug'])
 
         return render(request, self.template_name, context)
+
