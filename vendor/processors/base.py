@@ -14,6 +14,7 @@ from vendor.models.choice import PurchaseStatus, TermType
 # SIGNALS
 
 vendor_pre_authorization = django.dispatch.Signal()
+vendor_process_payment =  django.dispatch.Signal()
 vendor_post_authorization =  django.dispatch.Signal()
 
 #############
@@ -174,7 +175,7 @@ class PaymentProcessorBase(object):
         self.pre_authorization()
 
         self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
-        
+        vendor_process_payment.send(sender=self.__class__, invoice=self.invoice)
         if self.invoice.total:
             self.process_payment(request)
         else:
