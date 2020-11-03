@@ -128,6 +128,10 @@ class PaymentProcessorBase(object):
     def get_payment_info_form_data(self, form_data, form_class):
         self.payment_info = form_class(form_data)
 
+    def is_data_valid(self):
+        if not (self.billing_address.is_valid() and self.payment_info.is_valid() and self.invoice and self.invoice.item_orders.all().count()):
+            return False
+        return True
     #-------------------
     # Data for the View
 
@@ -164,7 +168,7 @@ class PaymentProcessorBase(object):
     #-------------------
     # Process a Payment
 
-    def authorize_payment(self, request=None):
+    def authorize_payment(self):
         """
         This runs the chain of events in a transaction.
         
@@ -176,10 +180,12 @@ class PaymentProcessorBase(object):
 
         self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         vendor_process_payment.send(sender=self.__class__, invoice=self.invoice)
-        if self.invoice.total:
-            self.process_payment(request)
-        else:
+        if not self.invoice.total:
             self.free_payment()
+        elif self.is_data_valid():
+            self.process_payment()
+        else:
+            return None
 
         vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()

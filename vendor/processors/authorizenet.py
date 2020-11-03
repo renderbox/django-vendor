@@ -336,12 +336,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     ##########
     # Base Processor Transaction Implementations
     ##########
-    def process_payment(self, request):
+    def process_payment(self):
         self.create_payment_model()
-        # Process form data to set up transaction
-        # TODO: See if we should move this two functions out
-        self.get_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
-        self.get_payment_info_form_data(request.session.get('credit_card_form'), CreditCardForm)
 
         # Init transaction
         self.transaction = self.create_transaction()
@@ -370,12 +366,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.create_receipts()
 
-    def subscription_payment(self, request, subscription):
+    def subscription_payment(self, subscription):
         """
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
-        self.get_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
-        self.get_payment_info_form_data(request.session.get('credit_card_form'), CreditCardForm)
         
         # Setting billing information
         billto = apicontractsv1.nameAndAddressType()
@@ -406,10 +400,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if self.transaction_submitted:
             self.update_subscription_receipt(subscription, self.transaction_response.subscriptionId.pyval)
 
-    def update_subscription_payment(self, request, subscription_id):
-        
-        self.get_billing_address_form_data(request.session.get['billing_address_form'], BillingAddressForm)
-        self.get_payment_info_form_data(request.session.get['credit_card_form'], CreditCardForm)
+    def update_subscription_payment(self, subscription_id):
 
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.payment = self.create_authorize_payment()

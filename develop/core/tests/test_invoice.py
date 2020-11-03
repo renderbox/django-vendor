@@ -222,6 +222,11 @@ class ReviewCheckoutViewTests(TestCase):
         response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
+
+    def test_view_missing_data(self):
+        response = self.client.post(self.view_url)
+
+        self.assertRedirects(response, reverse('vendor:checkout-account'))
     
     # def test_view_cart_no_shipping_address(self):
         # raise NotImplementedError()

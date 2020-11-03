@@ -208,13 +208,15 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         invoice = get_purchase_invoice(request.user)
 
         processor = payment_processor(invoice)
+        
+        processor.get_billing_address_form_data(context.get('billing_address_form'), BillingAddressForm)
+        processor.get_payment_info_form_data(context.get('credit_card_form'), CreditCardForm)
 
-        processor.authorize_payment(request)
+        processor.authorize_payment()
 
         if processor.transaction_submitted:
             for order_item_subscription in [order_item for order_item in processor.invoice.order_items.all() if order_item.offer.terms >= TermType.SUBSCRIPTION and order_item.offer.terms < TermType.ONE_TIME_USE]:
-                processor.subscription_payment(
-                    request, order_item_subscription)
+                processor.subscription_payment(order_item_subscription)
             clear_session_purchase_data(request)
             return redirect('vendor:purchase-summary', pk=invoice.pk)
         else:
