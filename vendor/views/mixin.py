@@ -1,6 +1,3 @@
-
-
-
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib import messages
 from django.utils.translation import ugettext as _
@@ -72,7 +69,7 @@ class ProductRequiredMixin():
 
         if not self.product_redirect:
             raise Http404(_("No %(verbose_name)s found matching the query") %
-                    {'verbose_name': product_queryset.model._meta.verbose_name})
+                    {'verbose_name': self.get_product_queryset().model._meta.verbose_name})
 
         messages.info(self.request, _("Product Purchase required."))
         return redirect(self.product_redirect)
