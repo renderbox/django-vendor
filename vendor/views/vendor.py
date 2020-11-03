@@ -193,12 +193,10 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 
         processor = payment_processor(invoice)
         if 'billing_address_form' in request.session:
-            context['billing_address_form'] = request.session['billing_address_form']
+            context['billing_address_form'] = BillingAddressForm(initial=request.session['billing_address_form'])
         if 'credit_card_form' in request.session:
-            context['credit_card_form'] = request.session['credit_card_form']
+            context['credit_card_form'] = CreditCardForm(initial=request.session['credit_card_form'])
         
-        clear_session_purchase_data(request)
-
         context = processor.get_checkout_context(context=context)
 
         return render(request, self.template_name, context)
@@ -209,8 +207,8 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 
         processor = payment_processor(invoice)
         
-        processor.get_billing_address_form_data(context.get('billing_address_form'), BillingAddressForm)
-        processor.get_payment_info_form_data(context.get('credit_card_form'), CreditCardForm)
+        processor.get_billing_address_form_data(request.session['billing_address_form'], BillingAddressForm)
+        processor.get_payment_info_form_data(request.session['credit_card_form'], CreditCardForm)
 
         processor.authorize_payment()
 
