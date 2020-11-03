@@ -129,7 +129,7 @@ class PaymentProcessorBase(object):
         self.payment_info = form_class(form_data)
 
     def is_data_valid(self):
-        if not (self.billing_address.is_valid() and self.payment_info.is_valid() and self.invoice and self.invoice.item_orders.all().count()):
+        if not (self.billing_address.is_valid() and self.payment_info.is_valid() and self.invoice and self.invoice.order_items.count()):
             return False
         return True
     #-------------------
