@@ -110,6 +110,8 @@ class Invoice(CreateUpdateModelBase):
         self.total = self.subtotal + self.tax + self.shipping
 
     def get_payment_billing_address(self):
+        if not self.payments.get(success=True).billing_address:
+            return ""
         return self.payments.get(success=True).billing_address.get_address()
 
 

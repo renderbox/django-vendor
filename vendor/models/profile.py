@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 from .base import CreateUpdateModelBase
@@ -15,14 +15,18 @@ from vendor.config import DEFAULT_CURRENCY
 # CUSTOMER PROFILE
 #####################
 
+
 class CustomerProfile(CreateUpdateModelBase):
     '''
     Additional customer information related to purchasing.
     This is what the Invoices are attached to.  This is abstracted from the user model directly do it can be mre flexible in the future.
     '''
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), null=True, on_delete=models.SET_NULL, related_name="customer_profile")
-    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY)      # User's default currency
-    site = models.ForeignKey(Site, on_delete=models.CASCADE, default=set_default_site_id, related_name="customer_profile")                      # For multi-site support
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_(
+        "User"), null=True, on_delete=models.SET_NULL, related_name="customer_profile")
+    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES,
+                                default=DEFAULT_CURRENCY)      # User's default currency
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, default=set_default_site_id,
+                             related_name="customer_profile")                      # For multi-site support
 
     objects = models.Manager()
     on_site = CurrentSiteManager()
@@ -35,32 +39,48 @@ class CustomerProfile(CreateUpdateModelBase):
         return "{} Customer Profile".format(self.user.username)
 
     def get_cart(self):
-        cart, created = self.invoices.get_or_create(status=Invoice.InvoiceStatus.CART)
+        cart, created = self.invoices.get_or_create(
+            status=Invoice.InvoiceStatus.CART)
         return cart
 
-    def has_product(self, product):
+    def get_checkout_cart(self):
+        return self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT).first()
+
+    def get_cart_or_checkout_cart(self):
+        carts_status = [cart.status for cart in self.invoices.filter(status__in=[Invoice.InvoiceStatus.CHECKOUT, Invoice.InvoiceStatus.CART])]
+        
+        if Invoice.InvoiceStatus.CHECKOUT in carts_status:
+            return self.invoices.get(status=Invoice.InvoiceStatus.CHECKOUT)
+        else:
+            cart, created = self.invoices.get_or_create(status=Invoice.InvoiceStatus.CART)
+            return cart
+        
+
+    def filter_products(self, products):
         """
-        returns true/false if the user has a receipt to a given product
-        it also checks against elegibility start/end/empty dates on consumable products and subscriptions
-        """        
+        returns the list of reciepts that the user has a reciept for filtered by the products provided.
+        """
         now = timezone.now()
 
-        count = self.receipts.filter( Q(products=product),
-                              Q(start_date__lte=now) | Q(start_date=None),
-                              Q(end_date__gte=now) | Q(end_date=None)).count() 
+        # Queryset or List of model records
+        if isinstance(products, QuerySet) or isinstance(products, list):
+            return self.receipts.filter(Q(products__in=products),
+                                Q(start_date__lte=now) | Q(start_date=None),
+                                Q(end_date__gte=now) | Q(end_date=None))
 
-        if count:
-            return True
-        
-        return False
+        # Single model record
+        return self.receipts.filter(Q(products=products),
+                                Q(start_date__lte=now) | Q(start_date=None),
+                                Q(end_date__gte=now) | Q(end_date=None))
+
+    def has_product(self, products):
+        """
+        returns true/false if the user has a receipt to a given product(s)
+        it also checks against elegibility start/end/empty dates on consumable products and subscriptions
+        """
+        return bool(self.filter_products(products).count())
 
     def get_cart_items_count(self):
-        invoices = self.invoices.filter(site=Site.objects.get_current(), status=Invoice.InvoiceStatus.CART)
-
-        if invoices:
-            cart = invoices.all().first()
-        else:
-            cart = self.get_cart()
+        cart = self.get_cart_or_checkout_cart()
 
         return cart.order_items.all().count()
-

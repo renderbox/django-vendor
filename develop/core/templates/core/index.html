@@ -1,23 +1,27 @@
 {% extends "base.html" %}
-
+{% load i18n %}
 
 {% block content %}
 <h2>Items</h2>
 
-  <div class="card-deck mb-3 text-center">
+<div class="card-deck mb-3 text-center">
 
-    {% for item in object_list %}
-    <div class="card mb-4 shadow-sm">
-      <div class="card-header">
-        <h4 class="my-0 font-weight-normal">{{ item.name }}</h4>
-      </div>
-      <div class="card-body">
-        Product Description
-        <a href="{{ item.add_to_cart_link }}" class="btn btn-lg btn-block btn-outline-primary">Add to Cart</a>
-      </div>
+  {% for item in object_list %}
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header">
+      <h4 class="my-0 font-weight-normal">{{ item.name }}</h4>
     </div>
-    {% endfor %}
-
+    <div class="card-body">
+      Product Description
+      <form action="{{ item.add_to_cart_link }}" method="post">
+        {% csrf_token %}
+        <button class="btn btn-lg btn-block btn-outline-primary" type="submit"> {% trans 'Add to Cart' %}</button>
+      </form>
+      <a href="{% url 'product-access' slug=item.slug %}">Check Ownership</a>
+    </div>
   </div>
+  {% endfor %}
+
+</div>
 
 {% endblock %}

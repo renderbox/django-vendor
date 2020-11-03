@@ -14,6 +14,7 @@ from vendor.models.choice import PurchaseStatus, TermType
 # SIGNALS
 
 vendor_pre_authorization = django.dispatch.Signal()
+vendor_process_payment =  django.dispatch.Signal()
 vendor_post_authorization =  django.dispatch.Signal()
 
 #############
@@ -127,6 +128,10 @@ class PaymentProcessorBase(object):
     def get_payment_info_form_data(self, form_data, form_class):
         self.payment_info = form_class(form_data)
 
+    def is_data_valid(self):
+        if not (self.billing_address.is_valid() and self.payment_info.is_valid() and self.invoice and self.invoice.order_items.count()):
+            return False
+        return True
     #-------------------
     # Data for the View
 
@@ -174,10 +179,17 @@ class PaymentProcessorBase(object):
         self.pre_authorization()
 
         self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
-        self.process_payment()
+        vendor_process_payment.send(sender=self.__class__, invoice=self.invoice)
+        if not self.invoice.total:
+            self.free_payment()
+        elif self.is_data_valid():
+            self.process_payment()
+        else:
+            return None
 
         vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()
+        self.transaction_submitted = True
 
         #TODO: Set the status based on the result from the process_payment()
 
@@ -194,6 +206,23 @@ class PaymentProcessorBase(object):
         """
         # Gateway Transaction goes here...
         pass
+            
+    def free_payment(self):
+        """
+        Called to handle an invoice with total zero.  
+        This are the base internal steps to process a free payment.
+        """
+        self.transaction_submitted = True
+        self.create_payment_model()
+
+        self.payment.success = True
+        self.payment.transation = f"{self.payment.pk}-free"
+        self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+        self.payment.save()
+        
+        self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+
+        self.create_receipts()
 
     def post_authorization(self):
         """
@@ -210,13 +239,13 @@ class PaymentProcessorBase(object):
     #-------------------
     # Process a Subscription
     
-    def process_subscription(self):
+    def subscription_payment(self):
         pass
 
-    def process_update_subscription(self):
+    def update_subscription_payment(self):
         pass
 
-    def process_cancel_subscription(self):
+    def cancel_subscription_payment(self):
         pass
 
     #-------------------

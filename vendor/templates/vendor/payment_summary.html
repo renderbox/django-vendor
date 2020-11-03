@@ -22,29 +22,16 @@
             <p class="my-1">{% trans 'Type' %}: {{ order_item.offer.get_terms_display }}</p>
             <p class="my-1">{% trans 'Quantity' %}: {{ order_item.quantity }}</p>
             </span>
-            <span>${{ order_item.total }}</span>
+            <span>${{ order_item.total|default_if_none:"0.00"|floatformat:2 }}</span>
         </div>
         {% endfor %}
     </div>
     <div class='col-md-12 mb-3'>
         <h3 class="d-flex w-100 justify-content-start">{% trans 'Summary' %}</h3>
-        <div class="my-1 d-flex w-50">
-            <span class="mr-auto">{% trans 'Subtotal' %}</span>
-            <span>${{invoice.subtotal}}</span>
-        </div>
-        <div class="my-1 d-flex w-50">
-            <span class="mr-auto">{% trans 'Estimated Shipping' %}</span>
-            <span>${{invoice.shipping}}</span>
-        </div>
-        <div class="my-1 d-flex w-50">
-            <span class="mr-auto">{% trans 'Estimated Tax' %}</span>
-            <span>${{invoice.tax}}</span>
-        </div>
-        <hr class="my-3 border-dark w-50 ml-0" />
-        <div class="my-1 d-flex w-50">
-            <span class="mr-auto font-weight-bolder">{% trans 'Total Charged' %}</span>
-            <span class="text-primary">${{invoice.total}}</span>
-        </div>
+        <ul class="list-group mb-3 border-0 col-6">
+        {% include "./includes/cost_overview.html" with invoice=invoice %}
+        </ul>
+
     </div>
     <div class='col-md-12'>
         <h3>{% trans 'Billing Address' %}</h3>

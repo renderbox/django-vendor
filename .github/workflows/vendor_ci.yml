@@ -68,6 +68,7 @@ jobs:
         AUTHORIZE_NET_API_ID: ${{ secrets.AUTHORIZE_NET_API_ID }}
         AUTHORIZE_NET_TRANSACTION_KEY: ${{ secrets.AUTHORIZE_NET_TRANSACTION_KEY }}
         AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT: "authCaptureTransaction"
+        VENDOR_PAYMENT_PROCESSOR: "authorizenet.AuthorizeNetProcessor"
     - name: Build Package
       run: |
         python setup.py sdist bdist_wheel
