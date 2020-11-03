@@ -14,6 +14,7 @@ class ProductRequiredMixin():
     product_queryset = None
     product_model = None
     product_redirect = "/"
+    product_owned = False
 
     def dispatch(self, request, *args, **kwargs):
         """
@@ -33,12 +34,12 @@ class ProductRequiredMixin():
         """
 
         if self.request.user.is_anonymous:
-            return False
+            self.product_owned = False
+        else:
+            products = self.get_product_queryset()
+            self.product_owned = self.request.user.customer_profile.filter(site=Site.objects.get_current()).get().has_product(products)
 
-        products = self.get_product_queryset()
-        print(products)
-
-        return self.request.user.customer_profile.filter(site=Site.objects.get_current()).get().has_product(products)
+        return self.product_owned
 
     def get_product_queryset(self):
         """

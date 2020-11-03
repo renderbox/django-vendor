@@ -21,10 +21,9 @@ class ProductAccessView(ProductRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
 
         offer = self.model.on_site.get(slug=kwargs['slug'])
-        profile = request.user.customer_profile.filter(site=Site.objects.get_current()).get()
 
         context['object'] = offer
-        context['owns_product'] = profile.has_product(offer.products.all())
+        context['product_owned'] = self.product_owned        # Variable set by ProductRequiredMixin
 
         return render(request, self.template_name, context)
 
