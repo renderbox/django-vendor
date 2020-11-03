@@ -214,9 +214,8 @@ class ReviewCheckoutViewTests(TestCase):
         response = self.client.get(self.view_url)
         self.assertEquals(response.status_code, 200)
         
-    def test_view_cart_no_shipping_address(self):
-        # TODO: Implement Test
-        pass
+    # def test_view_cart_no_shipping_address(self):
+    #     raise NotImplementedError()
     
     def test_view_redirect_login(self):
         self.client.logout()
