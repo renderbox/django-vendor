@@ -50,26 +50,22 @@ class BaseProcessorTests(TestCase):
         self.assertEquals('PaymentProcessorBase', base_processor.provider)
         self.assertIsNotNone(base_processor.invoice)
 
-    def test_processor_setup_success(self):
-        # TODO: Implement Test
-        pass    
+    # def test_processor_setup_success(self):
+        raise NotImplementedError()    
 
-    def test_set_payment_info_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_set_payment_info_success(self):
+        raise NotImplementedError()
 
-    def test_set_invoice_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_set_invoice_success(self):
+        raise NotImplementedError()
 
     def test_create_payment_model_success(self):
         self.base_processor.create_payment_model()
 
         self.assertIsNotNone(self.base_processor.payment)
 
-    def test_save_payment_transaction_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_save_payment_transaction_success(self):
+        raise NotImplementedError()
 
     def test_update_invoice_status_success(self):
         self.base_processor.transaction_submitted = True
@@ -93,13 +89,11 @@ class BaseProcessorTests(TestCase):
 
         self.assertIsNotNone(Receipt.objects.all())
 
-    def test_create_receipt_by_term_type_perpetual(self):
-        # TODO: Implement Test
-        pass
+    # def test_create_receipt_by_term_type_perpetual(self):
+        raise NotImplementedError()
 
-    def test_create_receipt_by_term_type_one_time_use(self):
-        # TODO: Implement Test
-        pass
+    # def test_create_receipt_by_term_type_one_time_use(self):
+        raise NotImplementedError()
     
     def test_create_receipts_success(self):
         self.base_processor.invoice.status = Invoice.InvoiceStatus.COMPLETE
@@ -182,53 +176,41 @@ class BaseProcessorTests(TestCase):
         self.assertTrue(invoice.payments.count())
         self.assertTrue(customer.receipts.count())
 
-    def test_get_header_javascript_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_get_header_javascript_success(self):
+    #     raise NotImplementedError()
 
-    def test_get_javascript_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_get_javascript_success(self):
+    #     raise NotImplementedError()
 
-    def test_get_template_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_get_template_success(self):
+    #     raise NotImplementedError()
 
-    def test_authorize_payment_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_authorize_payment_success(self):
+    #     raise NotImplementedError()
 
-    def test_pre_authorization_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_pre_authorization_success(self):
+    #     raise NotImplementedError()
 
-    def test_process_payment_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_process_payment_success(self):
+    #     raise NotImplementedError()
 
-    def test_post_authorization_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_post_authorization_success(self):
+    #     raise NotImplementedError()
 
-    def test_capture_payment_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_capture_payment_success(self):
+    #     raise NotImplementedError()
 
-    def test_subscription_payment_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_subscription_payment_success(self):
+    #     raise NotImplementedError()
 
-    def test_update_subscription_payment_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_update_subscription_payment_success(self):
+    #     raise NotImplementedError()
 
-    def test_cancel_subscription_payment_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_cancel_subscription_payment_success(self):
+    #     raise NotImplementedError()
 
-    def test_refund_payment_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_refund_payment_success(self):
+    #     raise NotImplementedError()
 
 class SupportedProcessorsSetupTests(TestCase):
     
@@ -259,9 +241,8 @@ class SupportedProcessorsSetupTests(TestCase):
         finally:
             pass
 
-    def test_stripe_init(self):
-        # TODO: Implement Test
-        pass
+    # def test_stripe_init(self):
+        raise NotImplementedError()
     
 @skipIf((settings.AUTHORIZE_NET_API_ID == None) or (settings.AUTHORIZE_NET_TRANSACTION_KEY == None), "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
@@ -746,22 +727,18 @@ class AuthorizeNetProcessorTests(TestCase):
 
     ##########
     # Customer Payment Profile Transaction Tests
-    ##########
-    def test_create_customer_payment_profile(self):
-        # TODO: Implement Test
-        pass
+    # ##########
+    # def test_create_customer_payment_profile(self):
+        raise NotImplementedError()
     
-    def test_update_customer_payment_profile(self):
-        # TODO: Implement Test
-        pass
+    # def test_update_customer_payment_profile(self):
+        raise NotImplementedError()
 
-    def test_get_customer_payment_profile(self):
-        # TODO: Implement Test
-        pass
+    # def test_get_customer_payment_profile(self):
+        raise NotImplementedError()
     
-    def test_get_customer_payment_profile_list(self):
-        # TODO: Implement Test
-        pass
+    # def test_get_customer_payment_profile_list(self):
+        raise NotImplementedError()
 
     ##########
     # Subscription Transaction Tests

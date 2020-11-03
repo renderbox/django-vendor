@@ -32,6 +32,12 @@ def get_purchase_invoice(user):
     profile, created = user.customer_profile.get_or_create(site=settings.SITE_ID)
     return profile.get_cart_or_checkout_cart()
 
+def clear_session_purchase_data(request):
+    if 'billing_address_form' in request.session:
+        del(request.session['billing_address_form'])
+    if 'credit_card_form' in request.session:
+        del(request.session['credit_card_form'])
+
 class CartView(LoginRequiredMixin, DetailView):
     '''
     View items in the cart
@@ -106,10 +112,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
         context['invoice'] = invoice
 
-        if 'billing_address_form' in request.session:
-            del(request.session['billing_address_form'])
-        if 'credit_card_form' in request.session:
-            del(request.session['credit_card_form'])
+        clear_session_purchase_data(request)
 
         return render(request, self.template_name, context)
 
@@ -191,10 +194,10 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         processor = payment_processor(invoice)
         if 'billing_address_form' in request.session:
             context['billing_address_form'] = request.session['billing_address_form']
-            del(request.session['billing_address_form'])
         if 'credit_card_form' in request.session:
             context['credit_card_form'] = request.session['credit_card_form']
-            del(request.session['credit_card_form'])
+        
+        clear_session_purchase_data(request)
 
         context = processor.get_checkout_context(context=context)
 
@@ -212,8 +215,7 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
             for order_item_subscription in [order_item for order_item in processor.invoice.order_items.all() if order_item.offer.terms >= TermType.SUBSCRIPTION and order_item.offer.terms < TermType.ONE_TIME_USE]:
                 processor.subscription_payment(
                     request, order_item_subscription)
-            del(request.session['billing_address_form'])
-            del(request.session['credit_card_form'])
+            clear_session_purchase_data(request)
             return redirect('vendor:purchase-summary', pk=invoice.pk)
         else:
             messages.info(self.request, _(

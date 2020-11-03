@@ -213,21 +213,6 @@ class ReviewCheckoutViewTests(TestCase):
     def test_view_status_code_200(self):
         response = self.client.get(self.view_url)
         self.assertEquals(response.status_code, 200)
-
-    @override_settings(SITE_ID=2)
-    def test_view_process_free_product_redirect_summary(self):
-        url = reverse('vendor:checkout-free')
-        client = Client()
-        user = User.objects.get(pk=2)
-        client.force_login(user)
-
-        invoice = Invoice(profile=CustomerProfile.objects.get(user=user))
-        invoice.save()
-        invoice.add_offer(Offer.objects.get(pk=5))
-        response = client.get(url)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('vendor:purchase-summary', kwargs={'pk':invoice.pk}))            
         
     def test_view_cart_no_shipping_address(self):
         # TODO: Implement Test
