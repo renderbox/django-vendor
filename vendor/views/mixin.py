@@ -26,6 +26,11 @@ class ProductRequiredMixin():
             return self.handle_no_product()
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['product_owned'] = self.product_owned        # Variable set by ProductRequiredMixin
+        return context
+
     def user_has_product(self):
         """
         Check to see if a user has a viable product license based on the get_product_queryset() method.

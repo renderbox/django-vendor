@@ -19,12 +19,7 @@ class ProductAccessView(ProductRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        offer = self.model.on_site.get(slug=kwargs['slug'])
-
-        context['object'] = offer
-        context['product_owned'] = self.product_owned        # Variable set by ProductRequiredMixin
-
+        context['object'] = self.model.on_site.get(slug=kwargs['slug'])
         return render(request, self.template_name, context)
 
     def get_product_queryset(self):
