@@ -10,6 +10,6 @@
 #         context = super().get_context_data(**kwargs)
 #         product = Product.objects.get(slug=self.kwargs["slug"])
         
-#         context['owens_product'] = self.request.user.customer_profile.get(site=settings.SITE_ID).has_product(product)
+#         context['owns_product'] = self.request.user.customer_profile.get(site=settings.SITE_ID).has_product(product)
         
 #         return context
