@@ -207,8 +207,8 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 
         processor = payment_processor(invoice)
         
-        processor.get_billing_address_form_data(request.session['billing_address_form'], BillingAddressForm)
-        processor.get_payment_info_form_data(request.session['credit_card_form'], CreditCardForm)
+        processor.get_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
+        processor.get_payment_info_form_data(request.session.get('credit_card_form'), CreditCardForm)
 
         processor.authorize_payment()
 

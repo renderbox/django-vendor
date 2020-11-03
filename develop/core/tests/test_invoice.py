@@ -4,7 +4,8 @@ from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.conf import settings
 
-from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerProfile
+from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerProfile, Payment
+from vendor.forms import BillingAddressForm, CreditCardForm
 
 User = get_user_model()
 class ModelInvoiceTests(TestCase):
@@ -224,9 +225,39 @@ class ReviewCheckoutViewTests(TestCase):
         self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
 
     def test_view_missing_data(self):
+        session = self.client.session
+        session['billing_address_form'] = BillingAddressForm().initial
+        session['credit_card_form'] = CreditCardForm().initial
+        session.save()
+
         response = self.client.post(self.view_url)
 
         self.assertRedirects(response, reverse('vendor:checkout-account'))
+
+    def test_view_payment_success(self):
+        Payment.objects.all().delete()
+        form_data = { 
+            'billing_address_form': 
+                {'name':'Home','company':'Whitemoon Dreams','country':'581','address_1':'221B Baker Street','address_2':'','locality':'Marylebone','state':'California','postal_code':'90292'}, 
+            'credit_card_form': 
+                {'full_name':'Bob Ross','card_number':'5424000000000015','expire_month':'12','expire_year':'2030','cvv_number':'900','payment_type':'10'}
+            }
+
+        billing_address = BillingAddressForm(form_data['billing_address_form'])
+        billing_address.is_bound = True
+        billing_address.is_valid()
+        payment_info = CreditCardForm(form_data['credit_card_form'])
+        payment_info.is_bound = True
+        payment_info.is_valid()
+
+        session = self.client.session
+        session['billing_address_form'] = billing_address.cleaned_data
+        session['credit_card_form'] = payment_info.cleaned_data
+        session.save()
+
+        response = self.client.post(self.view_url)
+
+        self.assertRedirects(response, reverse('vendor:purchase-summary', kwargs={'pk': 1}))
     
     # def test_view_cart_no_shipping_address(self):
         # raise NotImplementedError()
