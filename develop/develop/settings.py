@@ -172,7 +172,7 @@ STATICFILES_DIRS = [
 
 # Django Vendor Settings
 VENDOR_PRODUCT_MODEL = 'core.Product'
-VENDOR_PAYMENT_PROCESSOR = "authorizenet.AuthorizeNetProcessor"
+VENDOR_PAYMENT_PROCESSOR = os.getenv("VENDOR_PAYMENT_PROCESSOR", "base.PaymentProcessorBase")
 DEFAULT_CURRENCY = Currency.usd.name
 
 # Authorize.Net Settings:

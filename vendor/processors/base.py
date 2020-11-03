@@ -189,6 +189,7 @@ class PaymentProcessorBase(object):
 
         vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()
+        self.transaction_submitted = True
 
         #TODO: Set the status based on the result from the process_payment()
 
