@@ -11,7 +11,7 @@ from unittest import skipIf
 from random import randrange, choice
 from string import ascii_letters
 from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models import Invoice, Payment, Offer, Price, Receipt
+from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile
 from vendor.models.address import Country
 from vendor.models.choice import TermType
 from vendor.processors.base import PaymentProcessorBase
@@ -50,26 +50,22 @@ class BaseProcessorTests(TestCase):
         self.assertEquals('PaymentProcessorBase', base_processor.provider)
         self.assertIsNotNone(base_processor.invoice)
 
-    def test_processor_setup_success(self):
-        # TODO: Implement Test
-        pass    
+    # def test_processor_setup_success(self):
+        # raise NotImplementedError()    
 
-    def test_set_payment_info_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_set_payment_info_success(self):
+        # raise NotImplementedError()
 
-    def test_set_invoice_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_set_invoice_success(self):
+        # raise NotImplementedError()
 
     def test_create_payment_model_success(self):
         self.base_processor.create_payment_model()
 
         self.assertIsNotNone(self.base_processor.payment)
 
-    def test_save_payment_transaction_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_save_payment_transaction_success(self):
+        # raise NotImplementedError()
 
     def test_update_invoice_status_success(self):
         self.base_processor.transaction_submitted = True
@@ -93,13 +89,11 @@ class BaseProcessorTests(TestCase):
 
         self.assertIsNotNone(Receipt.objects.all())
 
-    def test_create_receipt_by_term_type_perpetual(self):
-        # TODO: Implement Test
-        pass
+    # def test_create_receipt_by_term_type_perpetual(self):
+        # raise NotImplementedError()
 
-    def test_create_receipt_by_term_type_one_time_use(self):
-        # TODO: Implement Test
-        pass
+    # def test_create_receipt_by_term_type_one_time_use(self):
+        # raise NotImplementedError()
     
     def test_create_receipts_success(self):
         self.base_processor.invoice.status = Invoice.InvoiceStatus.COMPLETE
@@ -169,53 +163,54 @@ class BaseProcessorTests(TestCase):
         context = self.base_processor.get_checkout_context()
         self.assertIn('invoice', context)
 
-    def test_get_header_javascript_success(self):
-        # TODO: Implement Test
-        pass
+    def test_free_payment_success(self):
+        customer = CustomerProfile.objects.get(pk=2)
+        invoice = Invoice(profile=customer)
+        invoice.save()
+        invoice.add_offer(Offer.objects.get(pk=5))
 
-    def test_get_javascript_success(self):
-        # TODO: Implement Test
-        pass
+        base_processor = PaymentProcessorBase(invoice)
 
-    def test_get_template_success(self):
-        # TODO: Implement Test
-        pass
+        base_processor.free_payment()
 
-    def test_authorize_payment_success(self):
-        # TODO: Implement Test
-        pass
+        self.assertTrue(invoice.payments.count())
+        self.assertTrue(customer.receipts.count())
 
-    def test_pre_authorization_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_get_header_javascript_success(self):
+    #     raise NotImplementedError()
 
-    def test_process_payment_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_get_javascript_success(self):
+    #     raise NotImplementedError()
 
-    def test_post_authorization_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_get_template_success(self):
+    #     raise NotImplementedError()
 
-    def test_capture_payment_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_authorize_payment_success(self):
+    #     raise NotImplementedError()
 
-    def test_process_subscription_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_pre_authorization_success(self):
+    #     raise NotImplementedError()
 
-    def test_process_update_subscription_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_process_payment_success(self):
+    #     raise NotImplementedError()
 
-    def test_process_cancel_subscription_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_post_authorization_success(self):
+    #     raise NotImplementedError()
 
-    def test_refund_payment_success(self):
-        # TODO: Implement Test
-        pass
+    # def test_capture_payment_success(self):
+    #     raise NotImplementedError()
+
+    # def test_subscription_payment_success(self):
+    #     raise NotImplementedError()
+
+    # def test_update_subscription_payment_success(self):
+    #     raise NotImplementedError()
+
+    # def test_cancel_subscription_payment_success(self):
+    #     raise NotImplementedError()
+
+    # def test_refund_payment_success(self):
+    #     raise NotImplementedError()
 
 class SupportedProcessorsSetupTests(TestCase):
     
@@ -246,9 +241,8 @@ class SupportedProcessorsSetupTests(TestCase):
         finally:
             pass
 
-    def test_stripe_init(self):
-        # TODO: Implement Test
-        pass
+    # def test_stripe_init(self):
+        # raise NotImplementedError()
     
 @skipIf((settings.AUTHORIZE_NET_API_ID == None) or (settings.AUTHORIZE_NET_TRANSACTION_KEY == None), "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
@@ -317,10 +311,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.existing_invoice.add_offer(self.subscription_offer)
         self.existing_invoice.save()
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
-        request = HttpRequest()
-        request.session = self.form_data
+
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
-        self.processor.process_payment(request)
+        self.processor.process_payment()
 
         print(self.processor.transaction_message)
         self.assertIsNotNone(self.processor.payment)
@@ -335,10 +330,10 @@ class AuthorizeNetProcessorTests(TestCase):
         """
         self.form_data['credit_card_form']['card_number'] = '5424000000015'
 
-        request = HttpRequest()
-        request.session = self.form_data
-
-        self.processor.process_payment(request)
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
+        self.processor.process_payment()
 
         self.assertIsNotNone(self.processor.payment)
         self.assertFalse(self.processor.payment.success)
@@ -353,10 +348,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['expire_month'] = '12'
         self.form_data['credit_card_form']['expire_year'] = '2000'
         
-        request = HttpRequest()
-        request.session = self.form_data
-
-        self.processor.process_payment(request)
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
+        self.processor.process_payment()
 
         self.assertIsNotNone(self.processor.payment)
         self.assertFalse(self.processor.payment.success)
@@ -374,11 +369,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['cvv_number'] = '901'
         self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         
-        request = HttpRequest()
-        request.session = self.form_data
-
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
         self.processor.invoice.total = randrange(1,1000)
-        self.processor.process_payment(request)
+        self.processor.process_payment()
 
         self.assertIsNotNone(self.processor.payment)
         if self.processor.transaction_response.cvvResultCode.text:
@@ -394,11 +389,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['cvv_number'] = '902'
         self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         
-        request = HttpRequest()
-        request.session = self.form_data
-
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
         self.processor.invoice.total = randrange(1,1000)
-        self.processor.process_payment(request)
+        self.processor.process_payment()
         
         self.assertIsNotNone(self.processor.payment)
         if self.processor.transaction_response.cvvResultCode.text:
@@ -415,11 +410,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['cvv_number'] = '903'
         self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         
-        request = HttpRequest()
-        request.session = self.form_data
-
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
         self.processor.invoice.total = randrange(1,1000)
-        self.processor.process_payment(request)
+        self.processor.process_payment()
         
         self.assertIsNotNone(self.processor.payment)
         if self.processor.transaction_response.cvvResultCode.text:
@@ -435,11 +430,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['cvv_number'] = '904'
         self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         
-        request = HttpRequest()
-        request.session = self.form_data
-
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
         self.processor.invoice.total = randrange(1,1000)
-        self.processor.process_payment(request)
+        self.processor.process_payment()
         
         self.assertIsNotNone(self.processor.payment)
         if self.processor.transaction_response.cvvResultCode.text:
@@ -459,11 +454,11 @@ class AuthorizeNetProcessorTests(TestCase):
         """
         self.form_data['billing_address_form']['postal_code'] = '46201'
         
-        request = HttpRequest()
-        request.session = self.form_data
-
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
         self.processor.invoice.total = randrange(1,1000)
-        self.processor.process_payment(request)
+        self.processor.process_payment()
 
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'A'", self.processor.payment.result["raw"])
@@ -476,11 +471,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['billing_address_form']['postal_code'] = '46203'
         self.form_data['credit_card_form']['card_number'] = '2223000010309711'
         
-        request = HttpRequest()
-        request.session = self.form_data
-                
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+                        
         self.processor.invoice.total = randrange(1,1000)
-        self.processor.process_payment(request)
+        self.processor.process_payment()
 
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'E'", self.processor.payment.result["raw"])
@@ -493,11 +488,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['billing_address_form']['postal_code'] = '46204'
         self.form_data['credit_card_form']['card_number'] = '4007000000027'
         
-        request = HttpRequest()
-        request.session = self.form_data
-
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
         self.processor.invoice.total = randrange(1,1000)
-        self.processor.process_payment(request)
+        self.processor.process_payment()
 
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'G'", self.processor.payment.result["raw"])
@@ -510,11 +505,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['billing_address_form']['postal_code'] = '46205'
         self.form_data['credit_card_form']['card_number'] = '2223000010309711'
         
-        request = HttpRequest()
-        request.session = self.form_data
-
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
         self.processor.invoice.total = randrange(1,1000)
-        self.processor.process_payment(request)
+        self.processor.process_payment()
 
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'N'", self.processor.payment.result["raw"])
@@ -527,11 +522,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['billing_address_form']['postal_code'] = '46207'
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
-        request = HttpRequest()
-        request.session = self.form_data
-
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
         self.processor.invoice.total = randrange(1,1000)
-        self.processor.process_payment(request)
+        self.processor.process_payment()
 
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'R'", self.processor.payment.result["raw"])
@@ -545,10 +540,10 @@ class AuthorizeNetProcessorTests(TestCase):
         """
         self.form_data['billing_address_form']['postal_code'] = '46208'
         
-        request = HttpRequest()
-        request.session = self.form_data
-
-        self.processor.process_payment(request)
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
+        self.processor.process_payment()
 
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'S'", self.processor.payment.result["raw"])
@@ -561,11 +556,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['billing_address_form']['postal_code'] = '46209'
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
-        request = HttpRequest()
-        request.session = self.form_data
-
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
         self.processor.invoice.total = randrange(1,1000)
-        self.processor.process_payment(request)
+        self.processor.process_payment()
 
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'U'", self.processor.payment.result["raw"])
@@ -578,11 +573,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['billing_address_form']['postal_code'] = '46211'
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
-        request = HttpRequest()
-        request.session = self.form_data
-
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
         self.processor.invoice.total = randrange(1,1000)
-        self.processor.process_payment(request)
+        self.processor.process_payment()
 
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'W'", self.processor.payment.result["raw"])
@@ -595,11 +590,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['billing_address_form']['postal_code'] = '46214'
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
-        request = HttpRequest()
-        request.session = self.form_data
-
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
         self.processor.invoice.total = randrange(1,1000)
-        self.processor.process_payment(request)
+        self.processor.process_payment()
 
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'X'", self.processor.payment.result["raw"])
@@ -612,11 +607,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['billing_address_form']['postal_code'] = '46217'
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
-        request = HttpRequest()
-        request.session = self.form_data
-
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
         self.processor.invoice.total = randrange(1,1000)
-        self.processor.process_payment(request)
+        self.processor.process_payment()
 
         self.assertIsNotNone(self.processor.payment)
         self.assertIn("'avsResultCode': 'Z'", self.processor.payment.result["raw"])
@@ -733,22 +728,18 @@ class AuthorizeNetProcessorTests(TestCase):
 
     ##########
     # Customer Payment Profile Transaction Tests
-    ##########
-    def test_create_customer_payment_profile(self):
-        # TODO: Implement Test
-        pass
+    # ##########
+    # def test_create_customer_payment_profile(self):
+        # raise NotImplementedError()
     
-    def test_update_customer_payment_profile(self):
-        # TODO: Implement Test
-        pass
+    # def test_update_customer_payment_profile(self):
+        # raise NotImplementedError()
 
-    def test_get_customer_payment_profile(self):
-        # TODO: Implement Test
-        pass
+    # def test_get_customer_payment_profile(self):
+        # raise NotImplementedError()
     
-    def test_get_customer_payment_profile_list(self):
-        # TODO: Implement Test
-        pass
+    # def test_get_customer_payment_profile_list(self):
+        # raise NotImplementedError()
 
     ##########
     # Subscription Transaction Tests
@@ -757,9 +748,6 @@ class AuthorizeNetProcessorTests(TestCase):
         """
         Test a successfull subscription enrollment.
         """        
-        request = HttpRequest()
-        request.session = self.form_data
-
         self.existing_invoice.add_offer(self.subscription_offer)
         self.existing_invoice.add_offer(self.subscription_offer)
         price = Price()
@@ -771,6 +759,9 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
         
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
         subscription_list = self.existing_invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
         subscription = subscription_list[0]
         subscription.offer.name = "".join([ choice(ascii_letters) for i in range(0, 10) ])
@@ -780,8 +771,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.payment = Payment.objects.get(pk=1)
         self.processor.create_receipts()
 
-        self.processor.process_subscription(request, subscription)
-        
+        self.processor.subscription_payment(subscription)
 
         # print(self.processor.transaction_message)
         self.assertTrue(self.processor.transaction_submitted)
@@ -798,7 +788,7 @@ class AuthorizeNetProcessorTests(TestCase):
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         
         if active_subscriptions:
-            self.processor.process_cancel_subscription(active_subscriptions[0].id.pyval)
+            self.processor.cancel_subscription_payment(active_subscriptions[0].id.pyval)
             self.assertTrue(self.processor.transaction_submitted)
         else:
             print("No active Subscriptions, Skipping Test")

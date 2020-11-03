@@ -32,6 +32,12 @@ def get_purchase_invoice(user):
     profile, created = user.customer_profile.get_or_create(site=settings.SITE_ID)
     return profile.get_cart_or_checkout_cart()
 
+def clear_session_purchase_data(request):
+    if 'billing_address_form' in request.session:
+        del(request.session['billing_address_form'])
+    if 'credit_card_form' in request.session:
+        del(request.session['credit_card_form'])
+
 class CartView(LoginRequiredMixin, DetailView):
     '''
     View items in the cart
@@ -106,10 +112,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
         context['invoice'] = invoice
 
-        if 'billing_address_form' in request.session:
-            del(request.session['billing_address_form'])
-        if 'credit_card_form' in request.session:
-            del(request.session['credit_card_form'])
+        clear_session_purchase_data(request)
 
         return render(request, self.template_name, context)
 
@@ -180,7 +183,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
             return redirect('vendor:checkout-review')
 
 
-class ReviewCheckout(LoginRequiredMixin, TemplateView):
+class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
     template_name = 'vendor/checkout.html'
 
     def get(self, request, *args, **kwargs):
@@ -190,12 +193,10 @@ class ReviewCheckout(LoginRequiredMixin, TemplateView):
 
         processor = payment_processor(invoice)
         if 'billing_address_form' in request.session:
-            context['billing_address_form'] = request.session['billing_address_form']
-            del(request.session['billing_address_form'])
+            context['billing_address_form'] = BillingAddressForm(request.session['billing_address_form'])
         if 'credit_card_form' in request.session:
-            context['credit_card_form'] = request.session['credit_card_form']
-            del(request.session['credit_card_form'])
-
+            context['credit_card_form'] = CreditCardForm(request.session['credit_card_form'])
+        
         context = processor.get_checkout_context(context=context)
 
         return render(request, self.template_name, context)
@@ -205,15 +206,16 @@ class ReviewCheckout(LoginRequiredMixin, TemplateView):
         invoice = get_purchase_invoice(request.user)
 
         processor = payment_processor(invoice)
+        
+        processor.get_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
+        processor.get_payment_info_form_data(request.session.get('credit_card_form'), CreditCardForm)
 
-        processor.process_payment(request)
+        processor.authorize_payment()
 
         if processor.transaction_submitted:
             for order_item_subscription in [order_item for order_item in processor.invoice.order_items.all() if order_item.offer.terms >= TermType.SUBSCRIPTION and order_item.offer.terms < TermType.ONE_TIME_USE]:
-                processor.process_subscription(
-                    request, order_item_subscription)
-            del(request.session['billing_address_form'])
-            del(request.session['credit_card_form'])
+                processor.subscription_payment(order_item_subscription)
+            clear_session_purchase_data(request)
             return redirect('vendor:purchase-summary', pk=invoice.pk)
         else:
             messages.info(self.request, _(

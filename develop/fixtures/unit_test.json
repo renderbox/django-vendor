@@ -102,7 +102,8 @@
         "meta": {"msrp": {"default": "mxn", "usd": 10.00, "mxn": 21.12}},
         "classification": [],
         "offers": [
-            4
+            4,
+            5
         ],
         "reciepts": []
     }
@@ -281,6 +282,29 @@
     }
 },
 {
+    "model": "vendor.offer",
+    "pk": 5,
+    "fields": {
+        "created": "2020-06-30T02:38:17.762Z",
+        "updated": "2020-06-30T02:38:35.045Z",
+        "uuid": "ccda0d8a-0ddf-440b-8804-eddc2800493b",
+        "slug": "free-hulk-mug",
+        "site": 1,
+        "name": "Free Hulk Mug Subscription",
+        "start_date": "2020-06-30T02:38:16Z",
+        "end_date": null,
+        "terms": 10,
+        "term_details": {
+            "period_length": 1,
+            "payment_occurrences": 3
+        },
+        "term_start_date": null,
+        "available": true,
+        "bundle": false,
+        "offer_description": "Free Hulk Mug"
+    }
+},
+{
     "model": "vendor.payment",
     "pk": 1,
     "fields": {
@@ -351,6 +375,18 @@
     "fields": {
         "offer": 3,
         "cost": 25.2,
+        "currency": "usd",
+        "start_date": "2000-06-30T02:38:30Z",
+        "end_date": "2120-06-30T02:38:30Z",
+        "priority": 2
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 6,
+    "fields": {
+        "offer": 5,
+        "cost": 0,
         "currency": "usd",
         "start_date": "2000-06-30T02:38:30Z",
         "end_date": "2120-06-30T02:38:30Z",

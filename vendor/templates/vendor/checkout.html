@@ -128,20 +128,20 @@
             </div>
           </h3>
 
-          <p class="mb-0">{{billing_address_form.address_1}},
-            {{billing_address_form.address_2|default_if_none:""}}</p>
-          <p>{{billing_address_form.state}},
-            {{billing_address_form.get_country_display}},{{billing_address_form.postal_code}}
-          </p>
-          <h3 class='card-title'>
-            {% trans 'Payment Method' %}
-          </h3>
-          <p class="mb-0">{{credit_card_form.full_name}}</p>
-          <p>{% trans 'Card ending in' %}
-            {{credit_card_form.card_number|slice:"-4:"}}</p>
+          <p class="mb-0">{{billing_address_form.data.address_1}},
+            {{billing_address_form.data.address_2|default_if_none:""}}</p>
+            <p>{{billing_address_form.data.state}},
+              {{billing_address_form.instance.get_country_display}}, {{billing_address_form.data.postal_code}}
+            </p>
+            <h3 class='card-title'>
+              {% trans 'Payment Method' %}
+            </h3>
+            <p class="mb-0">{{credit_card_form.data.full_name}}</p>
+            <p>{% trans 'Card ending in' %}
+              {{credit_card_form.data.card_number|slice:"-4:"}}</p>
           <form method="post">
             {% csrf_token %}
-            <button class=" btn btn-primary" type="submit">Place Order</button>
+            <button class=" btn btn-primary" type="submit">{% trans 'Place Order' %}</button>
           </form>
         </div>
       </div>
