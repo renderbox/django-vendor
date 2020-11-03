@@ -193,9 +193,9 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 
         processor = payment_processor(invoice)
         if 'billing_address_form' in request.session:
-            context['billing_address_form'] = BillingAddressForm(initial=request.session['billing_address_form'])
+            context['billing_address_form'] = BillingAddressForm(request.session['billing_address_form'])
         if 'credit_card_form' in request.session:
-            context['credit_card_form'] = CreditCardForm(initial=request.session['credit_card_form'])
+            context['credit_card_form'] = CreditCardForm(request.session['credit_card_form'])
         
         context = processor.get_checkout_context(context=context)
 
