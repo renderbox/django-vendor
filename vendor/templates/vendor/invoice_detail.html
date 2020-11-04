@@ -7,28 +7,54 @@
     <h2>{% trans 'Shopping Cart' %}</h2>
   </div>
   <div class='col-md-8'>
-    {% for item in object.order_items.all %}
-    <div class="card w-100 border-0 rounded-0 bg-light my-2">
-      <div class='card-body'>
-        <div class='d-flex flex-row justify-content-between'>
-          <a class="text-primary" href="#">
-            <h5>{{item.name}}</h5>
-          </a>
-          <h5>${{ item.total|default_if_none:"0.00"|floatformat:2}}</h5>
+    
+    {% if user.is_anonymous %}
+      {% for item in invoice.order_items %}
+      <div class="card w-100 border-0 rounded-0 bg-light my-2">
+        <div class='card-body'>
+          <div class='d-flex flex-row justify-content-between'>
+            <a class="text-primary" href="#">
+              <h5>{{item.name}}</h5>
+            </a>
+            <h5>${{ item.total|default_if_none:"0.00"|floatformat:2}}</h5>
+          </div>
+          {% for product in item.offer.products.all %}
+          <span>{{product.description}}</span>
+          {% endfor %}
+          <p class="font-weight-bolder mt-3 mb-2">{{ item.offer.get_terms_display }}</p>
+          <form action="{{ item.offer.remove_from_cart_link }}" method="post">
+            {% csrf_token %}
+            <button class="btn btn-link p-0" type="submit">{% trans 'Remove' %}</button>
+          </form>
         </div>
-        {% for product in item.offer.products.all %}
-        <span>{{product.description}}</span>
-        {% endfor %}
-        <p class="font-weight-bolder mt-3 mb-2">{{ item.offer.get_terms_display }}</p>
-        <form action="{{ item.offer.remove_from_cart_link }}" method="post">
-          {% csrf_token %}
-          <button class="btn btn-link p-0" type="submit">{% trans 'Remove' %}</button>
-        </form>
       </div>
-    </div>
-    {% empty %}
-      <h2>{% trans 'Empty Cart' %}</h2>
+      {% empty %}
+        <h2>{% trans 'Empty Cart' %}</h2>
     {% endfor %}
+    {% else %}
+      {% for item in invoice.order_items.all %}
+      <div class="card w-100 border-0 rounded-0 bg-light my-2">
+        <div class='card-body'>
+          <div class='d-flex flex-row justify-content-between'>
+            <a class="text-primary" href="#">
+              <h5>{{item.name}}</h5>
+            </a>
+            <h5>${{ item.total|default_if_none:"0.00"|floatformat:2}}</h5>
+          </div>
+          {% for product in item.offer.products.all %}
+          <span>{{product.description}}</span>
+          {% endfor %}
+          <p class="font-weight-bolder mt-3 mb-2">{{ item.offer.get_terms_display }}</p>
+          <form action="{{ item.offer.remove_from_cart_link }}" method="post">
+            {% csrf_token %}
+            <button class="btn btn-link p-0" type="submit">{% trans 'Remove' %}</button>
+          </form>
+        </div>
+      </div>
+      {% empty %}
+        <h2>{% trans 'Empty Cart' %}</h2>
+    {% endfor %}
+      {% endif %}
   </div>
 
   <div class="col-md-4 order-md-2 mb-4 mt-2">
@@ -49,8 +75,10 @@
       {% include "./includes/cost_overview.html" with invoice=invoice %}
 
     </ul>
-    {% if object.order_items.all %}
+    {% if invoice.order_items.all %}
     <a href="{% url 'vendor:checkout-account' %}" class="btn btn-primary">{% trans 'PROCEED TO CHECKOUT' %}</a>
+    {% else %}
+    <a href="{% url 'account_login' %}" class="btn btn-primary">{% trans 'LOGIN TO PROCEED TO CHECKOUT' %}</a>
     {% endif %}
 
 

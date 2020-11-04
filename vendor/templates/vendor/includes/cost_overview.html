@@ -19,7 +19,10 @@
   </li>
 
   <li class="px-0 border-0 d-flex justify-content-between">
-    {% with invoice.get_currency_display as currency %}
+    {% comment %}
+    <!-- TODO: Set default to site default -->
+    {% endcomment %}
+    {% with invoice.get_currency_display|default:"USD" as currency %}
     <span class="font-weight-bolder">{% blocktrans %}Total ({{ currency }}) {% endblocktrans %}</span>
     {% endwith  %}
     <span class="text-primary">${{ invoice.total|default_if_none:"0.00"|floatformat:2 }}</span>

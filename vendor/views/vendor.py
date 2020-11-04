@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -12,7 +14,7 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
 
-from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile
+from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile, OrderItem
 from vendor.models.choice import TermType
 from vendor.models.utils import set_default_site_id
 from vendor.processors import PaymentProcessor
@@ -38,16 +40,35 @@ def clear_session_purchase_data(request):
     if 'credit_card_form' in request.session:
         del(request.session['credit_card_form'])
 
-class CartView(DetailView):
+class CartView(TemplateView):
     '''
     View items in the cart
     '''
-    model = Invoice
+    template_name = 'vendor/invoice_detail.html'
 
-    def get_object(self):
-        profile, created = self.request.user.customer_profile.get_or_create(
-            site=set_default_site_id())
-        return profile.get_cart_or_checkout_cart()
+    def get(self, request, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if request.user.is_anonymous:
+            session_cart = {}
+            if 'session_cart' in request.session:
+                session_cart = request.session.get('session_cart')
+            else:
+                request.session['session_cart'] = session_cart
+            context['invoice'] = {}
+            if len(session_cart):
+                context['invoice']['order_items'] = [ OrderItem(offer=Offer.objects.get(pk=offer), quantity=session_cart[offer]['quantity']) for offer in session_cart.keys() ]
+            else:
+                context['invoice']['order_items'] = []
+            context['invoice']['subtotal'] = sum([item.total for item in context['invoice']['order_items'] ])
+            context['invoice']['shipping'] = 0
+            context['invoice']['tax'] = 0
+            context['invoice']['total'] = context['invoice']['subtotal']
+
+            return render(request, self.template_name, context)
+
+        profile, created = self.request.user.customer_profile.get_or_create(site=set_default_site_id())
+        context['invoice'] = profile.get_cart_or_checkout_cart()
+        return render(request, self.template_name, context)
 
 
 class AddToCartView(TemplateView):
@@ -57,16 +78,31 @@ class AddToCartView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         offer = Offer.objects.get(slug=self.kwargs["slug"])
-        profile, created = self.request.user.customer_profile.get_or_create(
-            site=set_default_site_id())
+        if request.user.is_anonymous:
+            offer_key = str(offer.pk)
+            session_cart = {}
+            if 'session_cart' in request.session:
+                session_cart = request.session.get('session_cart')
+            else:
+                request.session['session_cart'] = session_cart
+            if offer_key in session_cart:
+                session_cart[offer_key]['quantity'] += 1
+            else:
+                session_cart[offer_key] = {}
+                session_cart[offer_key]['quantity'] = 1
+            request.session['session_cart'] = session_cart
+        else:
+            profile, created = self.request.user.customer_profile.get_or_create(
+                site=set_default_site_id())
 
-        cart = profile.get_cart_or_checkout_cart()
+            cart = profile.get_cart_or_checkout_cart()
 
-        if cart.status == Invoice.InvoiceStatus.CHECKOUT:
-            messages.info(self.request, _("You have a pending cart in checkout"))
-            return redirect(request.META.get('HTTP_REFERER'))
+            if cart.status == Invoice.InvoiceStatus.CHECKOUT:
+                messages.info(self.request, _("You have a pending cart in checkout"))
+                return redirect(request.META.get('HTTP_REFERER'))
 
-        cart.add_offer(offer)
+            cart.add_offer(offer)
+
         messages.info(self.request, _("Added item to cart."))
 
         return redirect('vendor:cart')      # Redirect to cart on success
@@ -76,16 +112,28 @@ class RemoveFromCartView(DeleteView):
     
     def post(self, request, *args, **kwargs):
         offer = Offer.objects.get(slug=self.kwargs["slug"])
-        profile = self.request.user.customer_profile.get(
-            site=settings.SITE_ID)      # Make sure they have a cart
+        if request.user.is_anonymous:
+            offer_key = str(offer.pk)
+            session_cart = {}
+            if 'session_cart' in request.session:
+                session_cart = request.session.get('session_cart')
+            else:
+                request.session['session_cart'] = session_cart
+            if offer_key in session_cart:
+                session_cart[offer_key]['quantity'] -= 1
+            if session_cart[offer_key]['quantity'] <= 0:
+                del(session_cart[offer_key])
+            request.session['session_cart'] = session_cart
+        else:
+            profile = self.request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
 
-        cart = profile.get_cart_or_checkout_cart()
+            cart = profile.get_cart_or_checkout_cart()
 
-        if cart.status == Invoice.InvoiceStatus.CHECKOUT:
-            messages.info(self.request, _("You have a pending cart in checkout"))
-            return redirect(request.META.get('HTTP_REFERER'))
+            if cart.status == Invoice.InvoiceStatus.CHECKOUT:
+                messages.info(self.request, _("You have a pending cart in checkout"))
+                return redirect(request.META.get('HTTP_REFERER'))
 
-        cart.remove_offer(offer)
+            cart.remove_offer(offer)
 
         messages.info(self.request, _("Removed item from cart."))
 
