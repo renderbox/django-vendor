@@ -38,7 +38,7 @@ def clear_session_purchase_data(request):
     if 'credit_card_form' in request.session:
         del(request.session['credit_card_form'])
 
-class CartView(LoginRequiredMixin, DetailView):
+class CartView(DetailView):
     '''
     View items in the cart
     '''
@@ -50,7 +50,7 @@ class CartView(LoginRequiredMixin, DetailView):
         return profile.get_cart_or_checkout_cart()
 
 
-class AddToCartView(LoginRequiredMixin, TemplateView):
+class AddToCartView(TemplateView):
     '''
     Create an order item and add it to the order
     '''
@@ -72,7 +72,7 @@ class AddToCartView(LoginRequiredMixin, TemplateView):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-class RemoveFromCartView(LoginRequiredMixin, DeleteView):
+class RemoveFromCartView(DeleteView):
     
     def post(self, request, *args, **kwargs):
         offer = Offer.objects.get(slug=self.kwargs["slug"])
