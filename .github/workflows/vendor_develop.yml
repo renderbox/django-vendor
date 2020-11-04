@@ -11,7 +11,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.7] #, 3.8]
 
     # Service containers to run with `container-job`
     # services:
@@ -50,21 +50,21 @@ jobs:
         python manage.py test
       env: 
         DJANGO_DEBUG: 1
-        # DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
+        # DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor  # Using default SQLite
     - name: Run Base Processor Tests
       run: |
         cd develop
         python manage.py test vendor.tests.test_processor.BaseProcessorTests
       env: 
         DJANGO_DEBUG: 1
-        # DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
+        # DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor  # Using default SQLite
     - name: Run Authorize.Net Tests
       run: |
         cd develop
         python manage.py test vendor.tests.test_processor.AuthorizeNetProcessorTests
       env: 
         DJANGO_DEBUG: 1
-        # DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
+        # DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor  # Using default SQLite
         AUTHORIZE_NET_API_ID: ${{ secrets.AUTHORIZE_NET_API_ID }}
         AUTHORIZE_NET_TRANSACTION_KEY: ${{ secrets.AUTHORIZE_NET_TRANSACTION_KEY }}
         AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT: "authCaptureTransaction"
