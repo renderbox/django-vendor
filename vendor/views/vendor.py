@@ -40,6 +40,16 @@ def clear_session_purchase_data(request):
     if 'credit_card_form' in request.session:
         del(request.session['credit_card_form'])
 
+def get_or_create_session_cart(session):
+    session_cart = {}
+
+    if 'session_cart' not in session:
+        session['session_cart'] = session_cart
+    session_cart = session.get('session_cart')
+
+    return session_cart
+
+
 class CartView(TemplateView):
     '''
     View items in the cart
@@ -49,11 +59,8 @@ class CartView(TemplateView):
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         if request.user.is_anonymous:
-            session_cart = {}
-            if 'session_cart' in request.session:
-                session_cart = request.session.get('session_cart')
-            else:
-                request.session['session_cart'] = session_cart
+            session_cart = get_or_create_session_cart(request.session)
+
             context['invoice'] = {}
             if len(session_cart):
                 context['invoice']['order_items'] = [ OrderItem(offer=Offer.objects.get(pk=offer), quantity=session_cart[offer]['quantity']) for offer in session_cart.keys() ]
@@ -80,20 +87,16 @@ class AddToCartView(TemplateView):
         offer = Offer.objects.get(slug=self.kwargs["slug"])
         if request.user.is_anonymous:
             offer_key = str(offer.pk)
-            session_cart = {}
-            if 'session_cart' in request.session:
-                session_cart = request.session.get('session_cart')
-            else:
-                request.session['session_cart'] = session_cart
-            if offer_key in session_cart:
-                session_cart[offer_key]['quantity'] += 1
-            else:
+            session_cart = get_or_create_session_cart(request.session)
+
+            if offer_key not in session_cart:
                 session_cart[offer_key] = {}
-                session_cart[offer_key]['quantity'] = 1
+                session_cart[offer_key]['quantity'] = 0
+
+            session_cart[offer_key]['quantity'] += 1
             request.session['session_cart'] = session_cart
         else:
-            profile, created = self.request.user.customer_profile.get_or_create(
-                site=set_default_site_id())
+            profile, created = self.request.user.customer_profile.get_or_create(site=set_default_site_id())
 
             cart = profile.get_cart_or_checkout_cart()
 
@@ -114,15 +117,14 @@ class RemoveFromCartView(DeleteView):
         offer = Offer.objects.get(slug=self.kwargs["slug"])
         if request.user.is_anonymous:
             offer_key = str(offer.pk)
-            session_cart = {}
-            if 'session_cart' in request.session:
-                session_cart = request.session.get('session_cart')
-            else:
-                request.session['session_cart'] = session_cart
+            session_cart = get_or_create_session_cart(request.session)
+
             if offer_key in session_cart:
                 session_cart[offer_key]['quantity'] -= 1
+
             if session_cart[offer_key]['quantity'] <= 0:
                 del(session_cart[offer_key])
+
             request.session['session_cart'] = session_cart
         else:
             profile = self.request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
