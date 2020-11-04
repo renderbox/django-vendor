@@ -1,11 +1,13 @@
 import uuid
+from allauth.account.signals import user_logged_in
 
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
+from django.dispatch import receiver
+from vendor.models.utils import set_default_site_id
 from django.utils.translation import ugettext as _
-
 
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES
@@ -141,4 +143,11 @@ class OrderItem(CreateUpdateModelBase):
     @property
     def name(self):
         return self.offer.name
+
+@receiver(user_logged_in)
+def convert_session_cart_to_invoice(sender, request, **kwargs):
+    if 'session_cart' in request.session:
+        profile, created = request.user.customer_profile.get_or_create(site=set_default_site_id)
+        cart, created = profile.get_cart()
+        cart.add_offer([Offer.objects.get(pk=offer_pk) for offer_pk in request.session['session_cart'])
 
