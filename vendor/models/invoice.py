@@ -65,12 +65,12 @@ class Invoice(CreateUpdateModelBase):
     def __str__(self):
         return "%s Invoice (%s)" % (self.profile.user.username, self.created.strftime('%Y-%m-%d %H:%M'))
 
-    def add_offer(self, offer):
+    def add_offer(self, offer, quantity=1):
         
         order_item, created = self.order_items.get_or_create(offer=offer)
         # make sure the invoice pk is also in the OriderItem
         if not created and order_item.offer.allow_multiple:
-            order_item.quantity += 1
+            order_item.quantity += quantity
             order_item.save()
 
         self.update_totals()
@@ -118,7 +118,6 @@ class Invoice(CreateUpdateModelBase):
             return ""
         return self.payments.get(success=True).billing_address.get_address()
 
-
 class OrderItem(CreateUpdateModelBase):
     '''
     A link for each item to a user after it's been purchased
@@ -156,7 +155,9 @@ def convert_session_cart_to_invoice(sender, request, **kwargs):
     if 'session_cart' in request.session:
         profile, created = request.user.customer_profile.get_or_create(site=set_default_site_id())
         cart = profile.get_cart()
+        
         for offer_key in request.session['session_cart'].keys():
-            cart.add_offer(Offer.objects.get(pk=offer_key))
+            cart.add_offer(Offer.objects.get(pk=offer_key), quantity=request.session['session_cart'][offer_key]['quantity'])
+
         del(request.session['session_cart'])
 
