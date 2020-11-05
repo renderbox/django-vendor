@@ -48,7 +48,7 @@ def get_or_create_session_cart(session):
     return session_cart
 
 def get_site_default_currency_value(invoice=None):
-    if not invoice and not invoice.currency:
+    if not invoice:
         return Currency[settings.DEFAULT_CURRENCY].value
     return invoice.get_currency_display()
 
