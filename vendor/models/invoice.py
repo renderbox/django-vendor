@@ -66,10 +66,16 @@ class Invoice(CreateUpdateModelBase):
         return "%s Invoice (%s)" % (self.profile.user.username, self.created.strftime('%Y-%m-%d %H:%M'))
 
     def add_offer(self, offer):
+        
         order_item, created = self.order_items.get_or_create(offer=offer)
         # make sure the invoice pk is also in the OriderItem
         if not created:
             order_item.quantity += 1
+            order_item.save()
+        
+        # If offer can only be purchsed once and you have more defualt to one.
+        if not order_item.offer.allow_multiple and order_item.count() > 1:
+            order_item.quantity = 1
             order_item.save()
 
         self.update_totals()
