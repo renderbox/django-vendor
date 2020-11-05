@@ -40,7 +40,6 @@ def clear_session_purchase_data(request):
 
 def get_or_create_session_cart(session):
     session_cart = {}
-
     if 'session_cart' not in session:
         session['session_cart'] = session_cart
     session_cart = session.get('session_cart')
