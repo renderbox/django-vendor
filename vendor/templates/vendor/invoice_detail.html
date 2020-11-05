@@ -7,9 +7,7 @@
     <h2>{% trans 'Shopping Cart' %}</h2>
   </div>
   <div class='col-md-8'>
-    
-    {% if user.is_anonymous %}
-      {% for item in invoice.order_items %}
+      {% for item in invoice.order_items.all|default:invoice.order_items %}
       <div class="card w-100 border-0 rounded-0 bg-light my-2">
         <div class='card-body'>
           <div class='d-flex flex-row justify-content-between'>
@@ -31,30 +29,6 @@
       {% empty %}
         <h2>{% trans 'Empty Cart' %}</h2>
     {% endfor %}
-    {% else %}
-      {% for item in invoice.order_items.all %}
-      <div class="card w-100 border-0 rounded-0 bg-light my-2">
-        <div class='card-body'>
-          <div class='d-flex flex-row justify-content-between'>
-            <a class="text-primary" href="#">
-              <h5>{{item.name}}</h5>
-            </a>
-            <h5>${{ item.total|default_if_none:"0.00"|floatformat:2}}</h5>
-          </div>
-          {% for product in item.offer.products.all %}
-          <span>{{product.description}}</span>
-          {% endfor %}
-          <p class="font-weight-bolder mt-3 mb-2">{{ item.offer.get_terms_display }}</p>
-          <form action="{{ item.offer.remove_from_cart_link }}" method="post">
-            {% csrf_token %}
-            <button class="btn btn-link p-0" type="submit">{% trans 'Remove' %}</button>
-          </form>
-        </div>
-      </div>
-      {% empty %}
-        <h2>{% trans 'Empty Cart' %}</h2>
-    {% endfor %}
-      {% endif %}
   </div>
 
   <div class="col-md-4 order-md-2 mb-4 mt-2">
