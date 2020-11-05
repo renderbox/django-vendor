@@ -7,7 +7,7 @@
     <h2>{% trans 'Shopping Cart' %}</h2>
   </div>
   <div class='col-md-8'>
-      {% for item in invoice.order_items.all|default:invoice.order_items %}
+      {% for item in order_items %}
       <div class="card w-100 border-0 rounded-0 bg-light my-2">
         <div class='card-body'>
           <div class='d-flex flex-row justify-content-between'>
@@ -49,9 +49,9 @@
       {% include "./includes/cost_overview.html" with invoice=invoice %}
 
     </ul>
-    {% if invoice.order_items.all %}
+    {% if order_items and not user.is_anonymous %}
     <a href="{% url 'vendor:checkout-account' %}" class="btn btn-primary">{% trans 'PROCEED TO CHECKOUT' %}</a>
-    {% else %}
+    {% elif order_items and user.is_anonymous %}
     <a href="{% url 'account_login' %}" class="btn btn-primary">{% trans 'LOGIN TO PROCEED TO CHECKOUT' %}</a>
     {% endif %}
 

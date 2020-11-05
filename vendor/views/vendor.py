@@ -64,10 +64,10 @@ class CartView(TemplateView):
 
             context['invoice'] = {}
             if len(session_cart):
-                context['invoice']['order_items'] = [ OrderItem(offer=Offer.objects.get(pk=offer), quantity=session_cart[offer]['quantity']) for offer in session_cart.keys() ]
+                context['order_items'] = [ OrderItem(offer=Offer.objects.get(pk=offer), quantity=session_cart[offer]['quantity']) for offer in session_cart.keys() ]
             else:
-                context['invoice']['order_items'] = []
-            context['invoice']['subtotal'] = sum([item.total for item in context['invoice']['order_items'] ])
+                context['order_items'] = []
+            context['invoice']['subtotal'] = sum([item.total for item in context['order_items'] ])
             context['invoice']['shipping'] = 0
             context['invoice']['tax'] = 0
             context['invoice']['total'] = context['invoice']['subtotal']
@@ -75,7 +75,9 @@ class CartView(TemplateView):
             return render(request, self.template_name, context)
 
         profile, created = self.request.user.customer_profile.get_or_create(site=set_default_site_id())
-        context['invoice'] = profile.get_cart_or_checkout_cart()
+        cart = profile.get_cart_or_checkout_cart()
+        context['invoice'] = cart
+        context['order_items'] = [ order_item for order_item in cart.order_items.all() ]
         return render(request, self.template_name, context)
 
 
@@ -95,6 +97,10 @@ class AddToCartView(TemplateView):
                 session_cart[offer_key]['quantity'] = 0
 
             session_cart[offer_key]['quantity'] += 1
+
+            if not offer.allow_multiple:
+                session_cart[offer_key]['quantity'] = 1
+
             request.session['session_cart'] = session_cart
         else:
             profile, created = self.request.user.customer_profile.get_or_create(site=set_default_site_id())
