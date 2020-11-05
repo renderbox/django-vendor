@@ -10,7 +10,7 @@ from django.template import RequestContext
 from django.views.generic.edit import DeleteView
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 
 from iso4217 import Currency
 
@@ -81,7 +81,7 @@ class CartView(TemplateView):
         return render(request, self.template_name, context)
 
 
-class AddToCartView(TemplateView):
+class AddToCartView(View):
     '''
     Create an order item and add it to the order
     '''
@@ -118,7 +118,7 @@ class AddToCartView(TemplateView):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-class RemoveFromCartView(DeleteView):
+class RemoveFromCartView(View):
     
     def post(self, request, *args, **kwargs):
         offer = Offer.objects.get(slug=self.kwargs["slug"])
