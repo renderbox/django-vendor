@@ -53,7 +53,7 @@ class ProductRequiredMixin():
 
         if self.product_queryset is None:
             if self.product_model:
-                return self.product_model._default_manager.all()
+                return self.product_model.on_site.all()    # Only provide list of products on the current site.
             else:
                 raise ImproperlyConfigured(
                     "%(cls)s is missing a Product QuerySet. Define "

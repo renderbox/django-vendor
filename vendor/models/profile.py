@@ -38,9 +38,15 @@ class CustomerProfile(CreateUpdateModelBase):
     def __str__(self):
         return "{} Customer Profile".format(self.user.username)
 
+    def revert_invoice_to_cart(self):
+        cart = self.invoices.get(status=Invoice.InvoiceStatus.CHECKOUT)
+        cart.status = Invoice.InvoiceStatus.CART
+        cart.save()
+
     def get_cart(self):
-        cart, created = self.invoices.get_or_create(
-            status=Invoice.InvoiceStatus.CART)
+        if self.has_invoice_in_checkout():
+            self.revert_invoice_to_cart()
+        cart, created = self.invoices.get_or_create(status=Invoice.InvoiceStatus.CART)
         return cart
 
     def get_checkout_cart(self):
@@ -54,8 +60,10 @@ class CustomerProfile(CreateUpdateModelBase):
         else:
             cart, created = self.invoices.get_or_create(status=Invoice.InvoiceStatus.CART)
             return cart
+    
+    def has_invoice_in_checkout(self):
+        return bool(self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT).count())
         
-
     def filter_products(self, products):
         """
         returns the list of reciepts that the user has a reciept for filtered by the products provided.

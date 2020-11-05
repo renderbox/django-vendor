@@ -9,29 +9,29 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 4
+      max-parallel: 1
       matrix:
-        python-version: [3.7]
+        python-version: [3.7] #, 3.8]
 
     # Service containers to run with `container-job`
-    services:
-      # Label used to access the service container
-      postgres:
-        # Docker Hub image
-        image: postgres:11
-        # Provide the password for postgres
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: vendor
-        # Set health checks to wait until postgres has started
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    # services:
+    #   # Label used to access the service container
+    #   postgres:
+    #     # Docker Hub image
+    #     image: postgres:11
+    #     # Provide the password for postgres
+    #     env:
+    #       POSTGRES_USER: postgres
+    #       POSTGRES_PASSWORD: postgres
+    #       POSTGRES_DB: vendor
+    #     # Set health checks to wait until postgres has started
+    #     ports:
+    #       - 5432:5432
+    #     options: >-
+    #       --health-cmd pg_isready
+    #       --health-interval 10s
+    #       --health-timeout 5s
+    #       --health-retries 5
 
     steps:
     - uses: actions/checkout@v2
@@ -50,21 +50,21 @@ jobs:
         python manage.py test
       env: 
         DJANGO_DEBUG: 1
-        DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
+        # DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor  # Using default SQLite
     - name: Run Base Processor Tests
       run: |
         cd develop
         python manage.py test vendor.tests.test_processor.BaseProcessorTests
       env: 
         DJANGO_DEBUG: 1
-        DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
+        # DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor  # Using default SQLite
     - name: Run Authorize.Net Tests
       run: |
         cd develop
         python manage.py test vendor.tests.test_processor.AuthorizeNetProcessorTests
       env: 
         DJANGO_DEBUG: 1
-        DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
+        # DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor  # Using default SQLite
         AUTHORIZE_NET_API_ID: ${{ secrets.AUTHORIZE_NET_API_ID }}
         AUTHORIZE_NET_TRANSACTION_KEY: ${{ secrets.AUTHORIZE_NET_TRANSACTION_KEY }}
         AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT: "authCaptureTransaction"

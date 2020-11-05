@@ -34,7 +34,7 @@
               {% trans 'Shipping Address' %}
             </h3>
             {% include "./includes/account_info_form.html" with account_information_form=form %}
-            <button class="btn btn-primary p-0" type="submit">{% trans 'Continue' %}</button>
+            <button class="btn btn-primary" type="submit">{% trans 'Continue' %}</button>
           </form>
         </div>
       </div>
@@ -104,8 +104,8 @@
             <div class='d-flex flex-row align-items-center'>
               <div>{% trans 'Shipping Address' %}</div>
               <div class="ml-auto">
-                <a class="text-primary" href="{% url 'vendor:checkout-account' %}">
-                  <i class="fas fa-pen" style="display: inline-block; width: 21px; height: 21px;"></i>
+                <a href="{% url 'vendor:checkout-account' %}">
+                  <iconify-icon data-icon="ic-baseline-edit" class="text-primary" style="height: 21px;"></iconify-icon>
                 </a>
               </i>
             </div>
