@@ -62,9 +62,7 @@ class CustomerProfile(CreateUpdateModelBase):
             return cart
     
     def has_invoice_in_checkout(self):
-        if self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT).count():
-            return True
-        return False
+        return bool(self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT).count())
         
     def filter_products(self, products):
         """
