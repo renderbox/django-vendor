@@ -62,6 +62,8 @@ class ModelInvoiceTests(TestCase):
         self.assertEquals(remove_shirt_total, 345.19)
 
     def test_add_quantity(self):
+        self.shirt_offer.allow_multiple = True
+        self.shirt_offer.save()
         start_quantity = self.existing_invoice.order_items.filter(offer=self.shirt_offer).first().quantity
         self.existing_invoice.add_offer(self.shirt_offer)
         end_quantity = self.existing_invoice.order_items.filter(offer=self.shirt_offer).first().quantity
