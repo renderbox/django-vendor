@@ -154,8 +154,6 @@ class OrderItem(CreateUpdateModelBase):
 def convert_session_cart_to_invoice(sender, request, **kwargs):
     if 'session_cart' in request.session:
         profile, created = request.user.customer_profile.get_or_create(site=set_default_site_id())
-        if profile.has_invoice_in_checkout():
-            profile.revert_invoice_to_cart()
         cart = profile.get_cart()
         for offer_key in request.session['session_cart'].keys():
             cart.add_offer(Offer.objects.get(pk=offer_key))
