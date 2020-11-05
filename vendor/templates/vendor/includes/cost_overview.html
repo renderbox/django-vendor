@@ -22,7 +22,7 @@
     {% comment %}
     <!-- TODO: Set default to site default -->
     {% endcomment %}
-    {% with invoice.get_currency_display|default:"USD" as currency %}
+    {% with invoice.get_currency_display|default:site_default_currency as currency %}
     <span class="font-weight-bolder">{% blocktrans %}Total ({{ currency }}) {% endblocktrans %}</span>
     {% endwith  %}
     <span class="text-primary">${{ invoice.total|default_if_none:"0.00"|floatformat:2 }}</span>

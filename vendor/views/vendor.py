@@ -12,12 +12,13 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
 
+from iso4217 import Currency
+
 from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile, OrderItem
 from vendor.models.choice import TermType
 from vendor.models.utils import set_default_site_id
 from vendor.processors import PaymentProcessor
 from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm
-
 # from vendor.models.address import Address as GoogleAddress
 
 # The Payment Processor configured in settings.py
@@ -46,6 +47,8 @@ def get_or_create_session_cart(session):
 
     return session_cart
 
+def get_site_default_currency_value():
+    return Currency[settings.DEFAULT_CURRENCY].value
 
 class CartView(TemplateView):
     '''
@@ -55,6 +58,7 @@ class CartView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['site_default_currency'] = get_site_default_currency_value()
         if request.user.is_anonymous:
             session_cart = get_or_create_session_cart(request.session)
 
@@ -144,6 +148,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
+        clear_session_purchase_data(request)
         
         invoice = get_purchase_invoice(request.user)
 
@@ -153,14 +158,11 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
             # TODO: In future the user will be able to select from multiple saved address
             form = AccountInformationForm(initial={'email': request.user.email}, instance=existing_account_address[0])
         else:
-            form = AccountInformationForm(initial={
-                                          'first_name': request.user.first_name, 'last_name': request.user.last_name, 'email': request.user.email})
+            form = AccountInformationForm(initial={'first_name': request.user.first_name, 'last_name': request.user.last_name, 'email': request.user.email})
+        
         context['form'] = form
-
         context['invoice'] = invoice
-
-        clear_session_purchase_data(request)
-
+        context['site_default_currency'] = get_site_default_currency_value()
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -203,6 +205,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
 
         context = processor.get_checkout_context(context=context)
 
+        context['site_default_currency'] = get_site_default_currency_value()
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -245,7 +248,8 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
             context['credit_card_form'] = CreditCardForm(request.session['credit_card_form'])
         
         context = processor.get_checkout_context(context=context)
-
+        
+        context['site_default_currency'] = get_site_default_currency_value()
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -273,6 +277,11 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 class PaymentSummaryView(LoginRequiredMixin, DetailView):
     model = Invoice
     template_name = 'vendor/payment_summary.html'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data()
+        context['site_default_currency'] = get_site_default_currency_value()
+        return context
 
 
 class OrderHistoryListView(LoginRequiredMixin, ListView):
