@@ -66,7 +66,7 @@ class Offer(CreateUpdateModelBase):
                                     Q(end_date__gte=now) | Q(end_date=None)
                                     ).order_by('-priority').first()            # first()/last() returns the model object or None
 
-        if price:
+        if price.cost != None:
             result = price.cost
         else:
             result = self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
