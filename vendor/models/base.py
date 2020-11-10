@@ -27,7 +27,7 @@ def product_meta_default():
 def validate_msrp(value):
     if value['msrp']['default'] not in AVAILABLE_CURRENCIES:
         raise ValidationError(_(f'Currency not available {key}'))
-    
+
     for key in [ key for key in value['msrp'].keys() if key != 'default']:
         if key not in AVAILABLE_CURRENCIES:
             raise ValidationError(_(f'Currency not available {key}'))
@@ -88,8 +88,8 @@ class ProductModelBase(CreateUpdateModelBase):
 
     def get_best_currency(self, currency=DEFAULT_CURRENCY):
         """
-        If no currency is not added as an argument it will default to the products msrp default value.
-        If currency is added as an argument if will see if currency is available in the product if not will default to msrp default currency. 
+        If no currency is provided as an argument it will default to the products's msrp default currency.
+        If currency is provided but is not available in the product it will default to the products's msrp default currency.
         """
         if currency in self.meta['msrp']:
             return currency
