@@ -160,7 +160,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         clear_session_purchase_data(request)
         
         invoice = get_purchase_invoice(request.user)
-        if not invoice.items.count():
+        if not invoice.order_items.count():
             return redirect('vendor:cart')
 
         existing_account_address = Address.objects.filter(profile__user=request.user)
@@ -209,7 +209,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         invoice = get_purchase_invoice(request.user)
-        if not invoice.items.count():
+        if not invoice.order_items.count():
             return redirect('vendor:cart')
 
         context = super().get_context_data()
@@ -251,7 +251,7 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         invoice = get_purchase_invoice(request.user)
-        if not invoice.items.count():
+        if not invoice.order_items.count():
             return redirect('vendor:cart')
 
         context = super().get_context_data()
