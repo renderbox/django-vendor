@@ -61,6 +61,7 @@ class Offer(CreateUpdateModelBase):
         """
         if currency is None:
             currency = self.products.all().first().meta['msrp']['default']
+
         currency = self.get_best_currency(currency)
         return sum([p.get_msrp(currency) for p in self.products.all()])
 
@@ -68,7 +69,6 @@ class Offer(CreateUpdateModelBase):
         '''
         Finds the highest priority active price and returns that, otherwise returns msrp total.
         '''
-        currency = self.get_best_currency(currency)
         now = timezone.now()
         price = self.prices.filter( Q(start_date__lte=now) | Q(start_date=None),
                                     Q(end_date__gte=now) | Q(end_date=None)
@@ -105,7 +105,6 @@ class Offer(CreateUpdateModelBase):
         """
         Gets the savings between the difference between the product's msrp and the currenct price
         """
-        currency = self.get_best_currency(currency)
         savings = self.get_msrp_sum(currency) - self.current_price(currency)
         if savings < 0:
             return Decimal(0).quantize(Decimal('.00'), rounding=ROUND_UP)
@@ -115,7 +114,11 @@ class Offer(CreateUpdateModelBase):
         """
         Gets best currency for prodcuts available in this offer
         """
-        supported_currencies = [ currency for currency in p.meta['msrp'].keys() for p in self.products.all() if currency != 'default'])
+        supported_currencies = []
+        for product in self.products.all():
+            for supported_currency in product.meta['msrp'].keys():
+                if supported_currency != 'default':
+                    supported_currencies.append(supported_currency)
 
         if currency is None:
             return self.products.all().first().meta['msrp']['default']
