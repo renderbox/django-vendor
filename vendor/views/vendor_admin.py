@@ -33,7 +33,7 @@ class AdminInvoiceListView(LoginRequiredMixin, ListView):
     model = Invoice
 
     def get_queryset(self):
-        return self.model.on_site.filter(status__gt=Invoice.InvoiceStatus.CART)  # ignore cart state invoices
+        return self.model.on_site.filter(status__gt=Invoice.InvoiceStatus.CART).order_by('payment__created')  # ignore cart state invoices
 
 
 class AdminInvoiceDetailView(LoginRequiredMixin, DetailView):

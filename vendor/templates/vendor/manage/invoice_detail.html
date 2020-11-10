@@ -26,6 +26,8 @@
       <td>{{item.quantity}}</td>
       <td>${{item.total|floatformat:2}}</td>
     </tr>
+    {% empty %}
+    <h3> Cart is Empty </h3>
     {% endfor %}
     <tr>
       <td colspan=3></td>

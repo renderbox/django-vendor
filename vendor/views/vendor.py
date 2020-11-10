@@ -162,6 +162,9 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         invoice = get_purchase_invoice(request.user)
         if not invoice.order_items.count():
             return redirect('vendor:cart')
+        
+        invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        invoice.save()
 
         existing_account_address = Address.objects.filter(profile__user=request.user)
 
@@ -185,7 +188,6 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         account_form = form.save(commit=False)
 
         invoice = get_purchase_invoice(request.user)
-        invoice.status = Invoice.InvoiceStatus.CHECKOUT
         invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
         existing_account_address = Address.objects.filter(
             profile__user=request.user, name=account_form.name, first_name=account_form.first_name, last_name=account_form.last_name)

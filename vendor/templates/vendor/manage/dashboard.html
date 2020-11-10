@@ -106,7 +106,10 @@
           <thead>
             <tr>
               <th scope="col">{% trans '#' %}</th>
+              <th scope="col">{% trans 'Name' %}</th>
+              <th scope="col">{% trans 'State' %}</th>
               <th scope="col">{% trans 'Date' %}</th>
+              <th scope="col">{% trans 'Currency' %}</th>
               <th scope="col">{% trans 'Total' %}</th>
             </tr>
           </thead>
@@ -114,9 +117,12 @@
           <tbody>
             {% for item in object_list %}
             <tr>
-              <td><a class="text-primary" href="{% url 'vendor_admin:manager-order-detail' item.uuid %}">{% trans 'Order' %}</a></td>
+              <td><a class="text-primary" href="{% url 'vendor_admin:manager-order-detail' item.uuid %}">{{ item.pk }}</a></td>
+              <td>{{ item }}</td>
+              <td>{{ item.get_status_display }}</td>
               <td>{{ item.created }}</td>
-              <td>{{ item.total }}</td>
+              <td>{{ item.get_currency_display }}</td>
+              <td>{{ item.total|default:"0.00" }}</td>
             </tr>
             {% empty %}
             <tr>
