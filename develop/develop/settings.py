@@ -174,6 +174,7 @@ STATICFILES_DIRS = [
 VENDOR_PRODUCT_MODEL = 'core.Product'
 VENDOR_PAYMENT_PROCESSOR = os.getenv("VENDOR_PAYMENT_PROCESSOR", "base.PaymentProcessorBase")
 DEFAULT_CURRENCY = Currency.usd.name
+AVAILABLE_CURRENCIES = ['usd', 'jpy', 'mxn']
 
 # Authorize.Net Settings:
 AUTHORIZE_NET_API_ID = os.getenv("AUTHORIZE_NET_API_ID")
