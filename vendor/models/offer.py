@@ -66,12 +66,12 @@ class Offer(CreateUpdateModelBase):
                                     Q(end_date__gte=now) | Q(end_date=None)
                                     ).order_by('-priority').first()            # first()/last() returns the model object or None
 
-        if price.cost != None:
-            result = price.cost
-        else:
-            result = self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
+        if price is None:
+            return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
+        elif price.cost is None:
+            return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
 
-        return result
+        return price.cost
 
     def add_to_cart_link(self):
         return reverse("vendor:add-to-cart", kwargs={"slug":self.slug})
@@ -98,3 +98,18 @@ class Offer(CreateUpdateModelBase):
         if savings < 0:
             return Decimal(0).quantize(Decimal('.00'), rounding=ROUND_UP)
         return Decimal(savings).quantize(Decimal('.00'), rounding=ROUND_UP)
+
+    
+    def get_best_currency(self, currency=None):
+        """
+        If no currency is not added as an argument it will default to the products msrp default value.
+        If currency is added as an argument if will see if currency is available in the product if not will default to msrp default currency. 
+        """
+        currencies_supported = []
+        if currency is None:
+            return f"{Currency[self.products.all().first().meta['msrp']['default']].value}/{offer.get_terms_display()}"
+
+        if currency in currencies_supported.extend([ k for k in p.meta['msrp'].keys() for p in self.products.all() ]):
+            return f"{Currency[currency].value}/{offer.get_terms_display()}"
+        else:
+            return f"{Currency[self.products.all().first().meta['msrp']['default']].value}/{offer.get_terms_display()}"
