@@ -11,9 +11,8 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import ugettext as _
-from iso4217 import Currency
 
-from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
+from vendor.config import VENDOR_PRODUCT_MODEL
 
 from .base import CreateUpdateModelBase
 from .choice import TermType
@@ -21,6 +20,7 @@ from .utils import set_default_site_id
 #########
 # OFFER
 #########
+
 
 class Offer(CreateUpdateModelBase):
     '''
@@ -54,22 +54,30 @@ class Offer(CreateUpdateModelBase):
     def __str__(self):
         return self.name
 
-    def get_msrp(self, currency=DEFAULT_CURRENCY):
+    def get_msrp_sum(self, currency=None):
+        """
+        Gets the sum of the products msrp cost for products.
+        It assumes that all product in a offer use the same currency
+        """
+        if currency is None:
+            currency = self.products.all().first().meta['msrp']['default']
+        currency = self.get_best_currency(currency)
         return sum([p.get_msrp(currency) for p in self.products.all()])
 
-    def current_price(self, currency=DEFAULT_CURRENCY):
+    def current_price(self, currency=None):
         '''
         Finds the highest priority active price and returns that, otherwise returns msrp total.
         '''
+        currency = self.get_best_currency(currency)
         now = timezone.now()
         price = self.prices.filter( Q(start_date__lte=now) | Q(start_date=None),
                                     Q(end_date__gte=now) | Q(end_date=None)
                                     ).order_by('-priority').first()            # first()/last() returns the model object or None
 
         if price is None:
-            return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
+            return self.get_msrp_sum(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
         elif price.cost is None:
-            return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
+            return self.get_msrp_sum(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
 
         return price.cost
 
@@ -93,23 +101,28 @@ class Offer(CreateUpdateModelBase):
         else:
             return self.products.all().first().description
     
-    def savings(self, currency=DEFAULT_CURRENCY):
-        savings = self.get_msrp(currency) - self.current_price()
+    def savings(self, currency=None):
+        """
+        Gets the savings between the difference between the product's msrp and the currenct price
+        """
+        currency = self.get_best_currency(currency)
+        savings = self.get_msrp_sum(currency) - self.current_price(currency)
         if savings < 0:
             return Decimal(0).quantize(Decimal('.00'), rounding=ROUND_UP)
         return Decimal(savings).quantize(Decimal('.00'), rounding=ROUND_UP)
 
-    
     def get_best_currency(self, currency=None):
         """
-        If no currency is not added as an argument it will default to the products msrp default value.
-        If currency is added as an argument if will see if currency is available in the product if not will default to msrp default currency. 
+        Gets best currency for prodcuts available in this offer
         """
-        currencies_supported = []
-        if currency is None:
-            return f"{Currency[self.products.all().first().meta['msrp']['default']].value}/{offer.get_terms_display()}"
+        supported_currencies = [ currency for currency in p.meta['msrp'].keys() for p in self.products.all() if currency != 'default'])
 
-        if currency in currencies_supported.extend([ k for k in p.meta['msrp'].keys() for p in self.products.all() ]):
-            return f"{Currency[currency].value}/{offer.get_terms_display()}"
-        else:
-            return f"{Currency[self.products.all().first().meta['msrp']['default']].value}/{offer.get_terms_display()}"
+        if currency is None:
+            return self.products.all().first().meta['msrp']['default']
+        
+        if currency in supported_currencies:
+            return currency
+        
+        # TODO: Should this instead throw a warning or an error?
+        return self.products.all().first().meta['msrp']['default']
+
