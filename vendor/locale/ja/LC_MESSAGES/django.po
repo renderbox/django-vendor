@@ -1,0 +1,870 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#: forms.py:273
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-11-10 22:01+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: forms.py:48
+msgid "Available Products:"
+msgstr ""
+
+#: forms.py:68
+msgid "Invalid term details for subscription"
+msgstr ""
+
+#: forms.py:92
+msgid "email"
+msgstr ""
+
+#: forms.py:99
+msgid "Billing Address is the same as Shipping Address"
+msgstr ""
+
+#: forms.py:100 models/payment.py:26
+msgid "Company"
+msgstr ""
+
+#: forms.py:180
+msgid "The credit card number is invalid"
+msgstr ""
+
+#: forms.py:225
+msgid "Payment Type"
+msgstr ""
+
+#: forms.py:229
+msgid "Card Holder Name"
+msgstr ""
+
+#: forms.py:233
+msgid "CVV Number"
+msgstr ""
+
+#: forms.py:251
+msgid "You must select a valid expiration month"
+msgstr ""
+
+#: forms.py:259
+msgid "You must select a valid expiration year"
+msgstr ""
+
+#: forms.py:272
+msgid "The expiration date you entered is in the past."
+msgstr ""
+
+#: models/address.py:21
+msgid "United States"
+msgstr ""
+
+#: models/address.py:48
+msgid "Address Name"
+msgstr ""
+
+#: models/address.py:49 models/invoice.py:36 models/profile.py:35
+msgid "Customer Profile"
+msgstr ""
+
+#: models/address.py:50
+msgid "First Name"
+msgstr ""
+
+#: models/address.py:51
+msgid "Last Name"
+msgstr ""
+
+#: models/address.py:52
+msgid "Address 1"
+msgstr ""
+
+#: models/address.py:53
+msgid "Address 2"
+msgstr ""
+
+#: models/address.py:54
+msgid "City"
+msgstr ""
+
+#: models/address.py:55
+msgid "State"
+msgstr ""
+
+#: models/address.py:56
+msgid "Country"
+msgstr ""
+
+#: models/address.py:57
+msgid "Postal Code"
+msgstr ""
+
+#: models/base.py:44 templates/vendor/manage/products.html:19
+msgid "SKU"
+msgstr ""
+
+#: models/base.py:44
+msgid "User Defineable SKU field"
+msgstr ""
+
+#: models/base.py:46 models/offer.py:35 models/tax.py:17 models/wishlist.py:13
+#: templates/vendor/manage/offers.html:19
+#: templates/vendor/manage/products.html:20
+msgid "Name"
+msgstr ""
+
+#: models/base.py:49 models/offer.py:41 templates/vendor/manage/offers.html:23
+msgid "Available"
+msgstr ""
+
+#: models/base.py:49 models/offer.py:41
+msgid "Is this currently available?"
+msgstr ""
+
+#: models/base.py:50 templates/vendor/manage/products.html:22
+msgid "Description"
+msgstr ""
+
+#: models/base.py:51
+msgid "Meta"
+msgstr ""
+
+#: models/base.py:51
+msgid ""
+"Eg: { 'msrp':{'usd':10.99} }\n"
+"(iso4217 Country Code):(MSRP Price)"
+msgstr ""
+
+#: models/choice.py:13
+msgid "Perpetual"
+msgstr ""
+
+#: models/choice.py:14
+msgid "Subscription"
+msgstr ""
+
+#: models/choice.py:15
+msgid "Monthly Subscription"
+msgstr ""
+
+#: models/choice.py:16
+msgid "Quaterly Subscription"
+msgstr ""
+
+#: models/choice.py:17
+msgid "Semi-Annual Subscription"
+msgstr ""
+
+#: models/choice.py:18
+msgid "Annual Subscription"
+msgstr ""
+
+#: models/choice.py:19
+msgid "One-Time Use"
+msgstr ""
+
+#: models/choice.py:22 models/invoice.py:29
+msgid "Queued"
+msgstr ""
+
+#: models/choice.py:23
+msgid "Active"
+msgstr ""
+
+#: models/choice.py:24
+msgid "Authorized"
+msgstr ""
+
+#: models/choice.py:25
+msgid "Captured"
+msgstr ""
+
+#: models/choice.py:26
+msgid "Completed"
+msgstr ""
+
+#: models/choice.py:27
+msgid "Canceled"
+msgstr ""
+
+#: models/choice.py:28 models/invoice.py:33
+msgid "Refunded"
+msgstr ""
+
+#: models/choice.py:32
+msgid "Credit Card"
+msgstr ""
+
+#: models/choice.py:33
+msgid "Bank Account"
+msgstr ""
+
+#: models/choice.py:34
+msgid "Pay Pal"
+msgstr ""
+
+#: models/choice.py:35
+msgid "Mobile"
+msgstr ""
+
+#: models/choice.py:39
+msgid "Authorize"
+msgstr ""
+
+#: models/choice.py:40
+msgid "Capture"
+msgstr ""
+
+#: models/choice.py:41
+msgid "Settle"
+msgstr ""
+
+#: models/choice.py:42
+msgid "Void"
+msgstr ""
+
+#: models/choice.py:43 templates/vendor/purchase_detail.html:41
+#: templates/vendor/refund_list.html:17
+msgid "Refund"
+msgstr ""
+
+#: models/invoice.py:27 templates/vendor/orderitem_list.html:4
+msgid "Cart"
+msgstr ""
+
+#: models/invoice.py:28 templates/vendor/orderitem_list.html:45
+msgid "Checkout"
+msgstr ""
+
+#: models/invoice.py:30
+msgid "Processing"
+msgstr ""
+
+#: models/invoice.py:31
+msgid "Failed"
+msgstr ""
+
+#: models/invoice.py:32
+msgid "Complete"
+msgstr ""
+
+#: models/invoice.py:35
+msgid "UUID"
+msgstr ""
+
+#: models/invoice.py:38 models/receipt.py:26
+#: templates/vendor/purchase_detail.html:35
+msgid "Status"
+msgstr ""
+
+#: models/invoice.py:39
+msgid "Customer Notes"
+msgstr ""
+
+#: models/invoice.py:40 models/receipt.py:24
+msgid "Vendor Notes"
+msgstr ""
+
+#: models/invoice.py:41
+msgid "Ordered Date"
+msgstr ""
+
+#: models/invoice.py:46 models/price.py:15 models/profile.py:26
+msgid "Currency"
+msgstr ""
+
+#: models/invoice.py:47 templates/vendor/checkout.html:34
+#: templates/vendor/checkout.html:105
+msgid "Shipping Address"
+msgstr ""
+
+#: models/invoice.py:56 models/invoice.py:125 models/payment.py:16
+#: templates/vendor/payment_detail.html:6
+msgid "Invoice"
+msgstr ""
+
+#: models/invoice.py:57
+msgid "Invoices"
+msgstr ""
+
+#: models/invoice.py:126 models/offer.py:51 models/wishlist.py:31
+#: templates/vendor/manage/offer.html:9 templates/vendor/manage/offer.html:15
+msgid "Offer"
+msgstr ""
+
+#: models/invoice.py:127 templates/vendor/checkout.html:163
+#: templates/vendor/invoice_history_detail.html:15
+#: templates/vendor/manage/invoice_detail.html:15
+#: templates/vendor/orderitem_list.html:19
+#: templates/vendor/ordersummary.html:14
+#: templates/vendor/payment_summary.html:23
+#: templates/vendor/purchase_detail.html:19
+msgid "Quantity"
+msgstr ""
+
+#: models/invoice.py:130 models/receipt.py:20
+msgid "Order Item"
+msgstr ""
+
+#: models/invoice.py:131
+msgid "Order Items"
+msgstr ""
+
+#: models/offer.py:36 models/price.py:16 models/receipt.py:21
+#: templates/vendor/manage/offers.html:20
+#: templates/vendor/purchase_detail.html:27
+msgid "Start Date"
+msgstr ""
+
+#: models/offer.py:37 models/price.py:17 models/receipt.py:22
+#: templates/vendor/manage/offers.html:21
+#: templates/vendor/purchase_detail.html:31
+msgid "End Date"
+msgstr ""
+
+#: models/offer.py:38
+msgid "Terms"
+msgstr ""
+
+#: models/offer.py:39
+msgid "Term Details"
+msgstr ""
+
+#: models/offer.py:40
+msgid "Term Start Date"
+msgstr ""
+
+#: models/offer.py:40
+msgid "When is this product available to use?"
+msgstr ""
+
+#: models/offer.py:42
+msgid "Is a Bundle?"
+msgstr ""
+
+#: models/offer.py:42
+msgid "Is this a product bundle? (auto-generated)"
+msgstr ""
+
+#: models/offer.py:43
+msgid "Offer Description"
+msgstr ""
+
+#: models/offer.py:44
+msgid "List Bundled Items"
+msgstr ""
+
+#: models/offer.py:44
+msgid "When showing to customers, display the included items in a list?"
+msgstr ""
+
+#: models/offer.py:45
+msgid "Allow Multiple Purchase"
+msgstr ""
+
+#: models/offer.py:45
+msgid ""
+"Confirm the user wants to buy multiples of the product where typically there "
+"is just one purchased at a time."
+msgstr ""
+
+#: models/offer.py:52 templates/vendor/manage/offers.html:9
+msgid "Offers"
+msgstr ""
+
+#: models/payment.py:18
+msgid "Transaction ID"
+msgstr ""
+
+#: models/payment.py:19
+msgid "Payment Provider"
+msgstr ""
+
+#: models/payment.py:20
+msgid "Amount"
+msgstr ""
+
+#: models/payment.py:21 models/receipt.py:19 models/wishlist.py:12
+msgid "Purchase Profile"
+msgstr ""
+
+#: models/payment.py:22
+msgid "payments"
+msgstr ""
+
+#: models/payment.py:23
+msgid "Result"
+msgstr ""
+
+#: models/payment.py:24
+msgid "Successful"
+msgstr ""
+
+#: models/payment.py:25
+msgid "Name on Card"
+msgstr ""
+
+#: models/price.py:18
+msgid "Priority"
+msgstr ""
+
+#: models/price.py:27 templates/vendor/invoice_history_detail.html:14
+#: templates/vendor/manage/invoice_detail.html:14
+#: templates/vendor/purchase_detail.html:23
+#: templates/vendor/refund_list.html:16
+msgid "Price"
+msgstr ""
+
+#: models/price.py:28
+msgid "Prices"
+msgstr ""
+
+#: models/profile.py:25 templates/vendor/refund_list.html:13
+msgid "User"
+msgstr ""
+
+#: models/profile.py:36
+msgid "Customer Profiles"
+msgstr ""
+
+#: models/receipt.py:23
+msgid "Auto Renew"
+msgstr ""
+
+#: models/receipt.py:25
+msgid "Transaction"
+msgstr ""
+
+#: models/receipt.py:33
+msgid "Receipt"
+msgstr ""
+
+#: models/receipt.py:34
+msgid "Receipts"
+msgstr ""
+
+#: models/tax.py:25
+msgid "Product Classifier"
+msgstr ""
+
+#: models/tax.py:26
+msgid "Product Classifiers"
+msgstr ""
+
+#: models/validator.py:18 models/validator.py:21 models/validator.py:24
+msgid "Invalid MSRP Value"
+msgstr ""
+
+#: models/wishlist.py:16 models/wishlist.py:30
+msgid "Wishlist"
+msgstr ""
+
+#: models/wishlist.py:17
+msgid "Wishlists"
+msgstr ""
+
+#: models/wishlist.py:34
+msgid "Wishlist Item"
+msgstr ""
+
+#: models/wishlist.py:35
+msgid "Wishlist Items"
+msgstr ""
+
+#: templates/vendor/checkout.html:7
+msgid "SECURE CHECKOUT"
+msgstr ""
+
+#: templates/vendor/checkout.html:37 templates/vendor/checkout.html:82
+msgid "Continue"
+msgstr ""
+
+#: templates/vendor/checkout.html:67 templates/vendor/checkout.html:122
+#: templates/vendor/payment_summary.html:37
+msgid "Billing Address"
+msgstr ""
+
+#: templates/vendor/checkout.html:78 templates/vendor/checkout.html:137
+#: templates/vendor/payment_summary.html:41
+msgid "Payment Method"
+msgstr ""
+
+#: templates/vendor/checkout.html:95
+msgid "Review"
+msgstr ""
+
+#: templates/vendor/checkout.html:140
+msgid "Card ending in"
+msgstr ""
+
+#: templates/vendor/checkout.html:144
+msgid "Place Order"
+msgstr ""
+
+#: templates/vendor/checkout.html:154
+msgid "In Your Cart"
+msgstr ""
+
+#: templates/vendor/checkout.html:162
+msgid "Unit Price"
+msgstr ""
+
+#: templates/vendor/includes/cost_overview.html:4
+#: templates/vendor/invoice_history_detail.html:32
+#: templates/vendor/manage/invoice_detail.html:32
+msgid "Subtotal"
+msgstr ""
+
+#: templates/vendor/includes/cost_overview.html:9
+msgid "Estimated Shipping"
+msgstr ""
+
+#: templates/vendor/includes/cost_overview.html:14
+msgid "Estimated Tax"
+msgstr ""
+
+#: templates/vendor/includes/cost_overview.html:22
+#, python-format
+msgid "Total (%(currency)s) "
+msgstr ""
+
+#: templates/vendor/invoice_detail.html:7
+msgid "Shopping Cart"
+msgstr ""
+
+#: templates/vendor/invoice_detail.html:25
+msgid "Remove"
+msgstr ""
+
+#: templates/vendor/invoice_detail.html:30
+msgid "Empty Cart"
+msgstr ""
+
+#: templates/vendor/invoice_detail.html:36
+#: templates/vendor/payment_summary.html:30
+msgid "Summary"
+msgstr ""
+
+#: templates/vendor/invoice_detail.html:53
+#: templates/vendor/invoice_detail.html:55
+msgid "Proceed to Checkout"
+msgstr ""
+
+#: templates/vendor/invoice_detail.html:59
+msgid "Log in"
+msgstr ""
+
+#: templates/vendor/invoice_detail.html:59
+msgid "or"
+msgstr ""
+
+#: templates/vendor/invoice_detail.html:59
+msgid "Sign up"
+msgstr ""
+
+#: templates/vendor/invoice_detail.html:59
+msgid "to checkout"
+msgstr ""
+
+#: templates/vendor/invoice_detail.html:70
+msgid "Redeem"
+msgstr ""
+
+#: templates/vendor/invoice_history_detail.html:6
+msgid "Order Details"
+msgstr ""
+
+#: templates/vendor/invoice_history_detail.html:12
+#: templates/vendor/invoice_list.html:19
+#: templates/vendor/manage/dashboard.html:108
+#: templates/vendor/manage/invoice_detail.html:12
+msgid "#"
+msgstr ""
+
+#: templates/vendor/invoice_history_detail.html:13
+#: templates/vendor/manage/invoice_detail.html:13
+msgid "Item"
+msgstr ""
+
+#: templates/vendor/invoice_history_detail.html:16
+#: templates/vendor/invoice_list.html:21
+#: templates/vendor/manage/dashboard.html:110
+#: templates/vendor/manage/invoice_detail.html:16
+msgid "Total"
+msgstr ""
+
+#: templates/vendor/invoice_history_detail.html:39
+#: templates/vendor/manage/invoice_detail.html:39
+msgid "Back to List"
+msgstr ""
+
+#: templates/vendor/invoice_list.html:9
+msgid "My Orders"
+msgstr ""
+
+#: templates/vendor/invoice_list.html:20
+#: templates/vendor/manage/dashboard.html:109
+msgid "Date"
+msgstr ""
+
+#: templates/vendor/invoice_list.html:28
+#: templates/vendor/manage/dashboard.html:117
+msgid "Order"
+msgstr ""
+
+#: templates/vendor/manage/dashboard.html:9
+msgid "Admin Purchase Dashboard"
+msgstr ""
+
+#: templates/vendor/manage/dashboard.html:17
+msgid "Weekly Sales"
+msgstr ""
+
+#: templates/vendor/manage/dashboard.html:34
+msgid "Monthly Comparison"
+msgstr ""
+
+#: templates/vendor/manage/dashboard.html:51
+msgid "Top Items"
+msgstr ""
+
+#: templates/vendor/manage/dashboard.html:68
+msgid "Cart Conversion Rate"
+msgstr ""
+
+#: templates/vendor/manage/dashboard.html:85
+#: templates/vendor/manage/products.html:14
+msgid "Product List"
+msgstr ""
+
+#: templates/vendor/manage/dashboard.html:88
+#: templates/vendor/manage/offers.html:14
+msgid "Offer List"
+msgstr ""
+
+#: templates/vendor/manage/dashboard.html:93
+msgid "Reciept Report CSV"
+msgstr ""
+
+#: templates/vendor/manage/dashboard.html:96
+msgid "Invoice Report CSV"
+msgstr ""
+
+#: templates/vendor/manage/dashboard.html:103
+msgid "Most Recent Sales"
+msgstr ""
+
+#: templates/vendor/manage/dashboard.html:124
+msgid "No Orders"
+msgstr ""
+
+#: templates/vendor/manage/dashboard.html:134
+msgid "All Purchases"
+msgstr ""
+
+#: templates/vendor/manage/invoice_detail.html:6
+msgid "Admin: Order Details"
+msgstr ""
+
+#: templates/vendor/manage/invoice_list.html:8
+msgid "Site Order History"
+msgstr ""
+
+#: templates/vendor/manage/invoice_list.html:22
+#: templates/vendor/purchase_list.html:22
+msgid "No purchases"
+msgstr ""
+
+#: templates/vendor/manage/offer.html:27
+msgid "Save Offer"
+msgstr ""
+
+#: templates/vendor/manage/offers.html:22
+msgid "Term"
+msgstr ""
+
+#: templates/vendor/manage/offers.html:39
+msgid "No Offers"
+msgstr ""
+
+#: templates/vendor/manage/offers.html:48
+msgid "Add Offer"
+msgstr ""
+
+#: templates/vendor/manage/product.html:8
+#: templates/vendor/manage/product.html:15
+#: templates/vendor/orderitem_list.html:18
+#: templates/vendor/ordersummary.html:13
+#: templates/vendor/purchase_detail.html:15
+#: templates/vendor/refund_list.html:14
+msgid "Product"
+msgstr ""
+
+#: templates/vendor/manage/product.html:23
+msgid "Save Product"
+msgstr ""
+
+#: templates/vendor/manage/products.html:9
+msgid "Products"
+msgstr ""
+
+#: templates/vendor/manage/products.html:21
+msgid "Site"
+msgstr ""
+
+#: templates/vendor/manage/products.html:37
+msgid "No Products"
+msgstr ""
+
+#: templates/vendor/manage/products.html:46
+msgid "Add Product"
+msgstr ""
+
+#: templates/vendor/orderitem_confirm_delete.html:6
+#, python-format
+msgid "Are you sure you want to remove? %(product_name)s from the cart"
+msgstr ""
+
+#: templates/vendor/orderitem_form.html:12
+msgid "Add To Cart"
+msgstr ""
+
+#: templates/vendor/orderitem_list.html:13
+msgid "Your Cart"
+msgstr ""
+
+#: templates/vendor/orderitem_list.html:20
+#: templates/vendor/ordersummary.html:15
+msgid "Per Item Cost"
+msgstr ""
+
+#: templates/vendor/orderitem_list.html:21
+#: templates/vendor/ordersummary.html:16
+msgid "Cost"
+msgstr ""
+
+#: templates/vendor/orderitem_list.html:22
+msgid "Delete"
+msgstr ""
+
+#: templates/vendor/orderitem_list.html:37
+msgid "Remove Item"
+msgstr ""
+
+#: templates/vendor/orderitem_list.html:43
+#: templates/vendor/ordersummary.html:27
+#, python-format
+msgid "Total number of items: %(item_count)s "
+msgstr ""
+
+#: templates/vendor/orderitem_list.html:47
+msgid "No items in the cart"
+msgstr ""
+
+#: templates/vendor/orderitem_list.html:51
+msgid "No active Cart"
+msgstr ""
+
+#: templates/vendor/orderitem_list.html:53
+msgid "Add item"
+msgstr ""
+
+#: templates/vendor/ordersummary.html:8
+msgid "Order Summary"
+msgstr ""
+
+#: templates/vendor/ordersummary.html:28
+msgid "Order Total"
+msgstr ""
+
+#: templates/vendor/ordersummary.html:38
+msgid "Back To Cart"
+msgstr ""
+
+#: templates/vendor/payment_detail.html:5
+msgid "PURCHASE DETAILS"
+msgstr ""
+
+#: templates/vendor/payment_summary.html:7
+msgid "Purchase Confirmation"
+msgstr ""
+
+#: templates/vendor/payment_summary.html:10
+msgid ""
+"Thank you for the order. You can view this invoice in \"My Account\" under "
+"the Billing section."
+msgstr ""
+
+#: templates/vendor/payment_summary.html:13
+msgid "The order number is"
+msgstr ""
+
+#: templates/vendor/payment_summary.html:16
+msgid "Ordered on"
+msgstr ""
+
+#: templates/vendor/payment_summary.html:22
+msgid "Type"
+msgstr ""
+
+#: templates/vendor/payment_summary.html:45
+msgid "ending"
+msgstr ""
+
+#: templates/vendor/purchase_detail.html:8
+#: templates/vendor/purchase_list.html:8
+msgid "Purchases"
+msgstr ""
+
+#: templates/vendor/purchase_detail.html:53
+msgid "Buy Again"
+msgstr ""
+
+#: templates/vendor/refund_form.html:12
+msgid "Request Refund"
+msgstr ""
+
+#: templates/vendor/refund_list.html:8
+msgid "Refund requests"
+msgstr ""
+
+#: templates/vendor/refund_list.html:15
+msgid "Reason"
+msgstr ""
+
+#: views/mixin.py:77
+#, python-format
+msgid "No %(verbose_name)s found matching the query"
+msgstr ""
+
+#: views/mixin.py:80
+msgid "Product Purchase required."
+msgstr ""
+
+#: views/vendor.py:114 views/vendor.py:145
+msgid "You have a pending cart in checkout"
+msgstr ""
+
+#: views/vendor.py:119
+msgid "Added item to cart."
+msgstr ""
+
+#: views/vendor.py:150
+msgid "Removed item from cart."
+msgstr ""
+
+#: views/vendor.py:282
+msgid "The payment gateway did not authroize payment."
+msgstr ""
