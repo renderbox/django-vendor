@@ -11,7 +11,9 @@ from autoslug import AutoSlugField
 
 from .validator import validate_msrp_format
 
-from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
+from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY, AVAILABLE_CURRENCIES
+
+
 
 ##################
 # DEFAULTS
@@ -20,7 +22,17 @@ from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
 # TODO: Nice to have class MSRP(NestedModels)
 
 def product_meta_default():
-    return {'msrp':{'default':'usd', 'usd':10.00}}
+    return {'msrp':{'default':DEFAULT_CURRENCY, DEFAULT_CURRENCY: 0.00}}
+
+def validate_msrp(value):
+    if value['msrp']['default'] not in AVAILABLE_CURRENCIES:
+        raise ValidationError(_(f'Currency not available {key}'))
+    
+    for key in [ key for key in value['msrp'].keys() if key != 'default']:
+        if key not in AVAILABLE_CURRENCIES:
+            raise ValidationError(_(f'Currency not available {key}'))
+
+
 
 ##################
 # BASE MODELS
@@ -48,7 +60,7 @@ class ProductModelBase(CreateUpdateModelBase):
     slug = AutoSlugField(populate_from='name', unique_with='site__id')                                                                         # Gets set in the save
     available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))        # This can be forced to be unavailable if there is no prices attached.
     description = models.JSONField(_("Description"), default=dict, blank=True, null=True)
-    meta = models.JSONField(_("Meta"), default=product_meta_default, blank=True, null=True, help_text=_("Eg: { 'msrp':{'usd':10.99} }\n(iso4217 Country Code):(MSRP Price)"))
+    meta = models.JSONField(_("Meta"), validators=[validate_msrp], default=product_meta_default, blank=True, null=True, help_text=_("Eg: { 'msrp':{'usd':10.99} }\n(iso4217 Country Code):(MSRP Price)"))
     classification = models.ManyToManyField("vendor.TaxClassifier", blank=True)                                        # What taxes can apply to this item
     offers = models.ManyToManyField("vendor.Offer", blank=True, related_name="products")
     reciepts = models.ManyToManyField("vendor.Receipt", blank=True, related_name="products")
