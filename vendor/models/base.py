@@ -73,3 +73,18 @@ class ProductModelBase(CreateUpdateModelBase):
         Link to add the item to the user's cart.
         """
     # TODO: ADD trigger when object becomes unavailable to disable offer if it exisits. 
+
+    def get_best_currency(self, currency=None):
+        """
+        If no currency is not added as an argument it will default to the products msrp default value.
+        If currency is added as an argument if will see if currency is available in the product if not will default to msrp default currency. 
+        """
+        if currency is None:
+            return self.meta['msrp']['default']
+
+        if currency in [ currency for currency in p.meta['msrp'].keys() if currency != 'defualt' ]:
+            return currency
+        else:
+            # TODO: Should this instead throw a warning or an error?
+            return self.products.all().first().meta['msrp']['default']
+
