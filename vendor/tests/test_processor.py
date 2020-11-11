@@ -11,9 +11,9 @@ from unittest import skipIf
 from random import randrange, choice
 from string import ascii_letters
 from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile
+from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem
 from vendor.models.address import Country
-from vendor.models.choice import TermType
+from vendor.models.choice import TermType, PurchaseStatus
 from vendor.processors.base import PaymentProcessorBase
 from vendor.processors.authorizenet import AuthorizeNetProcessor
 from vendor.processors import PaymentProcessor
@@ -113,7 +113,7 @@ class BaseProcessorTests(TestCase):
         subscription_list = self.existing_invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
         subscription = subscription_list[0]
 
-        self.base_processor.update_subscription_receipt(subscription, subscription_id)
+        self.base_processor.update_subscription_receipt(subscription, subscription_id, PurchaseStatus.COMPLETE)
         receipt = Receipt.objects.get(meta__subscription_id=subscription_id)
         
         self.assertIsNotNone(receipt)
@@ -786,10 +786,12 @@ class AuthorizeNetProcessorTests(TestCase):
 
         subscription_list = self.processor.get_list_of_subscriptions()
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
-        
+        dummy_receipt = Receipt(order_item=OrderItem.objects.get(pk=2))
+
         if active_subscriptions:
-            self.processor.cancel_subscription_payment(active_subscriptions[0].id.pyval)
+            self.processor.cancel_subscription_payment(dummy_receipt, active_subscriptions[0].id.pyval)
             self.assertTrue(self.processor.transaction_submitted)
+            self.assertTrue(dummy_receipt.status, PurchaseStatus.CANCELED)
         else:
             print("No active Subscriptions, Skipping Test")
 
