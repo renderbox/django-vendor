@@ -59,9 +59,8 @@ class Offer(CreateUpdateModelBase):
         Gets the sum of the products msrp cost for products.
         It assumes that all product in a offer use the same currency
         """
-
         currency = self.get_best_currency(currency)
-        return sum([p.get_msrp(currency) for p in self.products.all()])
+        return sum([product.get_msrp(currency) for product in self.products.all()])
 
     def current_price(self, currency=DEFAULT_CURRENCY):
         '''
