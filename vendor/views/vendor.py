@@ -118,9 +118,6 @@ class AddToCartView(View):
                 messages.info(self.request, _("You Have Already Purchased This Item"))
                 return redirect('vendor:cart')
 
-            if not offer.allow_multiple and cart.order_items.quantity > 1:
-                messages.info(self.request, _("This Item Is Already in Your Cart"))
-                return redirect('vendor:cart')
             
             messages.info(self.request, _("Added item to cart."))
             cart.add_offer(offer)
