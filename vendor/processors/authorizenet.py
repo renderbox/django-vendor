@@ -207,7 +207,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             return subscription.offer.term_details['payment_occurrences']
         elif subscription_type == TermType.MONTHLY_SUBSCRIPTION:
             return 1
-        elif subscription_type == TermType.QUATERLY_SUBSCRIPTION:
+        elif subscription_type == TermType.QUARTERLY_SUBSCRIPTION:
             return 1
         elif subscription_type == TermType.SEMIANNUAL_SUBSCRIPTION:
             return 1
@@ -219,7 +219,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             return subscription.offer.term_details['period_length']
         elif subscription_type == TermType.MONTHLY_SUBSCRIPTION:
             return 1
-        elif subscription_type == TermType.QUATERLY_SUBSCRIPTION:
+        elif subscription_type == TermType.QUARTERLY_SUBSCRIPTION:
             return 4
         elif subscription_type == TermType.SEMIANNUAL_SUBSCRIPTION:
             return 6
