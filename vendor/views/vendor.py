@@ -116,13 +116,14 @@ class AddToCartView(View):
 
             if profile.has_product(offer.products.all()):
                 messages.info(self.request, _("You Have Already Purchased This Item"))
+                return redirect('vendor:cart')
 
-            if not offer.allow_multiple and cart.order_items.filter(offer=offer).count() > 1:
+            if not offer.allow_multiple and cart.order_items.quantity > 1:
                 messages.info(self.request, _("This Item Is Already in Your Cart"))
+                return redirect('vendor:cart')
             
-            if not profile.has_product(offer.products.all()) and offer.allow_multiple and cart.order_items.filter(offer=offer).count() < 1:
-                messages.info(self.request, _("Added item to cart."))
-                cart.add_offer(offer)
+            messages.info(self.request, _("Added item to cart."))
+            cart.add_offer(offer)
 
 
         return redirect('vendor:cart')      # Redirect to cart on success
