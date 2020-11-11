@@ -270,6 +270,6 @@ class CreditCardForm(PaymentFrom):
 
         if datetime.now() > expire:
             self._errors["expire_year"] = self.error_class([_("The expiration date you entered is in the past.")])
-            self._errors["expire_month"] = self.error_class([_("")])
+            self._errors["expire_month"] = self.error_class([_("Check expiration")])
             return False
         return True

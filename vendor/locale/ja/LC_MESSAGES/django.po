@@ -3,13 +3,12 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#: forms.py:273
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-10 22:01+0000\n"
+"POT-Creation-Date: 2020-11-11 20:49+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -67,6 +66,10 @@ msgstr "有効な有効期限を選択する必要があります"
 msgid "The expiration date you entered is in the past."
 msgstr "入力した有効期限は過去のものです。"
 
+#: forms.py:273
+msgid "Check expiration"
+msgstr "有効期限を確認してください"
+
 #: models/address.py:21
 msgid "United States"
 msgstr "アメリカ"
@@ -120,8 +123,12 @@ msgid "User Defineable SKU field"
 msgstr "ユーザー定義可能なSKUフィールド"
 
 #: models/base.py:46 models/offer.py:35 models/tax.py:17 models/wishlist.py:13
+#: templates/vendor/invoice_list.html:19
+#: templates/vendor/manage/dashboard.html:105
+#: templates/vendor/manage/invoice_list.html:19
 #: templates/vendor/manage/offers.html:19
 #: templates/vendor/manage/products.html:20
+#: templates/vendor/purchase_list.html:17
 msgid "Name"
 msgstr "名前"
 
@@ -145,7 +152,9 @@ msgstr "メタ"
 msgid ""
 "Eg: { 'msrp':{'usd':10.99} }\n"
 "(iso4217 Country Code):(MSRP Price)"
-msgstr "例：{'msrp'：{'usd'：10.99}} \n（iso4217国コード）:(希望小売価格）"
+msgstr ""
+"例：{'msrp'：{'usd'：10.99}} \n"
+"（iso4217国コード）:(希望小売価格）"
 
 #: models/choice.py:13
 msgid "Perpetual"
@@ -235,8 +244,7 @@ msgstr "解決する"
 msgid "Void"
 msgstr "無効"
 
-#: models/choice.py:43 templates/vendor/purchase_detail.html:41
-#: templates/vendor/refund_list.html:17
+#: models/choice.py:43 templates/vendor/refund_list.html:17
 msgid "Refund"
 msgstr "払い戻し"
 
@@ -265,7 +273,11 @@ msgid "UUID"
 msgstr "UUID"
 
 #: models/invoice.py:38 models/receipt.py:26
-#: templates/vendor/purchase_detail.html:35
+#: templates/vendor/invoice_list.html:20
+#: templates/vendor/manage/dashboard.html:106
+#: templates/vendor/manage/invoice_list.html:20
+#: templates/vendor/purchase_detail.html:39
+#: templates/vendor/purchase_list.html:19
 msgid "Status"
 msgstr "状態"
 
@@ -282,11 +294,15 @@ msgid "Ordered Date"
 msgstr "注文日"
 
 #: models/invoice.py:46 models/price.py:15 models/profile.py:26
+#: templates/vendor/invoice_list.html:22
+#: templates/vendor/manage/dashboard.html:108
+#: templates/vendor/manage/invoice_list.html:22
+#: templates/vendor/purchase_list.html:21
 msgid "Currency"
 msgstr "通貨"
 
-#: models/invoice.py:47 templates/vendor/checkout.html:34
-#: templates/vendor/checkout.html:105
+#: models/invoice.py:47 templates/vendor/address_detail.html:7
+#: templates/vendor/checkout.html:34 templates/vendor/checkout.html:105
 msgid "Shipping Address"
 msgstr "お届け先の住所"
 
@@ -310,7 +326,7 @@ msgstr "提供"
 #: templates/vendor/orderitem_list.html:19
 #: templates/vendor/ordersummary.html:14
 #: templates/vendor/payment_summary.html:23
-#: templates/vendor/purchase_detail.html:19
+#: templates/vendor/purchase_detail.html:23
 msgid "Quantity"
 msgstr "量"
 
@@ -324,17 +340,18 @@ msgstr "注文アイテム"
 
 #: models/offer.py:36 models/price.py:16 models/receipt.py:21
 #: templates/vendor/manage/offers.html:20
-#: templates/vendor/purchase_detail.html:27
+#: templates/vendor/purchase_detail.html:31
 msgid "Start Date"
 msgstr "開始日"
 
 #: models/offer.py:37 models/price.py:17 models/receipt.py:22
 #: templates/vendor/manage/offers.html:21
-#: templates/vendor/purchase_detail.html:31
+#: templates/vendor/purchase_detail.html:35
 msgid "End Date"
 msgstr "終了日"
 
-#: models/offer.py:38
+#: models/offer.py:38 templates/vendor/purchase_detail.html:19
+#: templates/vendor/purchase_list.html:18
 msgid "Terms"
 msgstr "条項"
 
@@ -378,7 +395,9 @@ msgstr "複数購入を許可する"
 msgid ""
 "Confirm the user wants to buy multiples of the product where typically there "
 "is just one purchased at a time."
-msgstr "ユーザーが複数の製品を購入したいことを確認します。通常、一度に購入できるのは1つだけです。"
+msgstr ""
+"ユーザーが複数の製品を購入したいことを確認します。通常、一度に購入できるのは1"
+"つだけです。"
 
 #: models/offer.py:52 templates/vendor/manage/offers.html:9
 msgid "Offers"
@@ -422,7 +441,7 @@ msgstr "優先度"
 
 #: models/price.py:27 templates/vendor/invoice_history_detail.html:14
 #: templates/vendor/manage/invoice_detail.html:14
-#: templates/vendor/purchase_detail.html:23
+#: templates/vendor/purchase_detail.html:27
 #: templates/vendor/refund_list.html:16
 msgid "Price"
 msgstr "価格"
@@ -483,6 +502,10 @@ msgstr "ウィッシュリストアイテム"
 msgid "Wishlist Items"
 msgstr "ウィッシュリストアイテム"
 
+#: templates/vendor/address_detail.html:11
+msgid "Update"
+msgstr "更新"
+
 #: templates/vendor/checkout.html:7
 msgid "SECURE CHECKOUT"
 msgstr "安全なチェックアウト"
@@ -493,6 +516,7 @@ msgstr "継続する"
 
 #: templates/vendor/checkout.html:67 templates/vendor/checkout.html:122
 #: templates/vendor/payment_summary.html:37
+#: templates/vendor/purchase_detail.html:51
 msgid "Billing Address"
 msgstr "請求先住所"
 
@@ -523,7 +547,7 @@ msgstr "単価"
 
 #: templates/vendor/includes/cost_overview.html:4
 #: templates/vendor/invoice_history_detail.html:32
-#: templates/vendor/manage/invoice_detail.html:32
+#: templates/vendor/manage/invoice_detail.html:34
 msgid "Subtotal"
 msgstr "小計"
 
@@ -537,8 +561,8 @@ msgstr "推定税額"
 
 #: templates/vendor/includes/cost_overview.html:22
 #, python-format
-msgid "Total ( %(currency)s)"
-msgstr "合計( %(currency)s)"
+msgid "Total (%(currency)s) "
+msgstr "合計( (%(currency)s)"
 
 #: templates/vendor/invoice_detail.html:7
 msgid "Shopping Cart"
@@ -587,9 +611,11 @@ msgid "Order Details"
 msgstr "注文詳細"
 
 #: templates/vendor/invoice_history_detail.html:12
-#: templates/vendor/invoice_list.html:19
-#: templates/vendor/manage/dashboard.html:108
+#: templates/vendor/invoice_list.html:18
+#: templates/vendor/manage/dashboard.html:104
 #: templates/vendor/manage/invoice_detail.html:12
+#: templates/vendor/manage/invoice_list.html:18
+#: templates/vendor/purchase_list.html:16
 msgid "#"
 msgstr "＃"
 
@@ -599,97 +625,72 @@ msgid "Item"
 msgstr "項目"
 
 #: templates/vendor/invoice_history_detail.html:16
-#: templates/vendor/invoice_list.html:21
-#: templates/vendor/manage/dashboard.html:110
+#: templates/vendor/invoice_list.html:23
+#: templates/vendor/manage/dashboard.html:109
 #: templates/vendor/manage/invoice_detail.html:16
+#: templates/vendor/manage/invoice_list.html:23
+#: templates/vendor/purchase_list.html:22
 msgid "Total"
 msgstr "合計"
 
 #: templates/vendor/invoice_history_detail.html:39
-#: templates/vendor/manage/invoice_detail.html:39
+#: templates/vendor/manage/invoice_detail.html:41
 msgid "Back to List"
 msgstr "リストに戻る"
 
 #: templates/vendor/invoice_list.html:9
-msgid "My Orders"
-msgstr "私の注文"
+#: templates/vendor/manage/invoice_list.html:9
+msgid "Site Order History"
+msgstr "サイトの注文履歴"
 
-#: templates/vendor/invoice_list.html:20
-#: templates/vendor/manage/dashboard.html:109
+#: templates/vendor/invoice_list.html:21
+#: templates/vendor/manage/dashboard.html:107
+#: templates/vendor/manage/invoice_list.html:21
+#: templates/vendor/purchase_list.html:20
 msgid "Date"
 msgstr "日付"
 
-#: templates/vendor/invoice_list.html:28
-#: templates/vendor/manage/dashboard.html:117
-msgid "Order"
-msgstr "注文"
+#: templates/vendor/invoice_list.html:40
+#: templates/vendor/manage/dashboard.html:126
+#: templates/vendor/manage/invoice_list.html:40
+msgid "No Orders"
+msgstr "注文なし"
 
 #: templates/vendor/manage/dashboard.html:9
 msgid "Admin Purchase Dashboard"
 msgstr "管理者購入ダッシュボード"
 
-#: templates/vendor/manage/dashboard.html:17
-msgid "Weekly Sales"
-msgstr "ウィークリーセールス"
-
-#: templates/vendor/manage/dashboard.html:34
-msgid "Monthly Comparison"
-msgstr "月次比較"
-
-#: templates/vendor/manage/dashboard.html:51
-msgid "Top Items"
-msgstr "トップアイテム"
-
-#: templates/vendor/manage/dashboard.html:68
-msgid "Cart Conversion Rate"
-msgstr "カートのコンバージョン率"
-
-#: templates/vendor/manage/dashboard.html:85
-#: templates/vendor/manage/products.html:14
-msgid "Product List"
-msgstr "製品リスト"
-
 #: templates/vendor/manage/dashboard.html:88
-#: templates/vendor/manage/offers.html:14
-msgid "Offer List"
-msgstr "オファーリスト"
+msgid "All Purchases"
+msgstr "すべての購入"
 
-#: templates/vendor/manage/dashboard.html:93
+#: templates/vendor/manage/dashboard.html:91
 msgid "Receipt Report CSV"
 msgstr "領収書レポートCSV"
 
-#: templates/vendor/manage/dashboard.html:96
+#: templates/vendor/manage/dashboard.html:92
 msgid "Invoice Report CSV"
 msgstr "請求書レポートCSV"
 
-#: templates/vendor/manage/dashboard.html:103
+#: templates/vendor/manage/dashboard.html:99
 msgid "Most Recent Sales"
 msgstr "最新の売上高"
-
-#: templates/vendor/manage/dashboard.html:124
-msgid "No Orders"
-msgstr "注文なし"
-
-#: templates/vendor/manage/dashboard.html:134
-msgid "All Purchases"
-msgstr "すべての購入"
 
 #: templates/vendor/manage/invoice_detail.html:6
 msgid "Admin: Order Details"
 msgstr "管理者：注文の詳細"
 
-#: templates/vendor/manage/invoice_list.html:8
-msgid "Site Order History"
-msgstr "サイトの注文履歴"
-
-#: templates/vendor/manage/invoice_list.html:22
-#: templates/vendor/purchase_list.html:22
-msgid "No purchases"
-msgstr "購入なし"
+#: templates/vendor/manage/invoice_detail.html:30
+msgid "Cart is Empty"
+msgstr "カートが空です"
 
 #: templates/vendor/manage/offer.html:27
 msgid "Save Offer"
 msgstr "オファーを保存"
+
+#: templates/vendor/manage/offers.html:14
+msgid "Offer List"
+msgstr "オファーリスト"
 
 #: templates/vendor/manage/offers.html:22
 msgid "Term"
@@ -719,6 +720,10 @@ msgstr "製品を保存する"
 #: templates/vendor/manage/products.html:9
 msgid "Products"
 msgstr "製品"
+
+#: templates/vendor/manage/products.html:14
+msgid "Product List"
+msgstr "製品リスト"
 
 #: templates/vendor/manage/products.html:21
 msgid "Site"
@@ -805,7 +810,9 @@ msgstr "購入確認"
 msgid ""
 "Thank you for the order. You can view this invoice in \"My Account\" under "
 "the Billing section."
-msgstr "ご注文ありがとうございます。この請求書は、[請求]セクションの[マイアカウント]で確認できます。"
+msgstr ""
+"ご注文ありがとうございます。この請求書は、[請求]セクションの[マイアカウント]"
+"で確認できます。"
 
 #: templates/vendor/payment_summary.html:13
 msgid "The order number is"
@@ -828,9 +835,29 @@ msgstr "エンディング"
 msgid "Purchases"
 msgstr "購入"
 
-#: templates/vendor/purchase_detail.html:53
+#: templates/vendor/purchase_detail.html:43
+msgid "Account Ending"
+msgstr "アカウントの終了"
+
+#: templates/vendor/purchase_detail.html:47
+msgid "Account Type"
+msgstr "口座の種類"
+
+#: templates/vendor/purchase_detail.html:56
 msgid "Buy Again"
 msgstr "もう一度購入する"
+
+#: templates/vendor/purchase_detail.html:64
+msgid "Actions"
+msgstr "行動"
+
+#: templates/vendor/purchase_detail.html:70
+msgid "Cancel Subscription"
+msgstr "サブスクリプションをキャンセルする"
+
+#: templates/vendor/purchase_list.html:38
+msgid "No purchases"
+msgstr "購入なし"
 
 #: templates/vendor/refund_form.html:12
 msgid "Request Refund"
@@ -853,18 +880,56 @@ msgstr "クエリに一致する%(verbose_name)sが見つかりません"
 msgid "Product Purchase required."
 msgstr "製品の購入が必要です。"
 
-#: views/vendor.py:114 views/vendor.py:145
+#: views/vendor.py:114 views/vendor.py:152
 msgid "You have a pending cart in checkout"
 msgstr "チェックアウト時に保留中のカートがあります"
 
-#: views/vendor.py:119
+#: views/vendor.py:118
+msgid "You Have Already Purchased This Item"
+msgstr "あなたはすでにこのアイテムを購入しました"
+
+#: views/vendor.py:121
+msgid "This Item Is Already in Your Cart"
+msgstr "このアイテムはすでにカートに入っています"
+
+#: views/vendor.py:124
 msgid "Added item to cart."
 msgstr "カートにアイテムを追加しました。"
 
-#: views/vendor.py:150
+#: views/vendor.py:157
 msgid "Removed item from cart."
 msgstr "カートからアイテムを削除しました。"
 
-#: views/vendor.py:282
+#: views/vendor.py:289
 msgid "The payment gateway did not authorize payment."
 msgstr "支払いゲートウェイは支払いを承認しませんでした。"
+
+#: views/vendor.py:364
+msgid "Unable to cancel at the moment"
+msgstr "現時点ではキャンセルできません"
+
+#: views/vendor.py:371
+msgid "Subscription Cancelled"
+msgstr "サブスクリプションがキャンセルされました"
+
+#: views/vendor.py:384
+msgid "Shipping Address Updated"
+msgstr "配送先住所が更新されました"
+
+#~ msgid "Weekly Sales"
+#~ msgstr "ウィークリーセールス"
+
+#~ msgid "Monthly Comparison"
+#~ msgstr "月次比較"
+
+#~ msgid "Top Items"
+#~ msgstr "トップアイテム"
+
+#~ msgid "Cart Conversion Rate"
+#~ msgstr "カートのコンバージョン率"
+
+#~ msgid "My Orders"
+#~ msgstr "私の注文"
+
+#~ msgid "Order"
+#~ msgstr "注文"
