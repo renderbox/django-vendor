@@ -4,63 +4,77 @@
 {% block vendor_content %}
 <div class="container-fluid">
         <nav aria-label="breadcrumb">
-            <!-- <ol class="breadcrumb"> -->
-            <h1>{% trans 'Purchases' %}</h1>
-            <!-- </ol> -->
+                <!-- <ol class="breadcrumb"> -->
+                <h1>{% trans 'Purchases' %}</h1>
+                <!-- </ol> -->
         </nav>
         <div class="row">
                 <div class="col">
-                    <table class="table table-striped">
-                    <tr>
-                            <th>{% trans 'Product' %}</th>
-                            <td>{{ object.order_item.offer.name }}</td>
-                    </tr>
-                    <tr>
-                            <th>{% trans 'Quantity' %}</th>
-                            <td>{{ object.order_item.quantity }}</td>
-                    </tr>   
-                    <tr>
-                            <th>{% trans 'Price' %}</th>
-                            <td>{{ object.order_item.price }}</td>
-                    </tr>
-                    <tr>
-                            <th>{% trans 'Start Date' %}</th>
-                            <td>{{ object.start_date }}</td>
-                    </tr>
-                    <tr>
-                            <th>{% trans 'End Date' %}</th>
-                            <td>{{ object.end_date }}</td>
-                    </tr>
-                    <tr>
-                            <th>{% trans 'Status' %}</th>
-                            <td>{{ object.get_status_display }}</td>
-                            
-                    </tr>   
-                    {% if refund %}
-                    <tr>
-                            <th>{% trans 'Refund' %}</th>
-                            {% if active %}
-                                <td><a class="text-danger" href="{% url 'vendor-request-refund' object.id %}">{{refund}}</a></td>
-                            
-                            {% else %}
-                                <td><a class="text-danger" href="#">{{refund}}</a></td>
+                        <table class="table table-striped">
+                                <tr>
+                                        <th>{% trans 'Product' %}</th>
+                                        <td>{{ object.order_item.offer.name }}</td>
+                                </tr>
+                                <tr>
+                                        <th>{% trans 'Terms' %}</th>
+                                        <td>{{ object.order_item.offer.get_terms_display }}</td>
+                                </tr>
+                                <tr>
+                                        <th>{% trans 'Quantity' %}</th>
+                                        <td>{{ object.order_item.quantity }}</td>
+                                </tr>
+                                <tr>
+                                        <th>{% trans 'Price' %}</th>
+                                        <td>{{ object.order_item.price }}</td>
+                                </tr>
+                                <tr>
+                                        <th>{% trans 'Start Date' %}</th>
+                                        <td>{{ object.start_date }}</td>
+                                </tr>
+                                <tr>
+                                        <th>{% trans 'End Date' %}</th>
+                                        <td>{{ object.end_date }}</td>
+                                </tr>
+                                <tr>
+                                        <th>{% trans 'Status' %}</th>
+                                        <td>{{ object.get_status_display }}</td>
+                                </tr>
+                                <tr>
+                                        <th>{% trans 'Account Ending' %}</th>
+                                        <td>{{ payment.result.account_number }}</td>
+                                </tr>
+                                <tr>
+                                        <th>{% trans 'Account Type' %}</th>
+                                        <td>{{ payment.result.account_type }}</td>
+                                </tr>
+                                <tr>
+                                        <th>{% trans 'Billing Address' %}</th>
+                                        <td>{{ payment.billing_address.get_address }}</td>
+                                </tr>
+                                {% if object.order_item.offer.terms == 0 or object.order_item.offer.terms == 20 %}
+                                <tr>
+                                        <th>{% trans 'Buy Again' %}</th>
+                                        <td><a class="text-danger"
+                                                        href="{% url 'vendor:add-to-cart' object.order_item.offer.slug %}">{{ object.order_item.offer.name }}</a>
+                                        </td>
+                                </tr>
+                                {% endif %}
+                                {% if object.status == 20 %}
+                                <tr>
+                                        <th>{% trans 'Actions' %}</th>
+                                        <td>
+                                                <form method="post" class="ml-auto"
+                                                        action="{% url 'vendor:customer-subscription-cancel' object.pk %}">
+                                                        {% csrf_token %}
+                                                        <button class="btn btn-sm btn-danger rounded"
+                                                                type="submit">{% trans 'Cancel Subscription' %}</button>
+                                                </form>
 
-                            {% endif %}
-                            
-                    </tr>   
-                    {% endif %}
-                    <tr>
-                            <th>{% trans 'Buy Again' %}</th>
-                            <td><a class="text-danger" href="{{object.order_item.offer.add_to_cart_link}}">{{ object.order_item.offer.name }}</a></td>
-                    </tr>   
-                   
-                    </table>
+                                        </td>
+                                </tr>
+                                {% endif %}
+                        </table>
                 </div>
-            </div>
-      
-       
-    </div>
- {% endblock %}   
-
-
-
+        </div>
+</div>
+{% endblock %}

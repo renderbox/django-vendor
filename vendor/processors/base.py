@@ -86,6 +86,22 @@ class PaymentProcessorBase(object):
             total_months = int(order_item.offer.term_details['period_length']) * int(order_item.offer.term_details['payment_occurrences'])
             receipt.end_date = timezone.now() + timedelta(days=(total_months*31))
             receipt.auto_renew = True
+        elif term_type == TermType.MONTHLY_SUBSCRIPTION:
+            total_months = 1
+            receipt.end_date = timezone.now() + timedelta(days=(total_months*31))
+            receipt.auto_renew = True
+        elif term_type == TermType.QUARTERLY_SUBSCRIPTION:
+            total_months = 3
+            receipt.end_date = timezone.now() + timedelta(days=(total_months*31))
+            receipt.auto_renew = True
+        elif term_type == TermType.SEMIANNUAL_SUBSCRIPTION:
+            total_months = 6
+            receipt.end_date = timezone.now() + timedelta(days=(total_months*31))
+            receipt.auto_renew = True
+        elif term_type == TermType.ANNUAL_SUBSCRIPTION:
+            total_months = 12
+            receipt.end_date = timezone.now() + timedelta(days=(total_months*31))
+            receipt.auto_renew = True
         elif term_type == TermType.PERPETUAL:
             receipt.auto_renew = False
         elif term_type == TermType.ONE_TIME_USE:
@@ -100,13 +116,15 @@ class PaymentProcessorBase(object):
                     receipt.save()
                     receipt.products.add(product)
 
-    def update_subscription_receipt(self, subscription, subscription_id):
+    def update_subscription_receipt(self, subscription, subscription_id, status):
         """
         subscription: OrderItem
         subscription_id: int
+        status: PurchaseStatus
         """
         subscription_receipt = self.invoice.order_items.get(offer=subscription.offer).receipts.get(transaction=self.payment.transaction)
         subscription_receipt.meta['subscription_id'] = subscription_id
+        subscription_receipt.status = status
         subscription_receipt.save()
 
     def amount(self):   # Retrieves the total amount from the invoice

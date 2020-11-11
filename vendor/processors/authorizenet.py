@@ -19,10 +19,9 @@ except ModuleNotFoundError:
     pass
 
 from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models.choice import TransactionTypes, PaymentTypes, TermType
+from vendor.models.choice import TransactionTypes, PaymentTypes, TermType, PurchaseStatus
 from vendor.models.invoice import Invoice
 from vendor.models.address import Country
-
 from .base import PaymentProcessorBase
 
 
@@ -208,7 +207,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             return subscription.offer.term_details['payment_occurrences']
         elif subscription_type == TermType.MONTHLY_SUBSCRIPTION:
             return 1
-        elif subscription_type == TermType.QUATERLY_SUBSCRIPTION:
+        elif subscription_type == TermType.QUARTERLY_SUBSCRIPTION:
             return 1
         elif subscription_type == TermType.SEMIANNUAL_SUBSCRIPTION:
             return 1
@@ -220,7 +219,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             return subscription.offer.term_details['period_length']
         elif subscription_type == TermType.MONTHLY_SUBSCRIPTION:
             return 1
-        elif subscription_type == TermType.QUATERLY_SUBSCRIPTION:
+        elif subscription_type == TermType.QUARTERLY_SUBSCRIPTION:
             return 4
         elif subscription_type == TermType.SEMIANNUAL_SUBSCRIPTION:
             return 6
@@ -326,7 +325,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if (response.messages.resultCode=="Ok"):
             self.transaction_submitted = True
             self.transaction_message['msg'] = "Subscription Tansaction Complete"
-            if 'subscriptionId' in response:
+            if 'subscriptionId' in response.__dict__:
                 self.transaction_message['subscription_id'] = response.subscriptionId
         else:
             self.transaction_message['msg'] = "Subscription Tansaction Failed"
@@ -398,7 +397,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.check_subscription_response(response)
         if self.transaction_submitted:
-            self.update_subscription_receipt(subscription, self.transaction_response.subscriptionId.pyval)
+            self.update_subscription_receipt(subscription, self.transaction_response.subscriptionId.pyval, PurchaseStatus.COMPLETE)
 
     def update_subscription_payment(self, subscription_id):
 
@@ -426,8 +425,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         return response
 
-    def cancel_subscription_payment(self, subscription_id):
-
+    def cancel_subscription_payment(self, reciept, subscription_id):
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.subscriptionId = str(subscription_id)
@@ -438,6 +436,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
 
         self.check_subscription_response(response)
+
+        if self.transaction_submitted:
+            reciept.status = PurchaseStatus.CANCELED
+            reciept.save()
+
 
     def refund_payment(self, payment):
         # Init transaction

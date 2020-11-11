@@ -1,0 +1,15 @@
+{% extends "vendor/base.html" %}
+{% load i18n %}
+
+{% block vendor_content %}
+<div class='row mx-md-5 px-md-3'>
+    <div class='col-12 my-5'>
+        <h2>{% trans 'Shipping Address' %}</h2>
+    </div>
+    <form method="post">{% csrf_token %}
+        {{ form.as_p }} 
+        <input type="submit" value="{% trans 'Update' %}">
+    </form>
+</div>
+
+{% endblock %}
