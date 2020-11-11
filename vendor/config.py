@@ -7,7 +7,7 @@ VENDOR_PAYMENT_PROCESSOR = getattr(settings, "VENDOR_PAYMENT_PROCESSOR", "dummy.
 
 DEFAULT_CURRENCY = getattr(settings, "DEFAULT_CURRENCY", "usd")
 
-AVAILABLE_CURRENCIES = getattr(settings, "DEFAULT_CURRENCY", "usd")
+AVAILABLE_CURRENCIES = getattr(settings, "AVAILABLE_CURRENCIES", "usd")
 
 # Encryption settings
 VENDOR_DATA_ENCODER = getattr(settings, "VENDOR_DATA_ENCODER", "vendor.encrypt.cleartext")
