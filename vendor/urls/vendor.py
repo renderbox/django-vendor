@@ -24,4 +24,8 @@ urlpatterns = [
     path('checkout/account/', vendor_views.AccountInformationView.as_view(), name="checkout-account"),
     path('checkout/payment/', vendor_views.PaymentView.as_view(), name="checkout-payment"),
     path('checkout/review/', vendor_views.ReviewCheckoutView.as_view(), name="checkout-review"),
+    path('products/', vendor_views.ProductsListView.as_view(), name="products-owned"),
+    path('product/<int:pk>/receipt/', vendor_views.ReceiptDetailView.as_view(), name="receipt"),
+    path('subscriptions/', vendor_views.SubscriptionsListView.as_view(), name="subscriptions"),
+    path('subscription/<int:pk>/cancel/', vendor_views.SubscriptionCancelView.as_view(), name="subscription-cancel"),
 ]

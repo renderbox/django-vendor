@@ -14,8 +14,8 @@ from django.views.generic import TemplateView, View
 
 from iso4217 import Currency
 
-from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile, OrderItem
-from vendor.models.choice import TermType
+from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile, OrderItem, Receipt
+from vendor.models.choice import TermType, PurchaseStatus
 from vendor.models.utils import set_default_site_id
 from vendor.processors import PaymentProcessor
 from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm
@@ -316,3 +316,46 @@ class OrderHistoryDetailView(LoginRequiredMixin, DetailView):
     model = Invoice
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
+
+
+class ProductsListView(LoginRequiredMixin, ListView):
+    model = Receipt
+    template_name = 'vendor/purchase_list.html'
+
+    def get_queryset(self):
+        return self.request.user.customer_profile.get().receipts.filter(status__gte=PurchaseStatus.COMPLETE)
+
+class ReceiptDetailView(LoginRequiredMixin, DetailView):
+    model = Receipt
+    template_name = 'vendor/purchase_detail.html'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['payment'] = Payment.objects.get(transaction=self.object.transaction)
+
+        return context
+
+class SubscriptionsListView(LoginRequiredMixin, ListView):
+    model = Receipt
+    template_name = 'vendor/purchase_list.html'
+
+    def get_queryset(self):
+        receipts = self.request.user.customer_profile.get().receipts.filter(status__gte=PurchaseStatus.COMPLETE)
+        subscriptions = [ receipt for receipt in receipts.all() if receipt.order_item.offer.terms > TermType.PERPETUAL and receipt.order_item.offer.terms < TermType.ONE_TIME_USE ]
+        return subscriptions
+
+class SubscriptionCancelView(LoginRequiredMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        receipt = Receipt.objects.get(pk=self.kwargs["pk"])
+        subscription_id = receipt.meta['subscription_id']
+
+        processor = PaymentProcessor(receipt.order_item.invoice)
+
+        processor.cancel_subscription_payment(receipt, subscription_id)
+
+        messages.info(self.request, _("Subscription Cancelled"))
+
+        return redirect('vendor:subscriptions')
+

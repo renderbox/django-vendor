@@ -3,33 +3,44 @@
 
 {% block vendor_content %}
 <div class="container-fluid">
-        <nav aria-label="breadcrumb">
-            <!-- <ol class="breadcrumb"> -->
-            <h1>{% trans 'Purchases' %}</h1>
-            <!-- </ol> -->
-        </nav>
-        <div class="row">
-                <div class="col">
-                    <table class="table table-striped">
-                        {% for items in object_list %}
-                        <tr>
-                                <td><a class="text-primary" href="{% url 'vendor-user-purchase-retrieve' items.id %}">{{ items.order_item.offer.name }}</a></td>
-                                <td>{{ items.created }}</td>
-                            </tr>
-                        {% empty %}
-                        <tr>
-                            <td>
-                                {% trans 'No purchases' %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </table>
-                </div>
-            </div>
-      
-       
+    <nav aria-label="breadcrumb">
+        <!-- <ol class="breadcrumb"> -->
+        <h1>{% trans 'Purchases' %}</h1>
+        <!-- </ol> -->
+    </nav>
+    <div class="row">
+        <div class="col">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th scope="col">{% trans '#' %}</th>
+                        <th scope="col">{% trans 'Name' %}</th>
+                        <th scope="col">{% trans 'Terms' %}</th>
+                        <th scope="col">{% trans 'Status' %}</th>
+                        <th scope="col">{% trans 'Date' %}</th>
+                        <th scope="col">{% trans 'Total' %}</th>
+                    </tr>
+                </thead>
+                {% for item in object_list %}
+                <tr>
+                    <td><a class="text-primary" href="{% url 'vendor:receipt' item.pk %}">{{ forloop.counter }}</a></td>
+                    <td>{{ item.order_item.offer.name }}</td>
+                    <td>{{ item.order_item.offer.get_terms_display }}</td>
+                    <td>{{ item.get_status_display }}</td>
+                    <td>{{ item.created }}</td>
+                    <td>{{ item.order_item.invoice.total }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td>
+                        {% trans 'No purchases' %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
     </div>
- {% endblock %}   
 
 
-
+</div>
+{% endblock %}
