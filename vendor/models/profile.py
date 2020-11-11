@@ -72,12 +72,12 @@ class CustomerProfile(CreateUpdateModelBase):
 
         # Queryset or List of model records
         if isinstance(products, QuerySet) or isinstance(products, list):
-            return self.receipts.filter(Q(products__in=products), Q(status=PurchaseStatus.COMPLETE),
+            return self.receipts.filter(Q(products__in=products),
                                 Q(start_date__lte=now) | Q(start_date=None),
                                 Q(end_date__gte=now) | Q(end_date=None))
 
         # Single model record
-        return self.receipts.filter(Q(products=products), Q(status=PurchaseStatus.COMPLETE),
+        return self.receipts.filter(Q(products=products),
                                 Q(start_date__lte=now) | Q(start_date=None),
                                 Q(end_date__gte=now) | Q(end_date=None))
 
