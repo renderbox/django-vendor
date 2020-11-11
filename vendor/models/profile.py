@@ -6,7 +6,7 @@ from django.db.models import Q, QuerySet
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 from .base import CreateUpdateModelBase
-from .choice import CURRENCY_CHOICES, TermType
+from .choice import CURRENCY_CHOICES, TermType, PurchaseStatus
 from .invoice import Invoice
 from .utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
@@ -72,12 +72,12 @@ class CustomerProfile(CreateUpdateModelBase):
 
         # Queryset or List of model records
         if isinstance(products, QuerySet) or isinstance(products, list):
-            return self.receipts.filter(Q(products__in=products),
+            return self.receipts.filter(Q(products__in=products), Q(status=PurchaseStatus.COMPLETE),
                                 Q(start_date__lte=now) | Q(start_date=None),
                                 Q(end_date__gte=now) | Q(end_date=None))
 
         # Single model record
-        return self.receipts.filter(Q(products=products),
+        return self.receipts.filter(Q(products=products), Q(status=PurchaseStatus.COMPLETE),
                                 Q(start_date__lte=now) | Q(start_date=None),
                                 Q(end_date__gte=now) | Q(end_date=None))
 
