@@ -114,7 +114,7 @@ class AddToCartView(View):
                 messages.info(self.request, _("You have a pending cart in checkout"))
                 return redirect(request.META.get('HTTP_REFERER'))
 
-            if profile.has_product(offer.products.all())
+            if profile.has_product(offer.products.all()):
                 messages.info(self.request, _("You Have Already Purchased This Item"))
 
             if not offer.allow_multiple and cart.order_items.filter(offer=offer).count() > 1:
@@ -331,6 +331,7 @@ class ProductsListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return self.request.user.customer_profile.get().receipts.filter(status__gte=PurchaseStatus.COMPLETE)
+
 
 class ReceiptDetailView(LoginRequiredMixin, DetailView):
     model = Receipt
