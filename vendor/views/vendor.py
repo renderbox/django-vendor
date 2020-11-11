@@ -361,7 +361,7 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
         receipt = Receipt.objects.get(pk=self.kwargs["pk"])
         subscription_id = receipt.meta.get('subscription_id', None)
         if not subscription_id:
-            messages.info(self.request, _("Unaviable to cancel at the moment"))
+            messages.info(self.request, _("Unable to cancel at the moment"))
             return redirect('vendor:customer-subscriptions')
 
         processor = PaymentProcessor(receipt.order_item.invoice)

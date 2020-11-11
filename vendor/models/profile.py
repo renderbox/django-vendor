@@ -6,7 +6,7 @@ from django.db.models import Q, QuerySet
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 from .base import CreateUpdateModelBase
-from .choice import CURRENCY_CHOICES, TermType, PurchaseStatus
+from .choice import CURRENCY_CHOICES, TermType
 from .invoice import Invoice
 from .utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
