@@ -28,4 +28,5 @@ urlpatterns = [
     path('product/<int:pk>/receipt/', vendor_views.ReceiptDetailView.as_view(), name="receipt"),
     path('subscriptions/', vendor_views.SubscriptionsListView.as_view(), name="subscriptions"),
     path('subscription/<int:pk>/cancel/', vendor_views.SubscriptionCancelView.as_view(), name="subscription-cancel"),
+    path('shipping/<int:pk>/update', vendor_views.ShippingAddressUpdateView.as_view(), name="shipping-update"),
 ]
