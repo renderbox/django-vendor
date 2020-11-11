@@ -1,24 +1,24 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ObjectDoesNotExist
 from django.template import RequestContext
 
-from django.views.generic.edit import DeleteView
+from django.views.generic.edit import DeleteView, UpdateView
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView, View
 
 from iso4217 import Currency
 
-from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile, OrderItem
-from vendor.models.choice import TermType
+from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile, OrderItem, Receipt
+from vendor.models.choice import TermType, PurchaseStatus
 from vendor.models.utils import set_default_site_id
 from vendor.processors import PaymentProcessor
-from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm
+from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm, AddressForm
 # from vendor.models.address import Address as GoogleAddress
 
 # The Payment Processor configured in settings.py
@@ -114,9 +114,16 @@ class AddToCartView(View):
                 messages.info(self.request, _("You have a pending cart in checkout"))
                 return redirect(request.META.get('HTTP_REFERER'))
 
-            cart.add_offer(offer)
+            if profile.has_product(offer.products.all()):
+                messages.info(self.request, _("You Have Already Purchased This Item"))
 
-        messages.info(self.request, _("Added item to cart."))
+            if not offer.allow_multiple and cart.order_items.filter(offer=offer).count() > 1:
+                messages.info(self.request, _("This Item Is Already in Your Cart"))
+            
+            if not profile.has_product(offer.products.all()) and offer.allow_multiple and cart.order_items.filter(offer=offer).count() < 1:
+                messages.info(self.request, _("Added item to cart."))
+                cart.add_offer(offer)
+
 
         return redirect('vendor:cart')      # Redirect to cart on success
 
@@ -279,7 +286,7 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
             return redirect('vendor:purchase-summary', pk=invoice.pk)
         else:
             messages.info(self.request, _(
-                "The payment gateway did not authroize payment."))
+                "The payment gateway did not authorize payment."))
             return redirect('vendor:checkout-account')
 
 
@@ -316,3 +323,65 @@ class OrderHistoryDetailView(LoginRequiredMixin, DetailView):
     model = Invoice
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
+
+
+class ProductsListView(LoginRequiredMixin, ListView):
+    model = Receipt
+    template_name = 'vendor/purchase_list.html'
+
+    def get_queryset(self):
+        return self.request.user.customer_profile.get().receipts.filter(status__gte=PurchaseStatus.COMPLETE)
+
+
+class ReceiptDetailView(LoginRequiredMixin, DetailView):
+    model = Receipt
+    template_name = 'vendor/purchase_detail.html'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['payment'] = Payment.objects.get(transaction=self.object.transaction)
+
+        return context
+
+
+class SubscriptionsListView(LoginRequiredMixin, ListView):
+    model = Receipt
+    template_name = 'vendor/purchase_list.html'
+
+    def get_queryset(self):
+        receipts = self.request.user.customer_profile.get().receipts.filter(status__gte=PurchaseStatus.COMPLETE)
+        subscriptions = [ receipt for receipt in receipts.all() if receipt.order_item.offer.terms > TermType.PERPETUAL and receipt.order_item.offer.terms < TermType.ONE_TIME_USE ]
+        return subscriptions
+
+
+class SubscriptionCancelView(LoginRequiredMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        receipt = Receipt.objects.get(pk=self.kwargs["pk"])
+        subscription_id = receipt.meta.get('subscription_id', None)
+        if not subscription_id:
+            messages.info(self.request, _("Unable to cancel at the moment"))
+            return redirect('vendor:customer-subscriptions')
+
+        processor = PaymentProcessor(receipt.order_item.invoice)
+
+        processor.cancel_subscription_payment(receipt, subscription_id)
+
+        messages.info(self.request, _("Subscription Cancelled"))
+
+        return redirect('vendor:customer-subscriptions')
+
+
+class ShippingAddressUpdateView(LoginRequiredMixin, UpdateView):
+    model = Address
+    fields = '__all__'
+    template_name_suffix = '_update_form'
+    template_name = 'vendor/address_detail.html'
+    success_url = reverse_lazy('vendor:products')
+
+    def get_success_url(self):
+        messages.info(self.request, _("Shipping Address Updated"))
+        return self.request.META.get('HTTP_REFERER', self.success_url)
+    
+

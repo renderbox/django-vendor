@@ -10,6 +10,7 @@
       <!-- </ol> -->
     </nav>
 
+    {% comment %}
     <div class="row">
       <div class="col-md-3 col-xxl-3 mb-3 pr-md-2">
         <div class="card h-md-100">
@@ -80,19 +81,13 @@
         </div>
       </div>
     </div>
-    <div class='row'>
-      <div class='col-2'>
-        <a href="{% url 'vendor_admin:manager-product-list' %}" class="btn btn-primary">{% trans 'Product List' %}</a>
+    {% endcomment %}
+    <div class='row my-5'>
+      <div class='col'>
+        <a href="{% url 'vendor_admin:manager-order-list' %}" class="btn btn-primary">{% trans 'All Purchases' %}</a>
       </div>
-      <div class='col-2'>
-        <a href="{% url 'vendor_admin:manager-offer-list' %}" class="btn btn-primary">{% trans 'Offer List' %}</a>
-      </div>
-      <div class='col-4'>
-      </div>
-      <div class='col-2'>
-        <a href="{% url 'vendor_admin:manager-reciept-download' %}" class="btn btn-primary">{% trans 'Reciept Report CSV' %}</a>
-      </div>
-      <div class='col-2'>
+      <div class='col-6 text-right'>
+        <a href="{% url 'vendor_admin:manager-reciept-download' %}" class="btn btn-primary">{% trans 'Receipt Report CSV' %}</a>
         <a href="{% url 'vendor_admin:manager-invoice-download' %}" class="btn btn-primary">{% trans 'Invoice Report CSV' %}</a>
       </div>
 
@@ -106,17 +101,23 @@
           <thead>
             <tr>
               <th scope="col">{% trans '#' %}</th>
+              <th scope="col">{% trans 'Name' %}</th>
+              <th scope="col">{% trans 'Status' %}</th>
               <th scope="col">{% trans 'Date' %}</th>
+              <th scope="col">{% trans 'Currency' %}</th>
               <th scope="col">{% trans 'Total' %}</th>
             </tr>
           </thead>
 
           <tbody>
             {% for item in object_list %}
-            <tr>
-              <td><a class="text-primary" href="{% url 'vendor_admin:manager-order-detail' item.uuid %}">{% trans 'Order' %}</a></td>
+            <tr>              
+              <td><a class="text-primary" href="{% url 'vendor_admin:manager-order-detail' item.uuid %}">{{ item.pk }}</a></td>
+              <td>{{ item }}</td>
+              <td>{{ item.get_status_display }}</td>
               <td>{{ item.created }}</td>
-              <td>{{ item.total }}</td>
+              <td>{{ item.get_currency_display }}</td>
+              <td>$ {{ item.total|floatformat:2|default:"0.00" }}</td>
             </tr>
             {% empty %}
             <tr>
@@ -130,9 +131,6 @@
         </table>
       </div>
     </div>
-      
-    <p><a href="{% url 'vendor_admin:manager-order-list' %}" class="btn btn-primary">{% trans 'All Purchases' %}</a></p>
-
   </div>
  {% endblock %}   
 
