@@ -51,21 +51,6 @@
                                         <th>{% trans 'Billing Address' %}</th>
                                         <td>{{ payment.billing_address.get_address }}</td>
                                 </tr>
-                                {% if refund %}
-                                <tr>
-                                        <th>{% trans 'Refund' %}</th>
-                                        {% if active %}
-                                        <td><a class="text-danger"
-                                                        href="{% url 'vendor-request-refund' object.id %}">{{refund}}</a>
-                                        </td>
-
-                                        {% else %}
-                                        <td><a class="text-danger" href="#">{{refund}}</a></td>
-
-                                        {% endif %}
-
-                                </tr>
-                                {% endif %}
                                 {% if object.order_item.offer.terms == 0 or object.order_item.offer.terms == 20 %}
                                 <tr>
                                         <th>{% trans 'Buy Again' %}</th>
