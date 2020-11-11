@@ -359,7 +359,10 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         receipt = Receipt.objects.get(pk=self.kwargs["pk"])
-        subscription_id = receipt.meta['subscription_id']
+        subscription_id = receipt.meta.get('subscription_id', None)
+        if not subscription_id:
+            messages.info(self.request, _("Unaviable to cancel at the moment"))
+            return redirect('vendor:customer-subscriptions')
 
         processor = PaymentProcessor(receipt.order_item.invoice)
 
@@ -367,7 +370,7 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
 
         messages.info(self.request, _("Subscription Cancelled"))
 
-        return redirect('vendor:subscriptions')
+        return redirect('vendor:customer-subscriptions')
 
 
 class ShippingAddressUpdateView(LoginRequiredMixin, UpdateView):

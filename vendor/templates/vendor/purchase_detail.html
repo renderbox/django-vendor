@@ -79,7 +79,7 @@
                                         <th>{% trans 'Actions' %}</th>
                                         <td>
                                                 <form method="post" class="ml-auto"
-                                                        action="{% url 'vendor:subscription-cancel' object.pk %}">
+                                                        action="{% url 'vendor:customer-subscription-cancel' object.pk %}">
                                                         {% csrf_token %}
                                                         <button class="btn btn-sm btn-danger rounded"
                                                                 type="submit">{% trans 'Cancel Subscription' %}</button>
