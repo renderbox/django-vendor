@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext as _
-
 from .choice import CURRENCY_CHOICES
 from vendor.config import DEFAULT_CURRENCY
 
