@@ -279,7 +279,7 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
             return redirect('vendor:purchase-summary', pk=invoice.pk)
         else:
             messages.info(self.request, _(
-                "The payment gateway did not authroize payment."))
+                "The payment gateway did not authorize payment."))
             return redirect('vendor:checkout-account')
 
 
