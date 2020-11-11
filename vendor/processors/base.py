@@ -90,7 +90,7 @@ class PaymentProcessorBase(object):
             total_months = 1
             receipt.end_date = timezone.now() + timedelta(days=(total_months*31))
             receipt.auto_renew = True
-        elif term_type == TermType.QUATERLY_SUBSCRIPTION:
+        elif term_type == TermType.QUARTERLY_SUBSCRIPTION:
             total_months = 3
             receipt.end_date = timezone.now() + timedelta(days=(total_months*31))
             receipt.auto_renew = True
