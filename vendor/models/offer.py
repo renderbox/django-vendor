@@ -119,7 +119,6 @@ class Offer(CreateUpdateModelBase):
         
         if currency in supported_currencies:
             return currency
-        
-        # TODO: Should this instead throw a warning or an error?
-        return self.products.all().first().meta['msrp']['default']
+
+        return DEFAULT_CURRENCY
 
