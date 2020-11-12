@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-12 05:29+0000\n"
+"POT-Creation-Date: 2020-11-12 18:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,14 +18,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: forms.py:32 forms.py:49 models/offer.py:36 models/price.py:16
-#: models/receipt.py:21 templates/vendor/manage/offers.html:20
+#: forms.py:32 forms.py:49 templates/vendor/manage/offers.html:20
 #: templates/vendor/purchase_detail.html:31
 msgid "Start Date"
 msgstr "開始日"
 
-#: forms.py:33 forms.py:50 models/offer.py:37 models/price.py:17
-#: models/receipt.py:22 templates/vendor/manage/offers.html:21
+#: forms.py:33 forms.py:50 templates/vendor/manage/offers.html:21
 #: templates/vendor/purchase_detail.html:35
 msgid "End Date"
 msgstr "終了日"
@@ -34,11 +32,11 @@ msgstr "終了日"
 msgid "Available Products:"
 msgstr "利用可能な製品："
 
-#: forms.py:51 models/offer.py:40
+#: forms.py:51
 msgid "Term Start Date"
 msgstr "期間開始日"
 
-#: forms.py:65 models/offer.py:87
+#: forms.py:65
 msgid "Bundle: "
 msgstr "バンドル："
 
@@ -54,7 +52,7 @@ msgstr "Eメール"
 msgid "Billing Address is the same as Shipping Address"
 msgstr "請求先住所は配​​送先住所と同じです"
 
-#: forms.py:100 models/payment.py:26
+#: forms.py:100
 msgid "Company"
 msgstr "会社"
 
@@ -106,84 +104,13 @@ msgstr "有効期限を確認してください"
 msgid "United States"
 msgstr "アメリカ"
 
-#: models/address.py:48
-msgid "Address Name"
-msgstr "住所名"
-
-#: models/address.py:49 models/invoice.py:36 models/profile.py:35
-msgid "Customer Profile"
-msgstr "顧客情報"
-
-#: models/address.py:50
-msgid "First Name"
-msgstr "ファーストネーム"
-
-#: models/address.py:51
-msgid "Last Name"
-msgstr "苗字"
-
-#: models/address.py:52
-msgid "Address 1"
-msgstr "住所1"
-
-#: models/address.py:53
-msgid "Address 2"
-msgstr "住所2"
-
-#: models/address.py:54
-msgid "City"
-msgstr "市"
-
-#: models/address.py:55
-msgid "State"
-msgstr "状態"
-
-#: models/address.py:56
-msgid "Country"
-msgstr "国"
-
-#: models/address.py:57
-msgid "Postal Code"
-msgstr "郵便番号"
-
-#: models/base.py:44 templates/vendor/manage/products.html:19
-msgid "SKU"
-msgstr "SKU"
-
 #: models/base.py:44
 msgid "User Defineable SKU field"
 msgstr "ユーザー定義可能なSKUフィールド"
 
-#: models/base.py:46 models/offer.py:35 models/tax.py:17 models/wishlist.py:13
-#: templates/vendor/invoice_list.html:19
-#: templates/vendor/manage/dashboard.html:105
-#: templates/vendor/manage/invoice_list.html:19
-#: templates/vendor/manage/offers.html:19
-#: templates/vendor/manage/products.html:20
-#: templates/vendor/purchase_list.html:17
-msgid "Name"
-msgstr "名前"
-
-#: models/base.py:47 models/invoice.py:37 models/offer.py:34
-#: models/profile.py:28 templates/vendor/manage/products.html:21
-msgid "Site"
-msgstr "地点"
-
-#: models/base.py:49 models/offer.py:41 templates/vendor/manage/offers.html:23
-msgid "Available"
-msgstr "利用可能"
-
 #: models/base.py:49 models/offer.py:41
 msgid "Is this currently available?"
 msgstr "これは現在利用できますか？"
-
-#: models/base.py:50 templates/vendor/manage/products.html:22
-msgid "Description"
-msgstr "説明"
-
-#: models/base.py:51 models/receipt.py:27
-msgid "Meta"
-msgstr "メタ"
 
 #: models/base.py:51
 msgid ""
@@ -305,86 +232,6 @@ msgstr "失敗しました"
 msgid "Complete"
 msgstr "コンプリート"
 
-#: models/invoice.py:35
-msgid "UUID"
-msgstr "UUID"
-
-#: models/invoice.py:38 models/receipt.py:26
-#: templates/vendor/invoice_list.html:20
-#: templates/vendor/manage/dashboard.html:106
-#: templates/vendor/manage/invoice_list.html:20
-#: templates/vendor/purchase_detail.html:39
-#: templates/vendor/purchase_list.html:19
-msgid "Status"
-msgstr "状態"
-
-#: models/invoice.py:39
-msgid "Customer Notes"
-msgstr "カスタマーノート"
-
-#: models/invoice.py:40 models/receipt.py:24
-msgid "Vendor Notes"
-msgstr "ベンダーノート"
-
-#: models/invoice.py:41
-msgid "Ordered Date"
-msgstr "注文日"
-
-#: models/invoice.py:46 models/price.py:15 models/profile.py:26
-#: templates/vendor/invoice_list.html:22
-#: templates/vendor/manage/dashboard.html:108
-#: templates/vendor/manage/invoice_list.html:22
-#: templates/vendor/purchase_list.html:21
-msgid "Currency"
-msgstr "通貨"
-
-#: models/invoice.py:47 templates/vendor/address_detail.html:7
-#: templates/vendor/checkout.html:34 templates/vendor/checkout.html:105
-msgid "Shipping Address"
-msgstr "お届け先の住所"
-
-#: models/invoice.py:56 models/invoice.py:127 models/payment.py:16
-#: templates/vendor/payment_detail.html:6
-msgid "Invoice"
-msgstr "請求書"
-
-#: models/invoice.py:57
-msgid "Invoices"
-msgstr "請求書"
-
-#: models/invoice.py:67
-msgid "New Invoice"
-msgstr "新しい請求書"
-
-#: models/invoice.py:68
-#, python-brace-format
-msgid "{username} Invoice ({time})"
-msgstr "{username}請求書（{time}）"
-
-#: models/invoice.py:128 models/offer.py:51 models/price.py:13
-#: models/wishlist.py:31 templates/vendor/manage/offer.html:9
-#: templates/vendor/manage/offer.html:15
-msgid "Offer"
-msgstr "提供"
-
-#: models/invoice.py:129 templates/vendor/checkout.html:163
-#: templates/vendor/invoice_history_detail.html:15
-#: templates/vendor/manage/invoice_detail.html:15
-#: templates/vendor/orderitem_list.html:19
-#: templates/vendor/ordersummary.html:14
-#: templates/vendor/payment_summary.html:23
-#: templates/vendor/purchase_detail.html:23
-msgid "Quantity"
-msgstr "量"
-
-#: models/invoice.py:132 models/receipt.py:20
-msgid "Order Item"
-msgstr "注文アイテム"
-
-#: models/invoice.py:133
-msgid "Order Items"
-msgstr "注文アイテム"
-
 #: models/offer.py:36
 msgid "What date should this offer become available?"
 msgstr "このオファーが利用可能になるのはいつですか？"
@@ -393,42 +240,17 @@ msgstr "このオファーが利用可能になるのはいつですか？"
 msgid "Expiration Date?"
 msgstr "賞味期限？"
 
-#: models/offer.py:38 templates/vendor/purchase_detail.html:19
-#: templates/vendor/purchase_list.html:18
-msgid "Terms"
-msgstr "条項"
-
-#: models/offer.py:39
-msgid "Term Details"
-msgstr "期間の詳細"
-
 #: models/offer.py:40
 msgid "When is this product available to use?"
 msgstr "この製品はいつ使用できますか？"
 
 #: models/offer.py:42
-msgid "Is a Bundle?"
-msgstr "バンドルですか？"
-
-#: models/offer.py:42
 msgid "Is this a product bundle? (auto-generated)"
 msgstr "これは製品バンドルですか？ （自動生成）"
-
-#: models/offer.py:43
-msgid "Offer Description"
-msgstr "オファーの説明"
-
-#: models/offer.py:44
-msgid "List Bundled Items"
-msgstr "バンドルアイテムのリスト"
 
 #: models/offer.py:44
 msgid "When showing to customers, display the included items in a list?"
 msgstr "顧客に表示するときに、含まれているアイテムをリストに表示しますか？"
-
-#: models/offer.py:45
-msgid "Allow Multiple Purchase"
-msgstr "複数購入を許可する"
 
 #: models/offer.py:45
 msgid ""
@@ -438,75 +260,24 @@ msgstr ""
 "ユーザーが複数の製品を購入したいことを確認します。通常、一度に購入できるのは1"
 "つだけです。"
 
-#: models/offer.py:52 templates/vendor/manage/offers.html:9
-msgid "Offers"
-msgstr "オファー"
-
-#: models/payment.py:17
-msgid "Date Created"
-msgstr "作成日"
-
-#: models/payment.py:18
-msgid "Transaction ID"
-msgstr "トランザクションID"
-
-#: models/payment.py:19
-msgid "Payment Provider"
-msgstr "支払いプロバイダー"
-
-#: models/payment.py:20
-msgid "Amount"
-msgstr "量"
-
-#: models/payment.py:21 models/receipt.py:19 models/wishlist.py:12
-msgid "Purchase Profile"
-msgstr "購入プロファイル"
-
-#: models/payment.py:22 templates/vendor/checkout.html:67
-#: templates/vendor/checkout.html:122 templates/vendor/payment_summary.html:37
-#: templates/vendor/purchase_detail.html:51
-msgid "Billing Address"
-msgstr "請求先住所"
-
-#: models/payment.py:23
-msgid "Result"
-msgstr "結果"
-
-#: models/payment.py:24
-msgid "Successful"
-msgstr "成功"
-
-#: models/payment.py:25
-msgid "Name on Card"
-msgstr "カードの名前"
-
-#: models/price.py:14 templates/vendor/orderitem_list.html:21
-#: templates/vendor/ordersummary.html:16
-msgid "Cost"
-msgstr "費用"
-
-#: models/price.py:18
-msgid "Priority"
-msgstr "優先度"
-
-#: models/price.py:18
-msgid "Higher number takes priority"
-msgstr "数値が大きいほど優先されます"
-
-#: models/price.py:27 templates/vendor/invoice_history_detail.html:14
-#: templates/vendor/manage/invoice_detail.html:14
-#: templates/vendor/purchase_detail.html:27
-#: templates/vendor/refund_list.html:16
-msgid "Price"
-msgstr "価格"
-
-#: models/price.py:28
-msgid "Prices"
-msgstr "価格"
-
 #: models/profile.py:25 templates/vendor/refund_list.html:13
 msgid "User"
 msgstr "ユーザー"
+
+#: models/profile.py:26 templates/vendor/invoice_list.html:22
+#: templates/vendor/manage/dashboard.html:108
+#: templates/vendor/manage/invoice_list.html:22
+#: templates/vendor/purchase_list.html:21
+msgid "Currency"
+msgstr "通貨"
+
+#: models/profile.py:28 templates/vendor/manage/products.html:21
+msgid "Site"
+msgstr "地点"
+
+#: models/profile.py:35
+msgid "Customer Profile"
+msgstr "顧客情報"
 
 #: models/profile.py:36
 msgid "Customer Profiles"
@@ -521,39 +292,24 @@ msgstr "新しい顧客プロファイル"
 msgid "{username} Customer Profile"
 msgstr "{username}顧客プロファイル"
 
-#: models/receipt.py:23
-msgid "Auto Renew"
-msgstr "自動更新"
-
-#: models/receipt.py:25
-msgid "Transaction"
-msgstr "トランザクション"
-
-#: models/receipt.py:33
-msgid "Receipt"
-msgstr "領収書"
-
-#: models/receipt.py:34
-msgid "Receipts"
-msgstr "領収書"
-
-#: models/tax.py:18
-msgid "Taxable"
-msgstr "課税対象"
-
-#: models/tax.py:25
-msgid "Product Classifier"
-msgstr "製品分類子"
-
-#: models/tax.py:26
-msgid "Product Classifiers"
-msgstr "製品分類子"
-
 #: models/validator.py:18 models/validator.py:21 models/validator.py:24
 msgid "Invalid MSRP Value"
 msgstr "無効なMSRP値"
 
-#: models/wishlist.py:16 models/wishlist.py:30
+#: models/wishlist.py:12
+msgid "Purchase Profile"
+msgstr "購入プロファイル"
+
+#: models/wishlist.py:13 templates/vendor/invoice_list.html:19
+#: templates/vendor/manage/dashboard.html:105
+#: templates/vendor/manage/invoice_list.html:19
+#: templates/vendor/manage/offers.html:19
+#: templates/vendor/manage/products.html:20
+#: templates/vendor/purchase_list.html:17
+msgid "Name"
+msgstr "名前"
+
+#: models/wishlist.py:16
 msgid "Wishlist"
 msgstr "ウィッシュリスト"
 
@@ -561,13 +317,10 @@ msgstr "ウィッシュリスト"
 msgid "Wishlists"
 msgstr "ウィッシュリスト"
 
-#: models/wishlist.py:34
-msgid "Wishlist Item"
-msgstr "ウィッシュリストアイテム"
-
-#: models/wishlist.py:35
-msgid "Wishlist Items"
-msgstr "ウィッシュリストアイテム"
+#: templates/vendor/address_detail.html:7 templates/vendor/checkout.html:34
+#: templates/vendor/checkout.html:105
+msgid "Shipping Address"
+msgstr "お届け先の住所"
 
 #: templates/vendor/address_detail.html:11
 msgid "Update"
@@ -588,6 +341,12 @@ msgstr "継続する"
 #: templates/vendor/checkout.html:51
 msgid "Billing"
 msgstr "請求"
+
+#: templates/vendor/checkout.html:67 templates/vendor/checkout.html:122
+#: templates/vendor/payment_summary.html:37
+#: templates/vendor/purchase_detail.html:51
+msgid "Billing Address"
+msgstr "請求先住所"
 
 #: templates/vendor/checkout.html:78 templates/vendor/checkout.html:137
 #: templates/vendor/payment_summary.html:41
@@ -613,6 +372,16 @@ msgstr "カートの中"
 #: templates/vendor/checkout.html:162
 msgid "Unit Price"
 msgstr "単価"
+
+#: templates/vendor/checkout.html:163
+#: templates/vendor/invoice_history_detail.html:15
+#: templates/vendor/manage/invoice_detail.html:15
+#: templates/vendor/orderitem_list.html:19
+#: templates/vendor/ordersummary.html:14
+#: templates/vendor/payment_summary.html:23
+#: templates/vendor/purchase_detail.html:23
+msgid "Quantity"
+msgstr "量"
 
 #: templates/vendor/includes/cost_overview.html:4
 #: templates/vendor/invoice_history_detail.html:32
@@ -693,6 +462,13 @@ msgstr "＃"
 msgid "Item"
 msgstr "項目"
 
+#: templates/vendor/invoice_history_detail.html:14
+#: templates/vendor/manage/invoice_detail.html:14
+#: templates/vendor/purchase_detail.html:27
+#: templates/vendor/refund_list.html:16
+msgid "Price"
+msgstr "価格"
+
 #: templates/vendor/invoice_history_detail.html:16
 #: templates/vendor/invoice_list.html:23
 #: templates/vendor/manage/dashboard.html:109
@@ -711,6 +487,14 @@ msgstr "リストに戻る"
 #: templates/vendor/manage/invoice_list.html:9
 msgid "Site Order History"
 msgstr "サイトの注文履歴"
+
+#: templates/vendor/invoice_list.html:20
+#: templates/vendor/manage/dashboard.html:106
+#: templates/vendor/manage/invoice_list.html:20
+#: templates/vendor/purchase_detail.html:39
+#: templates/vendor/purchase_list.html:19
+msgid "Status"
+msgstr "状態"
 
 #: templates/vendor/invoice_list.html:21
 #: templates/vendor/manage/dashboard.html:107
@@ -753,9 +537,17 @@ msgstr "管理者：注文の詳細"
 msgid "Cart is Empty"
 msgstr "カートが空です"
 
+#: templates/vendor/manage/offer.html:9 templates/vendor/manage/offer.html:15
+msgid "Offer"
+msgstr "提供"
+
 #: templates/vendor/manage/offer.html:27
 msgid "Save Offer"
 msgstr "オファーを保存"
+
+#: templates/vendor/manage/offers.html:9
+msgid "Offers"
+msgstr "オファー"
 
 #: templates/vendor/manage/offers.html:14
 msgid "Offer List"
@@ -764,6 +556,10 @@ msgstr "オファーリスト"
 #: templates/vendor/manage/offers.html:22
 msgid "Term"
 msgstr "期間"
+
+#: templates/vendor/manage/offers.html:23
+msgid "Available"
+msgstr "利用可能"
 
 #: templates/vendor/manage/offers.html:39
 msgid "No Offers"
@@ -794,6 +590,14 @@ msgstr "製品"
 msgid "Product List"
 msgstr "製品リスト"
 
+#: templates/vendor/manage/products.html:19
+msgid "SKU"
+msgstr "SKU"
+
+#: templates/vendor/manage/products.html:22
+msgid "Description"
+msgstr "説明"
+
 #: templates/vendor/manage/products.html:37
 msgid "No Products"
 msgstr "製品なし"
@@ -819,6 +623,11 @@ msgstr "あなたのカート"
 #: templates/vendor/ordersummary.html:15
 msgid "Per Item Cost"
 msgstr "アイテムあたりのコスト"
+
+#: templates/vendor/orderitem_list.html:21
+#: templates/vendor/ordersummary.html:16
+msgid "Cost"
+msgstr "費用"
 
 #: templates/vendor/orderitem_list.html:22
 msgid "Delete"
@@ -862,6 +671,10 @@ msgstr "カートに戻る"
 msgid "PURCHASE DETAILS"
 msgstr "購入の詳細"
 
+#: templates/vendor/payment_detail.html:6
+msgid "Invoice"
+msgstr "請求書"
+
 #: templates/vendor/payment_summary.html:7
 msgid "Purchase Confirmation"
 msgstr "購入確認"
@@ -894,6 +707,11 @@ msgstr "エンディング"
 #: templates/vendor/purchase_list.html:8
 msgid "Purchases"
 msgstr "購入"
+
+#: templates/vendor/purchase_detail.html:19
+#: templates/vendor/purchase_list.html:18
+msgid "Terms"
+msgstr "条項"
 
 #: templates/vendor/purchase_detail.html:43
 msgid "Account Ending"
@@ -971,6 +789,136 @@ msgstr "サブスクリプションがキャンセルされました"
 #: views/vendor.py:382
 msgid "Shipping Address Updated"
 msgstr "配送先住所が更新されました"
+
+#~ msgid "Address Name"
+#~ msgstr "住所名"
+
+#~ msgid "First Name"
+#~ msgstr "ファーストネーム"
+
+#~ msgid "Last Name"
+#~ msgstr "苗字"
+
+#~ msgid "Address 1"
+#~ msgstr "住所1"
+
+#~ msgid "Address 2"
+#~ msgstr "住所2"
+
+#~ msgid "City"
+#~ msgstr "市"
+
+#~ msgid "State"
+#~ msgstr "状態"
+
+#~ msgid "Country"
+#~ msgstr "国"
+
+#~ msgid "Postal Code"
+#~ msgstr "郵便番号"
+
+#~ msgid "Meta"
+#~ msgstr "メタ"
+
+#~ msgid "UUID"
+#~ msgstr "UUID"
+
+#~ msgid "Customer Notes"
+#~ msgstr "カスタマーノート"
+
+#~ msgid "Vendor Notes"
+#~ msgstr "ベンダーノート"
+
+#~ msgid "Ordered Date"
+#~ msgstr "注文日"
+
+#~ msgid "Invoices"
+#~ msgstr "請求書"
+
+#~ msgid "New Invoice"
+#~ msgstr "新しい請求書"
+
+#, python-brace-format
+#~ msgid "{username} Invoice ({time})"
+#~ msgstr "{username}請求書（{time}）"
+
+#~ msgid "Order Item"
+#~ msgstr "注文アイテム"
+
+#~ msgid "Order Items"
+#~ msgstr "注文アイテム"
+
+#~ msgid "Term Details"
+#~ msgstr "期間の詳細"
+
+#~ msgid "Is a Bundle?"
+#~ msgstr "バンドルですか？"
+
+#~ msgid "Offer Description"
+#~ msgstr "オファーの説明"
+
+#~ msgid "List Bundled Items"
+#~ msgstr "バンドルアイテムのリスト"
+
+#~ msgid "Allow Multiple Purchase"
+#~ msgstr "複数購入を許可する"
+
+#~ msgid "Date Created"
+#~ msgstr "作成日"
+
+#~ msgid "Transaction ID"
+#~ msgstr "トランザクションID"
+
+#~ msgid "Payment Provider"
+#~ msgstr "支払いプロバイダー"
+
+#~ msgid "Amount"
+#~ msgstr "量"
+
+#~ msgid "Result"
+#~ msgstr "結果"
+
+#~ msgid "Successful"
+#~ msgstr "成功"
+
+#~ msgid "Name on Card"
+#~ msgstr "カードの名前"
+
+#~ msgid "Priority"
+#~ msgstr "優先度"
+
+#~ msgid "Higher number takes priority"
+#~ msgstr "数値が大きいほど優先されます"
+
+#~ msgid "Prices"
+#~ msgstr "価格"
+
+#~ msgid "Auto Renew"
+#~ msgstr "自動更新"
+
+#~ msgid "Transaction"
+#~ msgstr "トランザクション"
+
+#~ msgid "Receipt"
+#~ msgstr "領収書"
+
+#~ msgid "Receipts"
+#~ msgstr "領収書"
+
+#~ msgid "Taxable"
+#~ msgstr "課税対象"
+
+#~ msgid "Product Classifier"
+#~ msgstr "製品分類子"
+
+#~ msgid "Product Classifiers"
+#~ msgstr "製品分類子"
+
+#~ msgid "Wishlist Item"
+#~ msgstr "ウィッシュリストアイテム"
+
+#~ msgid "Wishlist Items"
+#~ msgstr "ウィッシュリストアイテム"
 
 #~ msgid "payments"
 #~ msgstr "支払い"
