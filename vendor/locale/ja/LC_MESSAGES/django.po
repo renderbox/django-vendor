@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-12 01:48+0000\n"
+"POT-Creation-Date: 2020-11-12 03:01+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -484,6 +484,10 @@ msgstr "費用"
 #: models/price.py:18
 msgid "Priority"
 msgstr "優先度"
+
+#: models/price.py:18
+msgid "Higher number takes priority"
+msgstr "数値が大きいほど優先されます"
 
 #: models/price.py:27 templates/vendor/invoice_history_detail.html:14
 #: templates/vendor/manage/invoice_detail.html:14
