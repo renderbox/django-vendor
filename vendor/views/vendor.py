@@ -52,6 +52,14 @@ def get_currency(invoice=None):
         return Currency[settings.DEFAULT_CURRENCY].value
     return invoice.get_currency_display()
 
+def check_offer_items_or_redirect(invoice, request):
+    
+    if invoice.order_items.count() < 1:
+        messages.info(request, 
+            _("Please add to your cart")
+        )
+        redirect('vendor:cart')
+
 class CartView(TemplateView):
     '''
     View items in the cart
