@@ -269,7 +269,11 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user)
-
+        if invoice.offer_items.count() < 1:
+            messages.info(request, 
+            _("Please add to your cart before placing an order")
+        )
+            redirect('vendor:cart')
         processor = payment_processor(invoice)
         
         processor.get_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
