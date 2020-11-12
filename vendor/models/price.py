@@ -13,9 +13,9 @@ class Price(models.Model):
     offer = models.ForeignKey("vendor.Offer", verbose_name="Offer", on_delete=models.CASCADE, related_name="prices")
     cost = models.FloatField(_("Cost"), blank=True, null=True)
     currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY)
-    start_date = models.DateTimeField(_("Start Date"), help_text="When should the price first become available?")
-    end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="When should the price expire?")
-    priority = models.IntegerField(_("Priority"), help_text="Higher number takes priority", blank=True, null=True)
+    start_date = models.DateTimeField(_("Start Date"), help_text=_("When should the price first become available?"))
+    end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text=_("When should the price expire?"))
+    priority = models.IntegerField(_("Priority"), help_text=_("Higher number takes priority"), blank=True, null=True)
 
     def save(self, *args, **kwargs):
         if not self.priority:       # TODO: Add check to see if this is the only price on the offer, then let it be 0.  If not, might need to do some assumptions to guess what it should be.
