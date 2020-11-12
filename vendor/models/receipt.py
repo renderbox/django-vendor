@@ -30,8 +30,8 @@ class Receipt(CreateUpdateModelBase):
     # the product connection comes from the ProductModelBase to not trigger a migration on subclassing PMB
 
     class Meta:
-        verbose_name = _("Receipt")
-        verbose_name_plural = _("Receipts")
+        verbose_name = "Receipt"
+        verbose_name_plural = "Receipts"
 
     def __str__(self):
         return "%s - %s - %s" % (self.profile.user.username, self.order_item.offer.name, self.created.strftime('%Y-%m-%d %H:%M'))

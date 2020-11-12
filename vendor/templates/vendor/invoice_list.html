@@ -28,7 +28,7 @@
           <tr>
             <td><a class="text-primary" href="{% url 'vendor_admin:manager-order-detail' item.uuid %}">{{ item.pk }}</a>
             </td>
-            <td>{{ item }}</td>
+            <td>{{ item.get_invoice_display }}</td>
             <td>{{ item.get_status_display }}</td>
             <td>{{ item.created }}</td>
             <td>{{ item.get_currency_display }}</td>

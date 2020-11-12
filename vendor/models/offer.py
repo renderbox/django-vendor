@@ -48,8 +48,8 @@ class Offer(CreateUpdateModelBase):
     on_site = CurrentSiteManager()
 
     class Meta:
-        verbose_name = _("Offer")
-        verbose_name_plural = _("Offers")
+        verbose_name = "Offer"
+        verbose_name_plural = "Offers"
 
     def __str__(self):
         return self.name
@@ -84,7 +84,7 @@ class Offer(CreateUpdateModelBase):
         if len(product_names) == 1:
             self.name = product_names[0]
         else:
-            self.name = _("Bundle: ") + ", ".join(product_names)
+            self.name = "Bundle: " + ", ".join(product_names)
 
     @property
     def description(self):
