@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-12 20:11+0000\n"
+"POT-Creation-Date: 2020-11-12 20:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -141,6 +141,10 @@ msgstr "国"
 #: models/address.py:57
 msgid "Postal Code"
 msgstr "郵便番号"
+
+#: models/base.py:44 templates/vendor/manage/products.html:19
+msgid "SKU"
+msgstr "SKU"
 
 #: models/base.py:44
 msgid "User Defineable SKU field"
@@ -738,10 +742,6 @@ msgstr "製品"
 #: templates/vendor/manage/products.html:14
 msgid "Product List"
 msgstr "製品リスト"
-
-#: templates/vendor/manage/products.html:19
-msgid "SKU"
-msgstr "SKU"
 
 #: templates/vendor/manage/products.html:37
 msgid "No Products"
