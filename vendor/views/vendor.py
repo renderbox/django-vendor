@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse, reverse_lazy
 from django.conf import settings
 from django.utils.translation import ugettext as _
@@ -150,7 +151,7 @@ class RemoveFromCartView(View):
 
             request.session['session_cart'] = session_cart
         else:
-            profile = self.request.user.customer_profile.get(site=settings.SITE_ID)      # Make sure they have a cart
+            profile = self.request.user.customer_profile.get(site=get_current_site(self.request))      # Make sure they have a cart
 
             cart = profile.get_cart_or_checkout_cart()
 
@@ -335,7 +336,7 @@ class OrderHistoryListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         try:
             # The profile and user are site specific so this should only return what's on the site for that user excluding the cart
-            return self.request.user.customer_profile.get(site=settings.SITE_ID).invoices.filter(status__gt=Invoice.InvoiceStatus.CART)
+            return self.request.user.customer_profile.get(site=get_current_site(self.request)).invoices.filter(status__gt=Invoice.InvoiceStatus.CART)
         except ObjectDoesNotExist:         # Catch the actual error for the exception
             return []   # Return empty list if there is no customer_profile
 
@@ -355,7 +356,7 @@ class ProductsListView(LoginRequiredMixin, ListView):
     template_name = 'vendor/purchase_list.html'
 
     def get_queryset(self):
-        return self.request.user.customer_profile.get(site=settings.SITE_ID).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
+        return self.request.user.customer_profile.get(site=get_current_site(self.request)).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
 
 
 class ReceiptDetailView(LoginRequiredMixin, DetailView):
@@ -375,7 +376,7 @@ class SubscriptionsListView(LoginRequiredMixin, ListView):
     template_name = 'vendor/purchase_list.html'
 
     def get_queryset(self):
-        receipts = self.request.user.customer_profile.get(site=settings.SITE_ID).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
+        receipts = self.request.user.customer_profile.get(site=get_current_site(self.request)).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
         subscriptions = [ receipt for receipt in receipts.all() if receipt.order_item.offer.terms > TermType.PERPETUAL and receipt.order_item.offer.terms < TermType.ONE_TIME_USE ]
         return subscriptions
 
