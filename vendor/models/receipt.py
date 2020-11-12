@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import models
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from .base import CreateUpdateModelBase
 from vendor.models.choice import PurchaseStatus
@@ -24,7 +24,7 @@ class Receipt(CreateUpdateModelBase):
     vendor_notes = models.JSONField(_("Vendor Notes"), default=dict)
     transaction = models.CharField(_("Transaction"), max_length=80)
     status = models.IntegerField(_("Status"), choices=PurchaseStatus.choices, default=0)       # Fulfilled, Refund
-    meta = models.JSONField(default=dict)
+    meta = models.JSONField(_("Meta"), default=dict)
     # TODO: Add final purchase price to the reciept for tracking.
     # TODO: Add Site field for easier tracking?
     # the product connection comes from the ProductModelBase to not trigger a migration on subclassing PMB
