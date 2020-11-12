@@ -188,6 +188,13 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         account_form = form.save(commit=False)
 
         invoice = get_purchase_invoice(request.user)
+        
+        if not invoice.order_items.count():
+            messages.info(request, 
+                _("Please add to your cart")
+            )
+            return redirect('vendor:cart')
+
         invoice.status = Invoice.InvoiceStatus.CHECKOUT
         invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
         existing_account_address = Address.objects.filter(
@@ -225,6 +232,12 @@ class PaymentView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user)
+        
+        if not invoice.order_items.count():
+            messages.info(request, 
+                _("Please add to your cart")
+            )
+            return redirect('vendor:cart')
 
         credit_card_form = CreditCardForm(request.POST)
         if request.POST.get('same_as_shipping') == 'on':
@@ -269,7 +282,13 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user)
-
+        
+        if not invoice.order_items.count():
+            messages.info(request, 
+                _("Please add to your cart")
+            )
+            return redirect('vendor:cart')
+        
         processor = payment_processor(invoice)
         
         processor.get_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
