@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-12 18:38+0000\n"
+"POT-Creation-Date: 2020-11-12 19:27+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -321,6 +321,10 @@ msgstr "注文日"
 msgid "Currency"
 msgstr "通貨"
 
+#: models/invoice.py:67
+msgid "New Invoice"
+msgstr "新しい請求書"
+
 #: models/invoice.py:129 templates/vendor/checkout.html:163
 #: templates/vendor/invoice_history_detail.html:15
 #: templates/vendor/manage/invoice_detail.html:15
@@ -417,9 +421,21 @@ msgstr "カードの名前"
 msgid "Cost"
 msgstr "費用"
 
+#: models/price.py:16
+msgid "When should the price first become available?"
+msgstr "このオファーが利用可能になるのはいつですか？"
+
+#: models/price.py:17
+msgid "When should the price expire?"
+msgstr "価格はいつ期限切れになりますか？"
+
 #: models/price.py:18
 msgid "Priority"
 msgstr "優先度"
+
+#: models/price.py:18
+msgid "Higher number takes priority"
+msgstr "数値が大きいほど優先されます"
 
 #: models/receipt.py:23
 msgid "Auto Renew"
@@ -910,9 +926,6 @@ msgstr "配送先住所が更新されました"
 #~ msgid "Invoices"
 #~ msgstr "請求書"
 
-#~ msgid "New Invoice"
-#~ msgstr "新しい請求書"
-
 #, python-brace-format
 #~ msgid "{username} Invoice ({time})"
 #~ msgstr "{username}請求書（{time}）"
@@ -922,9 +935,6 @@ msgstr "配送先住所が更新されました"
 
 #~ msgid "Order Items"
 #~ msgstr "注文アイテム"
-
-#~ msgid "Higher number takes priority"
-#~ msgstr "数値が大きいほど優先されます"
 
 #~ msgid "Prices"
 #~ msgstr "価格"
