@@ -22,8 +22,8 @@ class TaxClassifier(models.Model):
         return self.name
 
     class Meta:
-        verbose_name = _("Product Classifier")
-        verbose_name_plural = _("Product Classifiers")
+        verbose_name = "Product Classifier"
+        verbose_name_plural = "Product Classifiers"
 
 
 #########

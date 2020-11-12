@@ -53,8 +53,8 @@ class Invoice(CreateUpdateModelBase):
 
 
     class Meta:
-        verbose_name = _("Invoice")
-        verbose_name_plural = _("Invoices")
+        verbose_name = "Invoice"
+        verbose_name_plural = "Invoices"
         ordering = ['-ordered_date', '-updated']             # TODO: [GK-2518] change to use ordered_date.  Invoice ordered_date needs to be updated on successful purchase by the PaymentProcessor.
 
         permissions = (
@@ -64,8 +64,11 @@ class Invoice(CreateUpdateModelBase):
 
     def __str__(self):
         if not self.profile.user:
-            return _("New Invoice")
-        return _("{username} Invoice ({time})").format(username=self.profile.user.username, time=self.created.strftime('%Y-%m-%d %H:%M'))
+            return "New Invoice"
+        return str(self.profile.user.username) + " Invoice (" + self.created.strftime('%Y-%m-%d %H:%M') + ")"
+
+    def get_invoice_display(self):
+        return _(f"{self.profile.user.username} Invoice ({self.created:%Y-%m-%d %H:%M})")
 
     def add_offer(self, offer, quantity=1):
         
@@ -129,8 +132,8 @@ class OrderItem(CreateUpdateModelBase):
     quantity = models.IntegerField(_("Quantity"), default=1)
 
     class Meta:
-        verbose_name = _("Order Item")
-        verbose_name_plural = _("Order Items")
+        verbose_name = "Order Item"
+        verbose_name_plural = "Order Items"
 
     def __str__(self):
         return "%s - %s" % (self.invoice.profile.user.username, self.offer.name)
