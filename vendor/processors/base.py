@@ -222,6 +222,7 @@ class PaymentProcessorBase(object):
         This is where the core of the payment processing happens.
         """
         # Gateway Transaction goes here...
+        self.transaction_submitted = True
         pass
             
     def free_payment(self):
