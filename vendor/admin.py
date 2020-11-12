@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib import admin
 
 from vendor.models import TaxClassifier, Offer, Price, CustomerProfile, \
-                    Invoice, OrderItem, Receipt, Wishlist, WishlistItem, Address
+                    Invoice, OrderItem, Receipt, Wishlist, WishlistItem, Address, Payment
 
 from vendor.config import VENDOR_PRODUCT_MODEL
 
@@ -102,6 +102,7 @@ admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(Wishlist, WishlistAdmin)
 admin.site.register(Address)
 admin.site.register(Receipt)
+admin.site.register(Payment)
 admin.site.register(OrderItem)
 
 
