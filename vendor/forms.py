@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import IntegerChoices
 from django.forms import inlineformset_factory
 from django.forms.widgets import SelectDateWidget
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from .config import VENDOR_PRODUCT_MODEL
 from .models import Address, Offer, OrderItem, Price
@@ -29,8 +29,8 @@ Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
         
 class PriceForm(forms.ModelForm):
-    start_date = forms.DateField(widget=SelectDateWidget())
-    end_date = forms.DateField(widget=SelectDateWidget())
+    start_date = forms.DateField(label=_("Start Date"), widget=SelectDateWidget())
+    end_date = forms.DateField(label=_("End Date"), widget=SelectDateWidget())
     class Meta:
         model = Price
         fields = ['cost', 'currency', 'start_date', 'end_date', 'priority']
@@ -46,9 +46,9 @@ class ProductForm(forms.ModelForm):
 class OfferForm(forms.ModelForm):
     # TODO: How to fileter per site?
     products = forms.ModelMultipleChoiceField(label=_("Available Products:"), required=True, queryset=Product.objects.filter(available=True))
-    start_date = forms.DateField(widget=SelectDateWidget())
-    end_date = forms.DateField(widget=SelectDateWidget())
-    term_start_date = forms.DateField(widget=SelectDateWidget())
+    start_date = forms.DateField(label=_("Start Date"), widget=SelectDateWidget())
+    end_date = forms.DateField(label=_("End Date"), widget=SelectDateWidget())
+    term_start_date = forms.DateField(label=_("Term Start Date"), widget=SelectDateWidget())
 
     class Meta:
         model = Offer
@@ -62,7 +62,7 @@ class OfferForm(forms.ModelForm):
             if len(product_names) == 1:
                 self.cleaned_data['name'] = product_names[0]
             else:
-                self.cleaned_data['name'] = "Bundle: " + ", ".join(product_names)
+                self.cleaned_data['name'] = _("Bundle: ") + ", ".join(product_names)
 
         if self.data['terms'] == TermType.SUBSCRIPTION and not cleaned_data['term_details']:
             self.add_error('term_details', _("Invalid term details for subscription"))
@@ -89,7 +89,7 @@ class AddressForm(forms.ModelForm):
 
 
 class AccountInformationForm(AddressForm):
-    email = forms.EmailField(label=_('email'), required=True)
+    email = forms.EmailField(label=_('Email'), required=True)
 
     class Meta:
         model = Address
@@ -227,9 +227,9 @@ class PaymentFrom(forms.Form):
 
 class CreditCardForm(PaymentFrom):
     full_name = forms.CharField(required=True, label=_("Card Holder Name"), max_length=80)
-    card_number = CreditCardField(placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)
-    expire_month = forms.ChoiceField(required=True, choices=[(x, x) for x in range(1, 13)])
-    expire_year = forms.ChoiceField(required=True, choices=[(x, x) for x in range(datetime.now().year, datetime.now().year + 15)])
+    card_number = CreditCardField(label=_("Card Number"), placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)
+    expire_month = forms.ChoiceField(required=True, label=_("Expiration Month"), choices=[(x, x) for x in range(1, 13)])
+    expire_year = forms.ChoiceField(required=True, label=_("Expiration Year"), choices=[(x, x) for x in range(datetime.now().year, datetime.now().year + 15)])
     cvv_number = forms.IntegerField(required=True, label=_("CVV Number"), max_value=9999, widget=forms.TextInput(attrs={'size': '4'}))
 
     def clean(self):

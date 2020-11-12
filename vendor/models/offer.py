@@ -10,7 +10,7 @@ from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext_lazy as _
 from iso4217 import Currency
 
 from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
@@ -31,10 +31,10 @@ class Offer(CreateUpdateModelBase):
     '''
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)                                # Used to track the product
     slug = AutoSlugField(populate_from='name', unique_with='site__id')                                               # SEO friendly 
-    site = models.ForeignKey(Site, on_delete=models.CASCADE, default=set_default_site_id, related_name="product_offers")                      # For multi-site support
+    site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="product_offers")                      # For multi-site support
     name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
-    start_date = models.DateTimeField(_("Start Date"), help_text="What date should this offer become available?")
-    end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text="Expiration Date?")
+    start_date = models.DateTimeField(_("Start Date"), help_text=_("What date should this offer become available?"))
+    end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text=_("Expiration Date?"))
     terms =  models.IntegerField(_("Terms"), default=0, choices=TermType.choices)
     term_details = models.JSONField(_("Term Details"), default=dict, blank=True, null=True)
     term_start_date = models.DateTimeField(_("Term Start Date"), help_text=_("When is this product available to use?"), blank=True, null=True) # Useful for Event Tickets or Pre-Orders
@@ -84,7 +84,7 @@ class Offer(CreateUpdateModelBase):
         if len(product_names) == 1:
             self.name = product_names[0]
         else:
-            self.name = "Bundle: " + ", ".join(product_names)
+            self.name = _("Bundle: ") + ", ".join(product_names)
 
     @property
     def description(self):
