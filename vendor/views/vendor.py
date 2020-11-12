@@ -52,6 +52,14 @@ def get_currency(invoice=None):
         return Currency[settings.DEFAULT_CURRENCY].value
     return invoice.get_currency_display()
 
+def check_offer_items_or_redirect(invoice, request):
+    
+    if invoice.offer_items.count() < 1:
+        messages.info(request, 
+            _("Please add to your cart")
+        )
+        redirect('vendor:cart')
+
 class CartView(TemplateView):
     '''
     View items in the cart
@@ -188,6 +196,9 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         account_form = form.save(commit=False)
 
         invoice = get_purchase_invoice(request.user)
+
+        check_offer_items_or_redirect(invoice, request)
+
         invoice.status = Invoice.InvoiceStatus.CHECKOUT
         invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
         existing_account_address = Address.objects.filter(
@@ -225,6 +236,8 @@ class PaymentView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user)
+        
+        check_offer_items_or_redirect(invoice, request)
 
         credit_card_form = CreditCardForm(request.POST)
         if request.POST.get('same_as_shipping') == 'on':
@@ -269,11 +282,9 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user)
-        if invoice.offer_items.count() < 1:
-            messages.info(request, 
-            _("Please add to your cart before placing an order")
-        )
-            redirect('vendor:cart')
+        
+        check_offer_items_or_redirect(invoice, request)
+        
         processor = payment_processor(invoice)
         
         processor.get_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
