@@ -15,7 +15,7 @@
             1
           </div>
           <div class="font-weight-bold text-left text-white border-0 py-3 ml-3">
-            Info
+            {% trans "Info" %}
           </div>
           {% if request.resolver_match.url_name != 'checkout-account' %}
           <div class='d-flex ml-auto mr-3 align-items-center'>
@@ -48,7 +48,7 @@
             2
           </div>
           <div class="font-weight-bold text-left text-white rounded-0 border-0 py-3 ml-3">
-            Billing
+            {% trans "Billing" %}
           </div>
           {% if request.resolver_match.url_name == 'checkout-review' %}
           <div class='d-flex ml-auto mr-3 align-items-center'>
@@ -174,7 +174,7 @@
       <div class="input-group">
         <input type="text" class="form-control" placeholder="Promo code">
         <div class="input-group-append">
-          <button type="submit" class="btn btn-secondary">Redeem</button>
+          <button type="submit" class="btn btn-secondary">{% trans "Redeem" %}</button>
         </div>
       </div>
     </form>
