@@ -10,7 +10,7 @@ from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ugettext_lazy as _
 from iso4217 import Currency
 
 from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY

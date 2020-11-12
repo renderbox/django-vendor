@@ -7,7 +7,7 @@ from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
 from django.dispatch import receiver
 from vendor.models.utils import set_default_site_id
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ugettext_lazy as _
 
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES
@@ -63,7 +63,7 @@ class Invoice(CreateUpdateModelBase):
         )
 
     def __str__(self):
-        return _(u"{username} Invoice ({time})").format(username=self.profile.user.username, time=self.created.strftime('%Y-%m-%d %H:%M'))
+        return _("{username} Invoice ({time})").format(username=self.profile.user.username, time=self.created.strftime('%Y-%m-%d %H:%M'))
 
     def add_offer(self, offer, quantity=1):
         
