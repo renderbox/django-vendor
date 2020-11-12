@@ -10,7 +10,7 @@ from vendor.config import DEFAULT_CURRENCY
 #########
 
 class Price(models.Model):
-    offer = models.ForeignKey("vendor.Offer", verbose_name="Offer", on_delete=models.CASCADE, related_name="prices")
+    offer = models.ForeignKey("vendor.Offer", verbose_name=_("Offer"), on_delete=models.CASCADE, related_name="prices")
     cost = models.FloatField(_("Cost"), blank=True, null=True)
     currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY)
     start_date = models.DateTimeField(_("Start Date"), help_text=_("When should the price first become available?"))

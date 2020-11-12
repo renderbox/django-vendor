@@ -9,7 +9,7 @@ from .base import CreateUpdateModelBase
 ###########
 
 class Wishlist(models.Model):
-    profile = models.ForeignKey("vendor.CustomerProfile", verbose_name="Purchase Profile", null=True, on_delete=models.CASCADE, related_name="wishlists")
+    profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Purchase Profile"), null=True, on_delete=models.CASCADE, related_name="wishlists")
     name = models.CharField(_("Name"), max_length=100, blank=False)
 
     class Meta:
@@ -27,8 +27,8 @@ class WishlistItem(CreateUpdateModelBase):
     '''
     
     '''
-    wishlist = models.ForeignKey(Wishlist, verbose_name="Wishlist", on_delete=models.CASCADE, related_name="wishlist_items")
-    offer = models.ForeignKey("vendor.Offer", verbose_name="Offer", on_delete=models.CASCADE, related_name="wishlist_items")
+    wishlist = models.ForeignKey(Wishlist, verbose_name=_("Wishlist"), on_delete=models.CASCADE, related_name="wishlist_items")
+    offer = models.ForeignKey("vendor.Offer", verbose_name=_("Offer"), on_delete=models.CASCADE, related_name="wishlist_items")
 
     class Meta:
         verbose_name = "Wishlist Item"

@@ -31,7 +31,7 @@ class Offer(CreateUpdateModelBase):
     '''
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)                                # Used to track the product
     slug = AutoSlugField(populate_from='name', unique_with='site__id')                                               # SEO friendly 
-    site = models.ForeignKey(Site, verbose_name="Site", on_delete=models.CASCADE, default=set_default_site_id, related_name="product_offers")                      # For multi-site support
+    site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="product_offers")                      # For multi-site support
     name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
     start_date = models.DateTimeField(_("Start Date"), help_text=_("What date should this offer become available?"))
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text=_("Expiration Date?"))

@@ -32,9 +32,9 @@ class Invoice(CreateUpdateModelBase):
         COMPLETE = 50, _("Complete")    # Payment Processor Completed Transaction.
         REFUNDED = 60, _("Refunded")    # Invoice Refunded to client. 
 
-    uuid = models.UUIDField("UUID", default=uuid.uuid4, editable=False, unique=True)
-    profile = models.ForeignKey("vendor.CustomerProfile", verbose_name="Customer Profile", null=True, on_delete=models.CASCADE, related_name="invoices")
-    site = models.ForeignKey(Site, verbose_name="Site", on_delete=models.CASCADE, default=set_default_site_id, related_name="invoices")                      # For multi-site support
+    uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
+    profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
+    site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="invoices")                      # For multi-site support
     status = models.IntegerField(_("Status"), choices=InvoiceStatus.choices, default=InvoiceStatus.CART)
     customer_notes = models.JSONField(_("Customer Notes"), default=dict, blank=True, null=True)
     vendor_notes = models.JSONField(_("Vendor Notes"), default=dict, blank=True, null=True)
@@ -44,7 +44,7 @@ class Invoice(CreateUpdateModelBase):
     shipping = models.FloatField(blank=True, null=True)                         # Set on checkout
     total = models.FloatField(blank=True, null=True)                            # Set on purchase
     currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY)      # User's default currency
-    shipping_address = models.ForeignKey("vendor.Address", verbose_name="Shipping Address", on_delete=models.CASCADE, blank=True, null=True)
+    shipping_address = models.ForeignKey("vendor.Address", verbose_name=_("Shipping Address"), on_delete=models.CASCADE, blank=True, null=True)
     # paid = models.BooleanField(_("Paid"))                 # May be Useful for quick filtering on invoices that are outstanding
     # settle_date = models.DateTimeField(_("Settle Date"))
 
@@ -127,8 +127,8 @@ class OrderItem(CreateUpdateModelBase):
     '''
     A link for each item to a user after it's been purchased
     '''
-    invoice = models.ForeignKey("vendor.Invoice", verbose_name="Invoice", on_delete=models.CASCADE, related_name="order_items")
-    offer = models.ForeignKey("vendor.Offer", verbose_name="Offer", on_delete=models.CASCADE, related_name="order_items")
+    invoice = models.ForeignKey("vendor.Invoice", verbose_name=_("Invoice"), on_delete=models.CASCADE, related_name="order_items")
+    offer = models.ForeignKey("vendor.Offer", verbose_name=_("Offer"), on_delete=models.CASCADE, related_name="order_items")
     quantity = models.IntegerField(_("Quantity"), default=1)
 
     class Meta:
