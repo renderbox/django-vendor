@@ -7,7 +7,7 @@ from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
 from django.dispatch import receiver
 from vendor.models.utils import set_default_site_id
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES
@@ -34,7 +34,7 @@ class Invoice(CreateUpdateModelBase):
 
     uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
     profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
-    site = models.ForeignKey(Site, on_delete=models.CASCADE, default=set_default_site_id, related_name="invoices")                      # For multi-site support
+    site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="invoices")                      # For multi-site support
     status = models.IntegerField(_("Status"), choices=InvoiceStatus.choices, default=InvoiceStatus.CART)
     customer_notes = models.JSONField(_("Customer Notes"), default=dict, blank=True, null=True)
     vendor_notes = models.JSONField(_("Vendor Notes"), default=dict, blank=True, null=True)
@@ -64,8 +64,8 @@ class Invoice(CreateUpdateModelBase):
 
     def __str__(self):
         if not self.profile.user:
-            return "New Invoice"
-        return f"{self.profile.user.username} Invoice {self.created:%Y-%m-%d %H:%M}" 
+            return _("New Invoice")
+        return _("{username} Invoice ({time})").format(username=self.profile.user.username, time=self.created.strftime('%Y-%m-%d %H:%M'))
 
     def add_offer(self, offer, quantity=1):
         
