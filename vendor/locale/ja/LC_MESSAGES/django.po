@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-12 20:14+0000\n"
+"POT-Creation-Date: 2020-11-12 20:31+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -344,8 +344,8 @@ msgid "Shipping Address"
 msgstr "お届け先の住所"
 
 #: models/invoice.py:71
-msgid " Invoice "
-msgstr "請求書"
+msgid "{self.profile.user.username} Invoice ({self.created:'%Y-%m-%d %H:%M'})"
+msgstr ""
 
 #: models/invoice.py:130 models/payment.py:16
 #: templates/vendor/payment_detail.html:6
@@ -633,6 +633,7 @@ msgstr "項目"
 
 #: templates/vendor/invoice_history_detail.html:14
 #: templates/vendor/manage/invoice_detail.html:14
+#: templates/vendor/manage/offer.html:22
 #: templates/vendor/purchase_detail.html:27
 #: templates/vendor/refund_list.html:16
 msgid "Price"
@@ -698,7 +699,7 @@ msgstr "管理者：注文の詳細"
 msgid "Cart is Empty"
 msgstr "カートが空です"
 
-#: templates/vendor/manage/offer.html:27
+#: templates/vendor/manage/offer.html:26
 msgid "Save Offer"
 msgstr "オファーを保存"
 
@@ -731,7 +732,7 @@ msgstr "オファーを追加"
 msgid "Product"
 msgstr "製品"
 
-#: templates/vendor/manage/product.html:23
+#: templates/vendor/manage/product.html:22
 msgid "Save Product"
 msgstr "製品を保存する"
 
@@ -920,6 +921,9 @@ msgstr "サブスクリプションがキャンセルされました"
 #: views/vendor.py:382
 msgid "Shipping Address Updated"
 msgstr "配送先住所が更新されました"
+
+#~ msgid " Invoice "
+#~ msgstr "請求書"
 
 #~ msgid "New Invoice"
 #~ msgstr "新しい請求書"

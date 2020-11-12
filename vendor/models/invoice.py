@@ -68,7 +68,7 @@ class Invoice(CreateUpdateModelBase):
         return str(self.profile.user.username) + " Invoice (" + self.created.strftime('%Y-%m-%d %H:%M') + ")"
 
     def get_invoice_display(self):
-        return str(self.profile.user.username) + _(" Invoice ") + "(" + self.created.strftime('%Y-%m-%d %H:%M') + ")"
+        return _(f"{self.profile.user.username} Invoice ({self.created:'%Y-%m-%d %H:%M'})")
 
     def add_offer(self, offer, quantity=1):
         

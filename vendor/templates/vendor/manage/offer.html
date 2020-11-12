@@ -19,8 +19,7 @@
                     {% csrf_token %}
                     {{ form.media }}
                     {{ form.as_p }}
-                    <!-- TODO: Add Transalte tag -->
-                    <h4>Price</h4>
+                    <h4>{% trans 'Price' %}</h4>
                     <table>
                         {{ formset.as_p }}
                     </table>
