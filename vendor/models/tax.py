@@ -14,16 +14,16 @@ class TaxClassifier(models.Model):
     These classifiers will retain certian provider specific codes that are used
     to help calculate the tax liability in the sale.
     '''
-    name = models.CharField(_("Name"), max_length=80, blank=True)
-    taxable = models.BooleanField(_("Taxable"))
+    name = models.CharField("Name", max_length=80, blank=True)
+    taxable = models.BooleanField("Taxable")
     # info = models.ManyToManyField("vendor.TaxInfo")                 # Which taxes is this subject to and where.  This is for a more complex tax setup
 
     def __str__(self):
         return self.name
 
     class Meta:
-        verbose_name = _("Product Classifier")
-        verbose_name_plural = _("Product Classifiers")
+        verbose_name = "Product Classifier"
+        verbose_name_plural = "Product Classifiers"
 
 
 #########

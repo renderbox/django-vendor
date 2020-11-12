@@ -16,22 +16,22 @@ class Receipt(CreateUpdateModelBase):
     A link for all the purchases a user has made. Contains subscription start and end date.
     This is generated for each item a user purchases so it can be checked in other code.
     '''
-    profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Purchase Profile"), null=True, on_delete=models.CASCADE, related_name="receipts")
-    order_item = models.ForeignKey('vendor.OrderItem', verbose_name=_("Order Item"), on_delete=models.CASCADE, related_name="receipts")
-    start_date = models.DateTimeField(_("Start Date"), blank=True, null=True)
-    end_date = models.DateTimeField(_("End Date"), blank=True, null=True)
-    auto_renew = models.BooleanField(_("Auto Renew"), default=False)        # For subscriptions
-    vendor_notes = models.JSONField(_("Vendor Notes"), default=dict)
-    transaction = models.CharField(_("Transaction"), max_length=80)
-    status = models.IntegerField(_("Status"), choices=PurchaseStatus.choices, default=0)       # Fulfilled, Refund
-    meta = models.JSONField(_("Meta"), default=dict)
+    profile = models.ForeignKey("vendor.CustomerProfile", verbose_name="Purchase Profile", null=True, on_delete=models.CASCADE, related_name="receipts")
+    order_item = models.ForeignKey('vendor.OrderItem', verbose_name="Order Item", on_delete=models.CASCADE, related_name="receipts")
+    start_date = models.DateTimeField("Start Date", blank=True, null=True)
+    end_date = models.DateTimeField("End Date", blank=True, null=True)
+    auto_renew = models.BooleanField("Auto Renew", default=False)        # For subscriptions
+    vendor_notes = models.JSONField("Vendor Notes", default=dict)
+    transaction = models.CharField("Transaction", max_length=80)
+    status = models.IntegerField("Status", choices=PurchaseStatus.choices, default=0)       # Fulfilled, Refund
+    meta = models.JSONField("Meta", default=dict)
     # TODO: Add final purchase price to the reciept for tracking.
     # TODO: Add Site field for easier tracking?
     # the product connection comes from the ProductModelBase to not trigger a migration on subclassing PMB
 
     class Meta:
-        verbose_name = _("Receipt")
-        verbose_name_plural = _("Receipts")
+        verbose_name = "Receipt"
+        verbose_name_plural = "Receipts"
 
     def __str__(self):
         return "%s - %s - %s" % (self.profile.user.username, self.order_item.offer.name, self.created.strftime('%Y-%m-%d %H:%M'))

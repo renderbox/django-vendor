@@ -32,19 +32,19 @@ class Invoice(CreateUpdateModelBase):
         COMPLETE = 50, _("Complete")    # Payment Processor Completed Transaction.
         REFUNDED = 60, _("Refunded")    # Invoice Refunded to client. 
 
-    uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
-    profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
-    site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="invoices")                      # For multi-site support
-    status = models.IntegerField(_("Status"), choices=InvoiceStatus.choices, default=InvoiceStatus.CART)
-    customer_notes = models.JSONField(_("Customer Notes"), default=dict, blank=True, null=True)
-    vendor_notes = models.JSONField(_("Vendor Notes"), default=dict, blank=True, null=True)
-    ordered_date = models.DateTimeField(_("Ordered Date"), blank=True, null=True)               # When was the purchase made?
+    uuid = models.UUIDField("UUID", default=uuid.uuid4, editable=False, unique=True)
+    profile = models.ForeignKey("vendor.CustomerProfile", verbose_name="Customer Profile", null=True, on_delete=models.CASCADE, related_name="invoices")
+    site = models.ForeignKey(Site, verbose_name="Site", on_delete=models.CASCADE, default=set_default_site_id, related_name="invoices")                      # For multi-site support
+    status = models.IntegerField("Status", choices=InvoiceStatus.choices, default=InvoiceStatus.CART)
+    customer_notes = models.JSONField("Customer Notes", default=dict, blank=True, null=True)
+    vendor_notes = models.JSONField("Vendor Notes", default=dict, blank=True, null=True)
+    ordered_date = models.DateTimeField("Ordered Date", blank=True, null=True)               # When was the purchase made?
     subtotal = models.FloatField(default=0.0)                                   
     tax = models.FloatField(blank=True, null=True)                              # Set on checkout
     shipping = models.FloatField(blank=True, null=True)                         # Set on checkout
     total = models.FloatField(blank=True, null=True)                            # Set on purchase
-    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY)      # User's default currency
-    shipping_address = models.ForeignKey("vendor.Address", verbose_name=_("Shipping Address"), on_delete=models.CASCADE, blank=True, null=True)
+    currency = models.CharField("Currency", max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY)      # User's default currency
+    shipping_address = models.ForeignKey("vendor.Address", verbose_name="Shipping Address", on_delete=models.CASCADE, blank=True, null=True)
     # paid = models.BooleanField(_("Paid"))                 # May be Useful for quick filtering on invoices that are outstanding
     # settle_date = models.DateTimeField(_("Settle Date"))
 
@@ -53,8 +53,8 @@ class Invoice(CreateUpdateModelBase):
 
 
     class Meta:
-        verbose_name = _("Invoice")
-        verbose_name_plural = _("Invoices")
+        verbose_name = "Invoice"
+        verbose_name_plural = "Invoices"
         ordering = ['-ordered_date', '-updated']             # TODO: [GK-2518] change to use ordered_date.  Invoice ordered_date needs to be updated on successful purchase by the PaymentProcessor.
 
         permissions = (
@@ -64,8 +64,8 @@ class Invoice(CreateUpdateModelBase):
 
     def __str__(self):
         if not self.profile.user:
-            return _("New Invoice")
-        return _("{username} Invoice ({time})").format(username=self.profile.user.username, time=self.created.strftime('%Y-%m-%d %H:%M'))
+            return "New Invoice"
+        return "{username} Invoice ({time})".format(username=self.profile.user.username, time=self.created.strftime('%Y-%m-%d %H:%M'))
 
     def add_offer(self, offer, quantity=1):
         
@@ -124,13 +124,13 @@ class OrderItem(CreateUpdateModelBase):
     '''
     A link for each item to a user after it's been purchased
     '''
-    invoice = models.ForeignKey("vendor.Invoice", verbose_name=_("Invoice"), on_delete=models.CASCADE, related_name="order_items")
-    offer = models.ForeignKey("vendor.Offer", verbose_name=_("Offer"), on_delete=models.CASCADE, related_name="order_items")
-    quantity = models.IntegerField(_("Quantity"), default=1)
+    invoice = models.ForeignKey("vendor.Invoice", verbose_name="Invoice", on_delete=models.CASCADE, related_name="order_items")
+    offer = models.ForeignKey("vendor.Offer", verbose_name="Offer", on_delete=models.CASCADE, related_name="order_items")
+    quantity = models.IntegerField("Quantity", default=1)
 
     class Meta:
-        verbose_name = _("Order Item")
-        verbose_name_plural = _("Order Items")
+        verbose_name = "Order Item"
+        verbose_name_plural = "Order Items"
 
     def __str__(self):
         return "%s - %s" % (self.invoice.profile.user.username, self.offer.name)

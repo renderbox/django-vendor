@@ -27,12 +27,12 @@ class WishlistItem(CreateUpdateModelBase):
     '''
     
     '''
-    wishlist = models.ForeignKey(Wishlist, verbose_name=_("Wishlist"), on_delete=models.CASCADE, related_name="wishlist_items")
-    offer = models.ForeignKey("vendor.Offer", verbose_name=_("Offer"), on_delete=models.CASCADE, related_name="wishlist_items")
+    wishlist = models.ForeignKey(Wishlist, verbose_name="Wishlist", on_delete=models.CASCADE, related_name="wishlist_items")
+    offer = models.ForeignKey("vendor.Offer", verbose_name="Offer", on_delete=models.CASCADE, related_name="wishlist_items")
 
     class Meta:
-        verbose_name = _("Wishlist Item")
-        verbose_name_plural = _("Wishlist Items")
+        verbose_name = "Wishlist Item"
+        verbose_name_plural = "Wishlist Items"
         # TODO: Unique Name Per User
 
     def __str__(self):
