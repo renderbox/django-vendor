@@ -21,24 +21,21 @@ class CustomerProfile(CreateUpdateModelBase):
     Additional customer information related to purchasing.
     This is what the Invoices are attached to.  This is abstracted from the user model directly do it can be mre flexible in the future.
     '''
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_(
-        "User"), null=True, on_delete=models.SET_NULL, related_name="customer_profile")
-    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES,
-                                default=DEFAULT_CURRENCY)      # User's default currency
-    site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id,
-                             related_name="customer_profile")                      # For multi-site support
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="User", null=True, on_delete=models.SET_NULL, related_name="customer_profile")
+    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES,default=DEFAULT_CURRENCY)      # User's default currency
+    site = models.ForeignKey(Site, verbose_name="Site", on_delete=models.CASCADE, default=set_default_site_id, related_name="customer_profile")                      # For multi-site support
 
     objects = models.Manager()
     on_site = CurrentSiteManager()
 
     class Meta:
-        verbose_name = _("Customer Profile")
-        verbose_name_plural = _("Customer Profiles")
+        verbose_name = "Customer Profile"
+        verbose_name_plural = "Customer Profiles"
 
     def __str__(self):
         if not self.user:
-            return _("New Customer Profile")
-        return _("{username} Customer Profile").format(username=self.user.username)
+            return "New Customer Profile"
+        return "{username} Customer Profile".format(username=self.user.username)
 
     def revert_invoice_to_cart(self):
         cart = self.invoices.get(status=Invoice.InvoiceStatus.CHECKOUT)
