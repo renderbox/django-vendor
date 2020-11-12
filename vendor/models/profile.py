@@ -37,6 +37,9 @@ class CustomerProfile(CreateUpdateModelBase):
             return "New Customer Profile"
         return "{username} Customer Profile".format(username=self.user.username)
 
+    def get_customer_profile_display(self):
+        return str(self.user.username) + _("Customer Profile")
+
     def revert_invoice_to_cart(self):
         cart = self.invoices.get(status=Invoice.InvoiceStatus.CHECKOUT)
         cart.status = Invoice.InvoiceStatus.CART
