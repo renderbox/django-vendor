@@ -52,7 +52,7 @@ class OfferForm(forms.ModelForm):
 
     class Meta:
         model = Offer
-        fields = ['name', 'start_date', 'end_date', 'terms', 'term_details', 'term_start_date', 'available', 'offer_description']
+        fields = ['name', 'start_date', 'end_date', 'terms', 'term_details', 'term_start_date', 'available', 'offer_description', 'allow_multiple']
 
     def clean(self):
         cleaned_data = super().clean()

@@ -36,7 +36,9 @@ class CustomerProfile(CreateUpdateModelBase):
         verbose_name_plural = _("Customer Profiles")
 
     def __str__(self):
-        return "{} Customer Profile".format(self.user.username)
+        if not self.user:
+            return "New Customer Profile"
+        return f"{self.user.username} - Customer Profile"
 
     def revert_invoice_to_cart(self):
         cart = self.invoices.get(status=Invoice.InvoiceStatus.CHECKOUT)
