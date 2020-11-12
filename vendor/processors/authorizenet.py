@@ -403,7 +403,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if self.transaction_submitted:
             receipt.meta['subscription_id'] = self.transaction_response.subscriptionId.pyval
             
-        receip.save()
+        receipt.save()
 
 
     def update_subscription_payment(self, subscription_id):
