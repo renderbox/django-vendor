@@ -54,7 +54,7 @@ def get_currency(invoice=None):
 
 def check_offer_items_or_redirect(invoice, request):
     
-    if invoice.offer_items.count() < 1:
+    if invoice.order_items.count() < 1:
         messages.info(request, 
             _("Please add to your cart")
         )
