@@ -64,8 +64,8 @@ class Invoice(CreateUpdateModelBase):
 
     def __str__(self):
         if not self.profile.user:
-            return "New Invoice"
-        return "{username} Invoice ({time})".format(username=self.profile.user.username, time=self.created.strftime('%Y-%m-%d %H:%M'))
+            return _("New Invoice")
+        return str(self.profile.user.username) + " Invoice (" + self.created.strftime('%Y-%m-%d %H:%M') + ")"
 
     def add_offer(self, offer, quantity=1):
         
