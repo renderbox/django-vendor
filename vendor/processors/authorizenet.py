@@ -394,10 +394,17 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.controller.execute()
         # Getting the response
         response = self.controller.getresponse()
-
+        
         self.check_subscription_response(response)
+
+        receipt = subscription.receipts.get(transaction=self.payment.transaction)
+        receipt.meta = {'raw': str({**self.transaction_message, **response})}
+        
         if self.transaction_submitted:
-            self.update_subscription_receipt(subscription, self.transaction_response.subscriptionId.pyval, PurchaseStatus.COMPLETE)
+            receipt.meta['subscription_id'] = self.transaction_response.subscriptionId.pyval
+            
+        receipt.save()
+
 
     def update_subscription_payment(self, subscription_id):
 
