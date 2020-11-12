@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-12 03:01+0000\n"
+"POT-Creation-Date: 2020-11-12 05:29+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -343,7 +343,7 @@ msgstr "通貨"
 msgid "Shipping Address"
 msgstr "お届け先の住所"
 
-#: models/invoice.py:56 models/invoice.py:125 models/payment.py:16
+#: models/invoice.py:56 models/invoice.py:127 models/payment.py:16
 #: templates/vendor/payment_detail.html:6
 msgid "Invoice"
 msgstr "請求書"
@@ -352,18 +352,22 @@ msgstr "請求書"
 msgid "Invoices"
 msgstr "請求書"
 
-#: models/invoice.py:66
+#: models/invoice.py:67
+msgid "New Invoice"
+msgstr "新しい請求書"
+
+#: models/invoice.py:68
 #, python-brace-format
 msgid "{username} Invoice ({time})"
 msgstr "{username}請求書（{time}）"
 
-#: models/invoice.py:126 models/offer.py:51 models/price.py:13
+#: models/invoice.py:128 models/offer.py:51 models/price.py:13
 #: models/wishlist.py:31 templates/vendor/manage/offer.html:9
 #: templates/vendor/manage/offer.html:15
 msgid "Offer"
 msgstr "提供"
 
-#: models/invoice.py:127 templates/vendor/checkout.html:163
+#: models/invoice.py:129 templates/vendor/checkout.html:163
 #: templates/vendor/invoice_history_detail.html:15
 #: templates/vendor/manage/invoice_detail.html:15
 #: templates/vendor/orderitem_list.html:19
@@ -373,11 +377,11 @@ msgstr "提供"
 msgid "Quantity"
 msgstr "量"
 
-#: models/invoice.py:130 models/receipt.py:20
+#: models/invoice.py:132 models/receipt.py:20
 msgid "Order Item"
 msgstr "注文アイテム"
 
-#: models/invoice.py:131
+#: models/invoice.py:133
 msgid "Order Items"
 msgstr "注文アイテム"
 
@@ -508,7 +512,11 @@ msgstr "ユーザー"
 msgid "Customer Profiles"
 msgstr "顧客プロファイル"
 
-#: models/profile.py:39
+#: models/profile.py:40
+msgid "New Customer Profile"
+msgstr "新しい顧客プロファイル"
+
+#: models/profile.py:41
 #, python-brace-format
 msgid "{username} Customer Profile"
 msgstr "{username}顧客プロファイル"
@@ -569,9 +577,17 @@ msgstr "更新"
 msgid "SECURE CHECKOUT"
 msgstr "安全なチェックアウト"
 
+#: templates/vendor/checkout.html:18
+msgid "Info"
+msgstr "情報"
+
 #: templates/vendor/checkout.html:37 templates/vendor/checkout.html:82
 msgid "Continue"
 msgstr "継続する"
+
+#: templates/vendor/checkout.html:51
+msgid "Billing"
+msgstr "請求"
 
 #: templates/vendor/checkout.html:78 templates/vendor/checkout.html:137
 #: templates/vendor/payment_summary.html:41
