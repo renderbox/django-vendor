@@ -46,7 +46,7 @@ class Address(models.Model):
         Address(): Returns an instance of the Address model
     """
     name = models.CharField(_("Address Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
-    profile = models.ForeignKey(CustomerProfile, verbose_name="Customer Profile", null=True, on_delete=models.CASCADE, related_name="addresses")
+    profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="addresses")
     first_name = models.CharField(_("First Name"), max_length=150, blank=True)
     last_name = models.CharField(_("Last Name"), max_length=150, blank=True)
     address_1 = models.CharField(_("Address 1"), max_length=40, blank=False)
