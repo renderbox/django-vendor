@@ -99,7 +99,7 @@ class AddToCartView(View):
     '''
 
     def post(self, request, *args, **kwargs):
-        offer = Offer.objects.get(slug=self.kwargs["slug"])
+        offer = Offer.on_site.get(slug=self.kwargs["slug"])
         if request.user.is_anonymous:
             offer_key = str(offer.pk)
             session_cart = get_or_create_session_cart(request.session)
@@ -138,7 +138,7 @@ class AddToCartView(View):
 class RemoveFromCartView(View):
     
     def post(self, request, *args, **kwargs):
-        offer = Offer.objects.get(slug=self.kwargs["slug"])
+        offer = Offer.on_site.get(slug=self.kwargs["slug"])
         if request.user.is_anonymous:
             offer_key = str(offer.pk)
             session_cart = get_or_create_session_cart(request.session)
