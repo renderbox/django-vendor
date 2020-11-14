@@ -260,6 +260,14 @@ class CreditCardForm(PaymentFrom):
 
         return expire_year
     
+    def clean_cvv_number(self):
+        cvv_number = self.cleaned_data.get('cvv_number')
+
+        if not cvv_number.isdigit():
+            raise forms.ValidationError(_("CVV must be all digits"))
+
+        return cvv_number
+    
 
 
     def expiration_date_valid(self, expire_month, expire_year):
