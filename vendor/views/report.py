@@ -65,8 +65,9 @@ class CSVStreamRowView(BaseListView):
         return super().get_queryset()
     
     def get_row_data(self):
-        rows = (["Row {}".format(idx), str(idx)] for idx in range(500))
-        return rows
+        header = [["ROW_NAME", "ROW_COUNT"]]  # Has to be a list inside an iterable (another list) for the chain to work.
+        rows = (["Row {}".format(idx), str(idx)] for idx in range(500))     # Dummy data to show that its working.
+        return chain(header, rows)
 
     def get(self, request, *args, **kwargs):
         rows = self.get_row_data()
@@ -90,9 +91,9 @@ class RecieptListCSV(CSVStreamRowView):
 
     def get_row_data(self):
         object_list = self.get_queryset()
-        header = ["RECIEPT_ID", "CREATED_TIME(ISO)", "USERNAME", "INVOICE_ID", "ORDER_ITEM", "OFFER_ID", "QUANTITY", "TRANSACTION_ID", "STATUS"]
+        header = [["RECIEPT_ID", "CREATED_TIME(ISO)", "USERNAME", "INVOICE_ID", "ORDER_ITEM", "OFFER_ID", "QUANTITY", "TRANSACTION_ID", "STATUS"]]  # Has to be a list inside an iterable (another list) for the chain to work.
         rows = [[str(obj.pk), obj.created.isoformat(), obj.profile.user.username, obj.order_item.invoice.pk, obj.order_item.offer, obj.order_item.pk, obj.order_item.quantity, obj.transaction, obj.get_status_display()] for obj in object_list]
-        return chain([header], rows)
+        return chain(header, rows)
 
  
 class InvoiceListCSV(CSVStreamRowView):
@@ -105,6 +106,6 @@ class InvoiceListCSV(CSVStreamRowView):
     
     def get_row_data(self):
         object_list = self.get_queryset()
-        header = ["INVOICE_ID", "CREATED_TIME(ISO)", "USERNAME", "CURRENCY", "TOTAL"]
+        header = [["INVOICE_ID", "CREATED_TIME(ISO)", "USERNAME", "CURRENCY", "TOTAL"]]  # Has to be a list inside an iterable (another list) for the chain to work.
         rows = ([str(obj.pk), obj.created.isoformat(), str(obj.profile.user.username), obj.currency, obj.total] for obj in object_list)
-        return chain([header], rows)
+        return chain(header, rows)
