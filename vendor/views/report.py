@@ -1,4 +1,5 @@
 import csv
+from itertools import chain
 
 from django.http import StreamingHttpResponse
 from django.utils.timezone import localtime
@@ -89,9 +90,9 @@ class RecieptListCSV(CSVStreamRowView):
 
     def get_row_data(self):
         object_list = self.get_queryset()
-        # header = ["RECIEPT_ID", "CREATED_TIME(ISO)", "USERNAME", "INVOICE_ID", "ORDER_ITEM", "OFFER_ID", "QUANTITY", "TRANSACTION_ID", "STATUS"]
+        header = ["RECIEPT_ID", "CREATED_TIME(ISO)", "USERNAME", "INVOICE_ID", "ORDER_ITEM", "OFFER_ID", "QUANTITY", "TRANSACTION_ID", "STATUS"]
         rows = [[str(obj.pk), obj.created.isoformat(), obj.profile.user.username, obj.order_item.invoice.pk, obj.order_item.offer, obj.order_item.pk, obj.order_item.quantity, obj.transaction, obj.get_status_display()] for obj in object_list]
-        return rows
+        return chain([header], rows)
 
  
 class InvoiceListCSV(CSVStreamRowView):
@@ -104,6 +105,6 @@ class InvoiceListCSV(CSVStreamRowView):
     
     def get_row_data(self):
         object_list = self.get_queryset()
-        # header = ["INVOICE_ID", "CREATED_TIME(ISO)", "USERNAME", "CURRENCY", "TOTAL"]
+        header = ["INVOICE_ID", "CREATED_TIME(ISO)", "USERNAME", "CURRENCY", "TOTAL"]
         rows = ([str(obj.pk), obj.created.isoformat(), str(obj.profile.user.username), obj.currency, obj.total] for obj in object_list)
-        return rows
+        return chain([header], rows)
