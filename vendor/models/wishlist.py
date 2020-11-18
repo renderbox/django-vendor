@@ -1,6 +1,6 @@
 
 from django.db import models
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from .base import CreateUpdateModelBase
 
@@ -13,8 +13,8 @@ class Wishlist(models.Model):
     name = models.CharField(_("Name"), max_length=100, blank=False)
 
     class Meta:
-        verbose_name = _("Wishlist")
-        verbose_name_plural = _("Wishlists")
+        verbose_name = "Wishlist"
+        verbose_name_plural = "Wishlists"
 
     def __str__(self):
         return self.name
@@ -31,8 +31,8 @@ class WishlistItem(CreateUpdateModelBase):
     offer = models.ForeignKey("vendor.Offer", verbose_name=_("Offer"), on_delete=models.CASCADE, related_name="wishlist_items")
 
     class Meta:
-        verbose_name = _("Wishlist Item")
-        verbose_name_plural = _("Wishlist Items")
+        verbose_name = "Wishlist Item"
+        verbose_name_plural = "Wishlist Items"
         # TODO: Unique Name Per User
 
     def __str__(self):

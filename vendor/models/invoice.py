@@ -1,18 +1,21 @@
 import uuid
-from allauth.account.signals import user_logged_in
 
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
 from django.dispatch import receiver
+from django.utils.translation import ugettext_lazy as _
+from django.urls import reverse
+
+from allauth.account.signals import user_logged_in
+
 from vendor.models.utils import set_default_site_id
-from django.utils.translation import ugettext as _
+from vendor.config import DEFAULT_CURRENCY
 
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES
 from .utils import set_default_site_id
-from vendor.config import DEFAULT_CURRENCY
 from .offer import Offer
 
 #####################
@@ -33,8 +36,8 @@ class Invoice(CreateUpdateModelBase):
         REFUNDED = 60, _("Refunded")    # Invoice Refunded to client. 
 
     uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
-    profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")
-    site = models.ForeignKey(Site, on_delete=models.CASCADE, default=set_default_site_id, related_name="invoices")                      # For multi-site support
+    profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")     # TODO: [GK-3029] remove null=True.  This should not be allowed.
+    site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="invoices")                      # For multi-site support
     status = models.IntegerField(_("Status"), choices=InvoiceStatus.choices, default=InvoiceStatus.CART)
     customer_notes = models.JSONField(_("Customer Notes"), default=dict, blank=True, null=True)
     vendor_notes = models.JSONField(_("Vendor Notes"), default=dict, blank=True, null=True)
@@ -51,10 +54,9 @@ class Invoice(CreateUpdateModelBase):
     objects = models.Manager()
     on_site = CurrentSiteManager()
 
-
     class Meta:
-        verbose_name = _("Invoice")
-        verbose_name_plural = _("Invoices")
+        verbose_name = "Invoice"
+        verbose_name_plural = "Invoices"
         ordering = ['-ordered_date', '-updated']             # TODO: [GK-2518] change to use ordered_date.  Invoice ordered_date needs to be updated on successful purchase by the PaymentProcessor.
 
         permissions = (
@@ -63,7 +65,12 @@ class Invoice(CreateUpdateModelBase):
         )
 
     def __str__(self):
-        return "%s Invoice (%s)" % (self.profile.user.username, self.created.strftime('%Y-%m-%d %H:%M'))
+        if not self.profile.user:   # Can this ever even happen?
+            return "New Invoice"
+        return str(self.profile.user.username) + " Invoice (" + self.created.strftime('%Y-%m-%d %H:%M') + ")"
+
+    def get_invoice_display(self):
+        return _(f"{self.profile.user.username} Invoice ({self.created:%Y-%m-%d %H:%M})")
 
     def add_offer(self, offer, quantity=1):
         
@@ -118,6 +125,19 @@ class Invoice(CreateUpdateModelBase):
             return ""
         return self.payments.get(success=True).billing_address.get_address()
 
+    # def get_absolute_url(self):       # TODO: [GK-3031] add and user view for invoice detail
+    #     """
+    #     This is the url to the detail page for the Invoice
+    #     """
+    #     return reverse('vendor:invoice-detail', kwargs={'uuid': self.uuid})
+
+    def get_absolute_management_url(self):
+        """
+        This is the url to the management's detail page for the Invoice
+        """
+        return reverse('vendor_admin:manager-order-detail', kwargs={'uuid': self.uuid})
+
+
 class OrderItem(CreateUpdateModelBase):
     '''
     A link for each item to a user after it's been purchased
@@ -127,8 +147,8 @@ class OrderItem(CreateUpdateModelBase):
     quantity = models.IntegerField(_("Quantity"), default=1)
 
     class Meta:
-        verbose_name = _("Order Item")
-        verbose_name_plural = _("Order Items")
+        verbose_name = "Order Item"
+        verbose_name_plural = "Order Items"
 
     def __str__(self):
         return "%s - %s" % (self.invoice.profile.user.username, self.offer.name)
@@ -144,7 +164,6 @@ class OrderItem(CreateUpdateModelBase):
     @property
     def name(self):
         return self.offer.name
-
 
 
 ##########

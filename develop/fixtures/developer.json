@@ -26,9 +26,9 @@
         "name": "Mouse T-Shirt",
         "site": 1,
         "slug": "mouse-t-shirt",
-        "available": false,
+        "available": true,
         "description": "Powerful T-Shirt",
-        "meta": "{}",
+        "meta": { "msrp": { "default": "usd", "usd":19.99 }},
         "classification": [],
         "offers": [
             1
@@ -47,9 +47,9 @@
         "name": "Wheel of Cheddar",
         "site": 1,
         "slug": "wheel-of-cheddar",
-        "available": false,
+        "available": true,
         "description": "This is a food item",
-        "meta": "{}",
+        "meta": { "msrp": { "default": "usd", "usd":19.99 }},
         "classification": [],
         "offers": [
             2
@@ -68,12 +68,54 @@
         "name": "Hamster Wheel",
         "site": 1,
         "slug": "hamster-wheel",
-        "available": false,
+        "available": true,
         "description": "",
-        "meta": "{}",
+        "meta": { "msrp": { "default": "usd", "usd":19.99 }},
         "classification": [],
         "offers": [
             3
+        ],
+        "reciepts": []
+    }
+},
+{
+    "model": "core.product",
+    "pk": 4,
+    "fields": {
+        "created": "2020-06-30T02:33:35.109Z",
+        "updated": "2020-06-30T02:33:35.109Z",
+        "sku": null,
+        "uuid": "def0d4f5-fd8f-1aa4-b25a-c043a846a732",
+        "name": "Ice",
+        "site": 1,
+        "slug": "ice",
+        "available": true,
+        "description": "",
+        "meta": { "msrp": { "default": "usd", "usd":112.99 }},
+        "classification": [],
+        "offers": [
+            4
+        ],
+        "reciepts": []
+    }
+},
+{
+    "model": "core.product",
+    "pk": 5,
+    "fields": {
+        "created": "2020-06-30T02:33:35.109Z",
+        "updated": "2020-06-30T02:33:35.109Z",
+        "sku": null,
+        "uuid": "def0d4f5-fd8f-4aa5-b25a-c043a846a732",
+        "name": "Lime",
+        "site": 1,
+        "slug": "lime",
+        "available": true,
+        "description": "",
+        "meta": { "msrp": { "default": "usd", "usd":1.99 }},
+        "classification": [],
+        "offers": [
+            5
         ],
         "reciepts": []
     }
@@ -156,9 +198,9 @@
         "start_date": "2020-06-30T00:53:23Z",
         "end_date": null,
         "terms": 0,
-        "term_details": null,
+        "term_details": {},
         "term_start_date": "2020-06-30T00:53:31Z",
-        "available": false,
+        "available": true,
         "bundle": false
     }
 },
@@ -175,9 +217,9 @@
         "start_date": "2020-06-30T02:34:32Z",
         "end_date": null,
         "terms": 0,
-        "term_details": "{}",
+        "term_details": {},
         "term_start_date": null,
-        "available": false,
+        "available": true,
         "bundle": false
     }
 },
@@ -194,9 +236,47 @@
         "start_date": "2020-06-30T02:38:16Z",
         "end_date": null,
         "terms": 0,
-        "term_details": "{}",
+        "term_details": {},
         "term_start_date": null,
-        "available": false,
+        "available": true,
+        "bundle": false
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 4,
+    "fields": {
+        "created": "2020-06-30T02:38:17.762Z",
+        "updated": "2020-06-30T02:38:35.045Z",
+        "uuid": "ceda0d8a-0ddf-440b-8804-eddc2800479b",
+        "slug": "hamster-wheel-month",
+        "site": 1,
+        "name": "Hamster Wheel Monthly",
+        "start_date": "2020-06-30T02:38:16Z",
+        "end_date": null,
+        "terms": 11,
+        "term_details": {},
+        "term_start_date": null,
+        "available": true,
+        "bundle": false
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 5,
+    "fields": {
+        "created": "2020-06-30T02:38:17.762Z",
+        "updated": "2020-06-30T02:38:35.045Z",
+        "uuid": "ceda0d8a-0ddf-440b-8804-eddc2820499b",
+        "slug": "hamster-wheel-year",
+        "site": 1,
+        "name": "Hamster Wheel Yearly",
+        "start_date": "2020-06-30T02:38:16Z",
+        "end_date": null,
+        "terms": 14,
+        "term_details": {},
+        "term_start_date": null,
+        "available": true,
         "bundle": false
     }
 },
