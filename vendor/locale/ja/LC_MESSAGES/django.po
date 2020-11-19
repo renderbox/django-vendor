@@ -100,7 +100,7 @@ msgstr "有効な有効期限を選択する必要があります"
 
 #: forms.py:267
 msgid "CVV must be all digits"
-msgstr ""
+msgstr "CVVはすべて数字である必要があります"
 
 #: forms.py:282
 msgid "The expiration date you entered is in the past."
@@ -358,7 +358,7 @@ msgstr "お届け先の住所"
 
 #: models/invoice.py:73
 msgid "{self.profile.user.username} Invoice ({self.created:%Y-%m-%d %H:%M})"
-msgstr ""
+msgstr "{self.profile.user.username}請求書({self.created:%Y-%m-%d %H:%M})"
 
 #: models/invoice.py:145 models/payment.py:16
 #: templates/vendor/payment_detail.html:6
@@ -593,8 +593,8 @@ msgid "Remove"
 msgstr "削除する"
 
 #: templates/vendor/invoice_detail.html:30
-msgid "Empty Cart"
-msgstr "空のカート"
+msgid "Your shopping cart is empty."
+msgstr "ショッピングカートは空です。"
 
 #: templates/vendor/invoice_detail.html:36
 #: templates/vendor/payment_summary.html:30
@@ -622,7 +622,23 @@ msgstr "サインアップ"
 msgid "to checkout"
 msgstr "チェックアウトする"
 
-#: templates/vendor/invoice_detail.html:70
+#: templates/vendor/invoice_detail.html:66
+msgid "Suggestions"
+msgstr "提案"
+
+#: templates/vendor/invoice_detail.html:68
+msgid "See all Paths"
+msgstr "すべてのパスを表示"
+
+#: templates/vendor/invoice_detail.html:69
+msgid "Pricing"
+msgstr "価格設定"
+
+#: templates/vendor/invoice_detail.html:78
+msgid "Promo code"
+msgstr "プロモーションコード"
+
+#: templates/vendor/invoice_detail.html:80
 msgid "Redeem"
 msgstr "引き換え"
 
@@ -903,10 +919,10 @@ msgstr "クエリに一致する%(verbose_name)sが見つかりません"
 msgid "Product Purchase required."
 msgstr "製品の購入が必要です。"
 
-#: views/vendor.py:60 views/vendor.py:208 views/vendor.py:254
-#: views/vendor.py:306
+#: views/vendor.py:60 views/vendor.py:203 views/vendor.py:247
+#: views/vendor.py:297
 msgid "Please add to your cart"
-msgstr ""
+msgstr "カートに追加してください"
 
 #: views/vendor.py:123 views/vendor.py:159
 msgid "You have a pending cart in checkout"
@@ -924,25 +940,24 @@ msgstr "カートにアイテムを追加しました。"
 msgid "Removed item from cart."
 msgstr "カートからアイテムを削除しました。"
 
-#: views/vendor.py:324
+#: views/vendor.py:315
 msgid "The payment gateway did not authorize payment."
 msgstr "支払いゲートウェイは支払いを承認しませんでした。"
 
-#: views/vendor.py:399
+#: views/vendor.py:390
 msgid "Unable to cancel at the moment"
 msgstr "現時点ではキャンセルできません"
 
-#: views/vendor.py:406
+#: views/vendor.py:397
 msgid "Subscription Cancelled"
 msgstr "サブスクリプションがキャンセルされました"
 
-#: views/vendor.py:419
+#: views/vendor.py:410
 msgid "Shipping Address Updated"
 msgstr "配送先住所が更新されました"
 
-#: views/vendor_admin.py:169
-msgid "Invalid currency"
-msgstr ""
+#~ msgid "Empty Cart"
+#~ msgstr "空のカート"
 
 #~ msgid " Invoice "
 #~ msgstr "請求書"
