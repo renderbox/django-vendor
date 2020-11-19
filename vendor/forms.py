@@ -85,10 +85,11 @@ class AddressForm(forms.ModelForm):
 
     class Meta:
         model = Address
-        fields = ['name',  'first_name', 'last_name', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
+        fields = ['name', 'first_name', 'last_name', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
 
     def __init__(self, *args, **kwargs):
         super(AddressForm, self).__init__(*args, **kwargs)
+        self.fields['name'].hidden = True
         self.fields['country'].label = _('Country/Region')
         self.fields['address_1'].label = _('Address')
         self.fields['address_1'].widget.attrs.update({'placeholder' : _('Enter Address')})
@@ -96,6 +97,7 @@ class AddressForm(forms.ModelForm):
         self.fields['address_2'].widget.attrs.update({'placeholder' : _('Enter Apt, Suite, Unit, Building, Floor, etc')})
         self.fields['locality'].label = _('City')
         self.fields['locality'].widget.attrs.update({'placeholder' : _('Enter City')})
+
 
 class AccountInformationForm(AddressForm):
     email = forms.EmailField(label=_('Email Address'), required=True)
@@ -110,7 +112,7 @@ class BillingAddressForm(AddressForm):
 
     class Meta:
         model = Address
-        fields = ['same_as_shipping', 'first_name', 'last_name', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
+        fields = ['same_as_shipping', 'name', 'first_name', 'last_name', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
 
     def __init__(self, *args, **kwargs):
         super(BillingAddressForm, self).__init__(*args, **kwargs)

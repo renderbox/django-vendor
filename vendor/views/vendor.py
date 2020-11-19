@@ -194,7 +194,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         if not form.is_valid():
             return render(request, self.template_name, {'form': form})
 
-        account_form = form.save(commit=False)
+        shipping_address = form.save(commit=False)
 
         invoice = get_purchase_invoice(request.user)
         
@@ -207,14 +207,15 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         invoice.status = Invoice.InvoiceStatus.CHECKOUT
         invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
         existing_account_address = Address.objects.filter(
-            profile__user=request.user, name=account_form.name, first_name=account_form.first_name, last_name=account_form.last_name)
+            profile__user=request.user, name=shipping_address.name, first_name=shipping_address.first_name, last_name=shipping_address.last_name)
         # TODO: Need to add a drop down to select existing address
         if existing_account_address:
-            account_form.pk = existing_account_address.first().pk
+            shipping_address.pk = existing_account_address.first().pk
 
-        account_form.profile = invoice.profile
-        account_form.save()
-        invoice.shipping_address = account_form
+        shipping_address.profile = invoice.profile
+        shipping_address.name = shipping_address.address_1
+        shipping_address.save()
+        invoice.shipping_address = shipping_address
         invoice.save()
 
         return redirect('vendor:checkout-payment')
