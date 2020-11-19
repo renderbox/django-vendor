@@ -6,7 +6,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from iso4217 import Currency
 
-from vendor.models import generate_sku, validate_msrp_format
+from vendor.models import generate_sku, validate_msrp_format, validate_msrp
 
 from core.models import Product
 
@@ -93,6 +93,20 @@ class ModelProductTests(TestCase):
         product = Product.objects.get(pk=1)
         
         self.assertEquals(product.get_best_currency('mxn'), 'usd')
+
+    def test_create_product_valid_msrp(self):
+        self.assertIsNone(validate_msrp({'msrp': {'default': 'usd', 'usd': 20 }}))
+
+    def test_create_product_valid_msrp_multiple_currencies(self):
+        self.assertIsNone(validate_msrp({'msrp': {'default': 'usd', 'usd': 20, 'jpy': 12 }}))
+
+    def test_create_product_in_valid_msrp(self):
+        with self.assertRaises(ValidationError):
+            validate_msrp({'msrp': {'default': 'rub', 'rub': 20 }})
+
+    def test_create_product_in_valid_msrp(self):
+        with self.assertRaises(ValidationError):
+            validate_msrp({'msrp': {'default': 'usd', 'usd': 21, 'rub': 20 }})
 
 
 class TransactionProductTests(TestCase):

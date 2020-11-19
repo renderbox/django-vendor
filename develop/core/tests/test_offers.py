@@ -116,25 +116,31 @@ class ModelOfferTests(TestCase):
 
     def test_get_best_currency_bundle_success(self):
         offer_bundle = Offer.objects.get(pk=4)
-        offer.products.add(Product.objects.get(pk=1))
 
-        self.assertEquals(offer.get_best_currency(), 'usd')
+        offer_bundle.products.add(Product.objects.get(pk=1))
+
+        self.assertEquals(offer_bundle.get_best_currency(), 'usd')
 
     def test_get_best_currency_single_success(self):
-        offer_bundle = Offer.objects.get(pk=4)
+        offer = Offer.objects.get(pk=4)
 
         self.assertEquals(offer.get_best_currency('mxn'), 'mxn')
 
+    def test_get_best_currency_single_success_not_default(self):
+        offer = Offer.objects.get(pk=4)
+
+        self.assertEquals(offer.get_best_currency('usd'), 'usd')
+
     def test_get_best_currency_bundle_fail(self):
         offer_bundle = Offer.objects.get(pk=4)
-        offer.products.add(Product.objects.get(pk=1))
+        offer_bundle.products.add(Product.objects.get(pk=1))
 
-        self.assertEquals(offer.get_best_currency('jpy'), 'usd')
+        self.assertEquals(offer_bundle.get_best_currency('jpy'), 'usd')
 
     def test_get_best_currency_single_fail(self):
-        offer_bundle = Offer.objects.get(pk=4)
+        offer = Offer.objects.get(pk=4)
 
-        self.assertEquals(offer.get_best_currency('jpy'), 'mxn')
+        self.assertEquals(offer.get_best_currency('jpy'), 'usd')
     
 class ViewOfferTests(TestCase):
     
