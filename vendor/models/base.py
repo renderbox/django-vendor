@@ -91,9 +91,10 @@ class ProductModelBase(CreateUpdateModelBase):
         If no currency is provided as an argument it will default to the products's msrp default currency.
         If currency is provided but is not available in the product it will default to the products's msrp default currency.
         """
-        if currency in self.meta['msrp']:
+        available_currencies = set(AVAILABLE_CURRENCIES.keys()).intersect(self.meta['msrp'].keys())
+
+        if currency in available_currencies:
             return currency
         else:
-            # TODO: Should this instead throw a warning or an error?
             return self.meta['msrp']['default']
 

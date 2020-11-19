@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from iso4217 import Currency
 
-from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
+from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY, AVAILABLE_CURRENCIES
 
 from .base import CreateUpdateModelBase
 from .choice import TermType
@@ -112,13 +112,9 @@ class Offer(CreateUpdateModelBase):
         """
         Gets best currency for prodcuts available in this offer
         """
-        supported_currencies = []
-        for product in self.products.all():
-            for supported_currency in product.meta['msrp'].keys():
-                if supported_currency != 'default':
-                    supported_currencies.append(supported_currency)
+        available_currencies = set(settings.AVAILABLE_CURRENCIES.keys()).intersection( *(set(product.meta['msrp'].keys()) for product in self.products.all() ) )
         
-        if currency in supported_currencies:
+        if currency in available_currencies:
             return currency
 
         return DEFAULT_CURRENCY

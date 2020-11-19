@@ -12,10 +12,10 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import os
 from pathlib import Path
 import dj_database_url
-
 from iso4217 import Currency
 
 from vendor.__version__ import VERSION
+from django.utils.translation import ugettext_lazy as _
 
 BUILD_VERSION = VERSION
 
@@ -174,7 +174,7 @@ STATICFILES_DIRS = [
 VENDOR_PRODUCT_MODEL = 'core.Product'
 VENDOR_PAYMENT_PROCESSOR = os.getenv("VENDOR_PAYMENT_PROCESSOR", "base.PaymentProcessorBase")
 DEFAULT_CURRENCY = Currency.usd.name
-AVAILABLE_CURRENCIES = ['usd', 'jpy', 'mxn']
+AVAILABLE_CURRENCIES = {'usd': _('USD Dollars'), 'mxn': _('Mexican peso'), 'jpy': _('Japanese yen')}
 
 # Authorize.Net Settings:
 AUTHORIZE_NET_API_ID = os.getenv("AUTHORIZE_NET_API_ID")
