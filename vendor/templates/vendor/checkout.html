@@ -150,10 +150,12 @@
     </div>
   </div>
   <div class="col-md-4 order-md-2 mb-4 mt-2">
-    <h3 class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex flex-row justify-content-between align-items-end mb-3">
+    <h3 class="m-0">
       {% trans 'In Your Cart' %}
     </h3>
-
+    <a class="text-primary" href="{% url 'vendor:cart' %}">Edit</a>
+    </div>
     <ul class="list-group mb-3 border-0">
       {% for item in invoice.order_items.all %}
       <li class="px-0 d-flex justify-content-between lh-condensed mb-3">
