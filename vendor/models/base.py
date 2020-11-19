@@ -11,7 +11,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY, AVAILABLE_CURRENCIES
 
-from .validator import validate_msrp_format
+from .validator import validate_msrp
 from .utils import set_default_site_id, is_currency_available
 
 ##################
@@ -22,14 +22,6 @@ from .utils import set_default_site_id, is_currency_available
 
 def product_meta_default():
     return {'msrp':{'default':DEFAULT_CURRENCY, DEFAULT_CURRENCY: 0.00}}
-
-def validate_msrp(value):
-    if value['msrp']['default'] not in AVAILABLE_CURRENCIES.keys():
-        raise ValidationError(_(f'Currency not available'))
-    
-    if not is_currency_available(value['msrp'].keys()):
-        raise ValidationError(_(f'Currency not available'))
-
 
 
 ##################
