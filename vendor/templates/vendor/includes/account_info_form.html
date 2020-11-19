@@ -11,44 +11,42 @@
     {% endfor %}
 </div>
 {% endif %}
-<div class='form-row mb-2'>
-    <div class='d-flex flex-row w-100'>
-        <div>
-            {{ account_information_form.first_name.label_tag }}
-            {{ account_information_form.first_name }}
-            {% if account_information_form.first_name.errors %}
-            {% for error in account_information_form.first_name.errors %}
-            <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
-                {{ error }}
-            </div>
-            {% endfor %}
-            {% endif %}
+<div class='form-row'>
+    <div class="col-sm-4 col-md-3 mr-md-1">
+        {{ account_information_form.first_name.label_tag }}
+        {{ account_information_form.first_name }}
+        {% if account_information_form.first_name.errors %}
+        {% for error in account_information_form.first_name.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
         </div>
-        <div class='mx-3'>
-            {{ account_information_form.last_name.label_tag }}
-            {{ account_information_form.last_name }}
-            {% if account_information_form.last_name.errors %}
-            {% for error in account_information_form.last_name.errors %}
-            <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
-                {{ error }}
-            </div>
-            {% endfor %}
-            {% endif %}
+        {% endfor %}
+        {% endif %}
+    </div>
+    <div class='col-sm-4 col-md-3 mr-md-1'>
+        {{ account_information_form.last_name.label_tag }}
+        {{ account_information_form.last_name }}
+        {% if account_information_form.last_name.errors %}
+        {% for error in account_information_form.last_name.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
         </div>
-        <div class='w-25'>
-            {{ account_information_form.email.label_tag }}
-            {{ account_information_form.email }}
-            {% if account_information_form.email.errors %}
-            {% for error in account_information_form.email.errors %}
-            <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
-                {{ error }}
-            </div>
-            {% endfor %}
-            {% endif %}
+        {% endfor %}
+        {% endif %}
+    </div>
+    <div class='col-sm-4 col-md-4'>
+        {{ account_information_form.email.label_tag }}
+        {{ account_information_form.email }}
+        {% if account_information_form.email.errors %}
+        {% for error in account_information_form.email.errors %}
+        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+            {{ error }}
         </div>
+        {% endfor %}
+        {% endif %}
     </div>
 </div>
-<div class='form-row mb-2'>
+<div class='form-row'>
     <div class='col-md-6'>
         <!-- Country -->
         {{ account_information_form.country.label_tag }}
@@ -69,7 +67,7 @@
     </div>
 </div>
 
-<div class='form-row mb-2'>
+<div class='form-row'>
     <div class='col-md-6'>
         <!-- Name -->
         {{ account_information_form.name.label_tag }}
@@ -90,7 +88,7 @@
     </div>
 </div>
 
-<div class='form-row mb-2'>
+<div class='form-row'>
     <div class='col-md-6'>
         <!-- Company -->
         {{ account_information_form.company.label_tag }}
@@ -111,7 +109,7 @@
     </div>
 </div>
 
-<div class='form-row mb-2'>
+<div class='form-row'>
     <div class='col-md-6'>
         <!-- Address 1 -->
         {{ account_information_form.address_1.label_tag }}
@@ -132,7 +130,7 @@
     </div>
 </div>
 
-<div class='form-row mb-2'>
+<div class='form-row'>
     <div class='col-md-6'>
         <!-- Address 2 -->
         {{ account_information_form.address_2.label_tag }}
@@ -153,7 +151,7 @@
     </div>
 </div>
 
-<div class='form-row mb-2'>
+<div class='form-row'>
     <div class='col-md-6'>
         <!-- Locality -->
         {{ account_information_form.locality.label_tag }}
@@ -174,7 +172,7 @@
     </div>
 </div>
 
-<div class='form-row mb-2'>
+<div class='form-row'>
     <div class='col-md-6'>
         <div class='row'>
             <div class='col'>
