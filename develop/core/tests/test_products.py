@@ -84,19 +84,27 @@ class ModelProductTests(TestCase):
         with self.assertRaises(ValidationError):
             validate_msrp_format(msrp)
     
-    
+    def test_get_best_currency_success(self):
+        product = Product.objects.get(pk=1)
+        
+        self.assertEquals(product.get_best_currency(), 'usd')
+
+    def test_get_best_currency_fail(self):
+        product = Product.objects.get(pk=1)
+        
+        self.assertEquals(product.get_best_currency('mxn'), 'usd')
+
+
 class TransactionProductTests(TestCase):
 
     def setUp(self):
         pass
 
-    def test_transaction_csv_add_product(self):
-        # TODO: Implement Test
-        pass
+    # def test_transaction_csv_add_product(self):
+    #     raise NotImplementedError()
 
-    def test_transaction_csv_edit_product(self):
-        # TODO: Implement Test
-        pass
+    # def test_transaction_csv_edit_product(self):
+    #     raise NotImplementedError()
 
 
 class ViewsProductTests(TestCase):
@@ -174,14 +182,11 @@ class ViewsProductTests(TestCase):
         self.assertIn('login', response.url)
     
 
-    def test_view_uplaod_csv_product(self):
-        # TODO: Implement Test
-        pass
+    # def test_view_uplaod_csv_product(self):
+    #     raise NotImplementedError()
 
-    def test_view_downlaod_csv_product(self):
-        # TODO: Implement Test
-        pass
+    # def test_view_downlaod_csv_product(self):
+    #     raise NotImplementedError()
 
-    def test_view_warning_change_product_to_unavailable(self):
-        # TODO: Implement Test
-        pass
+    # def test_view_warning_change_product_to_unavailable(self):
+    #     raise NotImplementedError()

@@ -26,3 +26,14 @@ def generate_sku():
 
 def set_default_site_id():
     return Site.objects.get_current()
+
+def is_currency_available(msrp_currencies, currency=None):
+    available_currencies = set(settings.AVAILABLE_CURRENCIES.keys()).intersection(msrp_currencies)
+
+    if not currency and not available_currencies:
+        return False
+        
+    if currency not in available_currencies:
+        return False 
+    
+    return True

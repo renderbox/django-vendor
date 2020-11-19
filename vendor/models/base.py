@@ -1,5 +1,7 @@
 import uuid
 
+from autoslug import AutoSlugField
+
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
@@ -7,13 +9,10 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from autoslug import AutoSlugField
-
-from .validator import validate_msrp_format
-
 from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY, AVAILABLE_CURRENCIES
 
-
+from .validator import validate_msrp_format
+from .utils import set_default_site_id, is_currency_available
 
 ##################
 # DEFAULTS
@@ -27,8 +26,8 @@ def product_meta_default():
 def validate_msrp(value):
     if value['msrp']['default'] not in AVAILABLE_CURRENCIES.keys():
         raise ValidationError(_(f'Currency not available'))
-
-    if not set(AVAILABLE_CURRENCIES.keys()).intersection(value['msrp'].keys()):
+    
+    if not is_currency_available(value['msrp'].keys()):
         raise ValidationError(_(f'Currency not available'))
 
 
@@ -90,9 +89,7 @@ class ProductModelBase(CreateUpdateModelBase):
         If no currency is provided as an argument it will default to the products's msrp default currency.
         If currency is provided but is not available in the product it will default to the products's msrp default currency.
         """
-        available_currencies = set(AVAILABLE_CURRENCIES.keys()).intersect(self.meta['msrp'].keys())
-
-        if currency in available_currencies:
+        if is_currency_available(self.meta['msrp'].keys(), currency=currency):
             return currency
         else:
             return self.meta['msrp']['default']

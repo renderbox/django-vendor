@@ -17,7 +17,7 @@ from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY, AVAILABLE_CURR
 
 from .base import CreateUpdateModelBase
 from .choice import TermType
-from .utils import set_default_site_id
+from .utils import set_default_site_id, is_currency_available
 #########
 # OFFER
 #########
@@ -112,9 +112,7 @@ class Offer(CreateUpdateModelBase):
         """
         Gets best currency for prodcuts available in this offer
         """
-        available_currencies = set(settings.AVAILABLE_CURRENCIES.keys()).intersection( *(set(product.meta['msrp'].keys()) for product in self.products.all() ) )
-        
-        if currency in available_currencies:
+        if is_currency_available(*(set(product.meta['msrp'].keys()) for product in products.all() ), currency=currency):
             return currency
 
         return DEFAULT_CURRENCY
