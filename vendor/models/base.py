@@ -25,12 +25,11 @@ def product_meta_default():
     return {'msrp':{'default':DEFAULT_CURRENCY, DEFAULT_CURRENCY: 0.00}}
 
 def validate_msrp(value):
-    if value['msrp']['default'] not in AVAILABLE_CURRENCIES:
-        raise ValidationError(_(f'Currency not available {key}'))
+    if value['msrp']['default'] not in AVAILABLE_CURRENCIES.keys():
+        raise ValidationError(_(f'Currency not available'))
 
-    for key in [ key for key in value['msrp'].keys() if key != 'default']:
-        if key not in AVAILABLE_CURRENCIES:
-            raise ValidationError(_(f'Currency not available {key}'))
+    if not set(AVAILABLE_CURRENCIES.keys()).intersection(value['msrp'].keys()):
+        raise ValidationError(_(f'Currency not available'))
 
 
 
