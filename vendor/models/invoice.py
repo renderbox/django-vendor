@@ -165,6 +165,12 @@ class OrderItem(CreateUpdateModelBase):
     def name(self):
         return self.offer.name
 
+    def get_total_display(self):
+        if not self.total:
+            return "0.00"
+        
+        return f'{self.total:2}'
+
 
 ##########
 # Signals

@@ -117,7 +117,7 @@
               <td>{{ item.get_status_display }}</td>
               <td>{{ item.created }}</td>
               <td>{{ item.get_currency_display }}</td>
-              <td>$ {{ item.total|floatformat:2|default:"0.00" }}</td>
+              <td>${{ item.total|floatformat:2|default:"0.00" }}</td>
             </tr>
             {% empty %}
             <tr>
