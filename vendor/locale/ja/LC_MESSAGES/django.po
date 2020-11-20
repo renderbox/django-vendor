@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-18 21:40+0000\n"
+"POT-Creation-Date: 2020-11-20 00:18+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -46,63 +46,91 @@ msgstr "バンドル："
 msgid "Invalid term details for subscription"
 msgstr "サブスクリプションの期間の詳細が無効です"
 
-#: forms.py:92
-msgid "Email"
-msgstr "Eメール"
+#: forms.py:93
+msgid "Country/Region"
+msgstr "国/地域"
+
+#: forms.py:94
+msgid "Address"
+msgstr "住所"
+
+#: forms.py:95
+msgid "Enter Address"
+msgstr "住所を入力してください"
+
+#: forms.py:96
+msgid "Address 2 (Optional)"
+msgstr "アドレス2（オプション）"
+
+#: forms.py:97
+msgid "Enter Apt, Suite, Unit, Building, Floor, etc"
+msgstr "アパート、スイート、ユニット、建物、フロアなどを入力してください"
+
+#: forms.py:98 models/address.py:54
+msgid "City"
+msgstr "市"
 
 #: forms.py:99
-msgid "Billing Address is the same as Shipping Address"
-msgstr "請求先住所は配​​送先住所と同じです"
+msgid "Enter City"
+msgstr ""
 
-#: forms.py:100 models/payment.py:26
-msgid "Company"
-msgstr "会社"
+#: forms.py:103
+msgid "Email Address"
+msgstr "電子メールアドレス"
 
-#: forms.py:180
+#: forms.py:111
+msgid "Billing address is the same as shipping address"
+msgstr "請求先住所は配送先住所と同じです"
+
+#: forms.py:119
+msgid "Billing Country/Region"
+msgstr "請求国/地域"
+
+#: forms.py:196
 msgid "The credit card number is invalid"
 msgstr "クレジットカード番号が無効です"
 
-#: forms.py:225
+#: forms.py:241
 msgid "Payment Type"
 msgstr "支払いタイプ"
 
-#: forms.py:229
-msgid "Card Holder Name"
-msgstr "クレジットカード名義人氏名"
+#: forms.py:245 models/payment.py:25
+msgid "Name on Card"
+msgstr "カードの名前"
 
-#: forms.py:230
-msgid "Card Number"
-msgstr "カード番号"
+#: forms.py:246
+msgid "Credit Card Number"
+msgstr "クレジットカード番号"
 
-#: forms.py:231
+#: forms.py:247
 msgid "Expiration Month"
 msgstr "有効期限月"
 
-#: forms.py:232
+#: forms.py:248
 msgid "Expiration Year"
 msgstr "有効期限"
 
-#: forms.py:233
+#: forms.py:249
 msgid "CVV Number"
 msgstr "CVV番号"
 
-#: forms.py:251
+#: forms.py:267
 msgid "You must select a valid expiration month"
 msgstr "有効な有効期限を選択する必要があります"
 
-#: forms.py:259
+#: forms.py:275
 msgid "You must select a valid expiration year"
 msgstr "有効な有効期限を選択する必要があります"
 
-#: forms.py:267
+#: forms.py:283
 msgid "CVV must be all digits"
 msgstr "CVVはすべて数字である必要があります"
 
-#: forms.py:282
+#: forms.py:298
 msgid "The expiration date you entered is in the past."
 msgstr "入力した有効期限は過去のものです。"
 
-#: forms.py:283
+#: forms.py:299
 msgid "Check expiration"
 msgstr "有効期限を確認してください"
 
@@ -133,10 +161,6 @@ msgstr "住所1"
 #: models/address.py:53
 msgid "Address 2"
 msgstr "住所2"
-
-#: models/address.py:54
-msgid "City"
-msgstr "市"
 
 #: models/address.py:55
 msgid "State"
@@ -343,7 +367,7 @@ msgid "Currency"
 msgstr "通貨"
 
 #: models/invoice.py:50 templates/vendor/address_detail.html:7
-#: templates/vendor/checkout.html:34 templates/vendor/checkout.html:105
+#: templates/vendor/checkout.html:35 templates/vendor/checkout.html:106
 msgid "Shipping Address"
 msgstr "お届け先の住所"
 
@@ -361,7 +385,7 @@ msgstr "請求書"
 msgid "Offer"
 msgstr "提供"
 
-#: models/invoice.py:147 templates/vendor/checkout.html:163
+#: models/invoice.py:147 templates/vendor/checkout.html:166
 #: templates/vendor/invoice_history_detail.html:15
 #: templates/vendor/manage/invoice_detail.html:15
 #: templates/vendor/orderitem_list.html:19
@@ -444,8 +468,8 @@ msgstr "量"
 msgid "Purchase Profile"
 msgstr "購入プロファイル"
 
-#: models/payment.py:22 templates/vendor/checkout.html:67
-#: templates/vendor/checkout.html:122 templates/vendor/payment_summary.html:37
+#: models/payment.py:22 templates/vendor/checkout.html:68
+#: templates/vendor/checkout.html:123 templates/vendor/payment_summary.html:37
 #: templates/vendor/purchase_detail.html:51
 msgid "Billing Address"
 msgstr "請求先住所"
@@ -458,9 +482,9 @@ msgstr "結果"
 msgid "Successful"
 msgstr "成功"
 
-#: models/payment.py:25
-msgid "Name on Card"
-msgstr "カードの名前"
+#: models/payment.py:26
+msgid "Company"
+msgstr "会社"
 
 #: models/price.py:14 templates/vendor/orderitem_list.html:21
 #: templates/vendor/ordersummary.html:16
@@ -515,44 +539,44 @@ msgstr "ウィッシュリスト"
 msgid "Update"
 msgstr "更新"
 
-#: templates/vendor/checkout.html:7
-msgid "SECURE CHECKOUT"
+#: templates/vendor/checkout.html:8
+msgid "Secure Checkout"
 msgstr "安全なチェックアウト"
 
-#: templates/vendor/checkout.html:18
+#: templates/vendor/checkout.html:19
 msgid "Info"
 msgstr "情報"
 
-#: templates/vendor/checkout.html:37 templates/vendor/checkout.html:82
+#: templates/vendor/checkout.html:38 templates/vendor/checkout.html:83
 msgid "Continue"
 msgstr "継続する"
 
-#: templates/vendor/checkout.html:51
+#: templates/vendor/checkout.html:52
 msgid "Billing"
 msgstr "請求"
 
-#: templates/vendor/checkout.html:78 templates/vendor/checkout.html:137
+#: templates/vendor/checkout.html:79 templates/vendor/checkout.html:138
 #: templates/vendor/payment_summary.html:41
 msgid "Payment Method"
 msgstr "支払方法"
 
-#: templates/vendor/checkout.html:95
+#: templates/vendor/checkout.html:96
 msgid "Review"
 msgstr "レビュー"
 
-#: templates/vendor/checkout.html:140
+#: templates/vendor/checkout.html:141
 msgid "Card ending in"
 msgstr "で終わるカード"
 
-#: templates/vendor/checkout.html:144
+#: templates/vendor/checkout.html:145
 msgid "Place Order"
 msgstr "注文する"
 
-#: templates/vendor/checkout.html:154
+#: templates/vendor/checkout.html:156
 msgid "In Your Cart"
 msgstr "カートの中"
 
-#: templates/vendor/checkout.html:162
+#: templates/vendor/checkout.html:165
 msgid "Unit Price"
 msgstr "単価"
 
@@ -910,8 +934,8 @@ msgstr "クエリに一致する%(verbose_name)sが見つかりません"
 msgid "Product Purchase required."
 msgstr "製品の購入が必要です。"
 
-#: views/vendor.py:60 views/vendor.py:203 views/vendor.py:247
-#: views/vendor.py:297
+#: views/vendor.py:60 views/vendor.py:203 views/vendor.py:248
+#: views/vendor.py:298
 msgid "Please add to your cart"
 msgstr "カートに追加してください"
 
@@ -931,21 +955,30 @@ msgstr "カートにアイテムを追加しました。"
 msgid "Removed item from cart."
 msgstr "カートからアイテムを削除しました。"
 
-#: views/vendor.py:315
+#: views/vendor.py:316
 msgid "The payment gateway did not authorize payment."
 msgstr "支払いゲートウェイは支払いを承認しませんでした。"
 
-#: views/vendor.py:390
+#: views/vendor.py:391
 msgid "Unable to cancel at the moment"
 msgstr "現時点ではキャンセルできません"
 
-#: views/vendor.py:397
+#: views/vendor.py:398
 msgid "Subscription Cancelled"
 msgstr "サブスクリプションがキャンセルされました"
 
-#: views/vendor.py:410
+#: views/vendor.py:411
 msgid "Shipping Address Updated"
 msgstr "配送先住所が更新されました"
+
+#~ msgid "Email"
+#~ msgstr "Eメール"
+
+#~ msgid "Card Holder Name"
+#~ msgstr "クレジットカード名義人氏名"
+
+#~ msgid "SECURE CHECKOUT"
+#~ msgstr "安全なチェックアウト"
 
 #~ msgid "Empty Cart"
 #~ msgstr "空のカート"
