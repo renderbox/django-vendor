@@ -28,7 +28,7 @@
 
       {% if request.resolver_match.url_name == 'checkout-account' %}
       <div id="collapseOne" class="collapse show" aria-labelledby="account_info" data-parent="#checkout_accordion">
-        <div class="card-body">
+        <div class="card-body px-2">
           <form method="post">
             {% csrf_token %}
             <h3 class='card-title'>
@@ -61,7 +61,7 @@
 
       {% if request.resolver_match.url_name == 'checkout-payment' %}
       <div id="collapseTwo" class="collapse show" aria-labelledby="billing_info" data-parent="#checkout_accordion">
-        <div class="card-body">
+        <div class="card-body px-2">
           <form id="payment-form" method="post">
             {% csrf_token %}
             <h3 class='card-title'>
@@ -100,7 +100,7 @@
 
       {% if request.resolver_match.url_name == 'checkout-review' %}
       <div id="collapseThree" class="collapse show" aria-labelledby="review" data-parent="#checkout_accordion">
-        <div class="card-body">
+        <div class="card-body px-2">
           <h3 class='card-title'>
             <div class='d-flex flex-row align-items-center'>
               <div>{% trans 'Shipping Address' %}</div>
