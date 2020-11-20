@@ -6,7 +6,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from iso4217 import Currency
 
-from vendor.models import generate_sku, validate_msrp_format
+from vendor.models import generate_sku, validate_msrp_format, validate_msrp
 
 from core.models import Product
 
@@ -84,19 +84,41 @@ class ModelProductTests(TestCase):
         with self.assertRaises(ValidationError):
             validate_msrp_format(msrp)
     
-    
+    def test_get_best_currency_success(self):
+        product = Product.objects.get(pk=1)
+        
+        self.assertEquals(product.get_best_currency(), 'usd')
+
+    def test_get_best_currency_fail(self):
+        product = Product.objects.get(pk=1)
+        
+        self.assertEquals(product.get_best_currency('mxn'), 'usd')
+
+    def test_create_product_valid_msrp(self):
+        self.assertIsNone(validate_msrp({'msrp': {'default': 'usd', 'usd': 20 }}))
+
+    def test_create_product_valid_msrp_multiple_currencies(self):
+        self.assertIsNone(validate_msrp({'msrp': {'default': 'usd', 'usd': 20, 'jpy': 12 }}))
+
+    def test_create_product_in_valid_msrp(self):
+        with self.assertRaises(ValidationError):
+            validate_msrp({'msrp': {'default': 'rub', 'rub': 20 }})
+
+    def test_create_product_in_valid_msrp(self):
+        with self.assertRaises(ValidationError):
+            validate_msrp({'msrp': {'default': 'usd', 'usd': 21, 'rub': 20 }})
+
+
 class TransactionProductTests(TestCase):
 
     def setUp(self):
         pass
 
-    def test_transaction_csv_add_product(self):
-        # TODO: Implement Test
-        pass
+    # def test_transaction_csv_add_product(self):
+    #     raise NotImplementedError()
 
-    def test_transaction_csv_edit_product(self):
-        # TODO: Implement Test
-        pass
+    # def test_transaction_csv_edit_product(self):
+    #     raise NotImplementedError()
 
 
 class ViewsProductTests(TestCase):
@@ -174,14 +196,11 @@ class ViewsProductTests(TestCase):
         self.assertIn('login', response.url)
     
 
-    def test_view_uplaod_csv_product(self):
-        # TODO: Implement Test
-        pass
+    # def test_view_uplaod_csv_product(self):
+    #     raise NotImplementedError()
 
-    def test_view_downlaod_csv_product(self):
-        # TODO: Implement Test
-        pass
+    # def test_view_downlaod_csv_product(self):
+    #     raise NotImplementedError()
 
-    def test_view_warning_change_product_to_unavailable(self):
-        # TODO: Implement Test
-        pass
+    # def test_view_warning_change_product_to_unavailable(self):
+    #     raise NotImplementedError()

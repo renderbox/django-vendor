@@ -49,11 +49,11 @@ class Address(models.Model):
     profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="addresses")
     first_name = models.CharField(_("First Name"), max_length=150, blank=True)
     last_name = models.CharField(_("Last Name"), max_length=150, blank=True)
-    address_1 = models.CharField(_("Address 1"), max_length=40, blank=False)
-    address_2 = models.CharField(_("Address 2"), max_length=40, blank=True, null=True)
+    address_1 = models.CharField(_("Address"), max_length=40, blank=False)
+    address_2 = models.CharField(_("Address 2 (Optional)"), max_length=40, blank=True, null=True)
     locality = models.CharField(_("City"), max_length=40, blank=False)
     state = models.CharField(_("State"), max_length=40, blank=False)
-    country = models.IntegerField(_("Country"), choices=COUNTRY_CHOICE, default=COUNTRY_DEFAULT)
+    country = models.IntegerField(_("Country/Region"), choices=COUNTRY_CHOICE, default=COUNTRY_DEFAULT)
     postal_code = models.CharField(_("Postal Code"), max_length=16, blank=True)
 
     # def create_address_from_billing_form(self, billing_form, profile):

@@ -85,23 +85,35 @@ class AddressForm(forms.ModelForm):
 
     class Meta:
         model = Address
-        fields = ['name',  'first_name', 'last_name', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
+        fields = ['name', 'first_name', 'last_name', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
+
+    def __init__(self, *args, **kwargs):
+        super(AddressForm, self).__init__(*args, **kwargs)
+        self.fields['name'].hidden = True
+        self.fields['address_1'].widget.attrs.update({'placeholder' : _('Enter Address')})
+        self.fields['address_2'].widget.attrs.update({'placeholder' : _('Enter Apt, Suite, Unit, Building, Floor, etc')})
+        self.fields['locality'].widget.attrs.update({'placeholder' : _('Enter City')})
 
 
 class AccountInformationForm(AddressForm):
-    email = forms.EmailField(label=_('Email'), required=True)
+    email = forms.EmailField(label=_('Email Address'), required=True)
 
     class Meta:
         model = Address
-        fields = ['name',  'first_name', 'last_name', 'email', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
+        fields = ['name', 'first_name', 'last_name', 'email', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
+
 
 class BillingAddressForm(AddressForm):
-    same_as_shipping = forms.BooleanField(label=_("Billing Address is the same as Shipping Address"), required=False)
-    company = forms.CharField(label=_('Company'), required=False)
+    same_as_shipping = forms.BooleanField(label=_("Billing address is the same as shipping address"), required=False)
 
     class Meta:
         model = Address
-        fields = ['same_as_shipping', 'name', 'company', 'first_name', 'last_name', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
+        fields = ['same_as_shipping', 'name', 'first_name', 'last_name', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
+
+    def __init__(self, *args, **kwargs):
+        super(BillingAddressForm, self).__init__(*args, **kwargs)
+        self.fields['country'].label = _('Billing Country/Region')
+
 
 class CreditCardField(forms.CharField):
 
@@ -226,8 +238,8 @@ class PaymentFrom(forms.Form):
 
 
 class CreditCardForm(PaymentFrom):
-    full_name = forms.CharField(required=True, label=_("Card Holder Name"), max_length=80)
-    card_number = CreditCardField(label=_("Card Number"), placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)
+    full_name = forms.CharField(required=True, label=_("Name on Card"), max_length=80)
+    card_number = CreditCardField(label=_("Credit Card Number"), placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)
     expire_month = forms.ChoiceField(required=True, label=_("Expiration Month"), choices=[(x, x) for x in range(1, 13)])
     expire_year = forms.ChoiceField(required=True, label=_("Expiration Year"), choices=[(x, x) for x in range(datetime.now().year, datetime.now().year + 15)])
     cvv_number = forms.CharField(required=True, label=_("CVV Number"), max_length=4, min_length=3, widget=forms.TextInput(attrs={'size': '4'}))

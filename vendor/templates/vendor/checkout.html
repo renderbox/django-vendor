@@ -2,19 +2,20 @@
 {% load i18n %}
 
 {% block vendor_content %}
-<div class='row mx-md-5 px-md-3'>
-  <div class='col-12 my-4'>
-    <h1>{% trans 'SECURE CHECKOUT' %}</h1>
+<div class='row mx-md-5 px-md-3 mt-2'>
+  <div class="d-flex flex-row w-100 m-3 align-items-center">
+    <h2><iconify-icon data-icon="ic-baseline-lock" class="text-black"></iconify-icon></h2>
+    <h1>{% trans 'Secure Checkout' %}</h1>
   </div>
   <div class='col-md-8'>
     <div class="card border-0">
-      <div class="card-header mb-0 text-white p-0 border-0 mb-3" id="account_info">
+      <div class="card-header mb-0 text-white p-0 border-0 mb-3 rounded" id="account_info">
         <div
-          class="btn-group w-100 {% if request.resolver_match.url_name == 'checkout-account' %}bg-accent{% else %}bg-accenthover{% endif %}">
-          <div class="bg-white font-weight-bold text-dark border-0 px-3 py-3 m-0" style="opacity: .5;">
+          class="btn-group w-100 rounded {% if request.resolver_match.url_name == 'checkout-account' %}bg-accenthover{% else %}bg-accent{% endif %}">
+          <div class="bg-white font-weight-bold text-dark border-0 px-3 py-2 m-0" style="opacity: .5;">
             1
           </div>
-          <div class="font-weight-bold text-left text-white border-0 py-3 ml-3">
+          <div class="font-weight-bold text-left text-white border-0 py-2 ml-3">
             {% trans "Info" %}
           </div>
           {% if request.resolver_match.url_name != 'checkout-account' %}
@@ -27,7 +28,7 @@
 
       {% if request.resolver_match.url_name == 'checkout-account' %}
       <div id="collapseOne" class="collapse show" aria-labelledby="account_info" data-parent="#checkout_accordion">
-        <div class="card-body">
+        <div class="card-body px-2">
           <form method="post">
             {% csrf_token %}
             <h3 class='card-title'>
@@ -41,13 +42,13 @@
       {% endif %}
     </div>
     <div class="card border-0">
-      <div class="card-header mb-0 text-white p-0 border-0 mb-3" id="billing_info">
+      <div class="card-header mb-0 text-white p-0 border-0 mb-3 rounded" id="billing_info">
         <div
-          class="btn-group w-100 {% if request.resolver_match.url_name == 'checkout-payment' %}bg-accent{% else %}bg-accenthover{% endif %}">
-          <div class="bg-white font-weight-bold text-dark rounded-0 border-0 px-3 py-3 m-0" style="opacity: .5;">
+          class="btn-group w-100 rounded {% if request.resolver_match.url_name == 'checkout-payment' %}bg-accenthover{% else %}bg-accent{% endif %}">
+          <div class="bg-white font-weight-bold text-dark border-0 px-3 py-2 m-0" style="opacity: .5;">
             2
           </div>
-          <div class="font-weight-bold text-left text-white rounded-0 border-0 py-3 ml-3">
+          <div class="font-weight-bold text-left text-white border-0 py-2 ml-3">
             {% trans "Billing" %}
           </div>
           {% if request.resolver_match.url_name == 'checkout-review' %}
@@ -60,7 +61,7 @@
 
       {% if request.resolver_match.url_name == 'checkout-payment' %}
       <div id="collapseTwo" class="collapse show" aria-labelledby="billing_info" data-parent="#checkout_accordion">
-        <div class="card-body">
+        <div class="card-body px-2">
           <form id="payment-form" method="post">
             {% csrf_token %}
             <h3 class='card-title'>
@@ -85,13 +86,13 @@
       {% endif %}
     </div>
     <div class="card border-0">
-      <div class="card-header mb-0 text-white p-0 border-0 mb-3" id="review">
+      <div class="card-header mb-0 text-white p-0 border-0 mb-3 rounded" id="review">
         <div
-          class="btn-group w-100 {% if request.resolver_match.url_name == 'checkout-review' %}bg-accent{% else %}bg-accenthover{% endif %}">
-          <div class="bg-white font-weight-bold text-dark rounded-0 border-0 px-3 py-3 m-0" style="opacity: .5;">
+          class="btn-group w-100 rounded {% if request.resolver_match.url_name == 'checkout-review' %}bg-accenthover{% else %}bg-accent{% endif %}">
+          <div class="bg-white font-weight-bold text-dark border-0 px-3 py-2 m-0" style="opacity: .5;">
             3
           </div>
-          <div class="font-weight-bold text-left text-white rounded-0 border-0 py-3 ml-3">
+          <div class="font-weight-bold text-left text-white border-0 py-2 ml-3">
             {% trans 'Review' %}
           </div>
         </div>
@@ -99,7 +100,7 @@
 
       {% if request.resolver_match.url_name == 'checkout-review' %}
       <div id="collapseThree" class="collapse show" aria-labelledby="review" data-parent="#checkout_accordion">
-        <div class="card-body">
+        <div class="card-body px-2">
           <h3 class='card-title'>
             <div class='d-flex flex-row align-items-center'>
               <div>{% trans 'Shipping Address' %}</div>
@@ -150,10 +151,12 @@
     </div>
   </div>
   <div class="col-md-4 order-md-2 mb-4 mt-2">
-    <h3 class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex flex-row justify-content-between align-items-end mb-3">
+    <h3 class="m-0">
       {% trans 'In Your Cart' %}
     </h3>
-
+    <a class="text-primary" href="{% url 'vendor:cart' %}">Edit</a>
+    </div>
     <ul class="list-group mb-3 border-0">
       {% for item in invoice.order_items.all %}
       <li class="px-0 d-flex justify-content-between lh-condensed mb-3">
