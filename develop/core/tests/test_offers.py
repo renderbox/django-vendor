@@ -23,7 +23,7 @@ class ModelOfferTests(TestCase):
         pass
 
 
-    def test_defualt_site_id(self):
+    def test_default_site_id(self):
         offer = Offer()
         offer.name = 'test-offer'
         offer.start_date = timezone.now()
@@ -32,17 +32,14 @@ class ModelOfferTests(TestCase):
 
         self.assertEquals(Site.objects.get_current(), offer.site)
 
-    def test_change_offer_to_unavailable_product_change_to_unavailable(self):
-        # TODO: Implement Tests
-        pass
+    # def test_change_offer_to_unavailable_product_change_to_unavailable(self):
+    #     raise NotImplementedError()
 
-    def test_save_fail_product_not_available(self):
-        # TODO: Implement Tests
-        pass
+    # def test_save_fail_product_not_available(self):
+    #     raise NotImplementedError()
 
-    def test_save_fail_no_price_set(self):
-        # TODO: Implement Tests
-        pass
+    # def test_save_fail_no_price_set(self):
+    #     raise NotImplementedError()
 
     def test_add_offer_to_cart_slug(self):
         mug_offer = Offer.objects.get(pk=4)
@@ -55,6 +52,11 @@ class ModelOfferTests(TestCase):
         self.assertEquals(slug,'/sales/cart/remove/' + mug_offer.slug + '/')
     
     def test_get_current_price_is_msrp(self):
+        offer = Offer.objects.get(pk=4)
+        price = offer.current_price('mxn')
+        self.assertEquals(price, 21.12)
+    
+    def test_get_current_price_is_msrp_default(self):
         offer = Offer.objects.get(pk=4)
         price = offer.current_price()
         self.assertEquals(price, 10.00)
@@ -87,7 +89,7 @@ class ModelOfferTests(TestCase):
         offer = Offer.objects.get(pk=4)
         self.assertEquals(offer.description, offer.offer_description)
 
-    def test_empty_name_single_product(self):
+    # def test_empty_name_single_product(self):
         # p1 = Product.objects.get(pk=1)
         # offer = Offer()
         # offer.products.add(p1)
@@ -96,9 +98,9 @@ class ModelOfferTests(TestCase):
         # p1 = Product.objects.get(pk=1)
 
         # self.assertEquals(p1.name, offer.name)
-        pass
+    #     raise NotImplementedError()
 
-    def test_empty_name_bundle(self):
+    # def test_empty_name_bundle(self):
         # TODO: Implement Test
         # p1 = Product.objects.get(pk=1)
         # p2 = Product.objects.get(pk=2)
@@ -110,8 +112,36 @@ class ModelOfferTests(TestCase):
         # p1 = Product.objects.get(pk=1)
     
         # self.assertEquals("Bundle: " + ", ".join([p1,p2]), offer.name)
-        pass
+        # raise NotImplementedError()
 
+    def test_get_best_currency_bundle_success(self):
+        offer_bundle = Offer.objects.get(pk=4)
+
+        offer_bundle.products.add(Product.objects.get(pk=1))
+
+        self.assertEquals(offer_bundle.get_best_currency(), 'usd')
+
+    def test_get_best_currency_single_success(self):
+        offer = Offer.objects.get(pk=4)
+
+        self.assertEquals(offer.get_best_currency('mxn'), 'mxn')
+
+    def test_get_best_currency_single_success_not_default(self):
+        offer = Offer.objects.get(pk=4)
+
+        self.assertEquals(offer.get_best_currency('usd'), 'usd')
+
+    def test_get_best_currency_bundle_fail(self):
+        offer_bundle = Offer.objects.get(pk=4)
+        offer_bundle.products.add(Product.objects.get(pk=1))
+
+        self.assertEquals(offer_bundle.get_best_currency('jpy'), 'usd')
+
+    def test_get_best_currency_single_fail(self):
+        offer = Offer.objects.get(pk=4)
+
+        self.assertEquals(offer.get_best_currency('jpy'), 'usd')
+    
 class ViewOfferTests(TestCase):
     
     fixtures = ['user', 'unit_test']
@@ -206,25 +236,20 @@ class ViewOfferTests(TestCase):
         self.assertEquals(response.url, reverse('vendor:cart'))
     
 
-    def test_view_only_available_offers(self):
-        # TODO: Implement Tests
-        pass
+    # def test_view_only_available_offers(self):
+    #     raise NotImplementedError()
 
-    def test_view_show_only_available_products_to_add_to_offer(self):
-        # TODO: Implement Tests
-        pass
+    # def test_view_show_only_available_products_to_add_to_offer(self):
+    #     raise NotImplementedError()
 
-    def test_valid_add_to_cart_offer(self):
-        # TODO: Implement Tests
-        pass
+    # def test_valid_add_to_cart_offer(self):
+    #     raise NotImplementedError()
 
-    def test_valid_remove_to_cart_offer(self):
-        # TODO: Implement Tests
-        pass
+    # def test_valid_remove_to_cart_offer(self):
+    #     raise NotImplementedError()
     
-    def test_create_profile_invoice_order_item_add_offer(self):
-        
-        pass
+    # def test_create_profile_invoice_order_item_add_offer(self):
+    #     raise NotImplementedError()
 
     
     

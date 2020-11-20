@@ -22,12 +22,12 @@
     <tr>
       <th scope="row">{{ forloop.counter }}</th>
       <td>{{item.name}}</td>
-      <td>$ {{item.price|floatformat:2}}</td>
+      <td>${{item.price|floatformat:2}}</td>
       <td>{{item.quantity}}</td>
-      <td>$ {{item.total|floatformat:2}}</td>
+      <td>${{item.get_total_display}}</td>
     </tr>
     {% empty %}
-    <h3> {% trans 'Cart is Empty' %} </h3>
+    <h3>{% trans 'Cart is Empty' %} </h3>
     {% endfor %}
     <tr>
       <td colspan=3></td>

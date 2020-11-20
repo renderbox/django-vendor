@@ -30,7 +30,7 @@
                     <td>{{ item.get_status_display }}</td>
                     <td>{{ item.created }}</td>
                     <td>{{ item.order_item.invoice.get_currency_display }}</td>
-                    <td>$ {{ item.order_item.invoice.total|floatformat:2|default:"0.00" }}</td>
+                    <td>{{ item.order_item.invoice.total|floatformat:2|default:"0.00" }}</td>
                 </tr>
                 {% empty %}
                 <tr>

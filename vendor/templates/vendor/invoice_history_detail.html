@@ -24,7 +24,7 @@
       <td>{{item.name}}</td>
       <td>${{item.price|floatformat:2}}</td>
       <td>{{item.quantity}}</td>
-      <td>${{item.total|floatformat:2}}</td>
+      <td>${{item.get_total_display}}</td>
     </tr>
     {% endfor %}
     <tr>
