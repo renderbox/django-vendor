@@ -90,12 +90,8 @@ class AddressForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(AddressForm, self).__init__(*args, **kwargs)
         self.fields['name'].hidden = True
-        self.fields['country'].label = _('Country/Region')
-        self.fields['address_1'].label = _('Address')
         self.fields['address_1'].widget.attrs.update({'placeholder' : _('Enter Address')})
-        self.fields['address_2'].label = _('Address 2 (Optional)')
         self.fields['address_2'].widget.attrs.update({'placeholder' : _('Enter Apt, Suite, Unit, Building, Floor, etc')})
-        self.fields['locality'].label = _('City')
         self.fields['locality'].widget.attrs.update({'placeholder' : _('Enter City')})
 
 
