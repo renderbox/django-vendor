@@ -108,7 +108,7 @@ class AccountInformationForm(AddressForm):
 
 
 class BillingAddressForm(AddressForm):
-    same_as_shipping = forms.BooleanField(label=_("Billing Address is the same as Shipping Address"), required=False)
+    same_as_shipping = forms.BooleanField(label=_("Billing address is the same as shipping address"), required=False)
 
     class Meta:
         model = Address
