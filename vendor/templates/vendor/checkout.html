@@ -3,14 +3,15 @@
 
 {% block vendor_content %}
 <div class='row mx-md-5 px-md-3'>
-  <div class='col-12 my-4'>
+  <div class="d-flex flex-row w-100 m-3">
+    <h1><iconify-icon data-icon="ic-baseline-lock" class="text-black"></iconify-icon></h1>
     <h1>{% trans 'Secure Checkout' %}</h1>
   </div>
   <div class='col-md-8'>
     <div class="card border-0">
       <div class="card-header mb-0 text-white p-0 border-0 mb-3 rounded" id="account_info">
         <div
-          class="btn-group w-100 {% if request.resolver_match.url_name == 'checkout-account' %}bg-accenthover{% else %}bg-accent{% endif %}">
+          class="btn-group w-100 rounded {% if request.resolver_match.url_name == 'checkout-account' %}bg-accenthover{% else %}bg-accent{% endif %}">
           <div class="bg-white font-weight-bold text-dark border-0 px-3 py-2 m-0" style="opacity: .5;">
             1
           </div>
@@ -43,7 +44,7 @@
     <div class="card border-0">
       <div class="card-header mb-0 text-white p-0 border-0 mb-3 rounded" id="billing_info">
         <div
-          class="btn-group w-100 {% if request.resolver_match.url_name == 'checkout-payment' %}bg-accenthover{% else %}bg-accent{% endif %}">
+          class="btn-group w-100 rounded {% if request.resolver_match.url_name == 'checkout-payment' %}bg-accenthover{% else %}bg-accent{% endif %}">
           <div class="bg-white font-weight-bold text-dark border-0 px-3 py-2 m-0" style="opacity: .5;">
             2
           </div>
@@ -87,7 +88,7 @@
     <div class="card border-0">
       <div class="card-header mb-0 text-white p-0 border-0 mb-3 rounded" id="review">
         <div
-          class="btn-group w-100 {% if request.resolver_match.url_name == 'checkout-review' %}bg-accenthover{% else %}bg-accent{% endif %}">
+          class="btn-group w-100 rounded {% if request.resolver_match.url_name == 'checkout-review' %}bg-accenthover{% else %}bg-accent{% endif %}">
           <div class="bg-white font-weight-bold text-dark border-0 px-3 py-2 m-0" style="opacity: .5;">
             3
           </div>
