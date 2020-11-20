@@ -47,12 +47,7 @@ def get_or_create_session_cart(session):
     session_cart = session.get('session_cart')
 
     return session_cart
-
-def get_currency(invoice=None):
-    if not invoice:
-        return Currency[settings.DEFAULT_CURRENCY].value
-    return invoice.get_currency_display()
-
+    
 def check_offer_items_or_redirect(invoice, request):
     
     if invoice.order_items.count() < 1:
@@ -82,14 +77,12 @@ class CartView(TemplateView):
             context['invoice']['tax'] = 0
             context['invoice']['total'] = context['invoice']['subtotal']
 
-            context['currency'] = get_currency()
             return render(request, self.template_name, context)
 
         profile, created = self.request.user.customer_profile.get_or_create(site=set_default_site_id())
         cart = profile.get_cart_or_checkout_cart()
         context['invoice'] = cart
         context['order_items'] = [ order_item for order_item in cart.order_items.all() ]
-        context['currency'] = get_currency(invoice=cart)
         return render(request, self.template_name, context)
 
 
@@ -130,7 +123,6 @@ class AddToCartView(View):
             
             messages.info(self.request, _("Added item to cart."))
             cart.add_offer(offer)
-
 
         return redirect('vendor:cart')      # Redirect to cart on success
 
@@ -174,6 +166,11 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         clear_session_purchase_data(request)
         
         invoice = get_purchase_invoice(request.user)
+        if not invoice.order_items.count():
+            return redirect('vendor:cart')
+        
+        invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        invoice.save()
 
         existing_account_address = Address.objects.filter(profile__user=request.user)
 
@@ -185,7 +182,6 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         
         context['form'] = form
         context['invoice'] = invoice
-        context['currency'] = get_currency(invoice=invoice)
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -229,6 +225,8 @@ class PaymentView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         invoice = get_purchase_invoice(request.user)
+        if not invoice.order_items.count():
+            return redirect('vendor:cart')
 
         context = super().get_context_data()
 
@@ -236,7 +234,6 @@ class PaymentView(LoginRequiredMixin, TemplateView):
 
         context = processor.get_checkout_context(context=context)
 
-        context['currency'] = get_currency(invoice=invoice)
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -275,6 +272,8 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         invoice = get_purchase_invoice(request.user)
+        if not invoice.order_items.count():
+            return redirect('vendor:cart')
 
         context = super().get_context_data()
 
@@ -286,7 +285,6 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         
         context = processor.get_checkout_context(context=context)
         
-        context['currency'] = get_currency(invoice=invoice)
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -323,7 +321,6 @@ class PaymentSummaryView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data()
-        context['currency'] = get_currency(invoice=kwargs.get('object'))
         return context
 
 

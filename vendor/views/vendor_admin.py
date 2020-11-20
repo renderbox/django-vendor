@@ -9,6 +9,7 @@ from django.views.generic.list import ListView
 from vendor.config import VENDOR_PRODUCT_MODEL
 from vendor.models import Invoice, Offer, Price
 from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet
+from django.utils.translation import ugettext as _
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 #############
@@ -33,7 +34,7 @@ class AdminInvoiceListView(LoginRequiredMixin, ListView):
     model = Invoice
 
     def get_queryset(self):
-        return self.model.on_site.filter(status__gt=Invoice.InvoiceStatus.CART)  # ignore cart state invoices
+        return self.model.on_site.filter(status__gt=Invoice.InvoiceStatus.CART).order_by('updated')  # ignore cart state invoices
 
 
 class AdminInvoiceDetailView(LoginRequiredMixin, DetailView):
@@ -152,8 +153,22 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
         offer_form = self.form_class(request.POST)
         price_formset = PriceFormSet(request.POST)
 
+
         if not (price_formset.is_valid() and offer_form.is_valid()):
-            return render(request, self.template_name, {'form': offer_form, 'formsert': price_formset})
+            return render(request, self.template_name, {'form': offer_form, 'formset': price_formset})
+        
+        product_currencies = {}
+        price_currency = [ price_form.cleaned_data['currency'] for price_form in price_formset ]
+
+        for product in Product.objects.filter(pk__in=offer_form.cleaned_data['products']):
+            for currency in product.meta['msrp'].keys():
+                product_currencies[currency] = currency
+
+        for price_form in price_formset:
+            if price_form.cleaned_data['currency'] not in product_currencies:
+                price_formset[0].add_error('currency', _('Invalid currency'))
+                return render(request, self.template_name, {'form': offer_form, 'formset': price_formset})
+                
 
         offer = offer_form.save(commit=False)
         if len(offer_form.cleaned_data['products']):

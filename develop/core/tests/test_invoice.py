@@ -118,7 +118,7 @@ class CartViewTests(TestCase):
         self.invoice.order_items.all().delete()
         response = self.client.get(self.cart_url)
 
-        self.assertContains(response, 'Empty Cart')
+        self.assertContains(response, 'Your shopping cart is empty.')
         self.assertNotContains(response, 'Check Out')
     
     def test_view_cart_updates_on_adding_items(self):

@@ -28,11 +28,11 @@
           <tr>
             <td><a class="text-primary" href="{% url 'vendor_admin:manager-order-detail' item.uuid %}">{{ item.pk }}</a>
             </td>
-            <td>{{ item.get_invoice_dispaly }}</td>
+            <td>{{ item.get_invoice_display }}</td>
             <td>{{ item.get_status_display }}</td>
             <td>{{ item.created }}</td>
             <td>{{ item.get_currency_display }}</td>
-            <td>$ {{ item.total|floatformat:2|default:"0.00" }}</td>
+            <td>${{ item.total|floatformat:2|default:"0.00" }}</td>
           </tr>
           {% empty %}
           <tr>
@@ -49,4 +49,3 @@
   </div>
 </div>
 {% endblock %}
-

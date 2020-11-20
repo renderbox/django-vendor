@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-20 00:18+0000\n"
+"POT-Creation-Date: 2020-11-18 22:39+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,13 +18,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: forms.py:32 forms.py:49 models/offer.py:36 models/price.py:16
+#: config.py:11
+msgid "USD Dollars"
+msgstr ""
+
+#: forms.py:32 forms.py:49 models/offer.py:37 models/price.py:16
 #: models/receipt.py:21 templates/vendor/manage/offers.html:20
 #: templates/vendor/purchase_detail.html:31
 msgid "Start Date"
 msgstr "開始日"
 
-#: forms.py:33 forms.py:50 models/offer.py:37 models/price.py:17
+#: forms.py:33 forms.py:50 models/offer.py:38 models/price.py:17
 #: models/receipt.py:22 templates/vendor/manage/offers.html:21
 #: templates/vendor/purchase_detail.html:35
 msgid "End Date"
@@ -34,7 +38,7 @@ msgstr "終了日"
 msgid "Available Products:"
 msgstr "利用可能な製品："
 
-#: forms.py:51 models/offer.py:40
+#: forms.py:51 models/offer.py:41
 msgid "Term Start Date"
 msgstr "期間開始日"
 
@@ -174,15 +178,20 @@ msgstr "国"
 msgid "Postal Code"
 msgstr "郵便番号"
 
-#: models/base.py:44 templates/vendor/manage/products.html:19
+#: models/base.py:29 models/base.py:33
+#, python-brace-format
+msgid "Currency not available {key}"
+msgstr ""
+
+#: models/base.py:56 templates/vendor/manage/products.html:19
 msgid "SKU"
 msgstr "SKU"
 
-#: models/base.py:44
+#: models/base.py:56
 msgid "User Defineable SKU field"
 msgstr "ユーザー定義可能なSKUフィールド"
 
-#: models/base.py:46 models/offer.py:35 models/tax.py:17 models/wishlist.py:13
+#: models/base.py:58 models/offer.py:36 models/tax.py:17 models/wishlist.py:13
 #: templates/vendor/invoice_list.html:19
 #: templates/vendor/manage/dashboard.html:105
 #: templates/vendor/manage/invoice_list.html:19
@@ -192,28 +201,28 @@ msgstr "ユーザー定義可能なSKUフィールド"
 msgid "Name"
 msgstr "名前"
 
-#: models/base.py:47 models/invoice.py:40 models/offer.py:34
+#: models/base.py:59 models/invoice.py:40 models/offer.py:35
 #: models/profile.py:26 templates/vendor/manage/products.html:21
 msgid "Site"
 msgstr "地点"
 
-#: models/base.py:49 models/offer.py:41 templates/vendor/manage/offers.html:23
+#: models/base.py:61 models/offer.py:42 templates/vendor/manage/offers.html:23
 msgid "Available"
 msgstr "利用可能"
 
-#: models/base.py:49 models/offer.py:41
+#: models/base.py:61 models/offer.py:42
 msgid "Is this currently available?"
 msgstr "これは現在利用できますか？"
 
-#: models/base.py:50 templates/vendor/manage/products.html:22
+#: models/base.py:62 templates/vendor/manage/products.html:22
 msgid "Description"
 msgstr "説明"
 
-#: models/base.py:51 models/receipt.py:27
+#: models/base.py:63 models/receipt.py:27
 msgid "Meta"
 msgstr "メタ"
 
-#: models/base.py:51
+#: models/base.py:63
 msgid ""
 "Eg: { 'msrp':{'usd':10.99} }\n"
 "(iso4217 Country Code):(MSRP Price)"
@@ -395,52 +404,52 @@ msgstr "提供"
 msgid "Quantity"
 msgstr "量"
 
-#: models/offer.py:36
+#: models/offer.py:37
 msgid "What date should this offer become available?"
 msgstr "このオファーが利用可能になるのはいつですか？"
 
-#: models/offer.py:37
+#: models/offer.py:38
 msgid "Expiration Date?"
 msgstr "賞味期限？"
 
-#: models/offer.py:38 templates/vendor/purchase_detail.html:19
+#: models/offer.py:39 templates/vendor/purchase_detail.html:19
 #: templates/vendor/purchase_list.html:18
 msgid "Terms"
 msgstr "条項"
 
-#: models/offer.py:39
+#: models/offer.py:40
 msgid "Term Details"
 msgstr "期間の詳細"
 
-#: models/offer.py:40
+#: models/offer.py:41
 msgid "When is this product available to use?"
 msgstr "この製品はいつ使用できますか？"
 
-#: models/offer.py:42
+#: models/offer.py:43
 msgid "Is a Bundle?"
 msgstr "バンドルですか？"
 
-#: models/offer.py:42
+#: models/offer.py:43
 msgid "Is this a product bundle? (auto-generated)"
 msgstr "これは製品バンドルですか？ （自動生成）"
 
-#: models/offer.py:43
+#: models/offer.py:44
 msgid "Offer Description"
 msgstr "オファーの説明"
 
-#: models/offer.py:44
+#: models/offer.py:45
 msgid "List Bundled Items"
 msgstr "バンドルアイテムのリスト"
 
-#: models/offer.py:44
+#: models/offer.py:45
 msgid "When showing to customers, display the included items in a list?"
 msgstr "顧客に表示するときに、含まれているアイテムをリストに表示しますか？"
 
-#: models/offer.py:45
+#: models/offer.py:46
 msgid "Allow Multiple Purchase"
 msgstr "複数購入を許可する"
 
-#: models/offer.py:45
+#: models/offer.py:46
 msgid ""
 "Confirm the user wants to buy multiples of the product where typically there "
 "is just one purchased at a time."

@@ -57,7 +57,7 @@
         "slug": "wheel-of-cheddar",
         "available": false,
         "description": "This is a food item",
-        "meta": {"msrp": {"default": "usd", "usd": 75.00}},
+        "meta": {"msrp": {"default": "usd", "usd": 75.00, "jpy": 75.00}},
         "classification": [],
         "offers": [
             2

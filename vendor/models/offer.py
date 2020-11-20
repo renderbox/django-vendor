@@ -17,10 +17,11 @@ from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
 
 from .base import CreateUpdateModelBase
 from .choice import TermType
-from .utils import set_default_site_id
+from .utils import set_default_site_id, is_currency_available
 #########
 # OFFER
 #########
+
 
 class Offer(CreateUpdateModelBase):
     '''
@@ -55,7 +56,12 @@ class Offer(CreateUpdateModelBase):
         return self.name
 
     def get_msrp(self, currency=DEFAULT_CURRENCY):
-        return sum([p.get_msrp(currency) for p in self.products.all()])
+        """
+        Gets the sum of the products msrp cost for products.
+        It assumes that all product in a offer use the same currency
+        """
+        currency = self.get_best_currency(currency)
+        return sum([product.get_msrp(currency) for product in self.products.all()])
 
     def current_price(self, currency=DEFAULT_CURRENCY):
         '''
@@ -63,15 +69,15 @@ class Offer(CreateUpdateModelBase):
         '''
         now = timezone.now()
         price = self.prices.filter( Q(start_date__lte=now) | Q(start_date=None),
-                                    Q(end_date__gte=now) | Q(end_date=None)
-                                    ).order_by('-priority').first()            # first()/last() returns the model object or None
+                                    Q(end_date__gte=now) | Q(end_date=None),
+                                    Q(currency=currency)).order_by('-priority').first()            # first()/last() returns the model object or None
 
-        if price:
-            result = price.cost
-        else:
-            result = self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
+        if price is None:
+            return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
+        elif price.cost is None:
+            return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
 
-        return result
+        return price.cost
 
     def add_to_cart_link(self):
         return reverse("vendor:add-to-cart", kwargs={"slug":self.slug})
@@ -94,7 +100,22 @@ class Offer(CreateUpdateModelBase):
             return self.products.all().first().description
     
     def savings(self, currency=DEFAULT_CURRENCY):
-        savings = self.get_msrp(currency) - self.current_price()
+        """
+        Gets the savings between the difference between the product's msrp and the currenct price
+        """
+        savings = self.get_msrp(currency) - self.current_price(currency)
         if savings < 0:
             return Decimal(0).quantize(Decimal('.00'), rounding=ROUND_UP)
         return Decimal(savings).quantize(Decimal('.00'), rounding=ROUND_UP)
+
+    def get_best_currency(self, currency=DEFAULT_CURRENCY):
+        """
+        Gets best currency for prodcuts available in this offer
+        """
+        product_msrp_currencies = [ set(product.meta['msrp'].keys()) for product in self.products.all() ]
+
+        if is_currency_available(product_msrp_currencies[0].union(*product_msrp_currencies[1:]), currency=currency):
+            return currency
+
+        return DEFAULT_CURRENCY
+

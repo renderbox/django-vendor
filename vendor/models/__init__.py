@@ -1,5 +1,5 @@
 from .utils import generate_sku
-from .validator import validate_msrp_format
+from .validator import validate_msrp_format, validate_msrp
 
 from .base import ProductModelBase
 

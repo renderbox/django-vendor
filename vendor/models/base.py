@@ -1,5 +1,7 @@
 import uuid
 
+from autoslug import AutoSlugField
+
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
@@ -7,11 +9,10 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from autoslug import AutoSlugField
+from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY, AVAILABLE_CURRENCIES
 
-from .validator import validate_msrp_format
-
-from vendor.config import VENDOR_PRODUCT_MODEL
+from .validator import validate_msrp
+from .utils import set_default_site_id, is_currency_available
 
 ##################
 # DEFAULTS
@@ -20,7 +21,8 @@ from vendor.config import VENDOR_PRODUCT_MODEL
 # TODO: Nice to have class MSRP(NestedModels)
 
 def product_meta_default():
-    return {'msrp':{'default':'usd', 'usd':10.00}}
+    return {'msrp':{'default':DEFAULT_CURRENCY, DEFAULT_CURRENCY: 0.00}}
+
 
 ##################
 # BASE MODELS
@@ -48,7 +50,7 @@ class ProductModelBase(CreateUpdateModelBase):
     slug = AutoSlugField(populate_from='name', unique_with='site__id')                                                                         # Gets set in the save
     available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))        # This can be forced to be unavailable if there is no prices attached.
     description = models.JSONField(_("Description"), default=dict, blank=True, null=True)
-    meta = models.JSONField(_("Meta"), default=product_meta_default, blank=True, null=True, help_text=_("Eg: { 'msrp':{'usd':10.99} }\n(iso4217 Country Code):(MSRP Price)"))
+    meta = models.JSONField(_("Meta"), validators=[validate_msrp], default=product_meta_default, blank=True, null=True, help_text=_("Eg: { 'msrp':{'usd':10.99} }\n(iso4217 Country Code):(MSRP Price)"))
     classification = models.ManyToManyField("vendor.TaxClassifier", blank=True)                                        # What taxes can apply to this item
     offers = models.ManyToManyField("vendor.Offer", blank=True, related_name="products")
     reciepts = models.ManyToManyField("vendor.Receipt", blank=True, related_name="products")
@@ -73,3 +75,14 @@ class ProductModelBase(CreateUpdateModelBase):
         Link to add the item to the user's cart.
         """
     # TODO: ADD trigger when object becomes unavailable to disable offer if it exisits. 
+
+    def get_best_currency(self, currency=DEFAULT_CURRENCY):
+        """
+        If no currency is provided as an argument it will default to the products's msrp default currency.
+        If currency is provided but is not available in the product it will default to the products's msrp default currency.
+        """
+        if is_currency_available(self.meta['msrp'].keys(), currency=currency):
+            return currency
+        else:
+            return self.meta['msrp']['default']
+
