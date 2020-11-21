@@ -36,7 +36,7 @@ class Offer(CreateUpdateModelBase):
     name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
     start_date = models.DateTimeField(_("Start Date"), help_text=_("What date should this offer become available?"))
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text=_("Expiration Date?"))
-    terms =  models.IntegerField(_("Terms"), default=0, choices=TermType.choices)
+    terms =  models.IntegerField(_("Terms"), default=TermType.PERPETUAL, choices=TermType.choices)
     term_details = models.JSONField(_("Term Details"), default=dict, blank=True, null=True)
     term_start_date = models.DateTimeField(_("Term Start Date"), help_text=_("When is this product available to use?"), blank=True, null=True) # Useful for Event Tickets or Pre-Orders
     available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))
