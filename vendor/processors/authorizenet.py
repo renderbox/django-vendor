@@ -6,6 +6,7 @@ from datetime import datetime
 from decimal import Decimal, ROUND_DOWN
 
 from django.conf import settings
+from django.utils import timezone
 
 from vendor.config import VENDOR_PAYMENT_PROCESSOR
 
@@ -23,7 +24,6 @@ from vendor.models.choice import TransactionTypes, PaymentTypes, TermType, Purch
 from vendor.models.invoice import Invoice
 from vendor.models.address import Country
 from .base import PaymentProcessorBase
-
 
 class AuthorizeNetProcessor(PaymentProcessorBase):
     """
@@ -403,15 +403,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             
         receipt.save()
 
-
-    def subscription_update_payment(self, subscription_id):
-
+    def subscription_update_payment(self, receipt, subscription_id):
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.payment = self.create_authorize_payment()
 
         self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = subscriptionId
+        self.transaction.subscriptionId = str(subscription_id)
         self.transaction.subscription = self.transaction_type
 
         self.controller = ARBUpdateSubscriptionController(self.transaction)
@@ -419,21 +417,17 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         response = self.controller.getresponse()
 
-        if (response.messages.resultCode=="Ok"):
-            print ("SUCCESS")
-            print ("Message Code : %s" % response.messages.message[0]['code'].text)
-            print ("Message text : %s" % response.messages.message[0]['text'].text)
-        else:
-            print ("ERROR")
-            print ("Message Code : %s" % response.messages.message[0]['code'].text)
-            print ("Message text : %s" % response.messages.message[0]['text'].text)
+        self.check_subscription_response(response)
 
-        return response
+        receipt.meta[f"{timezone.now():Y m }"] = {'raw': str({**self.transaction_message, **response})}
+        receipt.save()
+
 
     def subscription_cancel(self, reciept, subscription_id):
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.subscriptionId = str(subscription_id)
+        self.transaction.includeTransactions = False
 
         self.controller = ARBCancelSubscriptionController(self.transaction)
         self.controller.execute()
@@ -446,6 +440,17 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             reciept.status = PurchaseStatus.CANCELED
             reciept.save()
 
+    def subscription_info(self, subscription_id):
+        self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.subscriptionId = str(subscription_id)
+
+        self.controller = ARBGetSubscriptionRequest(self.transaction)
+        self.controller.execute()
+
+        response = self.controller.getresponse()
+
+        return response
 
     def refund_payment(self, payment):
         # Init transaction

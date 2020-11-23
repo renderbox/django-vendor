@@ -407,22 +407,24 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
         subscription_id = receipt.meta.get('subscription_id', None)
 
         if not subscription_id:
-            messages.info(self.request, _("Unable to cancel at the moment"))
-            return self.request.META.get('HTTP_REFERER', self.success_url)
+            messages.info(request, _("Unable to cancel at the moment"))
+            return redirect(request.META.get('HTTP_REFERER', self.success_url))
         
         if not payment_form.is_valid():
-            messages.info(self.request, _("Invalid Card"))
-            return self.request.META.get('HTTP_REFERER', self.success_url)
+            messages.info(request, _("Invalid Card"))
+            return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
         processor = PaymentProcessor(receipt.order_item.invoice)
-        processor.subscription_cancel(receipt, subscription_id)
+        processor.get_payment_info_form_data(request.POST, CreditCardForm)
+        processor.subscription_update_payment(receipt, subscription_id)
 
         if not processor.transaction_submitted:
-            messages.info(self.request, _(f"Payment gateway error: {processor.transaction_message}"))
-            return self.request.META.get('HTTP_REFERER', self.success_url)
+            messages.info(request, _(f"Payment gateway error: {processor.transaction_message.get('message', '')}"))
+            return redirect(request.META.get('HTTP_REFERER', self.success_url))
             
-        messages.info(self.request, _("Subscription Cancelled"))
-        return self.request.META.get('HTTP_REFERER', self.success_url)
+        payment = Payment.objects.get(transaction=receipt.transaction, invoice=receipt.order_item.invoice, invoice__order_items=receipt.order_item)
+        messages.info(request, _(f"Success: {processor.transaction_message.get('message', '')}"))
+        return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
 
 class ShippingAddressUpdateView(LoginRequiredMixin, UpdateView):
