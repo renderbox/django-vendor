@@ -23,6 +23,12 @@ from .utils import set_default_site_id, is_currency_available
 def product_meta_default():
     return {'msrp':{'default':DEFAULT_CURRENCY, DEFAULT_CURRENCY: 0.00}}
 
+def product_description_default():
+    return {
+            'description': '',
+            'call_out': ' '
+            }
+
 
 ##################
 # BASE MODELS
@@ -49,7 +55,7 @@ class ProductModelBase(CreateUpdateModelBase):
     site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=settings.SITE_ID, related_name="products")        # For multi-site support
     slug = AutoSlugField(populate_from='name', unique_with='site__id')                                                                         # Gets set in the save
     available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))        # This can be forced to be unavailable if there is no prices attached.
-    description = models.JSONField(_("Description"), default=dict, blank=True, null=True)
+    description = models.JSONField(_("Description"), default=product_description_default, blank=True, null=True, help_text=_("Eg: {'call out': 'The ultimate product'}"))
     meta = models.JSONField(_("Meta"), validators=[validate_msrp], default=product_meta_default, blank=True, null=True, help_text=_("Eg: { 'msrp':{'usd':10.99} }\n(iso4217 Country Code):(MSRP Price)"))
     classification = models.ManyToManyField("vendor.TaxClassifier", blank=True)                                        # What taxes can apply to this item
     offers = models.ManyToManyField("vendor.Offer", blank=True, related_name="products")

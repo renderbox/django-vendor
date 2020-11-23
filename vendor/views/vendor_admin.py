@@ -1,7 +1,7 @@
 from django.apps import apps
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.views.generic import TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView
@@ -62,14 +62,10 @@ class AdminProductUpdateView(LoginRequiredMixin, UpdateView):
     '''
     template_name = "vendor/manage/product.html"
     model = Product
-    form_class = ProductForm
+    fields = ['sku', 'name', 'site', 'available', 'description', 'meta']
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
-
-    def form_valid(self, form):
-        product = form.save(commit=False)
-        product.save()
-        return redirect('vendor_admin:manager-product-list')
+    success_url = reverse_lazy('vendor_admin:manager-product-list')
 
 
 class AdminProductCreateView(LoginRequiredMixin, CreateView):
@@ -77,12 +73,10 @@ class AdminProductCreateView(LoginRequiredMixin, CreateView):
     Creates a Product to be added to offers
     '''
     template_name = "vendor/manage/product.html"
-    form_class = ProductForm
+    model = Product
+    fields = ['sku', 'name', 'site', 'available', 'description', 'meta']
+    success_url = reverse_lazy('vendor_admin:manager-product-list')
 
-    def form_valid(self, form):
-        product = form.save(commit=False)
-        product.save()
-        return redirect('vendor_admin:manager-product-list')
 
 class AdminOfferListView(LoginRequiredMixin, ListView):
     '''
@@ -102,11 +96,15 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
     form_class = OfferForm
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
+    template_name_suffix = '_update_form'
+
+    def get_initial(self):
+        return {'products': self.object.products.all()}
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['formset'] = PriceFormSet(instance=Offer.objects.get(uuid=context['view'].kwargs['uuid']))
+        context['formset'] = PriceFormSet(instance=self.object)
 
         return context
 
@@ -119,7 +117,7 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
 
         offer = form.save(commit=False)
 
-        if len(form.cleaned_data['products']):
+        if len(form.cleaned_data['products']) > 1:
             offer.bundle=True
         
         offer.save()
@@ -140,7 +138,8 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
     Creates a Product to be added to offers
     '''
     template_name = "vendor/manage/offer.html"
-    form_class = OfferForm    
+    model = Offer
+    form_class = OfferForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -171,7 +170,7 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
                 
 
         offer = offer_form.save(commit=False)
-        if len(offer_form.cleaned_data['products']):
+        if len(offer_form.cleaned_data['products']) > 1:
             offer.bundle=True
 
         offer.save()
