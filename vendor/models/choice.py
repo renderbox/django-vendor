@@ -41,3 +41,7 @@ class TransactionTypes(models.IntegerChoices):
     SETTLE = 30, _('Settle')
     VOID = 40, _('Void')
     REFUND = 50, _('Refund')
+
+class TermDetailUnits(models.IntegerChoices):
+    DAY = 10, _("Day")
+    MONTH = 20, _("Month")

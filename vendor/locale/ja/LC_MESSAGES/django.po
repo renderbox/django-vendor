@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-20 17:18+0000\n"
+"POT-Creation-Date: 2020-11-23 19:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,103 +22,103 @@ msgstr ""
 msgid "USD Dollars"
 msgstr "米ドル"
 
-#: forms.py:32 forms.py:49 models/offer.py:37 models/price.py:16
+#: forms.py:19 forms.py:35 models/offer.py:39 models/price.py:16
 #: models/receipt.py:21 templates/vendor/manage/offers.html:20
 #: templates/vendor/purchase_detail.html:31
 msgid "Start Date"
 msgstr "開始日"
 
-#: forms.py:33 forms.py:50 models/offer.py:38 models/price.py:17
+#: forms.py:20 forms.py:36 models/offer.py:40 models/price.py:17
 #: models/receipt.py:22 templates/vendor/manage/offers.html:21
 #: templates/vendor/purchase_detail.html:35
 msgid "End Date"
 msgstr "終了日"
 
-#: forms.py:48
+#: forms.py:34
 msgid "Available Products:"
 msgstr "利用可能な製品："
 
-#: forms.py:51 models/offer.py:41
+#: forms.py:37 models/offer.py:43
 msgid "Term Start Date"
 msgstr "期間開始日"
 
-#: forms.py:65
+#: forms.py:51
 msgid "Bundle: "
 msgstr "バンドル："
 
-#: forms.py:68
+#: forms.py:54
 msgid "Invalid term details for subscription"
 msgstr "サブスクリプションの期間の詳細が無効です"
 
-#: forms.py:93
+#: forms.py:79
 msgid "Enter Address"
 msgstr "住所を入力してください"
 
-#: forms.py:94
+#: forms.py:80
 msgid "Enter Apt, Suite, Unit, Building, Floor, etc"
 msgstr "アパート、スイート、ユニット、建物、フロアなどを入力してください"
 
-#: forms.py:95
+#: forms.py:81
 msgid "Enter City"
 msgstr "市に入る"
 
-#: forms.py:99
+#: forms.py:85
 msgid "Email Address"
 msgstr "電子メールアドレス"
 
-#: forms.py:107
+#: forms.py:93
 msgid "Billing address is the same as shipping address"
 msgstr "請求先住所は配送先住所と同じです"
 
-#: forms.py:115
+#: forms.py:101
 msgid "Billing Country/Region"
 msgstr "請求国/地域"
 
-#: forms.py:192
+#: forms.py:178
 msgid "The credit card number is invalid"
 msgstr "クレジットカード番号が無効です"
 
-#: forms.py:237
+#: forms.py:223
 msgid "Payment Type"
 msgstr "支払いタイプ"
 
-#: forms.py:241 models/payment.py:25
+#: forms.py:227 models/payment.py:25
 msgid "Name on Card"
 msgstr "カードの名前"
 
-#: forms.py:242
+#: forms.py:228
 msgid "Credit Card Number"
 msgstr "クレジットカード番号"
 
-#: forms.py:243
+#: forms.py:229
 msgid "Expiration Month"
 msgstr "有効期限月"
 
-#: forms.py:244
+#: forms.py:230
 msgid "Expiration Year"
 msgstr "有効期限"
 
-#: forms.py:245
+#: forms.py:231
 msgid "CVV Number"
 msgstr "CVV番号"
 
-#: forms.py:263
+#: forms.py:249
 msgid "You must select a valid expiration month"
 msgstr "有効な有効期限を選択する必要があります"
 
-#: forms.py:271
+#: forms.py:257
 msgid "You must select a valid expiration year"
 msgstr "有効な有効期限を選択する必要があります"
 
-#: forms.py:279
+#: forms.py:265
 msgid "CVV must be all digits"
 msgstr "CVVはすべて数字である必要があります"
 
-#: forms.py:294
+#: forms.py:280
 msgid "The expiration date you entered is in the past."
 msgstr "入力した有効期限は過去のものです。"
 
-#: forms.py:295
+#: forms.py:281
 msgid "Check expiration"
 msgstr "有効期限を確認してください"
 
@@ -166,15 +166,15 @@ msgstr "国/地域"
 msgid "Postal Code"
 msgstr "郵便番号"
 
-#: models/base.py:46 templates/vendor/manage/products.html:19
+#: models/base.py:52 templates/vendor/manage/products.html:19
 msgid "SKU"
 msgstr "SKU"
 
-#: models/base.py:46
+#: models/base.py:52
 msgid "User Defineable SKU field"
 msgstr "ユーザー定義可能なSKUフィールド"
 
-#: models/base.py:48 models/offer.py:36 models/tax.py:17 models/wishlist.py:13
+#: models/base.py:54 models/offer.py:38 models/tax.py:17 models/wishlist.py:13
 #: templates/vendor/invoice_list.html:19
 #: templates/vendor/manage/dashboard.html:105
 #: templates/vendor/manage/invoice_list.html:19
@@ -184,28 +184,32 @@ msgstr "ユーザー定義可能なSKUフィールド"
 msgid "Name"
 msgstr "名前"
 
-#: models/base.py:49 models/invoice.py:40 models/offer.py:35
+#: models/base.py:55 models/invoice.py:40 models/offer.py:37
 #: models/profile.py:26 templates/vendor/manage/products.html:21
 msgid "Site"
 msgstr "地点"
 
-#: models/base.py:51 models/offer.py:42 templates/vendor/manage/offers.html:23
+#: models/base.py:57 models/offer.py:44 templates/vendor/manage/offers.html:23
 msgid "Available"
 msgstr "利用可能"
 
-#: models/base.py:51 models/offer.py:42
+#: models/base.py:57 models/offer.py:44
 msgid "Is this currently available?"
 msgstr "これは現在利用できますか？"
 
-#: models/base.py:52 templates/vendor/manage/products.html:22
+#: models/base.py:58 templates/vendor/manage/products.html:22
 msgid "Description"
 msgstr "説明"
 
-#: models/base.py:53 models/receipt.py:27
+#: models/base.py:58
+msgid "Eg: {'call out': 'The ultimate product'}"
+msgstr "例：{'call out'： '究極の製品'}"
+
+#: models/base.py:59 models/receipt.py:27
 msgid "Meta"
 msgstr "メタ"
 
-#: models/base.py:53
+#: models/base.py:59
 msgid ""
 "Eg: { 'msrp':{'usd':10.99} }\n"
 "(iso4217 Country Code):(MSRP Price)"
@@ -305,6 +309,14 @@ msgstr "無効"
 msgid "Refund"
 msgstr "払い戻し"
 
+#: models/choice.py:46
+msgid "Day"
+msgstr "日"
+
+#: models/choice.py:47
+msgid "Month"
+msgstr "月"
+
 #: models/invoice.py:30 templates/vendor/orderitem_list.html:4
 msgid "Cart"
 msgstr "カート"
@@ -387,52 +399,63 @@ msgstr "提供"
 msgid "Quantity"
 msgstr "量"
 
-#: models/offer.py:37
+#: models/offer.py:39
 msgid "What date should this offer become available?"
 msgstr "このオファーが利用可能になるのはいつですか？"
 
-#: models/offer.py:38
+#: models/offer.py:40
 msgid "Expiration Date?"
 msgstr "賞味期限？"
 
-#: models/offer.py:39 templates/vendor/purchase_detail.html:19
+#: models/offer.py:41 templates/vendor/purchase_detail.html:19
 #: templates/vendor/purchase_list.html:18
 msgid "Terms"
 msgstr "条項"
 
-#: models/offer.py:40
+#: models/offer.py:42
 msgid "Term Details"
 msgstr "期間の詳細"
 
-#: models/offer.py:41
+#: models/offer.py:42
+msgid "term_units: 10/20(Day/Month), trial_occurrences: 1(defualt)"
+msgstr "term_units：10/20（日/月）、試行回数：1（デフォルト）"
+
+#: models/offer.py:43
 msgid "When is this product available to use?"
 msgstr "この製品はいつ使用できますか？"
 
-#: models/offer.py:43
+#: models/offer.py:45
 msgid "Is a Bundle?"
 msgstr "バンドルですか？"
 
-#: models/offer.py:43
+#: models/offer.py:45
 msgid "Is this a product bundle? (auto-generated)"
 msgstr "これは製品バンドルですか？ （自動生成）"
 
-#: models/offer.py:44
+#: models/offer.py:46
 msgid "Offer Description"
 msgstr "オファーの説明"
 
-#: models/offer.py:45
+#: models/offer.py:46
+msgid ""
+"You can enter a list of descriptions. Note: if you inputs something here the "
+"product description will not show up."
+msgstr "説明のリストを入力できます。 注：ここに何かを入力すると"
+"商品説明は表示されません"
+
+#: models/offer.py:47
 msgid "List Bundled Items"
 msgstr "バンドルアイテムのリスト"
 
-#: models/offer.py:45
+#: models/offer.py:47
 msgid "When showing to customers, display the included items in a list?"
 msgstr "顧客に表示するときに、含まれているアイテムをリストに表示しますか？"
 
-#: models/offer.py:46
+#: models/offer.py:48
 msgid "Allow Multiple Purchase"
 msgstr "複数購入を許可する"
 
-#: models/offer.py:46
+#: models/offer.py:48
 msgid ""
 "Confirm the user wants to buy multiples of the product where typically there "
 "is just one purchased at a time."
@@ -967,7 +990,7 @@ msgstr "サブスクリプションがキャンセルされました"
 msgid "Shipping Address Updated"
 msgstr "配送先住所が更新されました"
 
-#: views/vendor_admin.py:169
+#: views/vendor_admin.py:168
 msgid "Invalid currency"
 msgstr "通貨が無効です"
 
