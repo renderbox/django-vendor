@@ -390,11 +390,15 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
 
         processor = PaymentProcessor(receipt.order_item.invoice)
 
-        processor.cancel_subscription_payment(receipt, subscription_id)
+        processor.subscription_cancel(receipt, subscription_id)
 
         messages.info(self.request, _("Subscription Cancelled"))
 
         return redirect('vendor:customer-subscriptions')
+
+
+class SubscriptionUpdatePaymentView(LoginRequiredMixin, View):
+    pass
 
 
 class ShippingAddressUpdateView(LoginRequiredMixin, UpdateView):

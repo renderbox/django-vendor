@@ -203,10 +203,10 @@ class BaseProcessorTests(TestCase):
     # def test_subscription_payment_success(self):
     #     raise NotImplementedError()
 
-    # def test_update_subscription_payment_success(self):
+    # def test_subscription_update_payment_success(self):
     #     raise NotImplementedError()
 
-    # def test_cancel_subscription_payment_success(self):
+    # def test_subscription_cancel_success(self):
     #     raise NotImplementedError()
 
     # def test_refund_payment_success(self):
@@ -789,7 +789,7 @@ class AuthorizeNetProcessorTests(TestCase):
         dummy_receipt = Receipt(order_item=OrderItem.objects.get(pk=2))
 
         if active_subscriptions:
-            self.processor.cancel_subscription_payment(dummy_receipt, active_subscriptions[0].id.pyval)
+            self.processor.subscription_cancel(dummy_receipt, active_subscriptions[0].id.pyval)
             self.assertTrue(self.processor.transaction_submitted)
             self.assertTrue(dummy_receipt.status, PurchaseStatus.CANCELED)
         else:

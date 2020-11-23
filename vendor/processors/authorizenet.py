@@ -406,7 +406,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         receipt.save()
 
 
-    def update_subscription_payment(self, subscription_id):
+    def subscription_update_payment(self, subscription_id):
 
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.payment = self.create_authorize_payment()
@@ -432,7 +432,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         return response
 
-    def cancel_subscription_payment(self, reciept, subscription_id):
+    def subscription_cancel(self, reciept, subscription_id):
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.subscriptionId = str(subscription_id)

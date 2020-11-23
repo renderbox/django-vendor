@@ -260,10 +260,10 @@ class PaymentProcessorBase(object):
     def subscription_payment(self):
         pass
 
-    def update_subscription_payment(self):
+    def subscription_update_payment(self):
         pass
 
-    def cancel_subscription_payment(self):
+    def subscription_cancel(self):
         pass
 
     #-------------------
