@@ -72,11 +72,13 @@ setup(
             'm2r',
         ],
         'docs': [
+            'recommonmark',
+            'm2r',
+            'django_extensions',
             'coverage',
             'Sphinx',
-            'sphinx-rtd-theme',
-            'recommonmark',
             'rstcheck',
+            'sphinx-rtd-theme'
         ],
     },
     **package_metadata
