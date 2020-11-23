@@ -16,11 +16,13 @@ from iso4217 import Currency
 from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
 
 from .base import CreateUpdateModelBase
-from .choice import TermType
+from .choice import TermType, TermDetailUnits
 from .utils import set_default_site_id, is_currency_available
 #########
 # OFFER
 #########
+def offer_term_details_default():
+    return { "term_units": TermDetailUnits.MONTH, "trial_occurrences": 1}
 
 
 class Offer(CreateUpdateModelBase):
@@ -37,11 +39,11 @@ class Offer(CreateUpdateModelBase):
     start_date = models.DateTimeField(_("Start Date"), help_text=_("What date should this offer become available?"))
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text=_("Expiration Date?"))
     terms =  models.IntegerField(_("Terms"), default=0, choices=TermType.choices)
-    term_details = models.JSONField(_("Term Details"), default=dict, blank=True, null=True)
+    term_details = models.JSONField(_("Term Details"), default=offer_term_details_default, blank=True, null=True, help_text=_("term_units: 10/20(Day/Month), trial_occurrences: 1(defualt)"))
     term_start_date = models.DateTimeField(_("Term Start Date"), help_text=_("When is this product available to use?"), blank=True, null=True) # Useful for Event Tickets or Pre-Orders
     available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))
     bundle = models.BooleanField(_("Is a Bundle?"), default=False, help_text=_("Is this a product bundle? (auto-generated)"))  # Auto-generated based on if the count of the products is greater than 1.
-    offer_description = models.TextField(_("Offer Description"), blank=True, null=True)
+    offer_description = models.TextField(_("Offer Description"), default=None, blank=True, null=True, help_text=_("You can enter a list of descriptions. Note: if you inputs something here the product description will not show up."))
     list_bundle_items = models.BooleanField(_("List Bundled Items"), default=False, help_text=_("When showing to customers, display the included items in a list?"))
     allow_multiple = models.BooleanField(_("Allow Multiple Purchase"), default=False, help_text=_("Confirm the user wants to buy multiples of the product where typically there is just one purchased at a time."))
 
