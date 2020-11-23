@@ -11,7 +11,7 @@ from django.template import RequestContext
 from django.views.generic.edit import DeleteView, UpdateView
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
-from django.views.generic import TemplateView, View
+from django.views.generic import TemplateView, View, FormView
 
 from iso4217 import Currency
 
@@ -397,8 +397,32 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
         return redirect('vendor:customer-subscriptions')
 
 
-class SubscriptionUpdatePaymentView(LoginRequiredMixin, View):
-    pass
+class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
+    form_class = CreditCardForm()
+    success_url = reverse_lazy('vendor:customer-subscriptions')
+    
+    def post(self, request, *args, **kwargs):
+        receipt = Receipt.objects.get(pk=self.kwargs["pk"])
+        payment_form = CreditCardForm(request.POST)
+        subscription_id = receipt.meta.get('subscription_id', None)
+
+        if not subscription_id:
+            messages.info(self.request, _("Unable to cancel at the moment"))
+            return self.request.META.get('HTTP_REFERER', self.success_url)
+        
+        if not payment_form.is_valid():
+            messages.info(self.request, _("Invalid Card"))
+            return self.request.META.get('HTTP_REFERER', self.success_url)
+
+        processor = PaymentProcessor(receipt.order_item.invoice)
+        processor.subscription_cancel(receipt, subscription_id)
+
+        if not processor.transaction_submitted:
+            messages.info(self.request, _(f"Payment gateway error: {processor.transaction_message}"))
+            return self.request.META.get('HTTP_REFERER', self.success_url)
+            
+        messages.info(self.request, _("Subscription Cancelled"))
+        return self.request.META.get('HTTP_REFERER', self.success_url)
 
 
 class ShippingAddressUpdateView(LoginRequiredMixin, UpdateView):

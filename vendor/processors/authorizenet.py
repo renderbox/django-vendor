@@ -327,8 +327,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             self.transaction_message['msg'] = "Subscription Tansaction Complete"
             if 'subscriptionId' in response.__dict__:
                 self.transaction_message['subscription_id'] = response.subscriptionId
-        else:
-            self.transaction_message['msg'] = "Subscription Tansaction Failed"
 
     def to_valid_decimal(self, number):
         return Decimal(number).quantize(Decimal('.00'), rounding=ROUND_DOWN)
