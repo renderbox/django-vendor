@@ -13,19 +13,6 @@ from .models import Address, Offer, OrderItem, Price
 from .models.choice import PaymentTypes, TermType
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
-# class AddToCartModelForm(forms.ModelForm):
-
-#     class Meta:
-#         model = OrderItem
-#         fields = ['quantity']
-
-# class AddToCartForm(forms.Form):
-#     quantity = forms.IntegerField(required=True, initial=1)
-
-# # class RequestRefundForm(forms.ModelForm):
-# #     class Meta:
-# #         model = Refund
-# #         fields = ['reason']
 
         
 class PriceForm(forms.ModelForm):
@@ -44,8 +31,7 @@ class ProductForm(forms.ModelForm):
 
 
 class OfferForm(forms.ModelForm):
-    # TODO: How to fileter per site?
-    products = forms.ModelMultipleChoiceField(label=_("Available Products:"), required=True, queryset=Product.objects.filter(available=True))
+    products = forms.ModelMultipleChoiceField(label=_("Available Products:"), required=True, queryset=Product.on_site.filter(available=True))
     start_date = forms.DateField(label=_("Start Date"), widget=SelectDateWidget())
     end_date = forms.DateField(label=_("End Date"), widget=SelectDateWidget())
     term_start_date = forms.DateField(label=_("Term Start Date"), widget=SelectDateWidget())
