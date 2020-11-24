@@ -796,7 +796,7 @@ class AuthorizeNetProcessorTests(TestCase):
             self.processor.subscription_update_payment(dummy_receipt, active_subscriptions[0].id.pyval)
             dummy_payment.refresh_from_db()
             print(f'Message: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}\nSubscription ID: {active_subscriptions[0].id.pyval}')
-            print(f"Update Card number: {self.form_data['credit_card_form']['card_number'][-4:}")
+            print(f"Update Card number: {self.form_data['credit_card_form']['card_number'][-4:]}")
             self.assertTrue(self.processor.transaction_submitted)
             self.assertEquals(dummy_payment.result['account_number'][-4:], self.form_data['credit_card_form']['card_number'][-4:])
         else:
