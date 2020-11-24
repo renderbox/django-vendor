@@ -364,6 +364,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.create_receipts()
 
+    def process_subscription(self):
+        pass
+    
     def subscription_payment(self, subscription):
         """
         subscription: Type: OrderItem

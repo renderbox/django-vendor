@@ -205,6 +205,8 @@ class PaymentProcessorBase(object):
         else:
             return None
 
+        self.process_subscription()
+
         vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()
 
@@ -256,6 +258,9 @@ class PaymentProcessorBase(object):
 
     #-------------------
     # Process a Subscription
+
+    def process_subscription(self):
+        pass
     
     def subscription_payment(self):
         pass
