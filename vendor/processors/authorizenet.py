@@ -397,7 +397,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         
         self.check_subscription_response(response)
 
-        receipt = subscription.receipts.get(transaction=self.payment.transaction, order_item=subscription)
+        receipt = subscription.receipts.get(transaction=self.payment.transaction)
         receipt.meta = {'raw': str({**self.transaction_message, **response})}
         
         if self.transaction_submitted:
