@@ -793,7 +793,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         if active_subscriptions:
             self.processor.get_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
-            self.processor.subscription_update_payment(dummy_receipt, active_subscriptions[0].id.pyval)
+            self.processor.subscription_update_payment(dummy_receipt, active_subscriptions[-1].id.pyval)
             dummy_payment.refresh_from_db()
             print(f'Message: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}\nSubscription ID: {active_subscriptions[0].id.pyval}')
             print(f"Update Card number: {self.form_data['credit_card_form']['card_number'][-4:]}")
