@@ -14,7 +14,7 @@
             <a class="text-primary" href="#">
               <h5>{{item.name}}</h5>
             </a>
-            <h5>${{ item.get_invoice_display}}</h5>
+            <h5>${{ item.total }}</h5>
           </div>
           {% for product in item.offer.products.all %}
           <span>{{product.description}}</span>

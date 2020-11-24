@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg container-fluid page__container">
+
+        <h1>{% trans 'My Account' %}</h1>
+
+        <div class="row mt-3">
+            <div class="col-12 col-md-6">
+                <h4>{% trans 'Billing' %}</h4>
+                {% comment %}
+                <!-- TODO: Added Saved Payments when django-vendor saves Payment gateway profile id for every user -->
+                <div class="d-flex justify-content-between align-items-end">
+                    <div>
+                        <div class="font-weight-bold">{% trans 'Payment Method' %}</div>
+                        {% if payment %}
+                        <div>
+                            {% blocktrans with account_type=payment.result.account_type account_number=payment.result.account_number %}{{ account_type }}
+                            ending in {{ account_number }}{% endblocktrans %}</div>
+                        {% else %}
+                        <div>{% trans 'No current Payments' %}</div>
+                        {% endif %}
+                    </div>
+                    <a class="edit-name-button btn text-primary p-0"
+                        href="{% url 'vendor:subscription-cancel' subscription.pk %}"><i class="fas fa-pen"></i></a>
+                    <a class="edit-name-button btn text-primary p-0" href="{% url 'core-account-edit' 'billing' %}"><i
+                            class="fas fa-pen"></i></a>
+                </div>
+                {% endcomment %}
+                <div class="d-flex justify-content-between align-items-end mt-3">
+                    <div>
+                        <div class="font-weight-bold">{% trans 'Address' %}</div>
+                        {% comment %}
+                        <div>{% trans 'Saved Addresses' %}</div>
+                        {% endcomment %}
+                        <div>{{ payment.billing_address.get_address }}</div>
+                    </div>
+                    {% comment %}
+                    <a class="edit-name-button btn text-primary p-0"
+                        href="{% url 'vendor:shipping-update' payment.billing_address.pk 'billing' %}"><i
+                            class="fas fa-pen"></i></a>
+                    <a class="edit-name-button btn text-primary p-0" href="{% url 'core-account-edit' 'billing' %}"><i
+                            class="fas fa-pen"></i></a>
+                    {% endcomment %}
+                </div>
+                <div class="font-weight-bold mt-3 w-100">{% trans 'Subscription Plan' %}</div>
+                {% if subscription %}
+                <div class="d-flex mt-2">
+                    <div class="text-primary text-left">{{ subscription.order_item.name }}</div>
+                    <a class="edit-name-button btn text-primary p-0 ml-auto" data-toggle="modal"
+                        data-target="#update_subscription"><i class="fas fa-pen"></i></a>
+                </div>
+                <div class="text-left">
+                    {% blocktrans with terms=subscription.order_item.offer.get_terms_display total=subscription.order_item.total end_date=subscription.end_date|date:"M d, Y" %}Your
+                    {{ terms }} plan for ${{ total }} will renew on {{ end_date }}{% endblocktrans %}</div>
+                <div class="d-flex">
+                    <div class="text-left">
+                        {% blocktrans with account_type=payment.result.account_type|default_if_none:"Card" account_number=payment.result.account_number %}{{ account_type }}
+                        ending in {{ account_number }}{% endblocktrans %}</div>
+                    <a class="edit-name-button btn text-primary p-0 ml-auto" data-toggle="modal"
+                        data-target="#update_payment_subscription">
+                        <i class="fas fa-pen"></i>
+                    </a>
+                </div>
+                {% else %}
+                <div>{% trans 'You are not currently subscribed to a plan' %}</div>
+                <a href="#"> {% trans 'See Plans' %}</a>
+                {% endif %}
+                <div class="d-flex justify-content-between align-items-end mt-3">
+                    <div>
+                        <div class="font-weight-bold">{% trans 'Order History' %}</div>
+                        <button class="btn btn-link p-0" type="button" role="button" aria-pressed="true"
+                            data-toggle="modal" data-target="#order_history_modal">{% trans 'View' %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    {% if subscription %}
+    <div class="modal fade" tabindex="-1" role="dialog" id="update_subscription">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content p-5">
+                <h3 class="mb-3">{% trans 'Cancel Subscription Plan' %}</h3>
+                {% comment %}
+                <!-- TODO: Functionalty still needed -->
+                {% for offer in offers %}
+                <hr class="m-0" />
+                <div class='d-flex flex-row flex-grow w-100 my-3 align-items-start'>
+                    <input type="radio" name="offers" id="{{offer.pk}}" class="mt-1">
+                    <div class="d-flex flex-column w-100 ml-2">
+                        <div>{{ offer.name }}</div>
+                        <div class="d-flex flex-row align-items-end">
+                            <h2 class="p-0 m-0">$ {{ offer.current_price|floatformat:2|default_if_none:"$ 0.00" }}</h2>
+                            USD/{{ offer.get_terms_display }}
+                        </div>
+                        <p>
+                            {% if offer.savings > 0 %}
+                            <small class="font-weight-bolder">{% trans 'Savings of ' %}{{ offer.savings }}</small>
+                            {% endif %}
+                        </p>
+                        <div>{{ offer.description }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endcomment %}
+                <hr class="m-0" />
+                <div class='d-flex flex-row w-100 my-4 align-items-start'>
+                    <input type="radio" name="offers" value="cancel" class="mt-1" checked>
+                    <div class="ml-2">{% trans 'Cancel Subscription' %}</div>
+                </div>
+                <hr class="m-0" />
+                <div class='d-flex flex-row w-100 align-items-center my-3'>
+                    {% comment %}
+                    <form id="changeSubscription" class="align-itmes-center" method="post"
+                        action="{% url 'vendor:customer-subscription-change-plan' subscription.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-primary" type="submit">{% trans 'Change Subscription' %}</button>
+                    </form>
+                    {% endcomment %}
+                    <button id="changeSubscription" class="btn btn-sm btn-primary" type="button" data-toggle="modal"
+                        data-target="#update_subscription">{% trans 'Change Subscription' %}</button>
+                    <form id="cancelSubscription" class="align-itmes-center" method="post"
+                        action="{% url 'vendor:customer-subscription-cancel' subscription.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-primary" type="submit">{% trans 'Cancel Subscription' %}</button>
+                    </form>
+                    {% comment %}
+                    <button id="cancelSubscription" class="btn btn-sm btn-primary" type="button" data-toggle="modal"
+                        data-target="#update_subscription">{% trans 'Cancel Subscription' %}</button>
+                    {% endcomment %}
+                    <button class="btn btn-link h-100 ml-2 pb-4" type="button" role="button" aria-pressed="true"
+                        data-toggle="modal" data-target="#update_subscription">{% trans 'Cancel' %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" tabindex="-1" role="dialog" id="update_payment_subscription">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content p-5">
+                <h3>{% trans 'Update Payment Method' %}</h3>
+                <div class='d-flex flex-column flex-grow w-100'>
+                    <form method="POST"
+                        action="{% url 'vendor:customer-subscription-update-payment' subscription.pk %}">
+                        {% csrf_token %}
+                        {{ payment_form }}
+                        <button class="btn btn-primary mt-3">{% trans 'Update' %}</button>
+                        <button class="btn btn-link mt-3" type="button" role="button" aria-pressed="true"
+                            data-toggle="modal" data-target="#update_payment_subscription">{% trans 'Cancel' %}</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="modal fade" tabindex="-1" role="dialog" id="order_history_modal">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content p-5">
+                <h3>{% trans 'Order History' %}</h3>
+                <div class='d-flex flex-column flex-grow w-100 mb-3'>
+                    <table class="table table-striped table-responsive-sm w-100">
+                        <thead>
+                            <tr>
+                                <th>{% trans 'Date' %}</th>
+                                <th>{% trans 'Description' %}</th>
+                                <th>{% trans 'Order #' %}</th>
+                                <th>{% trans 'Amount' %}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td>{{ payment.created|date:"M d, Y" }}</td>
+                                <td>
+                                    {% for order_item in payment.invoice.order_items.all %}
+                                    {{ order_item.name }},
+                                    {% endfor %}
+                                </td>
+                                <td>{{ payment.transaction|default_if_none:payment.invoice.pk }}</td>
+                                <td>$ {{ payment.amount|floatformat:2|default_if_none:"$0.00" }}</td>
+                                <td><a
+                                        href="{% url 'vendor:purchase-summary' payment.invoice.pk %}">{% trans 'Invoice' %}</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td>{% trans 'No Orders' %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block sub_template_js %}
+<script>
+    function toggleForms(offers_value) {
+
+        if (offers_value === 'cancel') {
+            $('#cancelSubscription').show();
+            $('#changeSubscription').hide();
+        } else {
+            $('#cancelSubscription').hide();
+            $('#changeSubscription').show();
+        }
+    }
+    $(document).ready(function () {
+
+        const privacySwitchIds = [{{ form.public_profile.id_for_label }}, {{ form.show_real_name.id_for_label }}, {{ form.avatar.id_for_label }}]
+        const generalForm = $('#general_form')
+    privacySwitchIds.forEach(id => {
+        $(id).on('change', evt => {
+            generalForm.submit();
+        })
+    });
+
+    $('.change-avatar-button').on('click', evt => {
+        evt.preventDefault()
+        evt.stopPropagation()
+        $({{ form.avatar.id_for_label }}).click();
+        });
+
+    $('.clear-avatar-button').on('click', evt => {
+        evt.preventDefault();
+        evt.stopPropagation();
+        $('#avatar-clear_id').prop('checked', true);
+        generalForm.submit();
+    });
+    $('input:radio[name=offers]').on('change', function () {
+        toggleForms($(this).val())
+    });
+    const initial_offers_value = $("input:radio[name=offers]:checked").val()
+    toggleForms(initial_offers_value)
+    }); {% comment %}// end document.ready{% endcomment %}
+</script>
+{% endblock %}
