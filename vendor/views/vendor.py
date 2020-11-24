@@ -422,10 +422,7 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
             messages.info(request, _(f"Payment gateway error: {processor.transaction_message.get('message', '')}"))
             return redirect(request.META.get('HTTP_REFERER', self.success_url))
         
-        payment = Payment.objects.get(transaction=receipt.transaction, invoice=receipt.order_item.invoice, invoice__order_items=receipt.order_item)
-        payment.result['account_number'] = ast.literal_eval(self.payment.result['raw']).get('accountNumber')[-4:]
-        payment.result['account_type'] =
-        messages.info(request, _(f"Success: {processor.transaction_message.get('message', '')}"))
+        messages.info(request, _(f"Success: Payment Updated"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
 

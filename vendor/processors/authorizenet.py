@@ -23,6 +23,7 @@ from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models.choice import TransactionTypes, PaymentTypes, TermType, PurchaseStatus
 from vendor.models.invoice import Invoice
 from vendor.models.address import Country
+from vendor.models.payment import Payment
 from .base import PaymentProcessorBase
 
 class AuthorizeNetProcessor(PaymentProcessorBase):
@@ -365,6 +366,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def subscription_payment(self, subscription):
         """
+        subscription: Type: OrderItem
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
         
@@ -395,7 +397,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         
         self.check_subscription_response(response)
 
-        receipt = subscription.receipts.get(transaction=self.payment.transaction)
+        receipt = subscription.receipts.get(transaction=self.payment.transaction, order_item=subscription)
         receipt.meta = {'raw': str({**self.transaction_message, **response})}
         
         if self.transaction_submitted:
@@ -419,8 +421,25 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.check_subscription_response(response)
 
-        receipt.meta[f"{timezone.now():Y m }"] = {'raw': str({**self.transaction_message, **response})}
+        if not self.transaction_submitted:
+            return None
+
+        receipt.meta[f"{timezone.now():%Y-%m-%d %H:%M}"] = {'raw': str({**self.transaction_message, **response})}
         receipt.save()
+
+        payment = Payment.objects.get(success=True, transaction=receipt.transaction, invoice=receipt.order_item.invoice)
+
+        subscription_info = self.subscription_info(subscription_id)
+
+        account_number = subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'].__dict__.get('cardNumber', None)
+        if account_number:
+            payment.result['account_number'] = account_number.text
+            
+        account_type = payment.result['account_type'] = subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'].__dict__.get('accountType', None)
+        if account_type:
+            payment.result['account_type'] = account_type.text
+        
+        payment.save()
 
 
     def subscription_cancel(self, reciept, subscription_id):
@@ -441,11 +460,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             reciept.save()
 
     def subscription_info(self, subscription_id):
-        self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
+        self.transaction = apicontractsv1.ARBGetSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.subscriptionId = str(subscription_id)
+        self.transaction.includeTransactions = False
 
-        self.controller = ARBGetSubscriptionRequest(self.transaction)
+        self.controller = ARBGetSubscriptionController(self.transaction)
         self.controller.execute()
 
         response = self.controller.getresponse()

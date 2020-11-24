@@ -58,9 +58,10 @@
                     {{ terms }} plan for ${{ total }} will renew on {{ end_date }}{% endblocktrans %}</div>
                 <div class="d-flex">
                     <div class="text-left">
-                        {% blocktrans with account_type=payment.result.account_type account_number=payment.result.account_number %}{{ account_type }}
+                        {% blocktrans with account_type=payment.result.account_type|default_if_none:"Card" account_number=payment.result.account_number %}{{ account_type }}
                         ending in {{ account_number }}{% endblocktrans %}</div>
-                    <a class="edit-name-button btn text-primary p-0 ml-auto" data-toggle="modal" data-target="#update_payment_subscription">
+                    <a class="edit-name-button btn text-primary p-0 ml-auto" data-toggle="modal"
+                        data-target="#update_payment_subscription">
                         <i class="fas fa-pen"></i>
                     </a>
                 </div>
@@ -197,48 +198,49 @@
             </div>
         </div>
     </div>
+</div>
 
-    {% endblock %}
+{% endblock %}
 
-    {% block sub_template_js %}
-    <script>
-        function toggleForms(offers_value) {
+{% block sub_template_js %}
+<script>
+    function toggleForms(offers_value) {
 
-            if (offers_value === 'cancel') {
-                $('#cancelSubscription').show();
-                $('#changeSubscription').hide();
-            } else {
-                $('#cancelSubscription').hide();
-                $('#changeSubscription').show();
-            }
+        if (offers_value === 'cancel') {
+            $('#cancelSubscription').show();
+            $('#changeSubscription').hide();
+        } else {
+            $('#cancelSubscription').hide();
+            $('#changeSubscription').show();
         }
-        $(document).ready(function () {
+    }
+    $(document).ready(function () {
 
-            const privacySwitchIds = [{{ form.public_profile.id_for_label }}, {{ form.show_real_name.id_for_label }}, {{ form.avatar.id_for_label }}]
+        const privacySwitchIds = [{{ form.public_profile.id_for_label }}, {{ form.show_real_name.id_for_label }}, {{ form.avatar.id_for_label }}]
         const generalForm = $('#general_form')
-        privacySwitchIds.forEach(id => {
-            $(id).on('change', evt => {
-                generalForm.submit();
-            })
-        });
-
-        $('.change-avatar-button').on('click', evt => {
-            evt.preventDefault()
-            evt.stopPropagation()
-            $({{ form.avatar.id_for_label }}).click();
-        });
-
-        $('.clear-avatar-button').on('click', evt => {
-            evt.preventDefault();
-            evt.stopPropagation();
-            $('#avatar-clear_id').prop('checked', true);
+    privacySwitchIds.forEach(id => {
+        $(id).on('change', evt => {
             generalForm.submit();
+        })
+    });
+
+    $('.change-avatar-button').on('click', evt => {
+        evt.preventDefault()
+        evt.stopPropagation()
+        $({{ form.avatar.id_for_label }}).click();
         });
-        $('input:radio[name=offers]').on('change', function () {
-            toggleForms($(this).val())
-        });
-        const initial_offers_value = $("input:radio[name=offers]:checked").val()
-        toggleForms(initial_offers_value)
+
+    $('.clear-avatar-button').on('click', evt => {
+        evt.preventDefault();
+        evt.stopPropagation();
+        $('#avatar-clear_id').prop('checked', true);
+        generalForm.submit();
+    });
+    $('input:radio[name=offers]').on('change', function () {
+        toggleForms($(this).val())
+    });
+    const initial_offers_value = $("input:radio[name=offers]:checked").val()
+    toggleForms(initial_offers_value)
     }); {% comment %}// end document.ready{% endcomment %}
-    </script>
-    {% endblock %}
+</script>
+{% endblock %}
