@@ -109,11 +109,6 @@
                 {% endfor %}
                 {% endcomment %}
                 <hr class="m-0" />
-                <div class='d-flex flex-row w-100 my-4 align-items-start'>
-                    <input type="radio" name="offers" value="cancel" class="mt-1" checked>
-                    <div class="ml-2">{% trans 'Cancel Subscription' %}</div>
-                </div>
-                <hr class="m-0" />
                 <div class='d-flex flex-row w-100 align-items-center my-3'>
                     {% comment %}
                     <form id="changeSubscription" class="align-itmes-center" method="post"
@@ -129,10 +124,6 @@
                         {% csrf_token %}
                         <button class="btn btn-sm btn-primary" type="submit">{% trans 'Cancel Subscription' %}</button>
                     </form>
-                    {% comment %}
-                    <button id="cancelSubscription" class="btn btn-sm btn-primary" type="button" data-toggle="modal"
-                        data-target="#update_subscription">{% trans 'Cancel Subscription' %}</button>
-                    {% endcomment %}
                     <button class="btn btn-link h-100 ml-2 pb-4" type="button" role="button" aria-pressed="true"
                         data-toggle="modal" data-target="#update_subscription">{% trans 'Cancel' %}</button>
                 </div>
