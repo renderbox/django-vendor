@@ -203,10 +203,10 @@ class BaseProcessorTests(TestCase):
     # def test_subscription_payment_success(self):
     #     raise NotImplementedError()
 
-    # def test_update_subscription_payment_success(self):
+    # def test_subscription_update_payment_success(self):
     #     raise NotImplementedError()
 
-    # def test_cancel_subscription_payment_success(self):
+    # def test_subscription_cancel_success(self):
     #     raise NotImplementedError()
 
     # def test_refund_payment_success(self):
@@ -777,19 +777,40 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertTrue(self.processor.transaction_submitted)
         self.assertIsNotNone(self.processor.transaction_response.subscriptionId)
 
-    def test_update_subscription_success(self):
-        # TODO: Implement Test
-        # self.assertTrue(self.processor.transaction_submitted)
-        pass
+    def test_subscription_update_change(self):
+        self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
+        subscription_list = self.processor.get_list_of_subscriptions()
+        active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
+        dummy_receipt = Receipt(order_item=OrderItem.objects.get(pk=2))
+        dummy_payment = Payment.objects.create(invoice=self.existing_invoice, 
+                                                transaction=dummy_receipt.transaction,
+                                                profile=dummy_receipt.profile,
+                                                success=True,
+                                                amount=dummy_receipt.order_item.invoice.total)
+        dummy_payment.result['account_number'] = ""
+        dummy_payment.result['account_type'] = ""
+        dummy_payment.save()
+
+        if active_subscriptions:
+            self.processor.get_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+            self.processor.subscription_update_payment(dummy_receipt, active_subscriptions[-1].id.pyval)
+            dummy_payment.refresh_from_db()
+            print(f'Message: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}\nSubscription ID: {active_subscriptions[0].id.pyval}')
+            print(f"Update Card number: {self.form_data['credit_card_form']['card_number'][-4:]}")
+            self.assertTrue(self.processor.transaction_submitted)
+            self.assertEquals(dummy_payment.result['account_number'][-4:], self.form_data['credit_card_form']['card_number'][-4:])
+        else:
+            print("No active Subscriptions, Skipping Test")
+
+        
 
     def test_cancel_subscription_success(self):
-
         subscription_list = self.processor.get_list_of_subscriptions()
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         dummy_receipt = Receipt(order_item=OrderItem.objects.get(pk=2))
 
         if active_subscriptions:
-            self.processor.cancel_subscription_payment(dummy_receipt, active_subscriptions[0].id.pyval)
+            self.processor.subscription_cancel(dummy_receipt, active_subscriptions[0].id.pyval)
             self.assertTrue(self.processor.transaction_submitted)
             self.assertTrue(dummy_receipt.status, PurchaseStatus.CANCELED)
         else:
