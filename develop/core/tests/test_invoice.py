@@ -8,6 +8,7 @@ from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerPro
 from vendor.forms import BillingAddressForm, CreditCardForm
 
 User = get_user_model()
+
 class ModelInvoiceTests(TestCase):
 
     fixtures = ['user', 'unit_test']
@@ -84,6 +85,31 @@ class ModelInvoiceTests(TestCase):
 
         self.assertNotEquals(start_quantity, end_quantity)
 
+    def test_get_recurring_total(self):
+        recurring_offer = Offer.objects.get(pk=5)
+        self.existing_invoice.add_offer(recurring_offer)
+        
+        self.assertEquals(self.existing_invoice.get_recurring_total(), recurring_offer.current_price())
+
+    def test_get_recurring_total_only_recurring_order_items(self):
+        recurring_offer = Offer.objects.get(pk=5)
+        self.new_invoice.add_offer(recurring_offer)
+        
+        self.assertEquals(self.new_invoice.get_recurring_total(), recurring_offer.current_price())
+        self.assertEquals(self.new_invoice.get_one_time_transaction_total(), 0)
+
+    def test_get_one_time_transaction_total_with_recurring_offer(self):
+        recurring_offer = Offer.objects.get(pk=5)
+        self.existing_invoice.add_offer(recurring_offer)
+        
+        self.assertEquals(self.existing_invoice.get_one_time_transaction_total(), self.existing_invoice.total - self.existing_invoice.get_recurring_total())
+
+    def test_get_one_time_transaction_total_no_recurring_order_items(self):
+        recurring_offer = Offer.objects.get(pk=5)
+        self.existing_invoice.add_offer(recurring_offer)
+        
+        self.assertEquals(self.existing_invoice.get_one_time_transaction_total(), self.existing_invoice.total - self.existing_invoice.get_recurring_total())
+        self.assertEquals(self.existing_invoice.get_recurring_total(), 0)
 
 class CartViewTests(TestCase):
 
@@ -135,7 +161,7 @@ class CartViewTests(TestCase):
     # def test_view_displays_login_instead_checkout(self):
         # raise NotImplementedError()
     
-
+    
 class AccountInformationViewTests(TestCase):
 
     fixtures = ['user', 'unit_test']
@@ -169,6 +195,7 @@ class AccountInformationViewTests(TestCase):
     # def test_cart_updates_to_zero_items(self):
         # raise NotImplementedError()
 
+
 class PaymentViewTests(TestCase):
 
     fixtures = ['user', 'unit_test']
@@ -201,6 +228,7 @@ class PaymentViewTests(TestCase):
 
     # def test_cart_updates_to_zero_items(self):
         # raise NotImplementedError()
+
 
 class ReviewCheckoutViewTests(TestCase):
 
