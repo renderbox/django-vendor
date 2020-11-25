@@ -58,12 +58,25 @@ class PaymentProcessorBase(object):
         self.invoice = invoice
 
     def create_payment_model(self):
+        """
+        Create payment instance with base information to track payment submissions
+        """
         self.payment = Payment(profile=self.invoice.profile,
                                amount=self.invoice.total,
                                provider=self.provider,
                                invoice=self.invoice,
                                created=timezone.now()
                                )
+        self.payment.result['account_number'] = self.payment_info.data.get('card_number')[-4:]
+        self.payment.payee_full_name = self.payment_info.data.get('full_name')
+        self.payment.payee_company = self.billing_address.data.get('company')
+
+        billing_address = self.billing_address.save(commit=False)
+        billing_address.profile = self.invoice.profile
+        billing_address.save()
+
+        self.payment.billing_address = billing_address
+        self.payment.save()
 
     def save_payment_transaction(self):
         pass
