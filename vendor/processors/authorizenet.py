@@ -278,6 +278,26 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.payment.billing_address = billing_address
         self.payment.save()
 
+    def save_payment_subscription(self):
+        self.payment.success = self.transaction_submitted
+
+        if 'subscription_id' in self.transaction_message:
+            self.payment.transaction = self.transaction_message['subscription_id']
+        response = self.transaction_response.__dict__
+            
+        self.payment.result = {'raw_recurring': str({**self.transaction_message, **response})}
+        self.payment.result['account_number'] = self.payment_info.data.get('card_number')[-4:]
+
+        self.payment.payee_full_name = self.payment_info.data.get('full_name')
+        self.payment.payee_company = self.billing_address.data.get('company')
+
+        billing_address = self.billing_address.save(commit=False)
+        billing_address.profile = self.invoice.profile
+        billing_address.save()
+
+        self.payment.billing_address = billing_address
+        self.payment.save()
+
     def check_response(self, response):
         """
         Checks the transaction response and set the transaction_submitted and transaction_response variables
@@ -338,7 +358,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         # Init transaction
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(settings.AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT)
-        self.transaction_type.amount = self.to_valid_decimal(self.invoice.total)
+        self.transaction_type.amount = self.to_valid_decimal(self.invoice.get_one_time_transaction_total())
         self.transaction_type.payment = self.create_authorize_payment()
         self.transaction_type.billTo = self.create_billing_address()
 
@@ -360,17 +380,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 
-        self.create_receipts()
-
-    def process_subscription(self):
-        pass
+        self.create_receipts(self.invoice.get_one_time_transaction_order_items())
     
     def subscription_payment(self, subscription):
         """
         subscription: Type: OrderItem
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
-        
         # Setting billing information
         billto = apicontractsv1.nameAndAddressType()
         billto.firstName = " ".join(self.payment_info.data.get('full_name', "").split(" ")[:-1])[:50]
@@ -395,16 +411,19 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.controller.execute()
         # Getting the response
         response = self.controller.getresponse()
-        
         self.check_subscription_response(response)
 
-        receipt = subscription.receipts.get(transaction=self.payment.transaction)
-        receipt.meta = {'raw': str({**self.transaction_message, **response})}
+        self.save_payment_subscription()
+
+        self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+
+        # receipt = subscription.receipts.get(transaction=self.payment.transaction)
+        # receipt.meta = {'raw': str({**self.transaction_message, **response})}
         
-        if self.transaction_submitted:
-            receipt.meta['subscription_id'] = self.transaction_response.subscriptionId.pyval
+        # if self.transaction_submitted:
+        #     receipt.meta['subscription_id'] = self.transaction_response.subscriptionId.pyval
             
-        receipt.save()
+        # receipt.save()
 
     def subscription_update_payment(self, receipt, subscription_id):
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
