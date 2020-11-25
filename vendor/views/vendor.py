@@ -305,9 +305,6 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         processor.authorize_payment()
 
         if processor.transaction_submitted:
-            for order_item_subscription in [order_item for order_item in processor.invoice.order_items.all() if order_item.offer.terms >= TermType.SUBSCRIPTION and order_item.offer.terms < TermType.ONE_TIME_USE]:
-                processor.subscription_payment(order_item_subscription)
-            clear_session_purchase_data(request)
             return redirect('vendor:purchase-summary', pk=invoice.pk)
         else:
             messages.info(self.request, _(
