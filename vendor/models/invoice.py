@@ -136,11 +136,23 @@ class Invoice(CreateUpdateModelBase):
         """
         return reverse('vendor_admin:manager-order-detail', kwargs={'uuid': self.uuid})
 
+    def get_recurring_order_items(self):
+        """
+        Gets the recurring order items in the invoice
+        """
+        return self.order_items.filter(offer__terms__gte=TermType.SUBSCRIPTION, offer__terms__lt=TermType.ONE_TIME_USE)
+
     def get_recurring_total(self):
         """
         Gets the total price for all recurring order items in the invoice
         """
         return sum([ order_item.total for order_item in self.order_items.filter(offer__terms__gte=TermType.SUBSCRIPTION, offer__terms__lt=TermType.ONE_TIME_USE)])
+
+    def get_one_time_transaction_order_items(self):
+        """
+        Gets one time transation order items in the invoice
+        """
+        return self.order_items.filter(Q(offer__terms__lt=TermType.SUBSCRIPTION) | Q(offer__terms__gt=TermType.ANNUAL_SUBSCRIPTION))
 
     def get_one_time_transaction_total(self):
         """

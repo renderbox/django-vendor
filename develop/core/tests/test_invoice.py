@@ -111,6 +111,19 @@ class ModelInvoiceTests(TestCase):
         self.assertEquals(self.existing_invoice.get_one_time_transaction_total(), self.existing_invoice.total - self.existing_invoice.get_recurring_total())
         self.assertEquals(self.existing_invoice.get_recurring_total(), 0)
 
+    def test_get_recurring_order_items(self):
+        recurring_offer = Offer.objects.get(pk=5)
+        self.existing_invoice.add_offer(recurring_offer)
+
+        self.assertEquals(self.existing_invoice.get_recurring_order_items().count(), 1)
+    
+    def test_get_one_time_transaction_order_items(self):
+        recurring_offer = Offer.objects.get(pk=5)
+        self.existing_invoice.add_offer(recurring_offer)
+
+        self.assertEquals(self.existing_invoice.get_one_time_transaction_order_items().count(), self.existing_invoice.order_items.all().count() - 1)
+    
+
 class CartViewTests(TestCase):
 
     fixtures = ['user', 'unit_test']
