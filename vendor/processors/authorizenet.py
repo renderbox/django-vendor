@@ -258,45 +258,28 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def save_payment_transaction(self):
         self.payment.success = self.transaction_submitted
         self.payment.transaction = self.transaction_response.transId.text
+
         response = self.transaction_response.__dict__
         if 'errors' in response:
             response.pop('errors')
         if 'messages' in response:
             response.pop('messages')
-
+        
         self.payment.result = {'raw': str({**self.transaction_message, **response})}
-        self.payment.result['account_number'] = ast.literal_eval(self.payment.result['raw']).get('accountNumber')[-4:]
         self.payment.result['account_type'] = ast.literal_eval(self.payment.result['raw']).get('accountType')
 
-        self.payment.payee_full_name = self.payment_info.data.get(
-            'full_name')
-        self.payment.payee_company = self.billing_address.data.get(
-            'company')
-        billing_address = self.billing_address.save(commit=False)
-        billing_address.profile = self.invoice.profile
-        billing_address.save()
-        self.payment.billing_address = billing_address
-        self.payment.save()
 
     def save_payment_subscription(self):
         self.payment.success = self.transaction_submitted
-
-        if 'subscription_id' in self.transaction_message:
-            self.payment.transaction = self.transaction_message['subscription_id']
         response = self.transaction_response.__dict__
-            
-        self.payment.result = {'raw_recurring': str({**self.transaction_message, **response})}
-        self.payment.result['account_number'] = self.payment_info.data.get('card_number')[-4:]
-
-        self.payment.payee_full_name = self.payment_info.data.get('full_name')
-        self.payment.payee_company = self.billing_address.data.get('company')
-
-        billing_address = self.billing_address.save(commit=False)
-        billing_address.profile = self.invoice.profile
-        billing_address.save()
-
-        self.payment.billing_address = billing_address
-        self.payment.save()
+        
+        if 'subscriptions' not in self.payment.result:
+            self.payment.result['subscriptions'] = {}
+        
+        if 'subscription_id' in self.transaction_message:
+            self.payment.result['subscriptions_ids'] = {
+                self.transaction_message["subscription_id"]: {'raw': str({**self.transaction_message, **response})}
+            }
 
     def check_response(self, response):
         """
@@ -416,14 +399,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.save_payment_subscription()
 
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
-
-        # receipt = subscription.receipts.get(transaction=self.payment.transaction)
-        # receipt.meta = {'raw': str({**self.transaction_message, **response})}
-        
-        # if self.transaction_submitted:
-        #     receipt.meta['subscription_id'] = self.transaction_response.subscriptionId.pyval
-            
-        # receipt.save()
 
     def subscription_update_payment(self, receipt, subscription_id):
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
