@@ -335,8 +335,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     # Base Processor Transaction Implementations
     ##########
     def process_payment(self):
-        self.create_payment_model()
-
         # Init transaction
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(settings.AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT)
@@ -443,7 +441,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             payment.result['account_type'] = account_type.text
         
         payment.save()
-
 
     def subscription_cancel(self, reciept, subscription_id):
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()

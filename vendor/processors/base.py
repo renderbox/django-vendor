@@ -194,6 +194,9 @@ class PaymentProcessorBase(object):
         """
         self.status = PurchaseStatus.QUEUED     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         vendor_pre_authorization.send(sender=self.__class__, invoice=self.invoice)
+
+        self.create_payment_model()             # Creates a payment attempt
+
         self.pre_authorization()
 
         self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
@@ -233,7 +236,6 @@ class PaymentProcessorBase(object):
         This are the base internal steps to process a free payment.
         """
         self.transaction_submitted = True
-        self.create_payment_model()
 
         self.payment.success = True
         self.payment.transation = f"{self.payment.pk}-free"
