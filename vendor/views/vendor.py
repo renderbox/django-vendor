@@ -113,8 +113,8 @@ class AddToCartView(View):
             cart = profile.get_cart_or_checkout_cart()
 
             if cart.status == Invoice.InvoiceStatus.CHECKOUT:
-                messages.info(self.request, _("You have a pending cart in checkout"))
-                return redirect(request.META.get('HTTP_REFERER'))
+                cart.status = Invoice.InvoiceStatus.CART
+                cart.save()
 
             if profile.has_product(offer.products.all()):
                 messages.info(self.request, _("You Have Already Purchased This Item"))
@@ -148,8 +148,8 @@ class RemoveFromCartView(View):
             cart = profile.get_cart_or_checkout_cart()
 
             if cart.status == Invoice.InvoiceStatus.CHECKOUT:
-                messages.info(self.request, _("You have a pending cart in checkout"))
-                return redirect(request.META.get('HTTP_REFERER'))
+                cart.status = Invoice.InvoiceStatus.CART
+                cart.save()
 
             cart.remove_offer(offer)
 
@@ -194,10 +194,8 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
         invoice = get_purchase_invoice(request.user)
         
-        if not invoice.order_items.count():
-            messages.info(request, 
-                _("Please add to your cart")
-            )
+        if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
+            messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
 
         invoice.status = Invoice.InvoiceStatus.CHECKOUT
@@ -240,10 +238,8 @@ class PaymentView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user)
         
-        if not invoice.order_items.count():
-            messages.info(request, 
-                _("Please add to your cart")
-            )
+        if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
+            messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
 
         credit_card_form = CreditCardForm(request.POST)
@@ -291,10 +287,8 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user)
         
-        if not invoice.order_items.count():
-            messages.info(request, 
-                _("Please add to your cart")
-            )
+        if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
+            messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
         
         processor = payment_processor(invoice)
