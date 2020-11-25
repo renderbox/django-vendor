@@ -58,12 +58,12 @@ class PaymentProcessorBase(object):
         self.invoice = invoice
 
     def create_payment_model(self):
-        self.payment = Payment(  profile=self.invoice.profile,
-                            amount=self.invoice.total,
-                            provider=self.provider,
-                            invoice=self.invoice,
-                            created=timezone.now()
-                            )
+        self.payment = Payment(profile=self.invoice.profile,
+                               amount=self.invoice.total,
+                               provider=self.provider,
+                               invoice=self.invoice,
+                               created=timezone.now()
+                               )
 
     def save_payment_transaction(self):
         pass
@@ -108,7 +108,10 @@ class PaymentProcessorBase(object):
             receipt.auto_renew = False
         return receipt
 
-    def create_receipts(self):
+    def create_receipts(self, order_items):
+        """
+        Creates receipt for the order items supplied. 
+        """
         if self.payment.success and self.invoice.status == Invoice.InvoiceStatus.COMPLETE:
             for order_item in self.invoice.order_items.all():
                 for product in order_item.offer.products.all():
@@ -201,14 +204,13 @@ class PaymentProcessorBase(object):
 
         self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         vendor_process_payment.send(sender=self.__class__, invoice=self.invoice)
+
         if not self.invoice.total:
             self.free_payment()
-        elif self.is_data_valid():
+        elif self.is_data_valid() and self.invoice.get_one_time_transaction_order_items():
             self.process_payment()
-        else:
-            return None
 
-        self.process_subscription()
+        self.process_subscriptions()        
 
         vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()
@@ -244,7 +246,7 @@ class PaymentProcessorBase(object):
         
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 
-        self.create_receipts()
+        self.create_receipts(self.invoice.order_items.all())
 
     def post_authorization(self):
         """
@@ -260,11 +262,13 @@ class PaymentProcessorBase(object):
 
     #-------------------
     # Process a Subscription
-
-    def process_subscription(self):
+    def process_subscriptions(self):
+        for subscription in self.invoice.get_recurring_order_items():
+            self.subscription_payment(subscription)
+        self.create_receipts(self.invoice.get_recurring_order_items())
         pass
-    
-    def subscription_payment(self):
+
+    def subscription_payment(self, subscription):
         pass
 
     def subscription_info(self):
