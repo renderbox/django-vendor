@@ -60,6 +60,9 @@ class BaseProcessorTests(TestCase):
         # raise NotImplementedError()
 
     def test_create_payment_model_success(self):
+        self.base_processor.get_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
+        self.base_processor.get_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+
         self.base_processor.create_payment_model()
 
         self.assertIsNotNone(self.base_processor.payment)
@@ -168,9 +171,12 @@ class BaseProcessorTests(TestCase):
         invoice = Invoice(profile=customer)
         invoice.save()
         invoice.add_offer(Offer.objects.get(pk=5))
-
-        base_processor = PaymentProcessorBase(invoice)
         
+        base_processor = PaymentProcessorBase(invoice)
+
+        base_processor.get_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)        
+        base_processor.get_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+
         base_processor.authorize_payment()
 
         self.assertTrue(invoice.payments.count())
@@ -332,8 +338,8 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         self.processor.authorize_payment()
 
-        self.assertIsNotNone(self.processor.payment)
-        self.assertFalse(self.processor.payment.success)
+        self.assertIsNone(self.processor.payment)
+        self.assertFalse(self.processor.transaction_submitted)
         self.assertEquals(Invoice.InvoiceStatus.CART, self.processor.invoice.status)
 
     def test_process_payment_transaction_fail_invalid_expiration(self):
@@ -351,7 +357,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        self.assertFalse(self.processor.payment.success)
+        self.assertFalse(self.processor.transaction_submitted)
         self.assertEquals(Invoice.InvoiceStatus.CART, self.processor.invoice.status)      
 
     ##########
@@ -790,7 +796,6 @@ class AuthorizeNetProcessorTests(TestCase):
             print("No active Subscriptions, Skipping Test")
 
         
-
     def test_cancel_subscription_success(self):
         subscription_list = self.processor.get_list_of_subscriptions()
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
