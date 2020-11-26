@@ -67,9 +67,9 @@ class PaymentProcessorBase(object):
                                invoice=self.invoice,
                                created=timezone.now()
                                )
-        self.payment.result['account_number'] = self.payment_info.data.get('card_number')[-4:]
-        self.payment.payee_full_name = self.payment_info.data.get('full_name')
-        self.payment.payee_company = self.billing_address.data.get('company')
+        self.payment.result['account_number'] = self.payment_info.cleaned_data.get('card_number')[-4:]
+        self.payment.payee_full_name = self.payment_info.cleaned_data.get('full_name')
+        self.payment.payee_company = self.billing_address.cleaned_data.get('company')
 
         billing_address = self.billing_address.save(commit=False)
         billing_address.profile = self.invoice.profile
@@ -121,16 +121,19 @@ class PaymentProcessorBase(object):
             receipt.auto_renew = False
         return receipt
 
+    def create_order_item_receipt(self, order_item):
+        for product in order_item.offer.products.all():
+            receipt = self.create_receipt_by_term_type(product, order_item, order_item.offer.terms)
+            receipt.save()
+            receipt.products.add(product)
+
     def create_receipts(self, order_items):
         """
         Creates receipt for the order items supplied. 
         """
         if self.payment.success and self.invoice.status == Invoice.InvoiceStatus.COMPLETE:
-            for order_item in self.invoice.order_items.all():
-                for product in order_item.offer.products.all():
-                    receipt = self.create_receipt_by_term_type(product, order_item, order_item.offer.terms)
-                    receipt.save()
-                    receipt.products.add(product)
+            for order_item in order_items.all():
+                self.create_order_item_receipt(order_item)
 
     def update_subscription_receipt(self, subscription, subscription_id, status):
         """
@@ -211,8 +214,6 @@ class PaymentProcessorBase(object):
         self.status = PurchaseStatus.QUEUED     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         vendor_pre_authorization.send(sender=self.__class__, invoice=self.invoice)
 
-        self.create_payment_model()             # Creates a payment attempt
-
         self.pre_authorization()
 
         self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
@@ -250,6 +251,7 @@ class PaymentProcessorBase(object):
         Called to handle an invoice with total zero.  
         This are the base internal steps to process a free payment.
         """
+        self.create_payment_model()
         self.transaction_submitted = True
 
         self.payment.success = True
@@ -278,7 +280,6 @@ class PaymentProcessorBase(object):
     def process_subscriptions(self):
         for subscription in self.invoice.get_recurring_order_items():
             self.subscription_payment(subscription)
-        self.create_receipts(self.invoice.get_recurring_order_items())
         pass
 
     def subscription_payment(self, subscription):
