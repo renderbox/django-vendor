@@ -42,7 +42,7 @@
         {% for payment in object.payments.all %}
         {% if payment.success == True %}
         <p>
-            {{ payment.result.account_type }} {% trans 'ending' %} {{ payment.result.account_number }}
+            {{ payment.result.account_type|default:"Card" }} {% trans 'ending' %} {{ payment.result.account_number }}
         </p>
         {% endif %}
         {% endfor %}
