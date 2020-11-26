@@ -43,13 +43,13 @@ class AccountView(LoginRequiredMixin, TemplateView):
                                                         order_item__offer__terms__lt=TermType.ONE_TIME_USE,
                                                         start_date__lte=timezone.now(),
                                                         end_date__gte=timezone.now()).first()
-        
+
         context['payments'] = customer_profile.payments.filter(success=True)
         context["offers"] = Offer.on_site.filter(available=True).order_by('terms')
 
         if subscription:
             context['subscription'] = subscription
-            context['payment'] = subscription.order_item.invoice.payments.get(success=True).first()
+            context['payment'] = subscription.order_item.invoice.payments.filter(success=True).first()
             context['payment_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
             
         
