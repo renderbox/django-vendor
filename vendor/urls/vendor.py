@@ -31,7 +31,7 @@ urlpatterns = [
     path('customer/product/<int:pk>/receipt/', vendor_views.ReceiptDetailView.as_view(), name="customer-receipt"),
     path('customer/subscriptions/', vendor_views.SubscriptionsListView.as_view(), name="customer-subscriptions"),
     path('customer/subscription/<int:pk>/cancel/', vendor_views.SubscriptionCancelView.as_view(), name="customer-subscription-cancel"),
-    path('customer/subscription/udpate/<int:pk>/payment', vendor_views.SubscriptionUpdatePaymentView.as_view(), name="customer-subscription-update-payment"),
+    path('customer/subscription/update/<int:pk>/payment', vendor_views.SubscriptionUpdatePaymentView.as_view(), name="customer-subscription-update-payment"),
     path('customer/shipping/<int:pk>/update', vendor_views.ShippingAddressUpdateView.as_view(), name="customer-shipping-update"),               # TODO: [GK-3030] Do not use PKs in URLs
 
     # TODO: Add user's account mangement urls
