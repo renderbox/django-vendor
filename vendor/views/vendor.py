@@ -355,7 +355,7 @@ class ReceiptDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['payment'] = Payment.objects.get(transaction=self.object.transaction)
+        context['payment'] = self.object.order_item.invoice.payments.filter(success=True).first()
 
         return context
 
@@ -398,7 +398,7 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
         subscription_id = receipt.meta.get('subscription_id', None)
 
         if not subscription_id:
-            messages.info(request, _("Unable to cancel at the moment"))
+            messages.info(request, _("Unable to update at the moment"))
             return redirect(request.META.get('HTTP_REFERER', self.success_url))
         
         if not payment_form.is_valid():

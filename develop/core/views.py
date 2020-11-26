@@ -13,6 +13,7 @@ from vendor.models.choice import PurchaseStatus, TermType, PaymentTypes
 class VendorIndexView(ListView):
     template_name = "core/index.html"
     model = Offer
+    queryset = Offer.objects.filter(available=True)
 
 
 class ProductAccessView(ProductRequiredMixin, TemplateView):
@@ -41,14 +42,14 @@ class AccountView(LoginRequiredMixin, TemplateView):
                                                         order_item__offer__terms__gt=TermType.PERPETUAL, 
                                                         order_item__offer__terms__lt=TermType.ONE_TIME_USE,
                                                         start_date__lte=timezone.now(),
-                                                        end_date__gte=timezone.now()).last()
-
+                                                        end_date__gte=timezone.now()).first()
+        
         context['payments'] = customer_profile.payments.filter(success=True)
         context["offers"] = Offer.on_site.filter(available=True).order_by('terms')
 
         if subscription:
             context['subscription'] = subscription
-            context['payment'] = Payment.objects.get(transaction=subscription.transaction)
+            context['payment'] = subscription.order_item.invoice.payments.get(success=True).first()
             context['payment_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
             
         
