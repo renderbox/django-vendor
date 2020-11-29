@@ -194,7 +194,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         billing_address.lastName = (self.payment_info.data.get('full_name', "").split(" ")[-1])[:50]
         billing_address.company = self.billing_address.data.get('company', "")[:50]
         billing_address.address = ", ".join([self.billing_address.data.get('address_1',""), str(self.billing_address.data.get('address_2', ""))])[:60]
-        billing_address.city = self.billing_address.data.get("city", "")[:40]
+        billing_address.city = self.billing_address.data.get("locality", "")[:40]
         billing_address.state = self.billing_address.data.get("state", "")[:40]
         billing_address.zip = self.billing_address.data.get("postal_code")[:20]
         country = Country(int(self.billing_address.data.get("country")))
@@ -203,6 +203,16 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def create_customer(self):
         raise NotImplementedError
+
+    def create_order_type(self):
+        """
+        Create Authorize.Net OrderType to add invoice and descriptions to the transaction
+        """
+        order = apicontractsv1.orderType()
+        order.invoiceNumber = str(self.invoice.pk)
+        order.description = self.get_transaction_id()
+
+        return order
 
     def get_payment_occurrences(self, subscription, subscription_type):
         """
@@ -371,8 +381,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if self.invoice.order_items:
             self.transaction_type.lineItems = self.create_line_item_array(
                 self.invoice.order_items.all())
-        
 
+        # Optional to add Order information. 
+        self.transaction_type.order = self.create_order_type()
 
         # You set the request to the transaction
         self.transaction.transactionRequest = self.transaction_type
@@ -396,20 +407,18 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
         self.create_payment_model()
-
-        # Setting billing information
-        billto = apicontractsv1.nameAndAddressType()
-        billto.firstName = " ".join(self.payment_info.data.get('full_name', "").split(" ")[:-1])[:50]
-        billto.lastName = (self.payment_info.data.get('full_name', "").split(" ")[-1])[:50]
-
+        
         # Setting subscription details
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.name = subscription.offer.name
         self.transaction_type.paymentSchedule = self.create_payment_scheduale_interval_type(subscription, subscription.offer.terms)
         self.transaction_type.amount = self.to_valid_decimal(subscription.total)
         self.transaction_type.trialAmount = Decimal('0.00')
-        self.transaction_type.billTo = billto
+        self.transaction_type.billTo = self.create_billing_address()
         self.transaction_type.payment = self.create_authorize_payment()
+
+        # Optional to add Order information. 
+        self.transaction_type.order = self.create_order_type()
 
         # Creating the request
         self.transaction = apicontractsv1.ARBCreateSubscriptionRequest()
