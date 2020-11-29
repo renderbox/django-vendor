@@ -78,15 +78,35 @@ class PaymentProcessorBase(object):
         self.payment.billing_address = billing_address
         self.payment.save()
 
-    def save_payment_transaction(self):
-        pass
+    def save_payment_transaction_result(self, payment_success, transaction_id, result_info):
+        """
+        Saves the result output of any transaction. 
+        """
+        self.payment.success = payment_success
+        self.payment.transaction = transaction_id
+        self.payment.result['raw'] = result_info
+        self.payment.save()
 
     def update_invoice_status(self, new_status):
+        """
+        Updates the Inovice status if the transaction was submitted.
+        Otherwise it returns the invoice to the Cart. The error is saved in 
+        the payment for the transaction.
+        """
         if self.transaction_submitted:
             self.invoice.status = new_status
         else:
             self.invoice.status = Invoice.InvoiceStatus.CART
         self.invoice.save()
+
+    def is_payment_and_invoice_complete(self):
+        """
+        If payment was successful and inovice status is complete returns True. Otherwise
+        false and no receipts should be created.
+        """
+        if self.payment.success and self.invoice.status == Invoice.InvoiceStatus.COMPLETE:
+            return True
+        return False
 
     def create_receipt_by_term_type(self, product, order_item, term_type):
         receipt = Receipt()
@@ -122,6 +142,10 @@ class PaymentProcessorBase(object):
         return receipt
 
     def create_order_item_receipt(self, order_item):
+        """
+        Creates a receipt for every product in the order item according to its,
+        offering term type. 
+        """
         for product in order_item.offer.products.all():
             receipt = self.create_receipt_by_term_type(product, order_item, order_item.offer.terms)
             receipt.save()
@@ -129,11 +153,10 @@ class PaymentProcessorBase(object):
 
     def create_receipts(self, order_items):
         """
-        Creates receipt for the order items supplied. 
+        It then creates receipt for the order items supplied. 
         """
-        if self.payment.success and self.invoice.status == Invoice.InvoiceStatus.COMPLETE:
-            for order_item in order_items.all():
-                self.create_order_item_receipt(order_item)
+        for order_item in order_items.all():
+            self.create_order_item_receipt(order_item)
 
     def update_subscription_receipt(self, subscription, subscription_id, status):
         """

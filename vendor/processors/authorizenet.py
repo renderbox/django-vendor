@@ -267,30 +267,39 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     ##########
     # Django-Vendor to Authoriaze.net data exchange functions
     ##########
-    def save_payment_transaction(self):
-        self.payment.success = self.transaction_submitted
-        self.payment.transaction = self.transaction_response.transId.text
-
+    def get_transaction_raw_response(self):
+        """
+        Returns a dictionary with raw information about the current transaction
+        """
         response = self.transaction_response.__dict__
         if 'errors' in response:
             response.pop('errors')
         if 'messages' in response:
             response.pop('messages')
-        
-        self.payment.result['raw'] = str({**self.transaction_message, **response})
-        self.payment.result['account_type'] = ast.literal_eval(self.payment.result['raw']).get('accountType')
+        return str({**self.transaction_message, **response})
 
-        self.payment.save()
+    def save_payment_transaction(self):
+        """
+        Processes and saves single transaction items payments.
+        """
+        transaction_id = self.transaction_response.transId.text
+
+        transaction_info = {}
+        transaction_info['raw'] = get_transaction_raw_response()
+        transaction_info['account_type'] = ast.literal_eval(self.payment.result['raw']).get('accountType')
+
+        self.save_payment_transaction_result(self.transaction_submitted, transaction_id, transaction_info)
 
     def save_payment_subscription(self):
-        self.payment.success = self.transaction_submitted
-        response = self.transaction_response.__dict__
+        """
+        Processes and saves subscription transaction payments.
+        The transaction id is the subscription id returned by Authorize.Net
+        """
+        transaction_id = self.transaction_message.get("subscription_id")
+        transaction_info = {}
+        transaction_info['raw'] = str({**self.transaction_message, **response})
 
-        if 'subscription_id' in self.transaction_message:
-            self.payment.transaction = self.transaction_message["subscription_id"]
-            
-        self.payment.result['raw'] = str({**self.transaction_message, **response})
-        self.payment.save()
+        self.save_payment_transaction_result(self.transaction_submitted, transaction_id, transaction_info)
 
     def check_response(self, response):
         """
@@ -362,6 +371,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if self.invoice.order_items:
             self.transaction_type.lineItems = self.create_line_item_array(
                 self.invoice.order_items.all())
+        
+
 
         # You set the request to the transaction
         self.transaction.transactionRequest = self.transaction_type
@@ -376,7 +387,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 
-        self.create_receipts(self.invoice.get_one_time_transaction_order_items())
+        if self.is_payment_and_invoice_complete():
+            self.create_receipts(self.invoice.get_one_time_transaction_order_items())
     
     def subscription_payment(self, subscription):
         """
@@ -414,8 +426,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.save_payment_subscription()
 
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+        if self.is_payment_and_invoice_complete():
+            self.create_order_item_receipt(subscription)
 
-        self.create_order_item_receipt(subscription)
 
     def subscription_update_payment(self, receipt, subscription_id):
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
