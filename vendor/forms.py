@@ -219,11 +219,11 @@ class CreditCardField(forms.CharField):
         return checksum % 10 == 0
 
 
-class PaymentFrom(forms.Form):
+class PaymentForm(forms.Form):
     payment_type = forms.ChoiceField(label=_("Payment Type"), choices=PaymentTypes.choices, widget=forms.widgets.HiddenInput)
 
 
-class CreditCardForm(PaymentFrom):
+class CreditCardForm(PaymentForm):
     full_name = forms.CharField(required=True, label=_("Name on Card"), max_length=80)
     card_number = CreditCardField(label=_("Credit Card Number"), placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)
     expire_month = forms.ChoiceField(required=True, label=_("Expiration Month"), choices=[(x, x) for x in range(1, 13)])
@@ -233,12 +233,12 @@ class CreditCardForm(PaymentFrom):
     def clean(self):
         cleaned_data = super(CreditCardForm, self).clean()
         expire_month = cleaned_data.get('expire_month')
-        expire_year = cleaned_data.get('expire_year')
-
+        expire_year = cleaned_data.get('expire_year', '1999')
+        
         if not self.expiration_date_valid(expire_month, expire_year):
-            del(cleaned_data['expire_month'])
-            del(cleaned_data['expire_year'])
-             
+            for key in ['expire_month', 'expire_year']:
+                if key in cleaned_data:
+                    del(cleaned_data[key])
         return cleaned_data
 
     def clean_expire_month(self):

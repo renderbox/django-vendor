@@ -351,8 +351,8 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['expire_month'] = '12'
         self.form_data['credit_card_form']['expire_year'] = str(timezone.now().year - 1)
         
-        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.get_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
         
         self.processor.authorize_payment()
 
@@ -377,6 +377,7 @@ class AuthorizeNetProcessorTests(TestCase):
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
+        print(self.processor.transaction_message)
 
         self.assertIsNotNone(self.processor.payment)
         if 'cvvResultCode' in self.processor.transaction_response:
@@ -397,7 +398,8 @@ class AuthorizeNetProcessorTests(TestCase):
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
-        
+
+        print(self.processor.transaction_message)
         self.assertIsNotNone(self.processor.payment)
         if 'cvvResultCode' in self.processor.transaction_response:
             self.assertEquals("S", self.processor.transaction_response.cvvResultCode.text)
