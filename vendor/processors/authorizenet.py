@@ -373,9 +373,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if self.invoice.order_items:
             self.transaction_type.lineItems = self.create_line_item_array(self.invoice.order_items.all())
 
-        # Optional to add Order information. 
-        self.transaction_type.order = self.create_order_type()
-
         # You set the request to the transaction
         self.transaction.transactionRequest = self.transaction_type
         self.controller = createTransactionController(self.transaction)

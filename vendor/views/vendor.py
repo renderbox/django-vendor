@@ -116,7 +116,7 @@ class AddToCartView(View):
                 cart.status = Invoice.InvoiceStatus.CART
                 cart.save()
 
-            if profile.has_product(offer.products.all()):
+            if profile.has_product(offer.products.all()) and not offer.allow_multiple:
                 messages.info(self.request, _("You Have Already Purchased This Item"))
                 return redirect('vendor:cart')
 

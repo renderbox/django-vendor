@@ -269,7 +269,7 @@ class PaymentProcessorBase(object):
         self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         vendor_process_payment.send(sender=self.__class__, invoice=self.invoice)
 
-        if self.invoice.total:
+        if not self.invoice.total:
             self.free_payment()
         elif self.invoice.get_one_time_transaction_order_items():
             self.process_payment()

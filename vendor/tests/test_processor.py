@@ -356,7 +356,7 @@ class AuthorizeNetProcessorTests(TestCase):
         
         self.processor.authorize_payment()
 
-        self.assertIsNotNone(self.processor.payment)
+        self.assertIsNone(self.processor.payment)
         self.assertFalse(self.processor.transaction_submitted)
         self.assertEquals(Invoice.InvoiceStatus.CART, self.processor.invoice.status)      
 
