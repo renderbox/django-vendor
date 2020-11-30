@@ -7,7 +7,8 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import Invoice, Offer, Price
+from vendor.models import Invoice, Offer, Price, Receipt
+from vendor.models.choice import TermType
 from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet
 from django.utils.translation import ugettext as _
 
@@ -184,3 +185,14 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
             price.save()
 
         return redirect('vendor_admin:manager-offer-list')
+
+
+class AdminSubscriptionListView(LoginRequiredMixin, ListView):
+    '''
+    List of all the invoices generated on the current site.
+    '''
+    template_name = "vendor/manage/receipt_list.html"
+    model = Receipt
+
+    def get_queryset(self):
+        return self.model.objects.filter(products__in=Product.on_site.all(), order_item__offer__terms__gte=TermType.SUBSCRIPTION, order_item__offer__terms__lt=TermType.ONE_TIME_USE)
