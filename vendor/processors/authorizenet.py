@@ -424,8 +424,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if self.is_payment_and_invoice_complete():
             self.create_order_item_receipt(subscription)
 
-
-    def subscription_update_payment(self, receipt, subscription_id):
+    def subscription_update_payment(self, receipt):
         """
         Updates the credit card information for the subscriptions in authorize.net 
         and updates the payment record associated with the receipt.
@@ -437,7 +436,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = str(subscription_id)
+        self.transaction.subscriptionId = str(receipt.transaction)
         self.transaction.subscription = self.transaction_type
 
         self.controller = ARBUpdateSubscriptionController(self.transaction)
@@ -447,13 +446,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.check_subscription_response(response)
 
-        if not self.transaction_submitted:
-            return None
-
-        receipt.meta[f"{timezone.now():%Y-%m-%d %H:%M}"] = {'raw': str({**self.transaction_message, **response})}
+        receipt.meta[f"payment-update-{timezone.now():%Y-%m-%d %H:%M}"] = {'raw': str({**self.transaction_message, **response})}
         receipt.save()
 
-        subscription_info = self.subscription_info(subscription_id)
+        subscription_info = self.subscription_info(receipt.transaction)
 
         account_number = subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'].__dict__.get('cardNumber', None)
         if account_number:
@@ -465,10 +461,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         
         self.payment.save()
 
-    def subscription_cancel(self, reciept, subscription_id):
+    def subscription_cancel(self, reciept):
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = str(subscription_id)
+        self.transaction.subscriptionId = str(reciept.transaction)
         self.transaction.includeTransactions = False
 
         self.controller = ARBCancelSubscriptionController(self.transaction)

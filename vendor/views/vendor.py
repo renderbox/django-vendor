@@ -374,14 +374,10 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         receipt = Receipt.objects.get(pk=self.kwargs["pk"])
-        subscription_id = receipt.meta.get('subscription_id', None)
-        if not subscription_id:
-            messages.info(self.request, _("Unable to cancel at the moment"))
-            return redirect('vendor:customer-subscriptions')
 
         processor = PaymentProcessor(receipt.order_item.invoice)
 
-        processor.subscription_cancel(receipt, subscription_id)
+        processor.subscription_cancel(receipt)
 
         messages.info(self.request, _("Subscription Cancelled"))
 
@@ -395,11 +391,6 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
     def post(self, request, *args, **kwargs):
         receipt = Receipt.objects.get(pk=self.kwargs["pk"])
         payment_form = CreditCardForm(request.POST)
-        subscription_id = receipt.meta.get('subscription_id', None)
-
-        if not subscription_id:
-            messages.info(request, _("Unable to update at the moment"))
-            return redirect(request.META.get('HTTP_REFERER', self.success_url))
         
         if not payment_form.is_valid():
             messages.info(request, _("Invalid Card"))
@@ -407,7 +398,7 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
 
         processor = PaymentProcessor(receipt.order_item.invoice)
         processor.get_payment_info_form_data(request.POST, CreditCardForm)
-        processor.subscription_update_payment(receipt, subscription_id)
+        processor.subscription_update_payment(receipt)
 
         if not processor.transaction_submitted:
             messages.info(request, _(f"Payment gateway error: {processor.transaction_message.get('message', '')}"))
