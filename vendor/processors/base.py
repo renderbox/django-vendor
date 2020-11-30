@@ -85,7 +85,7 @@ class PaymentProcessorBase(object):
         """
         self.payment.success = payment_success
         self.payment.transaction = transaction_id
-        self.payment.result = result_info
+        self.payment.result.update(result_info)
         self.payment.save()
 
     def update_invoice_status(self, new_status):
