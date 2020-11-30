@@ -301,8 +301,7 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         if processor.transaction_submitted:
             return redirect('vendor:purchase-summary', pk=invoice.pk)
         else:
-            messages.info(self.request, _(
-                "The payment gateway did not authorize payment."))
+            messages.info(self.request, _("The payment gateway did not authorize payment."))
             return redirect('vendor:checkout-account')
 
 
@@ -312,6 +311,7 @@ class PaymentSummaryView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data()
+        context['payment'] = self.object.payments.filter(success=True).first()
         return context
 
 
