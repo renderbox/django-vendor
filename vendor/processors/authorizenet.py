@@ -185,11 +185,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def create_shipping(self, shipping):
         raise NotImplementedError
 
-    def create_billing_address(self):
+    def create_billing_address(self, api_address_type):
         """
         Creates Billing address to improve security in transaction
         """
-        billing_address = apicontractsv1.customerAddressType()
+        billing_address = api_address_type
         billing_address.firstName = " ".join(self.payment_info.data.get('full_name', "").split(" ")[:-1])[:50]
         billing_address.lastName = (self.payment_info.data.get('full_name', "").split(" ")[-1])[:50]
         billing_address.company = self.billing_address.data.get('company', "")[:50]
@@ -216,14 +216,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def get_payment_occurrences(self, subscription, subscription_type):
         """
-        Gets the defined payment ocurrences for a Subscription or it defaults to a least one
-        full period should happen. If you want to make a subscription with no end make
-        payment_occurrences = 9999. 
+        Gets the defined payment ocurrences for a Subscription. It defaults to
+        9999 which means it will charge that amount until the customer cancels the subscription. 
         """
-        if subscription_type == TermType.SUBSCRIPTION:
-            return subscription.offer.term_details['payment_occurrences']
-        else:
-            return 1
+        return subscription.offer.term_details.get('payment_occurrences', 9999)
 
     def get_period_length(self, subscription, subscription_type):
         if subscription_type == TermType.SUBSCRIPTION:
@@ -231,7 +227,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         elif subscription_type == TermType.MONTHLY_SUBSCRIPTION:
             return 1
         elif subscription_type == TermType.QUARTERLY_SUBSCRIPTION:
-            return 4
+            return 3
         elif subscription_type == TermType.SEMIANNUAL_SUBSCRIPTION:
             return 6
         elif subscription_type == TermType.ANNUAL_SUBSCRIPTION:
@@ -240,19 +236,15 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def get_trail_occurrences(self, subscription):
         return subscription.offer.term_details.get('trial_occurrences', 0)
 
-    def get_interval_units_offset(self, subscription):
-        units = subscription.offer.term_details.get('term_units', TermDetailUnits.MONTH)
-        if units == TermDetailUnits.MONTH:
-            return 31
-        elif units == TermDetailUnits.DAY:
-            return 1
-
     def get_payment_schedule_start_date(self, subscription):
         """
         Determines the start date offset so the paymente gateway starts charging the monthly subscriptions
         """
-        start_offset = self.get_trail_occurrences(subscription) * self.get_interval_units_offset(subscription)
-        return timezone.now() + timedelta(days=(start_offset))
+        units = subscription.offer.term_details.get('term_units', TermDetailUnits.MONTH)
+        if units == TermDetailUnits.MONTH:
+            return self.get_future_date_months(timezone.now(), self.get_trail_occurrences(subscription))
+        elif units == TermDetailUnits.DAY:
+            return self.get_future_date_days(timezone.now(), self.get_trail_occurrences(subscription))
 
     def create_payment_scheduale_interval_type(self, subscription, subscription_type):
         """
@@ -261,7 +253,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             eg: period_length = 2. the user will be billed every 2 months.
         payment_occurrences: The number of occurrences the payment should be made.
             eg: payment_occurrences = 6. There will be six payments made at each period_length.
-        trial_occurrences: The number of ignored payments out of the    
+        trial_occurrences: The number of ignored payments out of the total payment occurrences
         """
         payment_schedule = apicontractsv1.paymentScheduleType()
         payment_schedule.interval = apicontractsv1.paymentScheduleTypeInterval()
@@ -295,8 +287,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         transaction_id = self.transaction_response.transId.text
 
         transaction_info = {}
-        transaction_info['raw'] = get_transaction_raw_response()
-        transaction_info['account_type'] = ast.literal_eval(self.payment.result['raw']).get('accountType')
+        transaction_info['raw'] = self.get_transaction_raw_response()
+        transaction_info['account_type'] = ast.literal_eval(transaction_info['raw']).get('accountType')
 
         self.save_payment_transaction_result(self.transaction_submitted, transaction_id, transaction_info)
 
@@ -307,7 +299,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         transaction_id = self.transaction_message.get("subscription_id")
         transaction_info = {}
-        transaction_info['raw'] = str({**self.transaction_message, **response})
+        transaction_info['raw'] = self.get_transaction_raw_response()
 
         self.save_payment_transaction_result(self.transaction_submitted, transaction_id, transaction_info)
 
@@ -375,12 +367,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_type = self.create_transaction_type(settings.AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT)
         self.transaction_type.amount = self.to_valid_decimal(self.invoice.get_one_time_transaction_total())
         self.transaction_type.payment = self.create_authorize_payment()
-        self.transaction_type.billTo = self.create_billing_address()
+        self.transaction_type.billTo = self.create_billing_address(apicontractsv1.customerAddressType())
 
         # Optional items for make it easier to read and use on the Authorize.net portal.
         if self.invoice.order_items:
-            self.transaction_type.lineItems = self.create_line_item_array(
-                self.invoice.order_items.all())
+            self.transaction_type.lineItems = self.create_line_item_array(self.invoice.order_items.all())
 
         # Optional to add Order information. 
         self.transaction_type.order = self.create_order_type()
@@ -407,14 +398,14 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
         self.create_payment_model()
-        
+
         # Setting subscription details
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.name = subscription.offer.name
         self.transaction_type.paymentSchedule = self.create_payment_scheduale_interval_type(subscription, subscription.offer.terms)
         self.transaction_type.amount = self.to_valid_decimal(subscription.total)
         self.transaction_type.trialAmount = Decimal('0.00')
-        self.transaction_type.billTo = self.create_billing_address()
+        self.transaction_type.billTo = self.create_billing_address(apicontractsv1.nameAndAddressType())
         self.transaction_type.payment = self.create_authorize_payment()
 
         # Optional to add Order information. 
@@ -440,6 +431,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
 
     def subscription_update_payment(self, receipt, subscription_id):
+        """
+        Updates the credit card information for the subscriptions in authorize.net 
+        and updates the payment record associated with the receipt.
+        """
+        self.payment = Payment.objects.get(success=True, transaction=receipt.transaction, invoice=receipt.order_item.invoice)
+
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.payment = self.create_authorize_payment()
 
@@ -461,19 +458,17 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         receipt.meta[f"{timezone.now():%Y-%m-%d %H:%M}"] = {'raw': str({**self.transaction_message, **response})}
         receipt.save()
 
-        payment = Payment.objects.get(success=True, transaction=receipt.transaction, invoice=receipt.order_item.invoice)
-
         subscription_info = self.subscription_info(subscription_id)
 
         account_number = subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'].__dict__.get('cardNumber', None)
         if account_number:
-            payment.result['account_number'] = account_number.text
+            self.payment.result['account_number'] = account_number.text
             
-        account_type = payment.result['account_type'] = subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'].__dict__.get('accountType', None)
+        account_type = subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'].__dict__.get('accountType', None)
         if account_type:
-            payment.result['account_type'] = account_type.text
+            self.payment.result['account_type'] = account_type.text
         
-        payment.save()
+        self.payment.save()
 
     def subscription_cancel(self, reciept, subscription_id):
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()

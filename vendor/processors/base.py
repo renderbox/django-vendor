@@ -4,7 +4,8 @@ Base Payment processor used by all derived processors.
 import django.dispatch
 
 from copy import deepcopy
-from datetime import timedelta
+from datetime import timedelta, date
+from calendar import mdays
 from django.db.models import Sum
 from django.conf import settings
 from django.utils import timezone
@@ -84,7 +85,7 @@ class PaymentProcessorBase(object):
         """
         self.payment.success = payment_success
         self.payment.transaction = transaction_id
-        self.payment.result['raw'] = result_info
+        self.payment.result = result_info
         self.payment.save()
 
     def update_invoice_status(self, new_status):
@@ -107,38 +108,59 @@ class PaymentProcessorBase(object):
         if self.payment.success and self.invoice.status == Invoice.InvoiceStatus.COMPLETE:
             return True
         return False
+    
+    def get_future_date_months(self, today, add_months):
+        """
+        Returns a datetime object with the a new added months
+        """
+        newday = today.day
+        newmonth = (((today.month - 1) + add_months) % 12) + 1
+        newyear  = today.year + (((today.month - 1) + add_months) // 12)
+        if newday > mdays[newmonth]:
+            newday = mdays[newmonth]
+        if newyear % 4 == 0 and newmonth == 2:
+            newday += 1
+        return date(newyear, newmonth, newday)
+
+    def get_future_date_days(self, today, add_days):
+        """
+        Returns a datetime object with the a new added days
+        """
+        return today + timedelta(days=add_days)
+
+    def get_month_offset(self, term_type):
+        """
+        Return the number of months depending on the term type.
+        """
+        if term_type == TermType.MONTHLY_SUBSCRIPTION:
+            return 1
+        elif term_type == TermType.QUARTERLY_SUBSCRIPTION:
+            return 3
+        elif term_type == TermType.SEMIANNUAL_SUBSCRIPTION:
+            return 6
+        elif term_type == TermType.ANNUAL_SUBSCRIPTION:
+            return 12
+
 
     def create_receipt_by_term_type(self, product, order_item, term_type):
+        today = timezone.now()
         receipt = Receipt()
         receipt.profile = self.invoice.profile
         receipt.order_item = order_item
         receipt.transaction = self.payment.transaction
         receipt.status = PurchaseStatus.COMPLETE
-        receipt.start_date = timezone.now()
-        if term_type == TermType.SUBSCRIPTION:
+        receipt.start_date = today
+        if term_type == TermType.PERPETUAL or term_type == TermType.ONE_TIME_USE:
+            receipt.auto_renew = False
+        elif term_type == TermType.SUBSCRIPTION:
             total_months = int(order_item.offer.term_details['period_length']) * int(order_item.offer.term_details['payment_occurrences'])
-            receipt.end_date = timezone.now() + timedelta(days=(total_months*31))
+            receipt.end_date = today + timedelta(days=(total_months*31))
             receipt.auto_renew = True
-        elif term_type == TermType.MONTHLY_SUBSCRIPTION:
-            total_months = 1
-            receipt.end_date = timezone.now() + timedelta(days=(total_months*31))
+        else:
+            total_months = self.get_month_offset(term_type)
+            receipt.end_date = self.get_future_date_months(today, total_months)
             receipt.auto_renew = True
-        elif term_type == TermType.QUARTERLY_SUBSCRIPTION:
-            total_months = 3
-            receipt.end_date = timezone.now() + timedelta(days=(total_months*31))
-            receipt.auto_renew = True
-        elif term_type == TermType.SEMIANNUAL_SUBSCRIPTION:
-            total_months = 6
-            receipt.end_date = timezone.now() + timedelta(days=(total_months*31))
-            receipt.auto_renew = True
-        elif term_type == TermType.ANNUAL_SUBSCRIPTION:
-            total_months = 12
-            receipt.end_date = timezone.now() + timedelta(days=(total_months*31))
-            receipt.auto_renew = True
-        elif term_type == TermType.PERPETUAL:
-            receipt.auto_renew = False
-        elif term_type == TermType.ONE_TIME_USE:
-            receipt.auto_renew = False
+
         return receipt
 
     def create_order_item_receipt(self, order_item):
@@ -242,7 +264,7 @@ class PaymentProcessorBase(object):
         self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         vendor_process_payment.send(sender=self.__class__, invoice=self.invoice)
 
-        if not self.invoice.total:
+        if self.is_data_valid() and not self.invoice.total:
             self.free_payment()
         elif self.is_data_valid() and self.invoice.get_one_time_transaction_order_items():
             self.process_payment()
@@ -267,7 +289,6 @@ class PaymentProcessorBase(object):
         """
         # Gateway Transaction goes here...
         self.transaction_submitted = True
-        pass
             
     def free_payment(self):
         """
@@ -303,10 +324,14 @@ class PaymentProcessorBase(object):
     def process_subscriptions(self):
         for subscription in self.invoice.get_recurring_order_items():
             self.subscription_payment(subscription)
-        pass
+        
 
     def subscription_payment(self, subscription):
-        pass
+        """
+        Call handels the authrization and creation for a subscription.
+        """
+        # Gateway Transaction goes here...
+        self.transaction_submitted = True
 
     def subscription_info(self):
         pass

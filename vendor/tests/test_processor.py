@@ -62,7 +62,7 @@ class BaseProcessorTests(TestCase):
     def test_create_payment_model_success(self):
         self.base_processor.get_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
         self.base_processor.get_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
-
+        self.base_processor.is_data_valid()
         self.base_processor.create_payment_model()
 
         self.assertIsNotNone(self.base_processor.payment)
