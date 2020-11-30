@@ -256,6 +256,11 @@ class PaymentProcessorBase(object):
         
         This should not be overriden.  Override one of the methods it calls if you need to.
         """
+        # TODO: Should this validation be outside the call to authorize the payment the call?
+        # Why bother to call the processor is the forms are wrong
+        if not self.is_data_valid():
+            return None
+
         self.status = PurchaseStatus.QUEUED     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         vendor_pre_authorization.send(sender=self.__class__, invoice=self.invoice)
 
@@ -264,9 +269,9 @@ class PaymentProcessorBase(object):
         self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         vendor_process_payment.send(sender=self.__class__, invoice=self.invoice)
 
-        if self.is_data_valid() and not self.invoice.total:
+        if self.invoice.total:
             self.free_payment()
-        elif self.is_data_valid() and self.invoice.get_one_time_transaction_order_items():
+        elif self.invoice.get_one_time_transaction_order_items():
             self.process_payment()
 
         self.process_subscriptions()        
@@ -288,7 +293,15 @@ class PaymentProcessorBase(object):
         This is where the core of the payment processing happens.
         """
         # Gateway Transaction goes here...
+        self.create_payment_model()
+
         self.transaction_submitted = True
+
+        self.save_payment_transaction_result(True, 1, {'gateway_response': 'any outpout'})
+
+        self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+
+        self.create_receipts(self.invoice.get_one_time_transaction_order_items())
             
     def free_payment(self):
         """
