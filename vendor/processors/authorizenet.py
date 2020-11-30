@@ -2,8 +2,6 @@
 Payment processor for Authorize.net.
 """
 import ast
-
-from datetime import timedelta
 from decimal import Decimal, ROUND_DOWN
 
 from django.conf import settings
