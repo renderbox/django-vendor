@@ -272,12 +272,16 @@ class ReviewCheckoutViewTests(TestCase):
         session['billing_address_form'] = BillingAddressForm().initial
         session['credit_card_form'] = CreditCardForm().initial
         session.save()
+        self.invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        self.invoice.save()
 
         response = self.client.post(self.view_url)
 
         self.assertRedirects(response, reverse('vendor:checkout-account'))
 
     def test_view_payment_success(self):
+        self.invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        self.invoice.save()
         Payment.objects.all().delete()
         form_data = { 
             'billing_address_form': 
