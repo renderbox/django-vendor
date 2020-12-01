@@ -5,42 +5,241 @@
 
 <h2>{% trans 'Admin: Profile Purchase History' %}</h2>
 <div class='row'>
-  <div class='col-6'>
+  <h3>{% trans 'Profile Detail' %}</h3>
+  <div class='col-12'>
+    {% trans 'Name:' %} {{ profile.user.name }}
+  </div>
+  <div class='col-12'>
+    {% trans 'Last Name:' %} {{ profile.user.last_name }}
+  </div>
+  <div class='col-12'>
+    {% trans 'Username:' %} {{ profile.user.username }}
+  </div>
+  <div class='col-12'>
+    {% trans 'Email:' %} {{ profile.user.email }}
   </div>
 </div>
-<table class="table table-bordered">
 
-  <thead>
-    <tr>
-      <th scope="col">{% trans '#' %}</th>
-      <th scope="col">{% trans 'Item' %}</th>
-      <th scope="col">{% trans 'Price' %}</th>
-      <th scope="col">{% trans 'Quantity' %}</th>
-      <th scope="col">{% trans 'Total' %}</th>
-    </tr>
-  </thead>
+<div class='row'>
+  <h3>{% trans 'Saved Addresses' %}</h3>
+  {% for address in profile.addresses.all %}
+  <div class='col-12'>
+    {{ address.get_address }}
+  </div>
+  {% endfor %}
+</div>
 
-  <tbody>
-    {% for item in object.order_items.all %}
-    <tr>
-      <th scope="row">{{ forloop.counter }}</th>
-      <td>{{item.name}}</td>
-      <td>${{item.price|floatformat:2}}</td>
-      <td>{{item.quantity}}</td>
-      <td>${{item.get_total_display}}</td>
-    </tr>
-    {% empty %}
-    <h3>{% trans 'Cart is Empty' %} </h3>
+
+<div class='row'>
+  <h3>{% trans 'Invoices' %}</h3>
+  {% for invoice in profile.invoices.all %}
+  <h4 class="col-12">{% trans 'Invoice Detail' %}</h4>
+  <div class='col-6'>
+    {% trans 'Status' %}
+  </div>
+  <div class='col-6'>
+    {{invoice.get_status_display }}
+  </div>
+  <div class='col-6'>
+    {% trans 'Customer Notes' %}
+  </div>
+  <div class='col-6'>
+    {{invoice.customer_notes }}
+  </div>
+  <div class='col-6'>
+    {% trans 'Vendor Notes' %}
+  </div>
+  <div class='col-6'>
+    {{invoice.vendor_notes }}
+  </div>
+  <div class='col-6'>
+    {% trans 'Order date' %}
+  </div>
+  <div class='col-6'>
+    {{invoice.ordered_date }}
+  </div>
+  <div class='col-6'>
+    {% trans 'Subtotal' %}
+  </div>
+  <div class='col-6'>
+    {{invoice.subtotal }}
+  </div>
+  <div class='col-6'>
+    {% trans 'Tax' %}
+  </div>
+  <div class='col-6'>
+    {{invoice.tax }}
+  </div>
+  <div class='col-6'>
+    {% trans 'Total' %}
+  </div>
+  <div class='col-6'>
+    {{invoice.total }}
+  </div>
+  <div class='col-6'>
+    {% trans 'Currency' %}
+  </div>
+  <div class='col-6'>
+    {{invoice.currency }}
+  </div>
+  <div class='col-6'>
+    {% trans 'Shipping Address' %}
+  </div>
+  <div class='col-6'>
+    {{invoice.shipping_address.get_address }}
+  </div>
+  <h4 class="col-12">{% trans 'Order Items' %}</h4>
+  {% for order_item in invoice.order_items.all %}
+  <div class='col-6'>
+    {% trans 'Offer Name' %}
+  </div>
+  <div class='col-6'>
+    {{order_item.name}}
+  </div>
+  <div class='col-6'>
+    {% trans 'Quantity' %}
+  </div>
+  <div class='col-6'>
+    {{order_item.quantity}}
+  </div>
+  <div class='col-6'>
+    {% trans 'Unit Price' %}
+  </div>
+  <div class='col-6'>
+    {{order_item.price}}
+  </div>
+  {% endfor %}
+  <h4 class="col-12">{% trans 'Payments Attempts' %}</h4>
+
+  {% for payment in invoice.payments.all %}
+  <div class='col-6'>
+    {% trans 'Success' %}
+  </div>
+  <div class='col-6'>
+    {{payment.success}}
+  </div>
+  <div class='col-6'>
+    {% trans 'Created' %}
+  </div>
+  <div class='col-6'>
+    {{payment.created}}
+  </div>
+  <div class='col-6'>
+    {% trans 'Transaction' %}
+  </div>
+  <div class='col-6'>
+    {{payment.transaction}}
+  </div>
+  <div class='col-6'>
+    {% trans 'Provider' %}
+  </div>
+  <div class='col-6'>
+    {{payment.provider}}
+  </div>
+  <div class='col-6'>
+    {% trans 'Amount' %}
+  </div>
+  <div class='col-6'>
+    {{payment.amount}}
+  </div>
+  <div class='col-6'>
+    {% trans 'Billing Address' %}
+  </div>
+  <div class='col-6'>
+    {{payment.billing_address.get_address}}
+  </div>
+  <div class='col-6'>
+    {% trans 'Result' %}
+  </div>
+  <div class='col-6'>
+    {{payment.result}}
+  </div>
+  <div class='col-6'>
+    {% trans 'Payee Full Name' %}
+  </div>
+  <div class='col-6'>
+    {{payment.payee_full_name}}
+  </div>
+  <div class='col-6'>
+    {% trans 'Payee Company' %}
+  </div>
+  <div class='col-6'>
+    {{payment.payee_company}}
+  </div>
+  {% endfor %}
+
+  <h4 class="col-12">{% trans 'Receipts' %}</h4>
+  {% for receipt in profile.receipts.all %}
+  <h5 class="col-12">{% trans 'Receipt Detail' %}</h5>
+    <div class='col-6'>
+      {% trans 'Status' %}
+    </div>
+    <div class='col-6'>
+      {{ receipt.get_status_display }}
+    </div>
+    <div class='col-6'>
+      {% trans 'Transaction' %}
+    </div>
+    <div class='col-6'>
+      {{ receipt.transaction }}
+    </div>
+    <div class='col-6'>
+      {% trans 'Start Date' %}
+    </div>
+    <div class='col-6'>
+      {{ receipt.start_date }}
+    </div>
+    <div class='col-6'>
+      {% trans 'End date' %}
+    </div>
+    <div class='col-6'>
+      {{ receipt.end_date }}
+    </div>
+    <div class='col-6'>
+      {% trans 'Auto Renew' %}
+    </div>
+    <div class='col-6'>
+      {{ receipt.auto_renew }}
+    </div>
+    <div class='col-6'>
+      {% trans 'Vendor Notes' %}
+    </div>
+    <div class='col-6'>
+      {{ receipt.vendor_notes }}
+    </div>
+    <div class='col-6'>
+      {% trans 'Meta' %}
+    </div>
+    <div class='col-6'>
+      {{ receipt.meta }}
+    </div>
+    <h5 class="col-12">{% trans 'Offer Detail' %}</h5>
+    <div class='col-6'>
+      {% trans 'Name' %}
+    </div>
+    <div class='col-6'>
+      {{ receipt.order_item.name }}
+    </div>
+    <div class='col-6'>
+      {% trans 'Slug' %}
+    </div>
+    <div class='col-6'>
+      {{ receipt.order_item.offer.slug }}
+    </div>
+    <div class='col-6'>
+      {% trans 'Terms' %}
+    </div>
+    <div class='col-6'>
+      {{ receipt.order_item.offer.get_terms_display }}
+    </div>
+    <div class='col-6'>
+      {% trans 'Term Details' %}
+    </div>
+    <div class='col-6'>
+      {{ receipt.order_item.offer.term_details }}
+    </div>
     {% endfor %}
-    <tr>
-      <td colspan=3></td>
-      <td>{% trans 'Subtotal' %}</td>
-      <td>${{ object.subtotal|floatformat:2 }}</td>
-    </tr>
-  </tbody>
+  {% endfor %}
+</div>
 
-</table>
-
-<a href="{% url 'vendor_admin:manager-order-list' %}" class="btn btn-primary">{% trans 'Back to List' %}</a>
 {% endblock %}
-

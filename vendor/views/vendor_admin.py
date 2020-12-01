@@ -7,11 +7,11 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import Invoice, Offer, Price, Receipt
+from vendor.models import Invoice, Offer, Price, Receipt, CustomerProfile
 from vendor.models.choice import TermType
 from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet
 from django.utils.translation import ugettext as _
-
+from django.contrib.sites.shortcuts import get_current_site
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 #############
 # Admin Views
@@ -196,3 +196,16 @@ class AdminSubscriptionListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return self.model.objects.filter(products__in=Product.on_site.all(), order_item__offer__terms__gte=TermType.SUBSCRIPTION, order_item__offer__terms__lt=TermType.ONE_TIME_USE)
+
+class AdminProfileDetailView(LoginRequiredMixin, TemplateView):
+    '''
+    Gets all Customer Profile information for quick lookup and management
+    '''
+    template_name = 'vendor/manage/profile_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['profile'] = CustomerProfile.objects.get(user=self.request.user, site=get_current_site(self.request))
+
+        return context
+        
