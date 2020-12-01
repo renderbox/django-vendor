@@ -154,7 +154,7 @@ class PaymentProcessorBase(object):
             receipt.auto_renew = False
         elif term_type == TermType.SUBSCRIPTION:
             total_months = int(order_item.offer.term_details['period_length']) * int(order_item.offer.term_details['payment_occurrences'])
-            receipt.end_date = today + timedelta(days=(total_months*31))
+            receipt.end_date = self.get_future_date_months(today, total_months)
             receipt.auto_renew = True
         else:
             total_months = self.get_month_offset(term_type)
