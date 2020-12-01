@@ -348,8 +348,8 @@ class AuthorizeNetProcessorTests(TestCase):
         billing information. The test send an invalid expiration date to test the 
         transation fails.
         """
-        self.form_data['credit_card_form']['expire_month'] = '12'
-        self.form_data['credit_card_form']['expire_year'] = str(timezone.now().year - 1)
+        self.form_data['credit_card_form']['expire_month'] = str(timezone.now().month - 1)
+        self.form_data['credit_card_form']['expire_year'] = str(timezone.now().year)
         
         self.processor.get_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
         self.processor.get_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
@@ -377,10 +377,11 @@ class AuthorizeNetProcessorTests(TestCase):
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
-        print(self.processor.transaction_message)
-
-        self.assertIsNotNone(self.processor.payment)
-        if 'cvvResultCode' in self.processor.transaction_response:
+        
+        if not self.processor.payment:
+            self.assertIsNotNone(self.processor.payment_info.errors)
+            
+        elif 'cvvResultCode' in self.processor.transaction_response:
             self.assertEquals("N", self.processor.transaction_response.cvvResultCode.text)
         else:
             print(f'test_process_payment_fail_cvv_no_match: Response: {self.processor.payment.result["raw"]}')
@@ -399,9 +400,9 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
 
-        print(self.processor.transaction_message)
-        self.assertIsNotNone(self.processor.payment)
-        if 'cvvResultCode' in self.processor.transaction_response:
+        if not self.processor.payment:
+            self.assertIsNotNone(self.processor.payment_info.errors)
+        elif 'cvvResultCode' in self.processor.transaction_response:
             self.assertEquals("S", self.processor.transaction_response.cvvResultCode.text)
         else:
             print(f'test_process_payment_fail_cvv_should_not_be_on_card: Response: {self.processor.payment.result["raw"]}')
@@ -420,9 +421,10 @@ class AuthorizeNetProcessorTests(TestCase):
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
-        
-        self.assertIsNotNone(self.processor.payment)
-        if 'cvvResultCode' in self.processor.transaction_response:
+
+        if not self.processor.payment:
+            self.assertIsNotNone(self.processor.payment_info.errors)
+        elif 'cvvResultCode' in self.processor.transaction_response:
             self.assertEquals("U", self.processor.transaction_response.cvvResultCode.text)
         else:
             print(f'test_process_payment_fail_cvv_not_certified: Response: {self.processor.payment.result["raw"]}')
@@ -441,8 +443,9 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
         
-        self.assertIsNotNone(self.processor.payment)
-        if 'cvvResultCode' in self.processor.transaction_response:
+        if not self.processor.payment:
+            self.assertIsNotNone(self.processor.payment_info.errors)
+        elif 'cvvResultCode' in self.processor.transaction_response:
             self.assertEquals("P", self.processor.transaction_response.cvvResultCode.text)
         else:
             print(f'test_process_payment_fail_cvv_not_processed Response: {self.processor.payment.result["raw"]}')
