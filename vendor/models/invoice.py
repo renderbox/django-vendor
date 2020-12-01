@@ -122,7 +122,7 @@ class Invoice(CreateUpdateModelBase):
     def get_payment_billing_address(self):
         if not self.payments.filter(success=True).first().billing_address:
             return ""
-        return self.payments.filter(success=True).first().billing_address.get_address()
+        return self.payments.filter(success=True).first().billing_address.get_address_display()
 
     # def get_absolute_url(self):       # TODO: [GK-3031] add and user view for invoice detail
     #     """

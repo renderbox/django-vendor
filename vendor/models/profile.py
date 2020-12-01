@@ -94,3 +94,8 @@ class CustomerProfile(CreateUpdateModelBase):
         cart = self.get_cart_or_checkout_cart()
 
         return cart.order_items.all().count()
+
+    def has_address(self, address):
+        if self.addresses.filter(name=address.name, address_1=address.address_1, postal_code=address.postal_code):
+            return True
+        return False

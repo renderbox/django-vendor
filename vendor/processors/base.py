@@ -9,7 +9,7 @@ from calendar import mdays
 from django.db.models import Sum
 from django.conf import settings
 from django.utils import timezone
-from vendor.models import Payment, Invoice, Receipt
+from vendor.models import Payment, Invoice, Receipt, Address
 from vendor.models.choice import PurchaseStatus, TermType
 ##########
 # SIGNALS
@@ -73,8 +73,11 @@ class PaymentProcessorBase(object):
         self.payment.payee_company = self.billing_address.cleaned_data.get('company')
 
         billing_address = self.billing_address.save(commit=False)
-        billing_address.profile = self.invoice.profile
-        billing_address.save()
+        if self.invoice.profile.has_address(billing_address):
+            billing_address.pk = Address.objects.get(profile=self.invoice.profile, name=billing_address.name, address_1=billing_address.address_1, postal_code=billing_address.postal_code).pk
+        else:
+            billing_address.profile = self.invoice.profile
+            billing_address.save()
 
         self.payment.billing_address = billing_address
         self.payment.save()

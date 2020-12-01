@@ -205,7 +205,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         existing_account_address = Address.objects.filter(
             profile__user=request.user, name=shipping_address.name, first_name=shipping_address.first_name, last_name=shipping_address.last_name)
         # TODO: Need to add a drop down to select existing address
-        if existing_account_address:
+        if invoice.profile.has_address(shipping_address):
             shipping_address.pk = existing_account_address.first().pk
 
         shipping_address.profile = invoice.profile
