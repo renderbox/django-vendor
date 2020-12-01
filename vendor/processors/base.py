@@ -90,7 +90,7 @@ class PaymentProcessorBase(object):
 
     def update_invoice_status(self, new_status):
         """
-        Updates the Inovice status if the transaction was submitted.
+        Updates the Invoice status if the transaction was submitted.
         Otherwise it returns the invoice to the Cart. The error is saved in 
         the payment for the transaction.
         """
@@ -102,7 +102,7 @@ class PaymentProcessorBase(object):
 
     def is_payment_and_invoice_complete(self):
         """
-        If payment was successful and inovice status is complete returns True. Otherwise
+        If payment was successful and invoice status is complete returns True. Otherwise
         false and no receipts should be created.
         """
         if self.payment.success and self.invoice.status == Invoice.InvoiceStatus.COMPLETE:
