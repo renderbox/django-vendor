@@ -1,0 +1,46 @@
+{% extends "vendor/manage/base.html" %}
+{% load i18n %}
+
+{% block vendor_content %}
+
+<h2>{% trans 'Admin: Profile Purchase History' %}</h2>
+<div class='row'>
+  <div class='col-6'>
+  </div>
+</div>
+<table class="table table-bordered">
+
+  <thead>
+    <tr>
+      <th scope="col">{% trans '#' %}</th>
+      <th scope="col">{% trans 'Item' %}</th>
+      <th scope="col">{% trans 'Price' %}</th>
+      <th scope="col">{% trans 'Quantity' %}</th>
+      <th scope="col">{% trans 'Total' %}</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for item in object.order_items.all %}
+    <tr>
+      <th scope="row">{{ forloop.counter }}</th>
+      <td>{{item.name}}</td>
+      <td>${{item.price|floatformat:2}}</td>
+      <td>{{item.quantity}}</td>
+      <td>${{item.get_total_display}}</td>
+    </tr>
+    {% empty %}
+    <h3>{% trans 'Cart is Empty' %} </h3>
+    {% endfor %}
+    <tr>
+      <td colspan=3></td>
+      <td>{% trans 'Subtotal' %}</td>
+      <td>${{ object.subtotal|floatformat:2 }}</td>
+    </tr>
+  </tbody>
+
+</table>
+
+<a href="{% url 'vendor_admin:manager-order-list' %}" class="btn btn-primary">{% trans 'Back to List' %}</a>
+{% endblock %}
+
