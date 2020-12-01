@@ -380,7 +380,6 @@ class AuthorizeNetProcessorTests(TestCase):
         
         if not self.processor.payment:
             self.assertIsNotNone(self.processor.payment_info.errors)
-            
         elif 'cvvResultCode' in self.processor.transaction_response:
             self.assertEquals("N", self.processor.transaction_response.cvvResultCode.text)
         else:

@@ -231,7 +231,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         elif subscription_type == TermType.ANNUAL_SUBSCRIPTION:
             return 12
 
-    def get_trail_occurrences(self, subscription):
+    def get_trial_occurrences(self, subscription):
         return subscription.offer.term_details.get('trial_occurrences', 0)
 
     def get_payment_schedule_start_date(self, subscription):
@@ -240,9 +240,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         units = subscription.offer.term_details.get('term_units', TermDetailUnits.MONTH)
         if units == TermDetailUnits.MONTH:
-            return self.get_future_date_months(timezone.now(), self.get_trail_occurrences(subscription))
+            return self.get_future_date_months(timezone.now(), self.get_trial_occurrences(subscription))
         elif units == TermDetailUnits.DAY:
-            return self.get_future_date_days(timezone.now(), self.get_trail_occurrences(subscription))
+            return self.get_future_date_days(timezone.now(), self.get_trial_occurrences(subscription))
 
     def create_payment_scheduale_interval_type(self, subscription, subscription_type):
         """
