@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-01 00:30+0000\n"
+"POT-Creation-Date: 2020-12-01 17:21+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -900,6 +900,14 @@ msgstr "で注文"
 msgid "Type"
 msgstr "タイプ"
 
+#: templates/vendor/payment_summary.html:44
+msgid "%(account_type)s ending in %(account_number)s"
+msgstr "%(account_type)sで終わります%(account_number)s"
+
+#: templates/vendor/payment_summary.html:48
+msgid "Card ending in %(account_number)s"
+msgstr "で終わるカード%(account_number)s"
+
 #: templates/vendor/purchase_detail.html:8
 #: templates/vendor/purchase_list.html:8
 msgid "Purchases"
@@ -985,7 +993,8 @@ msgstr "無効なカード"
 #: views/vendor.py:404
 msgid ""
 "Payment gateway error: {processor.transaction_message.get('message', '')}"
-msgstr "支払いゲートウェイエラー：{processor.transaction_message.get('message', '')}"
+msgstr ""
+"支払いゲートウェイエラー：{processor.transaction_message.get('message', '')}"
 
 #: views/vendor.py:407
 msgid "Success: Payment Updated"
