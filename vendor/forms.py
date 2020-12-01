@@ -231,7 +231,7 @@ class CreditCardForm(PaymentFrom):
     cvv_number = forms.CharField(required=True, label=_("CVV Number"), max_length=4, min_length=3, widget=forms.TextInput(attrs={'size': '4'}))
 
     def __init__(self, *args, **kwargs):
-        super(CreditCardForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         today = datetime.now()
         self.fields['expire_year'].choices = [(x, x) for x in range(today.year, today.year + 15)]
         self.fields['expire_year'].initial = (today.year, today.year)
