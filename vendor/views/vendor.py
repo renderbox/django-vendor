@@ -118,7 +118,7 @@ class AddToCartView(View):
                 cart.status = Invoice.InvoiceStatus.CART
                 cart.save()
 
-            if profile.has_product(offer.products.all()):
+            if profile.has_product(offer.products.all()) and not offer.allow_multiple:
                 messages.info(self.request, _("You Have Already Purchased This Item"))
             elif cart.order_items.filter(offer__products__in=offer.products.all()).count() and not offer.allow_multiple:
                 messages.info(self.request, _("You  already have this product in you cart"))
@@ -202,11 +202,9 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
         invoice.status = Invoice.InvoiceStatus.CHECKOUT
         invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
-        existing_account_address = Address.objects.filter(
-            profile__user=request.user, name=shipping_address.name, first_name=shipping_address.first_name, last_name=shipping_address.last_name)
         # TODO: Need to add a drop down to select existing address
         if invoice.profile.has_address(shipping_address):
-            shipping_address.pk = existing_account_address.first().pk
+            shipping_address.pk = Address.objects.get(profile=self.invoice.profile, name=shipping_address.name, address_1=shipping_address.address_1, postal_code=shipping_address.postal_code).pk
 
         shipping_address.profile = invoice.profile
         shipping_address.name = shipping_address.address_1
