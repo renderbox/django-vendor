@@ -90,25 +90,27 @@ class AddToCartView(View):
     '''
     Create an order item and add it to the order
     '''
+    def session_cart(self, request, offer):
+        offer_key = str(offer.pk)
+        session_cart = get_or_create_session_cart(request.session)
+
+        if offer_key not in session_cart:
+            session_cart[offer_key] = {}
+            session_cart[offer_key]['quantity'] = 0
+
+        session_cart[offer_key]['quantity'] += 1
+
+        if not offer.allow_multiple:
+            session_cart[offer_key]['quantity'] = 1
+
+        return session_cart
 
     def post(self, request, *args, **kwargs):
         offer = Offer.on_site.get(slug=self.kwargs["slug"])
         if request.user.is_anonymous:
-            offer_key = str(offer.pk)
-            session_cart = get_or_create_session_cart(request.session)
-
-            if offer_key not in session_cart:
-                session_cart[offer_key] = {}
-                session_cart[offer_key]['quantity'] = 0
-
-            session_cart[offer_key]['quantity'] += 1
-
-            if not offer.allow_multiple:
-                session_cart[offer_key]['quantity'] = 1
-
-            request.session['session_cart'] = session_cart
+            request.session['session_cart'] = self.session_cart(request, offer)
         else:
-            profile, created = self.request.user.customer_profile.get_or_create(site=set_default_site_id())
+            profile, created = self.request.user.customer_profile.get_or_create(site=get_current_site(request))
 
             cart = profile.get_cart_or_checkout_cart()
 
@@ -116,13 +118,13 @@ class AddToCartView(View):
                 cart.status = Invoice.InvoiceStatus.CART
                 cart.save()
 
-            if profile.has_product(offer.products.all()) and not offer.allow_multiple:
+            if profile.has_product(offer.products.all()):
                 messages.info(self.request, _("You Have Already Purchased This Item"))
-                return redirect('vendor:cart')
-
-            
-            messages.info(self.request, _("Added item to cart."))
-            cart.add_offer(offer)
+            elif cart.order_items.filter(offer__products__in=offer.products.all()).count() and not offer.allow_multiple:
+                messages.info(self.request, _("You  already have this product in you cart"))
+            else:
+                messages.info(self.request, _("Added item to cart."))
+                cart.add_offer(offer)
 
         return redirect('vendor:cart')      # Redirect to cart on success
 
