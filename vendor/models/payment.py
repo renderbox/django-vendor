@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -13,6 +14,7 @@ class Payment(models.Model):
     - Gift cards can be used as payments
     - Discounts are Payment credits
     '''
+    uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
     invoice = models.ForeignKey("vendor.Invoice", verbose_name=_("Invoice"), on_delete=models.CASCADE, related_name="payments")
     created = models.DateTimeField(_("Date Created"), auto_now_add=True)
     transaction = models.CharField(_("Transaction ID"), max_length=50)
