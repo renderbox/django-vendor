@@ -203,12 +203,10 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         invoice.status = Invoice.InvoiceStatus.CHECKOUT
         invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
         # TODO: Need to add a drop down to select existing address
-        if invoice.profile.has_address(shipping_address):
-            shipping_address.pk = Address.objects.get(profile=self.invoice.profile, name=shipping_address.name, address_1=shipping_address.address_1, postal_code=shipping_address.postal_code).pk
-
-        shipping_address.profile = invoice.profile
-        shipping_address.name = shipping_address.address_1
-        shipping_address.save()
+        shipping_address, created = invoice.profile.get_or_create_address(shipping_address)
+        if created:
+            shipping_address.profile = invoice.profile
+            shipping_address.save()
         invoice.shipping_address = shipping_address
         invoice.save()
 
