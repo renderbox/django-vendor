@@ -304,7 +304,7 @@ class ReviewCheckoutViewTests(TestCase):
 
         response = self.client.post(self.view_url)
 
-        self.assertRedirects(response, reverse('vendor:purchase-summary', kwargs={'pk': 1}))
+        self.assertEquals(self.invoice.payments.all().count(), 1)
     
     # def test_view_cart_no_shipping_address(self):
         # raise NotImplementedError()
@@ -328,7 +328,7 @@ class PaymentSummaryViewTests(TestCase):
         self.user = User.objects.get(pk=1)
         self.client.force_login(self.user)
         self.invoice = Invoice.objects.get(pk=1)
-        self.view_url = reverse('vendor:purchase-summary', kwargs={'pk': self.invoice.pk})
+        self.view_url = reverse('vendor:purchase-summary', kwargs={'uuid': self.invoice.uuid})
 
     def test_view_status_code_200(self):
         response = self.client.get(self.view_url)

@@ -1,0 +1,276 @@
+[
+{
+    "model": "core.product",
+    "pk": 6,
+    "fields": {
+        "created": "2020-11-25T19:52:26.535Z",
+        "updated": "2020-11-25T19:52:26.535Z",
+        "sku": "spm",
+        "uuid": "d7387dd6-1ef5-483e-96f0-e82525bcee1f",
+        "name": "month-free-sub",
+        "site": 1,
+        "slug": "month-free-sub",
+        "available": true,
+        "description": {
+            "call_out": " ",
+            "description": ""
+        },
+        "meta": {
+            "msrp": {
+                "usd": 10.0,
+                "default": "usd"
+            }
+        },
+        "classification": [],
+        "offers": [
+            6
+        ],
+        "reciepts": []
+    }
+},
+{
+    "model": "core.product",
+    "pk": 8,
+    "fields": {
+        "created": "2020-11-25T22:28:21.969Z",
+        "updated": "2020-11-25T22:28:40.651Z",
+        "sku": "ssss",
+        "uuid": "570756a1-7b40-442b-947f-8f7d939514ff",
+        "name": "Month 7 day trail",
+        "site": 1,
+        "slug": "m-7-d-trail",
+        "available": true,
+        "description": {
+            "call_out": " ",
+            "description": ""
+        },
+        "meta": {
+            "msrp": {
+                "usd": 10.0,
+                "default": "usd"
+            }
+        },
+        "classification": [],
+        "offers": [
+            7
+        ],
+        "reciepts": [
+        ]
+    }
+},
+{
+    "model": "core.product",
+    "pk": 9,
+    "fields": {
+        "created": "2020-11-25T22:28:33.201Z",
+        "updated": "2020-11-25T22:28:33.201Z",
+        "sku": "ccccccc",
+        "uuid": "560bfd16-7155-4074-a9d4-86df315495a5",
+        "name": "ccccc",
+        "site": 1,
+        "slug": "ccccc",
+        "available": true,
+        "description": {
+            "call_out": " ",
+            "description": ""
+        },
+        "meta": {
+            "msrp": {
+                "usd": 20.0,
+                "default": "usd"
+            }
+        },
+        "classification": [],
+        "offers": [
+            8
+        ],
+        "reciepts": [
+        ]
+    }
+},
+{
+    "model": "core.product",
+    "pk": 10,
+    "fields": {
+        "created": "2020-11-25T22:52:07.969Z",
+        "updated": "2020-11-25T22:52:07.970Z",
+        "sku": "dsf",
+        "uuid": "b5d8569b-4b27-4e63-bc3a-c9ff49d4ceeb",
+        "name": "mont 7 dail trail",
+        "site": 1,
+        "slug": "mont-7-dail-trail",
+        "available": true,
+        "description": {
+            "call_out": " ",
+            "description": ""
+        },
+        "meta": {
+            "msrp": {
+                "usd": 230.0,
+                "default": "usd"
+            }
+        },
+        "classification": [],
+        "offers": [
+            9
+        ],
+        "reciepts": []
+    }
+},
+{
+    "model": "core.product",
+    "pk": 11,
+    "fields": {
+        "created": "2020-11-25T23:16:05.552Z",
+        "updated": "2020-11-25T23:16:05.552Z",
+        "sku": "cdsadf",
+        "uuid": "eb91fb96-2094-41c3-83ab-23323f009a7b",
+        "name": "never ending mont 3 day trail",
+        "site": 1,
+        "slug": "never-ending-mont-3-day-trail",
+        "available": true,
+        "description": {
+            "call_out": " ",
+            "description": ""
+        },
+        "meta": {
+            "msrp": {
+                "usd": 210.0,
+                "default": "usd"
+            }
+        },
+        "classification": [],
+        "offers": [
+            10
+        ],
+        "reciepts": []
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 6,
+    "fields": {
+        "created": "2020-11-25T19:53:37.765Z",
+        "updated": "2020-11-25T19:53:37.765Z",
+        "uuid": "2cfa6c57-c670-4b98-9d8c-4610a2ac330b",
+        "slug": "month-free-sub",
+        "site": 1,
+        "name": "month-free-sub",
+        "start_date": "2020-01-01T00:00:00Z",
+        "end_date": "2021-01-01T00:00:00Z",
+        "terms": 11,
+        "term_details": {
+            "term_units": 20,
+            "trial_occurrences": 1
+        },
+        "term_start_date": "2021-01-01T00:00:00Z",
+        "available": true,
+        "bundle": false,
+        "offer_description": "",
+        "list_bundle_items": false,
+        "allow_multiple": false
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 7,
+    "fields": {
+        "created": "2020-11-25T22:29:27.633Z",
+        "updated": "2020-11-25T22:29:27.634Z",
+        "uuid": "a3a6a340-dbc4-4b3d-aca4-1c84beca8d46",
+        "slug": "m-7-day-trail",
+        "site": 1,
+        "name": "Month 7 day trail",
+        "start_date": "2020-01-01T00:00:00Z",
+        "end_date": "2021-01-01T00:00:00Z",
+        "terms": 11,
+        "term_details": {
+            "term_units": 10,
+            "trial_occurrences": 7
+        },
+        "term_start_date": "2021-01-01T00:00:00Z",
+        "available": true,
+        "bundle": false,
+        "offer_description": "",
+        "list_bundle_items": false,
+        "allow_multiple": false
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 8,
+    "fields": {
+        "created": "2020-11-25T22:29:56.743Z",
+        "updated": "2020-11-25T22:29:56.743Z",
+        "uuid": "e29ed8c5-20eb-4f4e-9d92-3b33fd695624",
+        "slug": "ccccc",
+        "site": 1,
+        "name": "Year 1 month trail",
+        "start_date": "2020-01-01T00:00:00Z",
+        "end_date": "2022-01-01T00:00:00Z",
+        "terms": 14,
+        "term_details": {
+            "term_units": 20,
+            "trial_occurrences": 1
+        },
+        "term_start_date": "2020-01-01T00:00:00Z",
+        "available": true,
+        "bundle": false,
+        "offer_description": "",
+        "list_bundle_items": false,
+        "allow_multiple": false
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 9,
+    "fields": {
+        "created": "2020-11-25T22:55:41.370Z",
+        "updated": "2020-11-25T22:55:41.370Z",
+        "uuid": "8fc9e40b-a5ba-4eb5-88d1-b3e38ca82b28",
+        "slug": "mont-3-day-trail",
+        "site": 1,
+        "name": "Month 3 day trail",
+        "start_date": "2020-01-01T00:00:00Z",
+        "end_date": "2022-01-01T00:00:00Z",
+        "terms": 11,
+        "term_details": {
+            "term_units": 10,
+            "trial_occurrences": 3
+        },
+        "term_start_date": "2020-01-01T00:00:00Z",
+        "available": true,
+        "bundle": false,
+        "offer_description": "",
+        "list_bundle_items": false,
+        "allow_multiple": false
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 10,
+    "fields": {
+        "created": "2020-11-25T23:17:24.098Z",
+        "updated": "2020-11-25T23:17:24.098Z",
+        "uuid": "dd54ce57-0a51-49c8-ae58-b8a9001939bd",
+        "slug": "never-ending-mont-3-day-trail",
+        "site": 1,
+        "name": "Manual 1 Year 1 mont trail",
+        "start_date": "2020-01-01T00:00:00Z",
+        "end_date": "2021-01-01T00:00:00Z",
+        "terms": 10,
+        "term_details": {
+            "term_units": 20,
+            "period_length": 1,
+            "trial_occurrences": 1,
+            "payment_occurrences": 9999
+        },
+        "term_start_date": "2020-01-01T00:00:00Z",
+        "available": true,
+        "bundle": false,
+        "offer_description": "",
+        "list_bundle_items": false,
+        "allow_multiple": false
+    }
+}
+]
