@@ -278,28 +278,29 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             response.pop('messages')
         return str({**self.transaction_message, **response})
 
-    def save_payment_transaction(self):
+    def process_payment_transaction_response(self):
         """
-        Processes and saves single transaction items payments.
+        Processes the transaction reponse from the gateway so it can be saved in the payment model
         """
-        transaction_id = self.transaction_response.transId.text
+        self.transaction_id = self.transaction_response.transId.text
 
         transaction_info = {}
         transaction_info['raw'] = self.get_transaction_raw_response()
         transaction_info['account_type'] = ast.literal_eval(transaction_info['raw']).get('accountType')
 
-        self.save_payment_transaction_result(self.transaction_submitted, transaction_id, transaction_info)
+        self.transaction_response = transaction_info
 
     def save_payment_subscription(self):
         """
-        Processes and saves subscription transaction payments.
+        Processes the transaction reponse from the gateway so it can be saved in the payment model
         The transaction id is the subscription id returned by Authorize.Net
         """
-        transaction_id = self.transaction_message.get("subscription_id")
+        self.transaction_id = self.transaction_message.get("subscription_id")
+
         transaction_info = {}
         transaction_info['raw'] = self.get_transaction_raw_response()
 
-        self.save_payment_transaction_result(self.transaction_submitted, transaction_id, transaction_info)
+        self.transaction_response = transaction_info
 
     def check_response(self, response):
         """
@@ -353,13 +354,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
                 self.transaction_message['subscription_id'] = response.subscriptionId.text
 
     def to_valid_decimal(self, number):
+        # TODO: Need to check currency to determin decimal places.
         return Decimal(number).quantize(Decimal('.00'), rounding=ROUND_DOWN)
     ##########
     # Base Processor Transaction Implementations
     ##########
     def process_payment(self):
-        self.create_payment_model()
-
         # Init transaction
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(settings.AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT)
@@ -380,20 +380,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
         self.check_response(response)
 
-        self.save_payment_transaction()
-
-        self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
-
-        if self.is_payment_and_invoice_complete():
-            self.create_receipts(self.invoice.get_one_time_transaction_order_items())
+        self.process_payment_transaction_response()
     
     def subscription_payment(self, subscription):
         """
         subscription: Type: OrderItem
         Creates a subscription for a user. Subscriptions can be monthy or yearly.objects.all()
         """
-        self.create_payment_model()
-
         # Setting subscription details
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.name = subscription.offer.name
@@ -419,10 +412,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.check_subscription_response(response)
 
         self.save_payment_subscription()
-
-        self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
-        if self.is_payment_and_invoice_complete():
-            self.create_order_item_receipt(subscription)
 
     def subscription_update_payment(self, receipt):
         """
@@ -451,11 +440,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         subscription_info = self.subscription_info(receipt.transaction)
 
-        account_number = subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'].__dict__.get('cardNumber', None)
+        account_number = getattr(subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'], 'cardNumber', None)
         if account_number:
             self.payment.result['account_number'] = account_number.text
             
-        account_type = subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'].__dict__.get('accountType', None)
+        account_type = getattr(subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'], 'accountType', None)
         if account_type:
             self.payment.result['account_type'] = account_type.text
         

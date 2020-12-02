@@ -772,7 +772,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         # print(self.processor.transaction_message)
         self.assertTrue(self.processor.transaction_submitted)
-        self.assertIsNotNone(self.processor.transaction_response.subscriptionId)
+        self.assertIn('subscriptionId', self.processor.transaction_response['raw'])
 
     def test_subscription_update_payment(self):
         self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
