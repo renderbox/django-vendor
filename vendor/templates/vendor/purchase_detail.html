@@ -63,13 +63,15 @@
                                 <tr>
                                         <th>{% trans 'Actions' %}</th>
                                         <td>
+                                                {% if object.order_item.offer.terms < 200 %}
                                                 <form method="post" class="ml-auto"
-                                                        action="{% url 'vendor:customer-subscription-cancel' object.pk %}">
+                                                        action="{% url 'vendor:customer-subscription-cancel' object.uuid %}">
                                                         {% csrf_token %}
                                                         <button class="btn btn-sm btn-danger rounded"
                                                                 type="submit">{% trans 'Cancel Subscription' %}</button>
                                                 </form>
 
+                                                {% endif %}
                                         </td>
                                 </tr>
                                 {% endif %}

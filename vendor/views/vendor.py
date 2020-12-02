@@ -51,9 +51,7 @@ def get_or_create_session_cart(session):
 def check_offer_items_or_redirect(invoice, request):
     
     if invoice.order_items.count() < 1:
-        messages.info(request, 
-            _("Please add to your cart")
-        )
+        messages.info(request, _("Please add to your cart"))
         redirect('vendor:cart')
 
 class CartView(TemplateView):
@@ -121,7 +119,7 @@ class AddToCartView(View):
             if profile.has_product(offer.products.all()) and not offer.allow_multiple:
                 messages.info(self.request, _("You Have Already Purchased This Item"))
             elif cart.order_items.filter(offer__products__in=offer.products.all()).count() and not offer.allow_multiple:
-                messages.info(self.request, _("You  already have this product in you cart"))
+                messages.info(self.request, _("You already have this product in you cart. You can only buy one"))
             else:
                 messages.info(self.request, _("Added item to cart."))
                 cart.add_offer(offer)
@@ -297,8 +295,9 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         processor.authorize_payment()
 
         if processor.transaction_submitted:
-            return redirect('vendor:purchase-summary', pk=invoice.pk)
+            return redirect('vendor:purchase-summary', uuid=invoice.uuid)
         else:
+            # TODO: Make message configurable for the site in the settings 
             messages.info(self.request, _("The payment gateway did not authorize payment."))
             return redirect('vendor:checkout-account')
 
@@ -306,6 +305,8 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 class PaymentSummaryView(LoginRequiredMixin, DetailView):
     model = Invoice
     template_name = 'vendor/payment_summary.html'
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data()
@@ -349,11 +350,13 @@ class ProductsListView(LoginRequiredMixin, ListView):
 class ReceiptDetailView(LoginRequiredMixin, DetailView):
     model = Receipt
     template_name = 'vendor/purchase_detail.html'
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['payment'] = self.object.order_item.invoice.payments.filter(success=True).first()
+        context['payment'] = self.object.order_item.invoice.payments.get(success=True, transaction=self.object.transaction)
 
         return context
 
@@ -371,7 +374,7 @@ class SubscriptionsListView(LoginRequiredMixin, ListView):
 class SubscriptionCancelView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
-        receipt = Receipt.objects.get(pk=self.kwargs["pk"])
+        receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
 
         processor = PaymentProcessor(receipt.order_item.invoice)
 
@@ -387,7 +390,7 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy('vendor:customer-subscriptions')
     
     def post(self, request, *args, **kwargs):
-        receipt = Receipt.objects.get(pk=self.kwargs["pk"])
+        receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
         payment_form = CreditCardForm(request.POST)
         
         if not payment_form.is_valid():
