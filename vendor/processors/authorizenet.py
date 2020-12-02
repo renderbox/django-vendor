@@ -222,14 +222,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def get_period_length(self, subscription, subscription_type):
         if subscription_type == TermType.SUBSCRIPTION:
             return subscription.offer.term_details['period_length']
-        elif subscription_type == TermType.MONTHLY_SUBSCRIPTION:
-            return 1
-        elif subscription_type == TermType.QUARTERLY_SUBSCRIPTION:
-            return 3
-        elif subscription_type == TermType.SEMIANNUAL_SUBSCRIPTION:
-            return 6
-        elif subscription_type == TermType.ANNUAL_SUBSCRIPTION:
-            return 12
+        else:
+            return subscription_type - 100
 
     def get_trial_occurrences(self, subscription):
         return subscription.offer.term_details.get('trial_occurrences', 0)
