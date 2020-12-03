@@ -197,6 +197,15 @@ class AdminSubscriptionListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return self.model.objects.filter(products__in=Product.on_site.all(), order_item__offer__terms__gte=TermType.SUBSCRIPTION, order_item__offer__terms__lt=TermType.ONE_TIME_USE)
 
+
+class AdminProfileListView(LoginRequiredMixin, ListView):
+    """
+    List of CustomerProfiles on site
+    """
+    template_name = "vendor/manage/profile_list.html"
+    model = CustomerProfile
+    queryset = CustomerProfile.on_site.all()
+
 class AdminProfileDetailView(LoginRequiredMixin, TemplateView):
     '''
     Gets all Customer Profile information for quick lookup and management
