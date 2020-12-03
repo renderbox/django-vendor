@@ -17,7 +17,7 @@ class Receipt(CreateUpdateModelBase):
     A link for all the purchases a user has made. Contains subscription start and end date.
     This is generated for each item a user purchases so it can be checked in other code.
     '''
-    uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
+    uuid = models.UUIDField(_("UUID"), editable=False, unique=True, default=uuid.uuid4, null=False, blank=False)
     profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Purchase Profile"), null=True, on_delete=models.CASCADE, related_name="receipts")
     order_item = models.ForeignKey('vendor.OrderItem', verbose_name=_("Order Item"), on_delete=models.CASCADE, related_name="receipts")
     start_date = models.DateTimeField(_("Start Date"), blank=True, null=True)

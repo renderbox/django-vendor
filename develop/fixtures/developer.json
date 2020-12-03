@@ -258,7 +258,10 @@
         "start_date": "2020-06-30T02:38:16Z",
         "end_date": null,
         "terms": 101,
-        "term_details": {},
+        "term_details": {
+            "term_units": 10,
+            "trail_occurrences": 7
+        },
         "term_start_date": null,
         "available": true,
         "bundle": false
@@ -277,7 +280,10 @@
         "start_date": "2020-06-30T02:38:16Z",
         "end_date": null,
         "terms": 112,
-        "term_details": {},
+        "term_details": {
+            "term_units": 20,
+            "trail_occurrences": 1
+        },
         "term_start_date": null,
         "available": true,
         "bundle": false
