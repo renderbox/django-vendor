@@ -39,13 +39,17 @@
     </div>
     <div class='col-md-12'>
         <h3>{% trans 'Payment Method' %}</h3>
-        {% for payment in object.payments.all %}
-        {% if payment.success == True %}
         <p>
-            {{ payment.result.account_type }} {% trans 'ending' %} {{ payment.result.account_number }}
-        </p>
+        {% if payment.result.account_type %}
+            {% blocktrans with account_type=payment.result.account_type account_number=payment.result.account_number %}
+                {{ account_type }} ending in {{ account_number }} 
+            {% endblocktrans %}
+        {% else %}
+            {% blocktrans with account_number=payment.result.account_number %}
+                Card ending in {{ account_number }} 
+            {% endblocktrans %}
         {% endif %}
-        {% endfor %}
+        </p>
     </div>
 </div>
 {% endblock %}

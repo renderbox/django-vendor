@@ -227,8 +227,15 @@ class CreditCardForm(PaymentFrom):
     full_name = forms.CharField(required=True, label=_("Name on Card"), max_length=80)
     card_number = CreditCardField(label=_("Credit Card Number"), placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)
     expire_month = forms.ChoiceField(required=True, label=_("Expiration Month"), choices=[(x, x) for x in range(1, 13)])
-    expire_year = forms.ChoiceField(required=True, label=_("Expiration Year"), choices=[(x, x) for x in range(datetime.now().year, datetime.now().year + 15)])
+    expire_year = forms.ChoiceField(required=True, label=_("Expiration Year"))
     cvv_number = forms.CharField(required=True, label=_("CVV Number"), max_length=4, min_length=3, widget=forms.TextInput(attrs={'size': '4'}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        today = datetime.now()
+        self.fields['expire_year'].choices = [(x, x) for x in range(today.year, today.year + 15)]
+        self.fields['expire_year'].initial = (today.year, today.year)
+
 
     def clean(self):
         cleaned_data = super(CreditCardForm, self).clean()
@@ -238,15 +245,14 @@ class CreditCardForm(PaymentFrom):
         if not self.expiration_date_valid(expire_month, expire_year):
             del(cleaned_data['expire_month'])
             del(cleaned_data['expire_year'])
-
-        
+             
         return cleaned_data
 
     def clean_expire_month(self):
         expire_month = self.cleaned_data.get('expire_month')
 
         if not expire_month:
-            raise forms.ValidationError(_("You must select a valid expiration month"))
+            raise forms.ValidationError(_("You must select a valid expiration month"), code='required')
 
         return expire_month
 
@@ -254,7 +260,7 @@ class CreditCardForm(PaymentFrom):
         expire_year = self.cleaned_data.get('expire_year')
 
         if not expire_year:
-            raise forms.ValidationError(_("You must select a valid expiration year"))
+            raise forms.ValidationError(_("You must select a valid expiration year"), code='required')
 
         return expire_year
     
@@ -266,8 +272,6 @@ class CreditCardForm(PaymentFrom):
 
         return cvv_number
     
-
-
     def expiration_date_valid(self, expire_month, expire_year):
         year = int(expire_year)
         month = int(expire_month)
