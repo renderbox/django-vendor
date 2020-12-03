@@ -240,12 +240,15 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def create_payment_scheduale_interval_type(self, subscription, subscription_type):
         """
-        Create an interval schedule with fixed months.
-        period_length: The period length the service paided mor last 
-            eg: period_length = 2. the user will be billed every 2 months.
-        payment_occurrences: The number of occurrences the payment should be made.
-            eg: payment_occurrences = 6. There will be six payments made at each period_length.
-        trial_occurrences: The number of ignored payments out of the total payment occurrences
+        Create an interval schedule with fixed months as units for period lenght.
+        It calculates that start date depending on the term_units and trail_occurrences defined in the term_details.
+        term_units can either be by day or by month. Start date is the first billing date of the subscriptions.
+        Eg. for a 1 year 1 month free subscription:
+            term_unit=20 (Month), trail_occurrences=1
+            start_date = now + 1 month
+        Eg. for a 7 day free 1 Month subscription:
+            term_units=10 (Day), trail_occurrences=7
+            start_date = now + 7 days
         """
         payment_schedule = apicontractsv1.paymentScheduleType()
         payment_schedule.interval = apicontractsv1.paymentScheduleTypeInterval()
@@ -254,8 +257,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         payment_schedule.interval.length = self.get_period_length(subscription, subscription_type)
         payment_schedule.totalOccurrences = self.get_payment_occurrences(subscription, subscription_type)
         payment_schedule.startDate = self.get_payment_schedule_start_date(subscription)
+        # Authorize.Net does not have a way to differenciate trail occurrences term_units for period length.
+        # Set to zero as the start date takes into account the trail occurrences.
         payment_schedule.trialOccurrences = 0
-        
         return payment_schedule
 
     ##########
