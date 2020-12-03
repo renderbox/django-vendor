@@ -24,6 +24,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='offer',
             name='terms',
-            field=models.IntegerField(choices=[(100, 'Subscription'), (101, 'Monthly Subscription'), (103, 'Quarterly Subscription'), (106, 'Semi-Annual Subscription'), (112, 'Annual Subscription'), (200, 'Perpetual'), (201, 'One-Time Use')], default=0, verbose_name='Terms'),
+            field=models.IntegerField(choices=[(100, 'Subscription'), (101, 'Monthly Subscription'), (103, 'Quarterly Subscription'), (106, 'Semi-Annual Subscription'), (112, 'Annual Subscription'), (200, 'Perpetual'), (220, 'One-Time Use')], default=0, verbose_name='Terms'),
         ),
     ]

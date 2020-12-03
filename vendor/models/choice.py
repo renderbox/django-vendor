@@ -16,7 +16,7 @@ class TermType(models.IntegerChoices):
     SEMIANNUAL_SUBSCRIPTION = 106, _("Semi-Annual Subscription")
     ANNUAL_SUBSCRIPTION = 112, _("Annual Subscription")
     PERPETUAL = 200, _("Perpetual")
-    ONE_TIME_USE = 201, _("One-Time Use")
+    ONE_TIME_USE = 220, _("One-Time Use")
 
 class PurchaseStatus(models.IntegerChoices):
     QUEUED = 1, _("Queued")
