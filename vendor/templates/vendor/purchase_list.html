@@ -24,7 +24,7 @@
                 </thead>
                 {% for item in object_list %}
                 <tr>
-                    <td><a class="text-primary" href="{% url 'vendor:customer-receipt' item.uuid %}">{{ forloop.counter }}</a></td>
+                    <td><a class="text-primary" href="{{ item.get_absolute_url }}">{{ forloop.counter }}</a></td>
                     <td>{{ item.order_item.offer.name }}</td>
                     <td>{{ item.order_item.offer.get_terms_display }}</td>
                     <td>{{ item.get_status_display }}</td>

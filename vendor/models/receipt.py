@@ -8,10 +8,6 @@ from vendor.models.choice import PurchaseStatus
 
 from vendor.config import VENDOR_PRODUCT_MODEL
 
-#####################
-# TAX CLASSIFIER
-#####################
-
 class Receipt(CreateUpdateModelBase):
     '''
     A link for all the purchases a user has made. Contains subscription start and end date.
@@ -37,6 +33,9 @@ class Receipt(CreateUpdateModelBase):
 
     def __str__(self):
         return "%s - %s - %s" % (self.profile.user.username, self.order_item.offer.name, self.created.strftime('%Y-%m-%d %H:%M'))
+
+    def get_absolute_url(self):
+        return reverse('vendor:customer-receipt', kwargs={'uuid': self.uuid})
 
 
 
