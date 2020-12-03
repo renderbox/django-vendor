@@ -56,7 +56,6 @@ class Address(models.Model):
     country = models.IntegerField(_("Country/Region"), choices=COUNTRY_CHOICE, default=COUNTRY_DEFAULT)
     postal_code = models.CharField(_("Postal Code"), max_length=16, blank=True)
 
-    objects = models.Manager()
     # def create_address_from_billing_form(self, billing_form, profile):
     #     locality = Locality()
     #     locality.postal_code = billing_form.data.get('postal_code')
