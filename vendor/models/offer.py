@@ -24,6 +24,20 @@ from .utils import set_default_site_id, is_currency_available
 def offer_term_details_default():
     return { "term_units": TermDetailUnits.MONTH, "trial_occurrences": 1}
 
+class ActiveManager(models.Manager):
+    """
+    This Model Manger returns offers that are available
+    """
+    def get_queryset(self):
+        return super().get_queryset().filter(available=True)
+
+class ActiveCurrentSiteManager(CurrentSiteManager):
+    """
+    This Model Manager return offers per site that are available
+    """
+    def get_queryset(self):
+        return super().get_queryset().filter(available=True)
+
 
 class Offer(CreateUpdateModelBase):
     '''
@@ -49,6 +63,8 @@ class Offer(CreateUpdateModelBase):
 
     objects = models.Manager()
     on_site = CurrentSiteManager()
+    active = ActiveManager()
+    on_site_active = ActiveCurrentSiteManager()
 
     class Meta:
         verbose_name = "Offer"

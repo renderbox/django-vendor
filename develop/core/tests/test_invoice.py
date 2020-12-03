@@ -8,6 +8,7 @@ from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerPro
 from vendor.forms import BillingAddressForm, CreditCardForm
 
 User = get_user_model()
+
 class ModelInvoiceTests(TestCase):
 
     fixtures = ['user', 'unit_test']
@@ -84,6 +85,44 @@ class ModelInvoiceTests(TestCase):
 
         self.assertNotEquals(start_quantity, end_quantity)
 
+    def test_get_recurring_total(self):
+        recurring_offer = Offer.objects.get(pk=5)
+        self.existing_invoice.add_offer(recurring_offer)
+        
+        self.assertEquals(self.existing_invoice.get_recurring_total(), recurring_offer.current_price())
+
+    def test_get_recurring_total_only_recurring_order_items(self):
+        recurring_offer = Offer.objects.get(pk=5)
+        self.new_invoice.add_offer(recurring_offer)
+        
+        self.assertEquals(self.new_invoice.get_recurring_total(), recurring_offer.current_price())
+        self.assertEquals(self.new_invoice.get_one_time_transaction_total(), 0)
+
+    def test_get_one_time_transaction_total_with_recurring_offer(self):
+        recurring_offer = Offer.objects.get(pk=5)
+        self.existing_invoice.add_offer(recurring_offer)
+        
+        self.assertEquals(self.existing_invoice.get_one_time_transaction_total(), self.existing_invoice.total - self.existing_invoice.get_recurring_total())
+
+    def test_get_one_time_transaction_total_no_recurring_order_items(self):
+        recurring_offer = Offer.objects.get(pk=5)
+        self.existing_invoice.add_offer(recurring_offer)
+        
+        self.assertEquals(self.existing_invoice.get_one_time_transaction_total(), self.existing_invoice.total - self.existing_invoice.get_recurring_total())
+        self.assertEquals(self.existing_invoice.get_recurring_total(), 0)
+
+    def test_get_recurring_order_items(self):
+        recurring_offer = Offer.objects.get(pk=5)
+        self.existing_invoice.add_offer(recurring_offer)
+
+        self.assertEquals(self.existing_invoice.get_recurring_order_items().count(), 1)
+    
+    def test_get_one_time_transaction_order_items(self):
+        recurring_offer = Offer.objects.get(pk=5)
+        self.existing_invoice.add_offer(recurring_offer)
+
+        self.assertEquals(self.existing_invoice.get_one_time_transaction_order_items().count(), self.existing_invoice.order_items.all().count() - 1)
+    
 
 class CartViewTests(TestCase):
 
@@ -135,7 +174,7 @@ class CartViewTests(TestCase):
     # def test_view_displays_login_instead_checkout(self):
         # raise NotImplementedError()
     
-
+    
 class AccountInformationViewTests(TestCase):
 
     fixtures = ['user', 'unit_test']
@@ -168,6 +207,7 @@ class AccountInformationViewTests(TestCase):
 
     # def test_cart_updates_to_zero_items(self):
         # raise NotImplementedError()
+
 
 class PaymentViewTests(TestCase):
 
@@ -202,6 +242,7 @@ class PaymentViewTests(TestCase):
     # def test_cart_updates_to_zero_items(self):
         # raise NotImplementedError()
 
+
 class ReviewCheckoutViewTests(TestCase):
 
     fixtures = ['user', 'unit_test']
@@ -231,12 +272,16 @@ class ReviewCheckoutViewTests(TestCase):
         session['billing_address_form'] = BillingAddressForm().initial
         session['credit_card_form'] = CreditCardForm().initial
         session.save()
+        self.invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        self.invoice.save()
 
         response = self.client.post(self.view_url)
 
         self.assertRedirects(response, reverse('vendor:checkout-account'))
 
     def test_view_payment_success(self):
+        self.invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        self.invoice.save()
         Payment.objects.all().delete()
         form_data = { 
             'billing_address_form': 
@@ -259,7 +304,7 @@ class ReviewCheckoutViewTests(TestCase):
 
         response = self.client.post(self.view_url)
 
-        self.assertRedirects(response, reverse('vendor:purchase-summary', kwargs={'pk': 1}))
+        self.assertEquals(self.invoice.payments.all().count(), 1)
     
     # def test_view_cart_no_shipping_address(self):
         # raise NotImplementedError()
@@ -283,7 +328,7 @@ class PaymentSummaryViewTests(TestCase):
         self.user = User.objects.get(pk=1)
         self.client.force_login(self.user)
         self.invoice = Invoice.objects.get(pk=1)
-        self.view_url = reverse('vendor:purchase-summary', kwargs={'pk': self.invoice.pk})
+        self.view_url = reverse('vendor:purchase-summary', kwargs={'uuid': self.invoice.uuid})
 
     def test_view_status_code_200(self):
         response = self.client.get(self.view_url)

@@ -51,9 +51,7 @@ def get_or_create_session_cart(session):
 def check_offer_items_or_redirect(invoice, request):
     
     if invoice.order_items.count() < 1:
-        messages.info(request, 
-            _("Please add to your cart")
-        )
+        messages.info(request, _("Please add to your cart"))
         redirect('vendor:cart')
 
 class CartView(TemplateView):
@@ -90,39 +88,41 @@ class AddToCartView(View):
     '''
     Create an order item and add it to the order
     '''
+    def session_cart(self, request, offer):
+        offer_key = str(offer.pk)
+        session_cart = get_or_create_session_cart(request.session)
+
+        if offer_key not in session_cart:
+            session_cart[offer_key] = {}
+            session_cart[offer_key]['quantity'] = 0
+
+        session_cart[offer_key]['quantity'] += 1
+
+        if not offer.allow_multiple:
+            session_cart[offer_key]['quantity'] = 1
+
+        return session_cart
 
     def post(self, request, *args, **kwargs):
         offer = Offer.on_site.get(slug=self.kwargs["slug"])
         if request.user.is_anonymous:
-            offer_key = str(offer.pk)
-            session_cart = get_or_create_session_cart(request.session)
-
-            if offer_key not in session_cart:
-                session_cart[offer_key] = {}
-                session_cart[offer_key]['quantity'] = 0
-
-            session_cart[offer_key]['quantity'] += 1
-
-            if not offer.allow_multiple:
-                session_cart[offer_key]['quantity'] = 1
-
-            request.session['session_cart'] = session_cart
+            request.session['session_cart'] = self.session_cart(request, offer)
         else:
-            profile, created = self.request.user.customer_profile.get_or_create(site=set_default_site_id())
+            profile, created = self.request.user.customer_profile.get_or_create(site=get_current_site(request))
 
             cart = profile.get_cart_or_checkout_cart()
 
             if cart.status == Invoice.InvoiceStatus.CHECKOUT:
-                messages.info(self.request, _("You have a pending cart in checkout"))
-                return redirect(request.META.get('HTTP_REFERER'))
+                cart.status = Invoice.InvoiceStatus.CART
+                cart.save()
 
-            if profile.has_product(offer.products.all()):
+            if profile.has_product(offer.products.all()) and not offer.allow_multiple:
                 messages.info(self.request, _("You Have Already Purchased This Item"))
-                return redirect('vendor:cart')
-
-            
-            messages.info(self.request, _("Added item to cart."))
-            cart.add_offer(offer)
+            elif cart.order_items.filter(offer__products__in=offer.products.all()).count() and not offer.allow_multiple:
+                messages.info(self.request, _("You already have this product in you cart. You can only buy one"))
+            else:
+                messages.info(self.request, _("Added item to cart."))
+                cart.add_offer(offer)
 
         return redirect('vendor:cart')      # Redirect to cart on success
 
@@ -148,8 +148,8 @@ class RemoveFromCartView(View):
             cart = profile.get_cart_or_checkout_cart()
 
             if cart.status == Invoice.InvoiceStatus.CHECKOUT:
-                messages.info(self.request, _("You have a pending cart in checkout"))
-                return redirect(request.META.get('HTTP_REFERER'))
+                cart.status = Invoice.InvoiceStatus.CART
+                cart.save()
 
             cart.remove_offer(offer)
 
@@ -194,23 +194,17 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
         invoice = get_purchase_invoice(request.user)
         
-        if not invoice.order_items.count():
-            messages.info(request, 
-                _("Please add to your cart")
-            )
+        if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
+            messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
 
         invoice.status = Invoice.InvoiceStatus.CHECKOUT
         invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
-        existing_account_address = Address.objects.filter(
-            profile__user=request.user, name=shipping_address.name, first_name=shipping_address.first_name, last_name=shipping_address.last_name)
         # TODO: Need to add a drop down to select existing address
-        if existing_account_address:
-            shipping_address.pk = existing_account_address.first().pk
-
-        shipping_address.profile = invoice.profile
-        shipping_address.name = shipping_address.address_1
-        shipping_address.save()
+        shipping_address, created = invoice.profile.get_or_create_address(shipping_address)
+        if created:
+            shipping_address.profile = invoice.profile
+            shipping_address.save()
         invoice.shipping_address = shipping_address
         invoice.save()
 
@@ -240,10 +234,8 @@ class PaymentView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user)
         
-        if not invoice.order_items.count():
-            messages.info(request, 
-                _("Please add to your cart")
-            )
+        if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
+            messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
 
         credit_card_form = CreditCardForm(request.POST)
@@ -291,10 +283,8 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user)
         
-        if not invoice.order_items.count():
-            messages.info(request, 
-                _("Please add to your cart")
-            )
+        if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
+            messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
         
         processor = payment_processor(invoice)
@@ -305,22 +295,22 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         processor.authorize_payment()
 
         if processor.transaction_submitted:
-            for order_item_subscription in [order_item for order_item in processor.invoice.order_items.all() if order_item.offer.terms >= TermType.SUBSCRIPTION and order_item.offer.terms < TermType.ONE_TIME_USE]:
-                processor.subscription_payment(order_item_subscription)
-            clear_session_purchase_data(request)
-            return redirect('vendor:purchase-summary', pk=invoice.pk)
+            return redirect('vendor:purchase-summary', uuid=invoice.uuid)
         else:
-            messages.info(self.request, _(
-                "The payment gateway did not authorize payment."))
+            # TODO: Make message configurable for the site in the settings 
+            messages.info(self.request, _("The payment gateway did not authorize payment."))
             return redirect('vendor:checkout-account')
 
 
 class PaymentSummaryView(LoginRequiredMixin, DetailView):
     model = Invoice
     template_name = 'vendor/payment_summary.html'
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data()
+        context['payment'] = self.object.payments.filter(success=True).first()
         return context
 
 
@@ -360,11 +350,13 @@ class ProductsListView(LoginRequiredMixin, ListView):
 class ReceiptDetailView(LoginRequiredMixin, DetailView):
     model = Receipt
     template_name = 'vendor/purchase_detail.html'
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['payment'] = Payment.objects.get(transaction=self.object.transaction)
+        context['payment'] = self.object.order_item.invoice.payments.get(success=True, transaction=self.object.transaction)
 
         return context
 
@@ -382,15 +374,11 @@ class SubscriptionsListView(LoginRequiredMixin, ListView):
 class SubscriptionCancelView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
-        receipt = Receipt.objects.get(pk=self.kwargs["pk"])
-        subscription_id = receipt.meta.get('subscription_id', None)
-        if not subscription_id:
-            messages.info(self.request, _("Unable to cancel at the moment"))
-            return redirect('vendor:customer-subscriptions')
+        receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
 
         processor = PaymentProcessor(receipt.order_item.invoice)
 
-        processor.subscription_cancel(receipt, subscription_id)
+        processor.subscription_cancel(receipt)
 
         messages.info(self.request, _("Subscription Cancelled"))
 
@@ -402,13 +390,8 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy('vendor:customer-subscriptions')
     
     def post(self, request, *args, **kwargs):
-        receipt = Receipt.objects.get(pk=self.kwargs["pk"])
+        receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
         payment_form = CreditCardForm(request.POST)
-        subscription_id = receipt.meta.get('subscription_id', None)
-
-        if not subscription_id:
-            messages.info(request, _("Unable to cancel at the moment"))
-            return redirect(request.META.get('HTTP_REFERER', self.success_url))
         
         if not payment_form.is_valid():
             messages.info(request, _("Invalid Card"))
@@ -416,7 +399,7 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
 
         processor = PaymentProcessor(receipt.order_item.invoice)
         processor.get_payment_info_form_data(request.POST, CreditCardForm)
-        processor.subscription_update_payment(receipt, subscription_id)
+        processor.subscription_update_payment(receipt)
 
         if not processor.transaction_submitted:
             messages.info(request, _(f"Payment gateway error: {processor.transaction_message.get('message', '')}"))

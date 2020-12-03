@@ -210,7 +210,7 @@
         "name": "Mouse T-Shirt",
         "start_date": "2020-06-30T00:53:23Z",
         "end_date": null,
-        "terms": 0,
+        "terms": 200,
         "term_details": null,
         "term_start_date": "2020-06-30T00:53:31Z",
         "available": false,
@@ -230,7 +230,7 @@
         "name": "Wheel of Wensleydale",
         "start_date": "2020-06-30T02:34:32Z",
         "end_date": null,
-        "terms": 0,
+        "terms": 200,
         "term_details": "{}",
         "term_start_date": null,
         "available": false,
@@ -250,7 +250,7 @@
         "name": "Hamster Wheel",
         "start_date": "2020-06-30T02:38:16Z",
         "end_date": null,
-        "terms": 0,
+        "terms": 200,
         "term_details": "{}",
         "term_start_date": null,
         "available": false,
@@ -270,7 +270,7 @@
         "name": "Hulk Mug Subscription",
         "start_date": "2020-06-30T02:38:16Z",
         "end_date": null,
-        "terms": 10,
+        "terms": 100,
         "term_details": {
             "period_length": 1,
             "payment_occurrences": 3
@@ -293,7 +293,7 @@
         "name": "Free Hulk Mug Subscription",
         "start_date": "2020-06-30T02:38:16Z",
         "end_date": null,
-        "terms": 10,
+        "terms": 100,
         "term_details": {
             "period_length": 1,
             "payment_occurrences": 3
@@ -309,6 +309,7 @@
     "pk": 1,
     "fields": {
         "invoice": 1,
+        "uuid": "ccda0d8a-0ddf-440b-8804-eddc2801493b",
         "created": "2020-06-30T01:20:01.616Z",
         "transaction": "1-1-1",
         "provider": "AuthorizeNetProcessor",

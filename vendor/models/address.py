@@ -86,6 +86,6 @@ class Address(models.Model):
     def __str__(self):
         return "\n".join([ f"{key}: {value}" for key, value in self.__dict__.items() ])
         
-    def get_address(self):
+    def get_address_display(self):
         return f"{self.profile.user}\n{self.address_1}, {self.address_2}\n{self.locality}, {self.state}, {self.postal_code}".replace('None', '')
          
