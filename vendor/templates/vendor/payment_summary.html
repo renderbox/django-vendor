@@ -10,7 +10,7 @@
         <span>{% trans 'Thank you for the order. You can view this invoice in "My Account" under the Billing section.' %}</span>
     </div>
     <div class='col-md-12'>
-        <span>{% trans 'The order number is' %}: {{ object.uuid }}</span>
+        <span>{% trans 'The order number is' %}: {{ object.pk }}</span>
     </div>
     <div class='col-md-12 mb-4'>
         <span>{% trans 'Ordered on' %} {{ object.created|date }}</span>
