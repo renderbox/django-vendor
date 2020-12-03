@@ -13,7 +13,7 @@ from vendor.models.choice import PurchaseStatus, TermType, PaymentTypes
 class VendorIndexView(ListView):
     template_name = "core/index.html"
     model = Offer
-    queryset = Offer.on_site_available.all()
+    queryset = Offer.on_site_active.all()
 
 
 class ProductAccessView(ProductRequiredMixin, TemplateView):
