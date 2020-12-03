@@ -32,7 +32,7 @@
                         {% endif %}
                     </div>
                     <a class="edit-name-button btn text-primary p-0"
-                        href="{% url 'vendor:subscription-cancel' subscription.pk %}"><i class="fas fa-pen"></i></a>
+                        href="{% url 'vendor:subscription-cancel' subscription.uuid %}"><i class="fas fa-pen"></i></a>
                     <a class="edit-name-button btn text-primary p-0" href="{% url 'core-account-edit' 'billing' %}"><i
                             class="fas fa-pen"></i></a>
                 </div>
@@ -43,7 +43,7 @@
                         {% comment %}
                         <div>{% trans 'Saved Addresses' %}</div>
                         {% endcomment %}
-                        <div>{{ payment.billing_address.get_address }}</div>
+                        <div>{{ payment.billing_address.get_address_display }}</div>
                     </div>
                     {% comment %}
                     <a class="edit-name-button btn text-primary p-0"
@@ -67,9 +67,15 @@
                 </div>
                 <div class="d-flex">
                     <div class="text-left">
-                        {% blocktrans with account_type=payment.result.account_type|default:"Card" account_number=payment.result.account_number %}
-                        {{ account_type }} ending in {{ account_number }}
+                        {% if payment.result.account_type %}
+                        {% blocktrans with account_type=payment.result.account_type account_number=payment.result.account_number %}
+                            {{ account_type }} ending in {{ account_number }} 
                         {% endblocktrans %}
+                        {% else %}
+                            {% blocktrans with account_number=payment.result.account_number %}
+                                Card ending in {{ account_number }} 
+                            {% endblocktrans %}
+                        {% endif %}
                     </div>
                     <a class="edit-name-button btn text-primary p-0 ml-auto" data-toggle="modal"
                         data-target="#update_payment_subscription">
@@ -123,7 +129,7 @@
                 <div class='d-flex flex-row w-100 align-items-center my-3'>
                     {% comment %}
                     <form id="changeSubscription" class="align-itmes-center" method="post"
-                        action="{% url 'vendor:customer-subscription-change-plan' subscription.pk %}">
+                        action="{% url 'vendor:customer-subscription-change-plan' subscription.uuid %}">
                         {% csrf_token %}
                         <button class="btn btn-sm btn-primary" type="submit">{% trans 'Change Subscription' %}</button>
                     </form>
@@ -131,7 +137,7 @@
                     <button id="changeSubscription" class="btn btn-sm btn-primary" type="button" data-toggle="modal"
                         data-target="#update_subscription">{% trans 'Change Subscription' %}</button>
                     <form id="cancelSubscription" class="align-itmes-center" method="post"
-                        action="{% url 'vendor:customer-subscription-cancel' subscription.pk %}">
+                        action="{% url 'vendor:customer-subscription-cancel' subscription.uuid %}">
                         {% csrf_token %}
                         <button class="btn btn-sm btn-primary" type="submit">{% trans 'Cancel Subscription' %}</button>
                     </form>
@@ -147,7 +153,7 @@
                 <h3>{% trans 'Update Payment Method' %}</h3>
                 <div class='d-flex flex-column flex-grow w-100'>
                     <form method="POST"
-                        action="{% url 'vendor:customer-subscription-update-payment' subscription.pk %}">
+                        action="{% url 'vendor:customer-subscription-update-payment' subscription.uuid %}">
                         {% csrf_token %}
                         {{ payment_form }}
                         <button class="btn btn-primary mt-3">{% trans 'Update' %}</button>
@@ -186,7 +192,7 @@
                                 <td>{{ payment.transaction|default_if_none:payment.invoice.pk }}</td>
                                 <td>$ {{ payment.amount|floatformat:2|default_if_none:"$0.00" }}</td>
                                 <td><a
-                                        href="{% url 'vendor:purchase-summary' payment.invoice.pk %}">{% trans 'Invoice' %}</a>
+                                        href="{% url 'vendor:purchase-summary' payment.invoice.uuid %}">{% trans 'Invoice' %}</a>
                                 </td>
                             </tr>
                             {% empty %}

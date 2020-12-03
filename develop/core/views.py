@@ -13,7 +13,7 @@ from vendor.models.choice import PurchaseStatus, TermType, PaymentTypes
 class VendorIndexView(ListView):
     template_name = "core/index.html"
     model = Offer
-    queryset = Offer.objects.filter(available=True)
+    queryset = Offer.on_site_active.all()
 
 
 class ProductAccessView(ProductRequiredMixin, TemplateView):
@@ -38,18 +38,14 @@ class AccountView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
 
         customer_profile, created = request.user.customer_profile.get_or_create(site=Site.objects.get_current())
-        subscription = customer_profile.receipts.filter(status__gte=PurchaseStatus.COMPLETE, 
-                                                        order_item__offer__terms__gt=TermType.PERPETUAL, 
-                                                        order_item__offer__terms__lt=TermType.ONE_TIME_USE,
-                                                        start_date__lte=timezone.now(),
-                                                        end_date__gte=timezone.now()).first()
+        subscriptions = customer_profile.get_recurring_receipts()
 
         context['payments'] = customer_profile.payments.filter(success=True)
         context["offers"] = Offer.on_site.filter(available=True).order_by('terms')
 
-        if subscription:
-            context['subscription'] = subscription
-            context['payment'] = subscription.order_item.invoice.payments.filter(success=True).first()
+        if subscriptions:
+            context['subscription'] = subscriptions.first()
+            context['payment'] = subscriptions.first().order_item.invoice.payments.filter(success=True).first()
             context['payment_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
             
         

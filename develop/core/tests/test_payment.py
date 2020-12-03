@@ -3,8 +3,7 @@ from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from core.models import Product
-from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerProfile
+from vendor.models import Invoice
 
 User = get_user_model()
 
@@ -38,14 +37,14 @@ class PaymentViewTests(TestCase):
         self.client.force_login(self.user)
 
     def test_view_payment_status_code(self):
-        response = self.client.get(reverse("vendor:purchase-summary", kwargs={'pk': 1}))
+        response = self.client.get(reverse("vendor:purchase-summary", kwargs={'uuid': Invoice.objects.get(pk=1).uuid}))
 
         self.assertEquals(response.status_code, 200)
         self.assertContains(response, 'Purchase Confirmation')
 
     def test_view_payment_status_code_fail_no_login(self):
         client = Client()
-        response = client.get(reverse("vendor:purchase-summary", kwargs={'pk': 1}))
+        response = client.get(reverse("vendor:purchase-summary", kwargs={'uuid': Invoice.objects.get(pk=1).uuid}))
         
         self.assertEquals(response.status_code, 302)
         self.assertIn('login', response.url)

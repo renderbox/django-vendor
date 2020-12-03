@@ -89,8 +89,24 @@ class CustomerProfile(CreateUpdateModelBase):
         it also checks against elegibility start/end/empty dates on consumable products and subscriptions
         """
         return bool(self.filter_products(products).count())
+    
+    def get_recurring_receipts(self):
+        """
+        Gets the recurring receipts the customer profile might have
+        """
+        return self.receipts.filter(order_item__offer__terms__lt=TermType.PERPETUAL)
+
+    def get_one_time_transaction_receipts(self):
+        """
+        Gets one time transation receipt the customer profile might have
+        """
+        return self.receipts.filter(order_item__offer__terms__gte=TermType.PERPETUAL)
 
     def get_cart_items_count(self):
         cart = self.get_cart_or_checkout_cart()
 
         return cart.order_items.all().count()
+
+    def get_or_create_address(self, address):
+        address, created = self.addresses.get_or_create(name=address.address_1, first_name=address.first_name, last_name=address.last_name, address_1=address.address_1, address_2=address.address_2, locality=address.locality, state=address.state, country=address.country, postal_code=address.postal_code, profile=self)
+        return address, created

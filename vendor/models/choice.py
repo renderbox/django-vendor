@@ -10,13 +10,13 @@ from iso4217 import Currency
 CURRENCY_CHOICES = [(c.name, c.value) for c in Currency ]
 
 class TermType(models.IntegerChoices):
-    PERPETUAL = 0, _("Perpetual")
-    SUBSCRIPTION = 10, _("Subscription")
-    MONTHLY_SUBSCRIPTION = 11, _("Monthly Subscription")
-    QUARTERLY_SUBSCRIPTION = 12, _("Quarterly Subscription")
-    SEMIANNUAL_SUBSCRIPTION = 13, _("Semi-Annual Subscription")
-    ANNUAL_SUBSCRIPTION = 14, _("Annual Subscription")
-    ONE_TIME_USE = 20, _("One-Time Use")
+    SUBSCRIPTION = 100, _("Subscription")
+    MONTHLY_SUBSCRIPTION = 101, _("Monthly Subscription")
+    QUARTERLY_SUBSCRIPTION = 103, _("Quarterly Subscription")
+    SEMIANNUAL_SUBSCRIPTION = 106, _("Semi-Annual Subscription")
+    ANNUAL_SUBSCRIPTION = 112, _("Annual Subscription")
+    PERPETUAL = 200, _("Perpetual")
+    ONE_TIME_USE = 220, _("One-Time Use")
 
 class PurchaseStatus(models.IntegerChoices):
     QUEUED = 1, _("Queued")

@@ -51,9 +51,7 @@ def get_or_create_session_cart(session):
 def check_offer_items_or_redirect(invoice, request):
     
     if invoice.order_items.count() < 1:
-        messages.info(request, 
-            _("Please add to your cart")
-        )
+        messages.info(request, _("Please add to your cart"))
         redirect('vendor:cart')
 
 class CartView(TemplateView):
@@ -90,25 +88,27 @@ class AddToCartView(View):
     '''
     Create an order item and add it to the order
     '''
+    def session_cart(self, request, offer):
+        offer_key = str(offer.pk)
+        session_cart = get_or_create_session_cart(request.session)
+
+        if offer_key not in session_cart:
+            session_cart[offer_key] = {}
+            session_cart[offer_key]['quantity'] = 0
+
+        session_cart[offer_key]['quantity'] += 1
+
+        if not offer.allow_multiple:
+            session_cart[offer_key]['quantity'] = 1
+
+        return session_cart
 
     def post(self, request, *args, **kwargs):
         offer = Offer.on_site.get(slug=self.kwargs["slug"])
         if request.user.is_anonymous:
-            offer_key = str(offer.pk)
-            session_cart = get_or_create_session_cart(request.session)
-
-            if offer_key not in session_cart:
-                session_cart[offer_key] = {}
-                session_cart[offer_key]['quantity'] = 0
-
-            session_cart[offer_key]['quantity'] += 1
-
-            if not offer.allow_multiple:
-                session_cart[offer_key]['quantity'] = 1
-
-            request.session['session_cart'] = session_cart
+            request.session['session_cart'] = self.session_cart(request, offer)
         else:
-            profile, created = self.request.user.customer_profile.get_or_create(site=set_default_site_id())
+            profile, created = self.request.user.customer_profile.get_or_create(site=get_current_site(request))
 
             cart = profile.get_cart_or_checkout_cart()
 
@@ -118,11 +118,11 @@ class AddToCartView(View):
 
             if profile.has_product(offer.products.all()) and not offer.allow_multiple:
                 messages.info(self.request, _("You Have Already Purchased This Item"))
-                return redirect('vendor:cart')
-
-            
-            messages.info(self.request, _("Added item to cart."))
-            cart.add_offer(offer)
+            elif cart.order_items.filter(offer__products__in=offer.products.all()).count() and not offer.allow_multiple:
+                messages.info(self.request, _("You already have this product in you cart. You can only buy one"))
+            else:
+                messages.info(self.request, _("Added item to cart."))
+                cart.add_offer(offer)
 
         return redirect('vendor:cart')      # Redirect to cart on success
 
@@ -200,15 +200,11 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
         invoice.status = Invoice.InvoiceStatus.CHECKOUT
         invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
-        existing_account_address = Address.objects.filter(
-            profile__user=request.user, name=shipping_address.name, first_name=shipping_address.first_name, last_name=shipping_address.last_name)
         # TODO: Need to add a drop down to select existing address
-        if existing_account_address:
-            shipping_address.pk = existing_account_address.first().pk
-
-        shipping_address.profile = invoice.profile
-        shipping_address.name = shipping_address.address_1
-        shipping_address.save()
+        shipping_address, created = invoice.profile.get_or_create_address(shipping_address)
+        if created:
+            shipping_address.profile = invoice.profile
+            shipping_address.save()
         invoice.shipping_address = shipping_address
         invoice.save()
 
@@ -299,8 +295,9 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         processor.authorize_payment()
 
         if processor.transaction_submitted:
-            return redirect('vendor:purchase-summary', pk=invoice.pk)
+            return redirect('vendor:purchase-summary', uuid=invoice.uuid)
         else:
+            # TODO: Make message configurable for the site in the settings 
             messages.info(self.request, _("The payment gateway did not authorize payment."))
             return redirect('vendor:checkout-account')
 
@@ -308,6 +305,8 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 class PaymentSummaryView(LoginRequiredMixin, DetailView):
     model = Invoice
     template_name = 'vendor/payment_summary.html'
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data()
@@ -351,11 +350,13 @@ class ProductsListView(LoginRequiredMixin, ListView):
 class ReceiptDetailView(LoginRequiredMixin, DetailView):
     model = Receipt
     template_name = 'vendor/purchase_detail.html'
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['payment'] = self.object.order_item.invoice.payments.filter(success=True).first()
+        context['payment'] = self.object.order_item.invoice.payments.get(success=True, transaction=self.object.transaction)
 
         return context
 
@@ -373,7 +374,7 @@ class SubscriptionsListView(LoginRequiredMixin, ListView):
 class SubscriptionCancelView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
-        receipt = Receipt.objects.get(pk=self.kwargs["pk"])
+        receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
 
         processor = PaymentProcessor(receipt.order_item.invoice)
 
@@ -389,7 +390,7 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy('vendor:customer-subscriptions')
     
     def post(self, request, *args, **kwargs):
-        receipt = Receipt.objects.get(pk=self.kwargs["pk"])
+        receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
         payment_form = CreditCardForm(request.POST)
         
         if not payment_form.is_valid():

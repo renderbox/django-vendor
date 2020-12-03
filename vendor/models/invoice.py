@@ -3,7 +3,6 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
-from django.db.models import Q
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
@@ -122,7 +121,7 @@ class Invoice(CreateUpdateModelBase):
     def get_payment_billing_address(self):
         if not self.payments.filter(success=True).first().billing_address:
             return ""
-        return self.payments.filter(success=True).first().billing_address.get_address()
+        return self.payments.filter(success=True).first().billing_address.get_address_display()
 
     # def get_absolute_url(self):       # TODO: [GK-3031] add and user view for invoice detail
     #     """
@@ -140,25 +139,25 @@ class Invoice(CreateUpdateModelBase):
         """
         Gets the recurring order items in the invoice
         """
-        return self.order_items.filter(offer__terms__gte=TermType.SUBSCRIPTION, offer__terms__lt=TermType.ONE_TIME_USE)
+        return self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)
 
     def get_recurring_total(self):
         """
         Gets the total price for all recurring order items in the invoice
         """
-        return sum([ order_item.total for order_item in self.order_items.filter(offer__terms__gte=TermType.SUBSCRIPTION, offer__terms__lt=TermType.ONE_TIME_USE)])
+        return sum([ order_item.total for order_item in self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)])
 
     def get_one_time_transaction_order_items(self):
         """
         Gets one time transation order items in the invoice
         """
-        return self.order_items.filter(Q(offer__terms__lt=TermType.SUBSCRIPTION) | Q(offer__terms__gt=TermType.ANNUAL_SUBSCRIPTION))
+        return self.order_items.filter(offer__terms__gte=TermType.PERPETUAL)
 
     def get_one_time_transaction_total(self):
         """
         Gets the total price for order items that will be purchased on a single transation. 
         """
-        return sum([ order_item.total for order_item in self.order_items.filter(Q(offer__terms__lt=TermType.SUBSCRIPTION) | Q(offer__terms__gt=TermType.ANNUAL_SUBSCRIPTION))])
+        return sum([ order_item.total for order_item in self.order_items.filter(offer__terms__gte=TermType.PERPETUAL)])
 
     
 class OrderItem(CreateUpdateModelBase):

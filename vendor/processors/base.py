@@ -9,7 +9,7 @@ from calendar import mdays
 from django.db.models import Sum
 from django.conf import settings
 from django.utils import timezone
-from vendor.models import Payment, Invoice, Receipt
+from vendor.models import Payment, Invoice, Receipt, Address
 from vendor.models.choice import PurchaseStatus, TermType
 ##########
 # SIGNALS
@@ -32,6 +32,7 @@ class PaymentProcessorBase(object):
     payment_info = {}
     billing_address = {}
     transaction_token = None
+    transaction_id = ""
     transaction_submitted = False
     transaction_message = {}
     transaction_response = {}
@@ -73,8 +74,10 @@ class PaymentProcessorBase(object):
         self.payment.payee_company = self.billing_address.cleaned_data.get('company')
 
         billing_address = self.billing_address.save(commit=False)
-        billing_address.profile = self.invoice.profile
-        billing_address.save()
+        billing_address, created = self.invoice.profile.get_or_create_address(billing_address)
+        if created:
+            billing_address.profile = self.invoice.profile
+            billing_address.save()
 
         self.payment.billing_address = billing_address
         self.payment.save()
@@ -90,7 +93,7 @@ class PaymentProcessorBase(object):
 
     def update_invoice_status(self, new_status):
         """
-        Updates the Inovice status if the transaction was submitted.
+        Updates the Invoice status if the transaction was submitted.
         Otherwise it returns the invoice to the Cart. The error is saved in 
         the payment for the transaction.
         """
@@ -102,7 +105,7 @@ class PaymentProcessorBase(object):
 
     def is_payment_and_invoice_complete(self):
         """
-        If payment was successful and inovice status is complete returns True. Otherwise
+        If payment was successful and invoice status is complete returns True. Otherwise
         false and no receipts should be created.
         """
         if self.payment.success and self.invoice.status == Invoice.InvoiceStatus.COMPLETE:
@@ -128,19 +131,6 @@ class PaymentProcessorBase(object):
         """
         return today + timedelta(days=add_days)
 
-    def get_month_offset(self, term_type):
-        """
-        Return the number of months depending on the term type.
-        """
-        if term_type == TermType.MONTHLY_SUBSCRIPTION:
-            return 1
-        elif term_type == TermType.QUARTERLY_SUBSCRIPTION:
-            return 3
-        elif term_type == TermType.SEMIANNUAL_SUBSCRIPTION:
-            return 6
-        elif term_type == TermType.ANNUAL_SUBSCRIPTION:
-            return 12
-
 
     def create_receipt_by_term_type(self, product, order_item, term_type):
         today = timezone.now()
@@ -154,10 +144,10 @@ class PaymentProcessorBase(object):
             receipt.auto_renew = False
         elif term_type == TermType.SUBSCRIPTION:
             total_months = int(order_item.offer.term_details['period_length']) * int(order_item.offer.term_details['payment_occurrences'])
-            receipt.end_date = today + timedelta(days=(total_months*31))
+            receipt.end_date = self.get_future_date_months(today, total_months)
             receipt.auto_renew = True
         else:
-            total_months = self.get_month_offset(term_type)
+            total_months = term_type - 100
             receipt.end_date = self.get_future_date_months(today, total_months)
             receipt.auto_renew = True
 
@@ -249,7 +239,6 @@ class PaymentProcessorBase(object):
 
     #-------------------
     # Process a Payment
-
     def authorize_payment(self):
         """
         This runs the chain of events in a transaction.
@@ -272,7 +261,12 @@ class PaymentProcessorBase(object):
         if not self.invoice.total:
             self.free_payment()
         elif self.invoice.get_one_time_transaction_order_items():
+            self.create_payment_model()
             self.process_payment()
+            self.save_payment_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
+            self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+            if self.is_payment_and_invoice_complete():
+                self.create_receipts(self.invoice.get_one_time_transaction_order_items())
 
         self.process_subscriptions()        
 
@@ -293,15 +287,6 @@ class PaymentProcessorBase(object):
         This is where the core of the payment processing happens.
         """
         # Gateway Transaction goes here...
-        self.create_payment_model()
-
-        self.transaction_submitted = True
-
-        self.save_payment_transaction_result(True, 1, {'gateway_response': 'any outpout'})
-
-        self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
-
-        self.create_receipts(self.invoice.get_one_time_transaction_order_items())
             
     def free_payment(self):
         """
@@ -335,8 +320,17 @@ class PaymentProcessorBase(object):
     #-------------------
     # Process a Subscription
     def process_subscriptions(self):
+        """
+        Process/subscribies recurring payments throught the payement gateway and creates a payment model for each subscription.
+        If a payment is completed it will create a receipt for the subscription
+        """
         for subscription in self.invoice.get_recurring_order_items():
+            self.create_payment_model()
             self.subscription_payment(subscription)
+            self.save_payment_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
+            self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+            if self.is_payment_and_invoice_complete():
+                self.create_order_item_receipt(subscription)
         
 
     def subscription_payment(self, subscription):
@@ -344,7 +338,6 @@ class PaymentProcessorBase(object):
         Call handels the authrization and creation for a subscription.
         """
         # Gateway Transaction goes here...
-        self.transaction_submitted = True
 
     def subscription_info(self):
         pass
