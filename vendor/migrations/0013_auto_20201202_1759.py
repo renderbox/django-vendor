@@ -14,12 +14,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='payment',
             name='uuid',
-            field=models.UUIDField(editable=False, unique=False, verbose_name='UUID', null=True),
+            field=models.UUIDField(editable=True, unique=False, verbose_name='UUID', null=True),
         ),
         migrations.AddField(
             model_name='receipt',
             name='uuid',
-            field=models.UUIDField(editable=False, unique=False, verbose_name='UUID', null=True),
+            field=models.UUIDField(editable=True, unique=False, verbose_name='UUID', null=True),
         ),
         migrations.AlterField(
             model_name='offer',
