@@ -4,44 +4,10 @@ from itertools import chain
 from django.http import StreamingHttpResponse
 from django.utils.timezone import localtime
 from django.contrib.sites.models import Site
-# from django.shortcuts import render, redirect
-# from django.contrib import messages
-# from django.contrib.auth.mixins import LoginRequiredMixin
-# from django.urls import reverse
-# from django.conf import settings
-# from django.utils.translation import ugettext as _
-# from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.mixins import PermissionRequiredMixin
-
-# from django.views.generic.edit import DeleteView
 from django.views.generic.list import BaseListView
-# from django.views.generic.detail import DetailView
-# from django.views.generic import TemplateView
 
 from vendor.models import Receipt, Invoice
-
-# from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile
-# from vendor.models.choice import TermType
-# from vendor.models.utils import set_default_site_id
-# from vendor.processors import PaymentProcessor
-# from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm
-
-# # from vendor.models.address import Address as GoogleAddress
-
-# # The Payment Processor configured in settings.py
-# payment_processor = PaymentProcessor
-
-
-# class CartView(LoginRequiredMixin, DetailView):
-#     '''
-#     View items in the cart
-#     '''
-#     model = Invoice
-
-#     def get_object(self):
-#         profile, created = self.request.user.customer_profile.get_or_create(
-#             site=set_default_site_id())
-#         return profile.get_cart()
 
 
 class Echo:
@@ -54,7 +20,6 @@ class Echo:
         return value
 
 
-# class RecieptListCSV(PermissionRequiredMixin, BaseListView):
 class CSVStreamRowView(BaseListView):
     """A base view for displaying a list of objects."""
 
