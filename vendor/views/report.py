@@ -23,7 +23,7 @@ class Echo:
 class CSVStreamRowView(BaseListView):
     """A base view for displaying a list of objects."""
 
-    filename = "reciept_list.csv"
+    filename = "receipt_list.csv"
     # headers = 
 
     def get_queryset(self):
@@ -46,17 +46,17 @@ class CSVStreamRowView(BaseListView):
         return response
 
 
-class RecieptListCSV(CSVStreamRowView):
-    filename = "reciepts.csv"
+class ReceiptListCSV(CSVStreamRowView):
+    filename = "receipts.csv"
     model = Receipt
 
     def get_queryset(self):
         # TODO: Update to handle ranges from a POST
-        return self.model.objects.filter(profile__site=Site.objects.get_current())      # Return reciepts only for profiles on this site
+        return self.model.objects.filter(profile__site=Site.objects.get_current())      # Return receipts only for profiles on this site
 
     def get_row_data(self):
         object_list = self.get_queryset()
-        header = [["RECIEPT_ID", "CREATED_TIME(ISO)", "USERNAME", "INVOICE_ID", "ORDER_ITEM", "OFFER_ID", "QUANTITY", "TRANSACTION_ID", "STATUS"]]  # Has to be a list inside an iterable (another list) for the chain to work.
+        header = [["receipt_ID", "CREATED_TIME(ISO)", "USERNAME", "INVOICE_ID", "ORDER_ITEM", "OFFER_ID", "QUANTITY", "TRANSACTION_ID", "STATUS"]]  # Has to be a list inside an iterable (another list) for the chain to work.
         rows = [[str(obj.pk), obj.created.isoformat(), obj.profile.user.username, obj.order_item.invoice.pk, obj.order_item.offer, obj.order_item.pk, obj.order_item.quantity, obj.transaction, obj.get_status_display()] for obj in object_list]
         return chain(header, rows)
 
