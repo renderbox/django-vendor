@@ -1,10 +1,10 @@
 import csv
 from itertools import chain
-
 from django.http import StreamingHttpResponse
 from django.utils.timezone import localtime
 from django.contrib.sites.models import Site
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.utils.translation import ugettext_lazy as _
 from django.views.generic.list import BaseListView
 from django.views.generic.edit import FormMixin
 
@@ -51,7 +51,7 @@ class ReceiptListCSV(FormMixin, CSVStreamRowView):
     filename = "receipts.csv"
     model = Receipt
     form_class = DateRangeForm
-    header = [['Order ID', 'Title', 'Order Date', 'Order Status', 'Order Total', 'Product ID', 'Product Name', 'Quantity', 'Item Cost', 'Item Total', 'Discount Amount ', 'Coupon Code', 'Coupons Used', 'Total Discount Amount', 'Refund ID', 'Refund Total', 'Refund Amounts', 'Refund Reason', 'Refund Date', 'Refund Author Email', 'Date Type', 'Dates']]
+    header = [[_('Order ID'), _('Title'), _('Order Date'), _('Order Status'), _('Order Total'), _('Product ID'), _('Product Name'), _('Quantity'), _('Item Cost'), _('Item Total'), _('Discount Amount '), _('Coupon Code'), _('Coupons Used'), _('Total Discount Amount'), _('Refund ID'), _('Refund Total'), _('Refund Amounts'), _('Refund Reason'), _('Refund Date'), _('Refund Author Email'), _('Date Type'), _('Dates']]
 
     def get_queryset(self):
         form = self.form_class(data=self.request.POST)
