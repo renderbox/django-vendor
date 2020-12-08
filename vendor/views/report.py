@@ -46,22 +46,12 @@ class CSVStreamRowView(BaseListView):
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(self.filename)
         return response
 
-    def post(self, request, *args, **kwargs):
-        rows = self.get_row_data()
-        pseudo_buffer = Echo()
-        writer = csv.writer(pseudo_buffer)
-        #TODO: Figure out what to prepend the header without breaking the streaming generator
-        response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-
-        # Set the filename
-        response['Content-Disposition'] = 'attachment; filename="{}"'.format(self.filename)
-        return response
-
 
 class ReceiptListCSV(FormMixin, CSVStreamRowView):
     filename = "receipts.csv"
     model = Receipt
     form_class = DateRangeForm
+    header = [['Order ID', 'Title', 'Order Date', 'Order Status', 'Order Total', 'Product ID', 'Product Name', 'Quantity', 'Item Cost', 'Item Total', 'Discount Amount ', 'Coupon Code', 'Coupons Used', 'Total Discount Amount', 'Refund ID', 'Refund Total', 'Refund Amounts', 'Refund Reason', 'Refund Date', 'Refund Author Email', 'Date Type', 'Dates']]
 
     def get_queryset(self):
         form = self.form_class(data=self.request.POST)
@@ -76,30 +66,6 @@ class ReceiptListCSV(FormMixin, CSVStreamRowView):
 
     def get_row_data(self):
         object_list = self.get_queryset()
-        header = [[
-            'Order ID',
-            'Title',
-            'Order Date',
-            'Order Status',
-            'Order Total',
-            'Product ID',
-            'Product Name',
-            'Quantity',
-            'Item Cost',
-            'Item Total',
-            'Discount Amount ',
-            'Coupon Code',
-            'Coupons Used',
-            'Total Discount Amount',
-            'Refund ID',
-            'Refund Total',
-            'Refund Amounts',
-            'Refund Reason',
-            'Refund Date',
-            'Refund Author Email',
-            'Date Type',
-            'Dates'
-        ]]
         rows = [[
             str(obj.order_item.invoice.pk),              # Order ID
             obj.order_item.invoice,                      # Title
@@ -124,7 +90,7 @@ class ReceiptListCSV(FormMixin, CSVStreamRowView):
             'multiple' if obj.end_date is None else f'range',                                          # TODO: Date Type
             " ".join([ '' if obj.start_date is None else f'{obj.start_date:%Y-%m-%d}', '' if obj.end_date is None else f'{obj.end_date:%Y-%m-%d}']),
             ] for obj in object_list]
-        return chain(header, rows)
+        return chain(self.header, rows)
 
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST)
