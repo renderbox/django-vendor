@@ -51,7 +51,7 @@ class ReceiptListCSV(FormMixin, CSVStreamRowView):
     filename = "receipts.csv"
     model = Receipt
     form_class = DateRangeForm
-    header = [[_('Order ID'), _('Title'), _('Order Date'), _('Order Status'), _('Order Total'), _('Product ID'), _('Product Name'), _('Quantity'), _('Item Cost'), _('Item Total'), _('Discount Amount '), _('Coupon Code'), _('Coupons Used'), _('Total Discount Amount'), _('Refund ID'), _('Refund Total'), _('Refund Amounts'), _('Refund Reason'), _('Refund Date'), _('Refund Author Email'), _('Date Type'), _('Dates']]
+    header = [[_('Order ID'), _('Title'), _('Order Date'), _('Order Status'), _('Order Total'), _('Product ID'), _('Product Name'), _('Quantity'), _('Item Cost'), _('Item Total'), _('Discount Amount '), _('Coupon Code'), _('Coupons Used'), _('Total Discount Amount'), _('Refund ID'), _('Refund Total'), _('Refund Amounts'), _('Refund Reason'), _('Refund Date'), _('Refund Author Email'), _('Date Type'), _('Dates')]]
 
     def get_queryset(self):
         form = self.form_class(data=self.request.POST)
