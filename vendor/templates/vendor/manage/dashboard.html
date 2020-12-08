@@ -87,7 +87,7 @@
         <a href="{% url 'vendor_admin:manager-order-list' %}" class="btn btn-primary">{% trans 'All Purchases' %}</a>
       </div>
       <div class='col-6 text-right'>
-        <form id="changeSubscription" class="align-itmes-center" method="post" action="{% url 'vendor_admin:manager-receipt-download' %}">
+        <form class="align-itmes-center" method="post" action="{% url 'vendor_admin:manager-receipt-download' %}">
           {% csrf_token %}
           <button class="btn btn-sm btn-primary" type="submit">{% trans 'Receipt Report CSV' %}</button>
         </form>

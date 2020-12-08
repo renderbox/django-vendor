@@ -295,5 +295,8 @@ class DateRangeForm(forms.Form):
         start_date = cleaned_data.get('start_date')
         end_date = cleaned_data.get('end_date')
 
-        if end_date < start_date:
-            self.add_error('end_date', _('End Date cannot be before Start Date')
+        if end_date and end_date < start_date:
+            self.add_error('end_date', _('End Date cannot be before Start Date'))
+            del(cleaned_data['end_date'])
+            
+        return cleaned_data
