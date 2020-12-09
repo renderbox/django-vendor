@@ -24,7 +24,6 @@ class PriceForm(forms.ModelForm):
 
 
 class ProductForm(forms.ModelForm):
-
     class Meta:
         model = Product
         fields = ['sku', 'name', 'site', 'available', 'description', 'meta']
@@ -285,3 +284,19 @@ class CreditCardForm(PaymentFrom):
             self._errors["expire_month"] = self.error_class([_("Check expiration")])
             return False
         return True
+
+
+class DateRangeForm(forms.Form):
+    start_date = forms.DateField(required=False, label=_("Start Date"), widget=SelectDateWidget())
+    end_date = forms.DateField(required=False, label=_("End Date"), widget=SelectDateWidget())
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+
+        if end_date and end_date < start_date:
+            self.add_error('end_date', _('End Date cannot be before Start Date'))
+            del(cleaned_data['end_date'])
+            
+        return cleaned_data
