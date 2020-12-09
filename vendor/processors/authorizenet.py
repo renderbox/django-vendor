@@ -448,10 +448,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         
         self.payment.save()
 
-    def subscription_cancel(self, reciept):
+    def subscription_cancel(self, receipt):
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = str(reciept.transaction)
+        self.transaction.subscriptionId = str(receipt.transaction)
         self.transaction.includeTransactions = False
 
         self.controller = ARBCancelSubscriptionController(self.transaction)
@@ -462,8 +462,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.check_subscription_response(response)
 
         if self.transaction_submitted:
-            reciept.status = PurchaseStatus.CANCELED
-            reciept.save()
+            receipt.status = PurchaseStatus.CANCELED
+            receipt.save()
 
     def subscription_info(self, subscription_id):
         self.transaction = apicontractsv1.ARBGetSubscriptionRequest()
