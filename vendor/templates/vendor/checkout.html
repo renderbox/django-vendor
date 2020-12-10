@@ -142,7 +142,22 @@
               {{credit_card_form.data.card_number|slice:"-4:"}}</p>
           <form method="post">
             {% csrf_token %}
-            <button class=" btn btn-primary" type="submit">{% trans 'Place Order' %}</button>
+            <button
+                class="btn btn-primary"
+                type="submit"
+                onclick="dataLayer.push({  {% comment %} Details for Google Tag Manager {% endcomment %}
+                    'event': 'purchase',
+                    'user': '{{ user }}',
+                    'invoice_id': '{{ invoice.uuid }}',
+                    'num_items': '{{ invoice.order_items.all|length }}',
+                    {% for item in invoice.order_items.all %}
+                    'item_{{ forloop.counter }}': '{{ item.name }}',
+                    'item_{{ forloop.counter }}_price': '{{ item.total|default_if_none:"0.00"|floatformat:2 }}',
+                    {% endfor %}
+                    'currency': '{{ invoice.get_currency_display }}',
+                    'total': '{{ invoice.total|default_if_none:"0.00"|floatformat:2 }}'
+                });"
+            >{% trans 'Place Order' %}</button>
           </form>
         </div>
       </div>
