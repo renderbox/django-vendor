@@ -16,9 +16,7 @@
             </a>
             <h5>${{ item.total }}</h5>
           </div>
-          {% for product in item.offer.products.all %}
-          <span>{{product.description}}</span>
-          {% endfor %}
+          <span>{{item.offer.description}}</span>
           <p class="font-weight-bolder mt-3 mb-2">{{ item.offer.get_terms_display }}</p>
           <form action="{{ item.offer.remove_from_cart_link }}" method="post">
             {% csrf_token %}
