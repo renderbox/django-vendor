@@ -80,6 +80,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             TransactionTypes.AUTHORIZE: self.AUTHORIZE,
             TransactionTypes.CAPTURE: self.CAPTURE,
             TransactionTypes.REFUND: self.REFUND,
+            TransactionTypes.VOID: self.VOID,
         }
 
     def init_payment_type_switch(self):
@@ -503,6 +504,45 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         if self.transaction_submitted:
             self.update_invoice_status(Invoice.InvoiceStatus.REFUNDED)
+
+    def void_payment(self, transaction_id):
+        self.transaction = self.create_transaction()
+        self.transaction_type = self.create_transaction_type(self.transaction_types[TransactionTypes.VOID])
+        self.transaction_type.refTransId = transaction_id
+
+        self.transaction.transactionRequest = self.transaction_type
+
+        self.controller = createTransactionController(self.transaction)
+        self.controller.execute()
+
+        response = self.controller.getresponse()
+
+        self.check_response(response)
+
+
+    def is_card_valid(self):
+        """
+        Handles an Authorize Only transaction to ensure that the funds are in the customers bank account
+        """
+        self.create_payment_model()
+        self.transaction = self.create_transaction()
+        self.transaction_type = self.create_transaction_type(self.transaction_types[TransactionTypes.AUTHORIZE])
+        self.transaction_type.amount = self.to_valid_decimal(self.invoice.get_recurring_total())
+        self.transaction_type.payment = self.create_authorize_payment()
+        self.transaction_type.billTo = self.create_billing_address(apicontractsv1.customerAddressType())
+
+        self.transaction.transactionRequest = self.transaction_type
+        self.controller = createTransactionController(self.transaction)
+        self.controller.execute()
+
+        # You execute and get the response
+        response = self.controller.getresponse()
+        self.check_response(response)
+
+        if self.transaction_submitted:
+            self.void_payment(self.transaction_message['trans_id'].text)
+            return True
+        return False
 
     ##########
     # Reporting API, for transaction retrieval information
