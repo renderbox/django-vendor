@@ -55,7 +55,7 @@
         class="btn btn-primary"
         onclick="dataLayer.push({  {% comment %} Details for Google Tag Manager {% endcomment %}
             'event': 'initiate-checkout',
-            'user': '{{ user }}',
+            'user': '{{ user.id }}',
             'invoice_id': '{{ invoice.uuid }}',
             'num_items': '{{ order_items|length }}',
             {% for item in order_items %}

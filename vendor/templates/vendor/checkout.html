@@ -147,7 +147,7 @@
                 type="submit"
                 onclick="dataLayer.push({  {% comment %} Details for Google Tag Manager {% endcomment %}
                     'event': 'purchase',
-                    'user': '{{ user }}',
+                    'user': '{{ user.id }}',
                     'invoice_id': '{{ invoice.uuid }}',
                     'num_items': '{{ invoice.order_items.all|length }}',
                     {% for item in invoice.order_items.all %}
