@@ -542,8 +542,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if self.transaction_submitted:
             self.void_payment(self.transaction_message['trans_id'].text)
             return True
-        
-
         return False
 
     ##########
