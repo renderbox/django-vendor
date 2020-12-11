@@ -841,6 +841,39 @@ class AuthorizeNetProcessorTests(TestCase):
         else:
             print("No active Subscriptions, Skipping Test")
 
+    def test_is_card_valid_success(self):
+        self.existing_invoice.add_offer(self.subscription_offer)
+        price = Price()
+        price.offer = self.subscription_offer
+        price.cost = randrange(1,1000)
+        price.start_date = timezone.now() - timedelta(days=1)
+        price.save()
+        self.existing_invoice.save()
+        self.processor = AuthorizeNetProcessor(self.existing_invoice)
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.is_data_valid()
+        self.processor.create_payment_model()
+        self.assertTrue(self.processor.is_card_valid())
+
+    def test_is_card_valid_fail(self):
+        self.form_data['credit_card_form']['cvv_number'] = '901'
+        self.existing_invoice.add_offer(self.subscription_offer)
+        price = Price()
+        price.offer = self.subscription_offer
+        price.cost = randrange(1,1000)
+        price.start_date = timezone.now() - timedelta(days=1)
+        price.save()
+        self.existing_invoice.save()
+        self.processor = AuthorizeNetProcessor(self.existing_invoice)
+        self.processor.get_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.is_data_valid()
+        self.processor.create_payment_model()
+        self.assertFalse(self.processor.is_card_valid())
+
+
+
     ##########
     # Transaction View Tests
     ##########

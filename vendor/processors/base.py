@@ -267,7 +267,8 @@ class PaymentProcessorBase(object):
             if self.is_payment_and_invoice_complete():
                 self.create_receipts(self.invoice.get_one_time_transaction_order_items())
 
-        self.process_subscriptions()        
+        if self.is_card_valid():
+            self.process_subscriptions()        
 
         vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()
@@ -352,7 +353,7 @@ class PaymentProcessorBase(object):
     def subscription_cancel(self):
         pass
 
-    def validate_card(self):
+    def is_card_valid(self):
         """
         Function to validate a credit card by method of makeing a microtransaction and voiding it if authorized.
         """
