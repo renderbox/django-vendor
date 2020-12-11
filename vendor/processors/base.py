@@ -131,7 +131,6 @@ class PaymentProcessorBase(object):
         """
         return today + timedelta(days=add_days)
 
-
     def create_receipt_by_term_type(self, product, order_item, term_type):
         today = timezone.now()
         receipt = Receipt()
@@ -317,6 +316,12 @@ class PaymentProcessorBase(object):
         """
         pass
 
+    def void_payment(self):
+        """
+        Call to handle a payment that has not been settled and wants to be voided
+        """
+        pass
+
     #-------------------
     # Process a Subscription
     def process_subscriptions(self):
@@ -332,7 +337,6 @@ class PaymentProcessorBase(object):
             if self.is_payment_and_invoice_complete():
                 self.create_order_item_receipt(subscription)
         
-
     def subscription_payment(self, subscription):
         """
         Call handels the authrization and creation for a subscription.
@@ -346,6 +350,12 @@ class PaymentProcessorBase(object):
         pass
 
     def subscription_cancel(self):
+        pass
+
+    def validate_card(self):
+        """
+        Function to validate a credit card by method of makeing a microtransaction and voiding it if authorized.
+        """
         pass
 
     #-------------------

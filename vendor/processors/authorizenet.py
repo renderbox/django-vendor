@@ -504,6 +504,23 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if self.transaction_submitted:
             self.update_invoice_status(Invoice.InvoiceStatus.REFUNDED)
 
+    def void_payment(self, transaction_id):
+        self.transaction = self.create_transaction()
+        self.transaction_type = self.create_transaction_type(self.transaction_types[TransactionTypes.VOID])
+        self.transaction_type.refTransId = transaction_id
+
+        self.transaction.transactionRequest = self.transaction_type
+
+        self.controller = createTransactionController(self.transaction)
+        self.controller.execute()
+
+        response = self.controller.getresponse()
+
+        self.check_response(response)
+
+    def validate_card(self):
+        pass
+
     ##########
     # Reporting API, for transaction retrieval information
     ##########
