@@ -9,6 +9,7 @@ from calendar import mdays
 from django.db.models import Sum
 from django.conf import settings
 from django.utils import timezone
+from vendor import config
 from vendor.models import Payment, Invoice, Receipt, Address
 from vendor.models.choice import PurchaseStatus, TermType
 ##########
@@ -25,6 +26,8 @@ class PaymentProcessorBase(object):
     """
     Setup the core functionality for all processors.
     """
+    API_ENDPOINT = None
+
     status = None
     invoice = None
     provider = None
@@ -45,6 +48,18 @@ class PaymentProcessorBase(object):
         self.set_invoice(invoice)
         self.provider = self.__class__.__name__
         self.processor_setup()
+        self.set_api_endpoint()
+
+    def set_api_endpoint(self):
+        """
+        Sets the API endpoint for debugging or production.It is dependent on the VENDOR_STATE
+        enviornment variable. Default value is DEBUG for the VENDOR_STATE this function
+        should be overwrote upon necesity of each Payment Processor
+        """
+        if config.VENDOR_STATE == 'DEBUG':
+            self.API_ENDPOINT = None
+        elif config.VENDOR_STATE == 'PRODUCTION':
+            self.API_ENDPOINT = None
 
     def processor_setup(self):
         """
