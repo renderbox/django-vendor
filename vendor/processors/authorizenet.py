@@ -7,10 +7,11 @@ from decimal import Decimal, ROUND_DOWN
 from django.conf import settings
 from django.utils import timezone
 
-from vendor.config import VENDOR_PAYMENT_PROCESSOR
+from vendor.config import VENDOR_PAYMENT_PROCESSOR, VENDOR_STATE
 
 try:
     from authorizenet import apicontractsv1
+    from authorizenet import constants
     from authorizenet.apicontrollers import *
 except ModuleNotFoundError:
     if VENDOR_PAYMENT_PROCESSOR == "authorizenet.AuthorizeNetProcessor":
@@ -93,10 +94,26 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             PaymentTypes.PAY_PAL: self.create_pay_pal_payment,
             PaymentTypes.MOBILE: self.create_mobile_payment,
         }
+    
+    def set_api_endpoint(self):
+        """
+        Sets the API endpoint for debugging or production.It is dependent on the VENDOR_STATE
+        enviornment variable. Default value is DEBUG for the VENDOR_STATE
+        """
+        if VENDOR_STATE == 'DEBUG':
+            self.API_ENDPOINT = constants.SANDBOX
+        elif VENDOR_STATE == 'PRODUCTION':
+            self.API_ENDPOINT = constants.PRODUCTION
 
     ##########
     # Authorize.net Object creations
     ##########
+    def set_controller_api_endpoint(self):
+        """
+        Sets the endpoint for the controller to point to test or production.
+        self.API_ENDPOINT is set on Processor Initialization
+        """
+        self.controller.setenvironment(self.API_ENDPOINT)
 
     def create_transaction(self):
         """
@@ -281,7 +298,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         Processes the transaction reponse from the gateway so it can be saved in the payment model
         """
-        self.transaction_id = self.transaction_response.transId.text
+        self.transaction_id = str(getattr(self.transaction_response, 'transId', 'failed_payment'))
 
         transaction_info = {}
         transaction_info['raw'] = self.get_transaction_raw_response()
@@ -294,7 +311,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Processes the transaction reponse from the gateway so it can be saved in the payment model
         The transaction id is the subscription id returned by Authorize.Net
         """
-        self.transaction_id = self.transaction_message.get("subscription_id")
+        self.transaction_id = self.transaction_message.get("subscription_id", 'failed_payement')
 
         transaction_info = {}
         transaction_info['raw'] = self.get_transaction_raw_response()
@@ -373,6 +390,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         # You set the request to the transaction
         self.transaction.transactionRequest = self.transaction_type
         self.controller = createTransactionController(self.transaction)
+        self.set_controller_api_endpoint()
         self.controller.execute()
 
         # You execute and get the response
@@ -405,7 +423,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         # Creating and executing the controller
         self.controller = ARBCreateSubscriptionController(self.transaction)
+        self.set_controller_api_endpoint()
         self.controller.execute()
+
         # Getting the response
         response = self.controller.getresponse()
         self.check_subscription_response(response)
@@ -428,6 +448,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.subscription = self.transaction_type
 
         self.controller = ARBUpdateSubscriptionController(self.transaction)
+        self.set_controller_api_endpoint()
         self.controller.execute()
 
         response = self.controller.getresponse()
@@ -456,6 +477,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.includeTransactions = False
 
         self.controller = ARBCancelSubscriptionController(self.transaction)
+        self.set_controller_api_endpoint()
         self.controller.execute()
 
         response = self.controller.getresponse()
@@ -473,6 +495,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.includeTransactions = False
 
         self.controller = ARBGetSubscriptionController(self.transaction)
+        self.set_controller_api_endpoint()
         self.controller.execute()
 
         response = self.controller.getresponse()
@@ -497,6 +520,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.transaction.transactionRequest = self.transaction_type
         self.controller = createTransactionController(self.transaction)
+        self.set_controller_api_endpoint()
         self.controller.execute()
 
         response = self.controller.getresponse()
@@ -513,6 +537,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.transactionRequest = self.transaction_type
 
         self.controller = createTransactionController(self.transaction)
+        self.set_controller_api_endpoint()
         self.controller.execute()
 
         response = self.controller.getresponse()
@@ -533,6 +558,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.transaction.transactionRequest = self.transaction_type
         self.controller = createTransactionController(self.transaction)
+        self.set_controller_api_endpoint()
         self.controller.execute()
 
         # You execute and get the response
@@ -557,6 +583,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.lastSettlementDate = end_date
 
         self.controller = getSettledBatchListController(self.transaction)
+        self.set_controller_api_endpoint()
         self.controller.execute()
 
         response = self.controller.getresponse()
@@ -574,6 +601,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.batchId = batch_id
 
         self.controller = getTransactionListController(self.transaction)
+        self.set_controller_api_endpoint()
         self.controller.execute()
 
         response = self.controller.getresponse()
@@ -587,6 +615,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.transId = transaction_id
 
         self.controller = getTransactionDetailsController(self.transaction)
+        self.set_controller_api_endpoint()
         self.controller.execute()
 
         response = self.controller.getresponse()
@@ -600,11 +629,14 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.searchType = apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionActive
 
         self.controller = ARBGetSubscriptionListController(self.transaction)
+        self.set_controller_api_endpoint()
         self.controller.execute()
 
         # Work on the response
         response = self.controller.getresponse()
-        if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
+        if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok and hasattr(response.subscriptionDetails, 'subscriptionDetail'):
             return response.subscriptionDetails.subscriptionDetail
+        else:
+            return []
 
 
