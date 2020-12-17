@@ -662,6 +662,10 @@ class AuthorizeNetProcessorTests(TestCase):
         # Get Settled payment
         start_date, end_date = (timezone.now() - timedelta(days=31)), timezone.now()
         batch_list = self.processor.get_settled_batch_list(start_date, end_date)
+        if not batch_list:
+            print("No Transactions to refund Skipping\n")
+            return
+
         for batch in batch_list:
             transaction_list = self.processor.get_transaction_batch_list(str(batch.batchId))
             successfull_transactions = [ t for t in transaction_list if t['transactionStatus'] == 'settledSuccessfully' ]
@@ -697,6 +701,9 @@ class AuthorizeNetProcessorTests(TestCase):
         # Get Settled payment
         start_date, end_date = (timezone.now() - timedelta(days=31)), timezone.now()
         batch_list = self.processor.get_settled_batch_list(start_date, end_date)
+        if not batch_list:
+            print("No Transactions to refund Skipping\n")
+            return
         transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
 
         payment = Payment()
@@ -721,6 +728,9 @@ class AuthorizeNetProcessorTests(TestCase):
         # Get Settled payment
         start_date, end_date = (timezone.now() - timedelta(days=31)), timezone.now()
         batch_list = self.processor.get_settled_batch_list(start_date, end_date)
+        if not batch_list:
+            print("No Transactions to refund Skipping\n")
+            return
         transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
 
         payment = Payment()
@@ -746,6 +756,9 @@ class AuthorizeNetProcessorTests(TestCase):
         # Get Settled payment
         start_date, end_date = (timezone.now() - timedelta(days=31)), timezone.now()
         batch_list = self.processor.get_settled_batch_list(start_date, end_date)
+        if not batch_list:
+            print("No Transactions to refund Skipping\n")
+            return
         transaction_list = self.processor.get_transaction_batch_list(str(batch_list[-1].batchId))
 
         payment = Payment()
@@ -805,6 +818,9 @@ class AuthorizeNetProcessorTests(TestCase):
     def test_subscription_update_payment(self):
         self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         subscription_list = self.processor.get_list_of_subscriptions()
+        if not subscription_list:
+            print("No subscriptions, Skipping Test")
+            return
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         dummy_receipt = Receipt(order_item=OrderItem.objects.get(pk=2))
         dummy_receipt.transaction = active_subscriptions[-1].id.pyval
@@ -830,6 +846,9 @@ class AuthorizeNetProcessorTests(TestCase):
 
     def test_cancel_subscription_success(self):
         subscription_list = self.processor.get_list_of_subscriptions()
+        if not subscription_list:
+            print("No subscriptions, Skipping Test")
+            return
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         dummy_receipt = Receipt(order_item=OrderItem.objects.get(pk=2))
         dummy_receipt.transaction = active_subscriptions[0].id.pyval
