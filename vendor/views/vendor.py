@@ -372,6 +372,7 @@ class SubscriptionsListView(LoginRequiredMixin, ListView):
 
 
 class SubscriptionCancelView(LoginRequiredMixin, View):
+    success_url = reverse_lazy('vendor:customer-subscriptions')
 
     def post(self, request, *args, **kwargs):
         receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
@@ -382,7 +383,7 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
 
         messages.info(self.request, _("Subscription Cancelled"))
 
-        return redirect('vendor:customer-subscriptions')
+        return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
 
 class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):

@@ -18,13 +18,10 @@
                         <div class="font-weight-bold">{% trans 'Payment Method' %}</div>
                         {% if payment %}
                         <div>
-                            {% blocktrans with account_type=payment.result.account_type account_number=payment.result.account_number %}
-                            {% if account_type %}
-                                {{ account_type }}
-                            {% else %}
-                                Card
-                            {% endif %}
-                             ending in {{ account_number }}
+                            {% trans 'Credit Card' as card %}
+                            {% firstof payment.result.account_type card as account_type %}
+                            {% blocktrans with account_number=payment.result.account_number %}
+                                {{ account_type }} ending in {{ account_number }} 
                             {% endblocktrans %}
                         </div>
                         {% else %}
@@ -67,15 +64,11 @@
                 </div>
                 <div class="d-flex">
                     <div class="text-left">
-                        {% if payment.result.account_type %}
-                        {% blocktrans with account_type=payment.result.account_type account_number=payment.result.account_number %}
+                        {% trans 'Credit Card' as card %}
+                        {% firstof payment.result.account_type card as account_type %}
+                        {% blocktrans with account_number=payment.result.account_number %}
                             {{ account_type }} ending in {{ account_number }} 
                         {% endblocktrans %}
-                        {% else %}
-                            {% blocktrans with account_number=payment.result.account_number %}
-                                Card ending in {{ account_number }} 
-                            {% endblocktrans %}
-                        {% endif %}
                     </div>
                     <a class="edit-name-button btn text-primary p-0 ml-auto" data-toggle="modal"
                         data-target="#update_payment_subscription">

@@ -40,15 +40,11 @@
     <div class='col-md-12'>
         <h3>{% trans 'Payment Method' %}</h3>
         <p>
-        {% if payment.result.account_type %}
-            {% blocktrans with account_type=payment.result.account_type account_number=payment.result.account_number %}
-                {{ account_type }} ending in {{ account_number }} 
-            {% endblocktrans %}
-        {% else %}
-            {% blocktrans with account_number=payment.result.account_number %}
-                Card ending in {{ account_number }} 
-            {% endblocktrans %}
-        {% endif %}
+        {% trans 'Credit Card' as card %}
+        {% firstof payment.result.account_type card as account_type %}
+        {% blocktrans with account_number=payment.result.account_number %}
+            {{ account_type }} ending in {{ account_number }} 
+        {% endblocktrans %}
         </p>
     </div>
 </div>

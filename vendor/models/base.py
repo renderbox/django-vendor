@@ -59,7 +59,7 @@ class ProductModelBase(CreateUpdateModelBase):
     meta = models.JSONField(_("Meta"), validators=[validate_msrp], default=product_meta_default, blank=True, null=True, help_text=_("Eg: { 'msrp':{'usd':10.99} }\n(iso4217 Country Code):(MSRP Price)"))
     classification = models.ManyToManyField("vendor.TaxClassifier", blank=True)                                        # What taxes can apply to this item
     offers = models.ManyToManyField("vendor.Offer", blank=True, related_name="products")
-    reciepts = models.ManyToManyField("vendor.Receipt", blank=True, related_name="products")
+    receipts = models.ManyToManyField("vendor.Receipt", blank=True, related_name="products")
 
     objects = models.Manager()
     on_site = CurrentSiteManager()

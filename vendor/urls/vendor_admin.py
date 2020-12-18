@@ -20,6 +20,6 @@ urlpatterns = [
     path('profile/', admin_views.AdminProfileDetailView.as_view(), name="manager-profile"),
 
     # reports
-    path('reports/reciepts/download/', report_views.RecieptListCSV.as_view(), name="manager-reciept-download"),
+    path('reports/receipts/download/', report_views.ReceiptListCSV.as_view(), name="manager-receipt-download"),
     path('reports/invoices/download/', report_views.InvoiceListCSV.as_view(), name="manager-invoice-download"),
 ]

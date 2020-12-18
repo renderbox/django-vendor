@@ -1,48 +1,15 @@
 import csv
 from itertools import chain
-
 from django.http import StreamingHttpResponse
 from django.utils.timezone import localtime
 from django.contrib.sites.models import Site
-# from django.shortcuts import render, redirect
-# from django.contrib import messages
-# from django.contrib.auth.mixins import LoginRequiredMixin
-# from django.urls import reverse
-# from django.conf import settings
-# from django.utils.translation import ugettext as _
-# from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.mixins import PermissionRequiredMixin
-
-# from django.views.generic.edit import DeleteView
+from django.utils.translation import ugettext_lazy as _
 from django.views.generic.list import BaseListView
-# from django.views.generic.detail import DetailView
-# from django.views.generic import TemplateView
+from django.views.generic.edit import FormMixin
 
 from vendor.models import Receipt, Invoice
-
-# from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile
-# from vendor.models.choice import TermType
-# from vendor.models.utils import set_default_site_id
-# from vendor.processors import PaymentProcessor
-# from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm
-
-# # from vendor.models.address import Address as GoogleAddress
-
-# # The Payment Processor configured in settings.py
-# payment_processor = PaymentProcessor
-
-
-# class CartView(LoginRequiredMixin, DetailView):
-#     '''
-#     View items in the cart
-#     '''
-#     model = Invoice
-
-#     def get_object(self):
-#         profile, created = self.request.user.customer_profile.get_or_create(
-#             site=set_default_site_id())
-#         return profile.get_cart()
-
+from vendor.forms import DateRangeForm
 
 class Echo:
     """An object that implements just the write method of the file-like
@@ -54,11 +21,10 @@ class Echo:
         return value
 
 
-# class RecieptListCSV(PermissionRequiredMixin, BaseListView):
 class CSVStreamRowView(BaseListView):
     """A base view for displaying a list of objects."""
 
-    filename = "reciept_list.csv"
+    filename = "receipt_list.csv"
     # headers = 
 
     def get_queryset(self):
@@ -81,21 +47,68 @@ class CSVStreamRowView(BaseListView):
         return response
 
 
-class RecieptListCSV(CSVStreamRowView):
-    filename = "reciepts.csv"
+class ReceiptListCSV(FormMixin, CSVStreamRowView):
+    filename = "receipts.csv"
     model = Receipt
+    form_class = DateRangeForm
+    header = [[_('Order ID'), _('Title'), _('Order Date'), _('Order Status'), _('Order Total'), _('Product ID'), _('Product Name'), _('Quantity'), _('Item Cost'), _('Item Total'), _('Discount Amount '), _('Coupon Code'), _('Coupons Used'), _('Total Discount Amount'), _('Refund ID'), _('Refund Total'), _('Refund Amounts'), _('Refund Reason'), _('Refund Date'), _('Refund Author Email'), _('Date Type'), _('Dates')]]
 
     def get_queryset(self):
-        # TODO: Update to handle ranges from a POST
-        return self.model.objects.filter(profile__site=Site.objects.get_current())      # Return reciepts only for profiles on this site
+        form = self.form_class(data=self.request.POST)
+        start_date = form.data.get('start_date', None)
+        end_date = form.data.get('end_date', None)
+        if start_date and end_date:
+            return self.model.objects.filter(profile__site=Site.objects.get_current(), order_item__invoice__created__gte=start_date, order_item__invoice__created__lte=end_date)
+        elif start_date and not end_date:
+            return self.model.objects.filter(profile__site=Site.objects.get_current(), order_item__invoice__created__gte=start_date)
+        else:
+            return self.model.objects.filter(profile__site=Site.objects.get_current())      # Return receipts only for profiles on this site
 
     def get_row_data(self):
         object_list = self.get_queryset()
-        header = [["RECIEPT_ID", "CREATED_TIME(ISO)", "USERNAME", "INVOICE_ID", "ORDER_ITEM", "OFFER_ID", "QUANTITY", "TRANSACTION_ID", "STATUS"]]  # Has to be a list inside an iterable (another list) for the chain to work.
-        rows = [[str(obj.pk), obj.created.isoformat(), obj.profile.user.username, obj.order_item.invoice.pk, obj.order_item.offer, obj.order_item.pk, obj.order_item.quantity, obj.transaction, obj.get_status_display()] for obj in object_list]
-        return chain(header, rows)
+        rows = [[
+            str(obj.order_item.invoice.pk),              # Order ID
+            obj.order_item.invoice,                      # Title
+            obj.order_item.invoice.created.isoformat(),  # Oder Date
+            obj.get_status_display(),                    # Order Status
+            obj.order_item.invoice.total,                # Order Total
+            str(obj.products.first().id),                # Product ID
+            obj.products.first().name,                   # Product Name
+            obj.order_item.quantity,                     # Quantity
+            obj.order_item.price,                        # Item Cost
+            obj.order_item.total,                        # Item Total
+            "",                                          # TODO: Discount Amount
+            "",                                          # TODO: Coupon Code
+            "",                                          # TODO: Coupons Used
+            "",                                          # TODO: Total Discount Amount
+            "",                                          # TODO: Refund ID
+            "",                                          # TODO: Refund Total
+            "",                                          # TODO: Refound Amounts
+            "",                                          # TODO: Refund Reason
+            "",                                          # TODO: Refund Date
+            "",                                          # TODO: Refund Author Email 
+            'multiple' if obj.end_date is None else f'range',                                          # TODO: Date Type
+            " ".join([ '' if obj.start_date is None else f'{obj.start_date:%Y-%m-%d}', '' if obj.end_date is None else f'{obj.end_date:%Y-%m-%d}']),
+            ] for obj in object_list]
+        return chain(self.header, rows)
 
- 
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+
+        if not form.is_valid():
+            messages.info(self.request, ",".join([error for error in form.errors]))
+            return redirect(request.META.get('HTTP_REFERER', self.success_url))
+        
+        rows = self.get_row_data()
+        pseudo_buffer = Echo()
+        writer = csv.writer(pseudo_buffer)
+        #TODO: Figure out what to prepend the header without breaking the streaming generator
+        response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+
+        # Set the filename
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(self.filename)
+        return response
+        
 class InvoiceListCSV(CSVStreamRowView):
     filename = "invoices.csv"
     model = Invoice

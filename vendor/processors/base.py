@@ -9,6 +9,7 @@ from calendar import mdays
 from django.db.models import Sum
 from django.conf import settings
 from django.utils import timezone
+from vendor import config
 from vendor.models import Payment, Invoice, Receipt, Address
 from vendor.models.choice import PurchaseStatus, TermType
 ##########
@@ -25,6 +26,8 @@ class PaymentProcessorBase(object):
     """
     Setup the core functionality for all processors.
     """
+    API_ENDPOINT = None
+
     status = None
     invoice = None
     provider = None
@@ -45,6 +48,18 @@ class PaymentProcessorBase(object):
         self.set_invoice(invoice)
         self.provider = self.__class__.__name__
         self.processor_setup()
+        self.set_api_endpoint()
+
+    def set_api_endpoint(self):
+        """
+        Sets the API endpoint for debugging or production.It is dependent on the VENDOR_STATE
+        enviornment variable. Default value is DEBUG for the VENDOR_STATE this function
+        should be overwrote upon necesity of each Payment Processor
+        """
+        if config.VENDOR_STATE == 'DEBUG':
+            self.API_ENDPOINT = None
+        elif config.VENDOR_STATE == 'PRODUCTION':
+            self.API_ENDPOINT = None
 
     def processor_setup(self):
         """
@@ -130,7 +145,6 @@ class PaymentProcessorBase(object):
         Returns a datetime object with the a new added days
         """
         return today + timedelta(days=add_days)
-
 
     def create_receipt_by_term_type(self, product, order_item, term_type):
         today = timezone.now()
@@ -268,7 +282,8 @@ class PaymentProcessorBase(object):
             if self.is_payment_and_invoice_complete():
                 self.create_receipts(self.invoice.get_one_time_transaction_order_items())
 
-        self.process_subscriptions()        
+        if self.invoice.get_recurring_order_items():
+            self.process_subscriptions()        
 
         vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()
@@ -317,6 +332,12 @@ class PaymentProcessorBase(object):
         """
         pass
 
+    def void_payment(self):
+        """
+        Call to handle a payment that has not been settled and wants to be voided
+        """
+        pass
+
     #-------------------
     # Process a Subscription
     def process_subscriptions(self):
@@ -324,6 +345,9 @@ class PaymentProcessorBase(object):
         Process/subscribies recurring payments throught the payement gateway and creates a payment model for each subscription.
         If a payment is completed it will create a receipt for the subscription
         """
+        if not self.is_card_valid():
+            return None
+
         for subscription in self.invoice.get_recurring_order_items():
             self.create_payment_model()
             self.subscription_payment(subscription)
@@ -332,7 +356,6 @@ class PaymentProcessorBase(object):
             if self.is_payment_and_invoice_complete():
                 self.create_order_item_receipt(subscription)
         
-
     def subscription_payment(self, subscription):
         """
         Call handels the authrization and creation for a subscription.
@@ -346,6 +369,12 @@ class PaymentProcessorBase(object):
         pass
 
     def subscription_cancel(self):
+        pass
+
+    def is_card_valid(self):
+        """
+        Function to validate a credit card by method of makeing a microtransaction and voiding it if authorized.
+        """
         pass
 
     #-------------------
