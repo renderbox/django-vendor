@@ -55,17 +55,6 @@ class OfferForm(forms.ModelForm):
         return cleaned_data
 
 
-PriceFormSet = inlineformset_factory(
-    Offer,
-    Price,
-    form=PriceForm,
-    can_delete=True,
-    exclude=('offer',),
-    validate_max=True,
-    min_num=1,
-    extra=0)
-
-
 class AddressForm(forms.ModelForm):
 
     class Meta:
@@ -300,3 +289,19 @@ class DateRangeForm(forms.Form):
             del(cleaned_data['end_date'])
             
         return cleaned_data
+
+
+
+##########
+# From Sets
+##########
+
+PriceFormSet = inlineformset_factory(
+    Offer,
+    Price,
+    form=PriceForm,
+    can_delete=True,
+    exclude=('offer',),
+    validate_max=True,
+    min_num=1,
+    extra=0)
