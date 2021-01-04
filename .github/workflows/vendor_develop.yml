@@ -68,5 +68,5 @@ jobs:
         # DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor  # Using default SQLite
         AUTHORIZE_NET_API_ID: ${{ secrets.AUTHORIZE_NET_API_ID }}
         AUTHORIZE_NET_TRANSACTION_KEY: ${{ secrets.AUTHORIZE_NET_TRANSACTION_KEY }}
-        AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT: "authCaptureTransaction"
+        AUTHORIZE_NET_TRANSACTION_TYPE_DEFAULT: "authCaptureTransaction"
         VENDOR_PAYMENT_PROCESSOR: "authorizenet.AuthorizeNetProcessor"

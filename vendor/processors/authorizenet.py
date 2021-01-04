@@ -28,7 +28,7 @@ from .base import PaymentProcessorBase
 
 class AuthorizeNetProcessor(PaymentProcessorBase):
     """
-    Implementation of Authoirze.Net SDK
+    Implementation of AUTHORIZE.Net SDK
     https://apitest.authorize.net/xml/v1/schema/AnetApiSchema.xsd
     """
 
@@ -378,7 +378,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def process_payment(self):
         # Init transaction
         self.transaction = self.create_transaction()
-        self.transaction_type = self.create_transaction_type(settings.AUTHOIRZE_NET_TRANSACTION_TYPE_DEFAULT)
+        self.transaction_type = self.create_transaction_type(settings.AUTHORIZE_NET_TRANSACTION_TYPE_DEFAULT)
         self.transaction_type.amount = self.to_valid_decimal(self.invoice.get_one_time_transaction_total())
         self.transaction_type.payment = self.create_authorize_payment()
         self.transaction_type.billTo = self.create_billing_address(apicontractsv1.customerAddressType())
