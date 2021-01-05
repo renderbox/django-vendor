@@ -195,7 +195,15 @@ class AdminSubscriptionListView(LoginRequiredMixin, ListView):
     model = Receipt
 
     def get_queryset(self):
-        return self.model.objects.filter(products__in=Product.on_site.all(), order_item__offer__terms__gte=TermType.SUBSCRIPTION, order_item__offer__terms__lt=TermType.ONE_TIME_USE)
+        return self.model.objects.filter(products__in=Product.on_site.all(), order_item__offer__terms__lt=TermType.PERPETUAL)
+
+
+class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
+    '''
+    Gets all Customer Profile information for quick lookup and management
+    '''
+    template_name = 'vendor/manage/profile_detail.html'
+    model = Receipt
 
 
 class AdminProfileListView(LoginRequiredMixin, ListView):
@@ -206,15 +214,11 @@ class AdminProfileListView(LoginRequiredMixin, ListView):
     model = CustomerProfile
     queryset = CustomerProfile.on_site.all()
 
-class AdminProfileDetailView(LoginRequiredMixin, TemplateView):
+class AdminProfileDetailView(LoginRequiredMixin, DetailView):
     '''
     Gets all Customer Profile information for quick lookup and management
     '''
     template_name = 'vendor/manage/profile_detail.html'
+    model = CustomerProfile
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['profile'] = CustomerProfile.objects.get(user=self.request.user, site=get_current_site(self.request))
-
-        return context
         

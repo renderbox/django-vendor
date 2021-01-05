@@ -26,12 +26,12 @@
         <tbody>
           {% for item in object_list %}
           <tr>
-            <td><a href="{% url 'vendor_admin:manager-profile' %}">{{ item.pk }}</a></td>
+            <td><a href="{% url 'vendor_admin:manager-profile' item.pk %}">{{ item.pk }}</a></td>
             <td>{{ item.user.username }}</td>
             <td>{{ item.user.first_name }}</td>
-            <td>{{ item.last_name }}</td>
+            <td>{{ item.user.last_name }}</td>
             <td>{{ item.site }}</td>
-            <td>{{ item.get_currency_dispaly }}</td>
+            <td>{{ item.currency }}</td>
           </tr>
           {% empty %}
           <tr>

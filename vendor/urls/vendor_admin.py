@@ -16,8 +16,9 @@ urlpatterns = [
     path('orders/', admin_views.AdminInvoiceListView.as_view(), name="manager-order-list"),
     path('order/<uuid:uuid>/', admin_views.AdminInvoiceDetailView.as_view(), name="manager-order-detail"),
     path('subscriptions/', admin_views.AdminSubscriptionListView.as_view(), name="manager-subscriptions"),
+    path('subscription/<uuid:uuid>', admin_views.AdminSubscriptionListView.as_view(), name="manager-subscriptions"),
     path('profiles/', admin_views.AdminProfileListView.as_view(), name="manager-profiles"),
-    path('profile/', admin_views.AdminProfileDetailView.as_view(), name="manager-profile"),
+    path('profile/<int:pk>', admin_views.AdminProfileDetailView.as_view(), name="manager-profile"),
 
     # reports
     path('reports/receipts/download/', report_views.ReceiptListCSV.as_view(), name="manager-receipt-download"),
