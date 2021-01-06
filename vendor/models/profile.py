@@ -6,7 +6,7 @@ from django.db.models import Q, QuerySet
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from .base import CreateUpdateModelBase
-from .choice import CURRENCY_CHOICES, TermType
+from .choice import CURRENCY_CHOICES, TermType, PurchaseStatus
 from .invoice import Invoice
 from .utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
@@ -110,3 +110,9 @@ class CustomerProfile(CreateUpdateModelBase):
     def get_or_create_address(self, address):
         address, created = self.addresses.get_or_create(name=address.address_1, first_name=address.first_name, last_name=address.last_name, address_1=address.address_1, address_2=address.address_2, locality=address.locality, state=address.state, country=address.country, postal_code=address.postal_code, profile=self)
         return address, created
+
+    def get_customer_products(self):
+        return [ product for receipt in self.receipts.filter(status__gte=PurchaseStatus.COMPLETE) for product in receipt.products.all() ]
+
+    def get_completed_receipts(self):
+        return self.receipts.filter(status__gte=PurchaseStatus.COMPLETE)

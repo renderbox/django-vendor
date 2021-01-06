@@ -2,7 +2,7 @@ from django.apps import apps
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
@@ -238,3 +238,14 @@ class AdminProfileDetailView(LoginRequiredMixin, DetailView):
         context['products'] = [ product for receipt in self.object.receipts.all() for product in receipt.products.all() ]
 
         return context
+
+class AddProductToProfile(LoginRequiredMixin, TemplateView):
+    template_name = 'vendor/manage/add_product_to_profile.html'
+
+    def get(self, request, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile = CustomerProfile.objects.get(pk=kwargs.get('pk'))
+        products_owned = profile.get_customer_products()
+
+
+        return render(request, self.template_name, context)
