@@ -486,6 +486,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         if self.transaction_submitted:
             receipt.status = PurchaseStatus.CANCELED
+            receipt.auto_renew = False
             receipt.save()
 
     def subscription_info(self, subscription_id):

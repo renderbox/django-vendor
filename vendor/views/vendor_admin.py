@@ -8,9 +8,10 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
 from vendor.config import VENDOR_PRODUCT_MODEL
 from vendor.models import Invoice, Offer, Price, Receipt, CustomerProfile, Payment
-from vendor.models.choice import TermType
-from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet
+from vendor.models.choice import TermType, PaymentTypes
+from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet, CreditCardForm, AddressForm
 from django.utils.translation import ugettext as _
+from django.utils import timezone
 from django.contrib.sites.shortcuts import get_current_site
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 #############
@@ -202,15 +203,19 @@ class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
     '''
     Gets all Customer Profile information for quick lookup and management
     '''
-    template_name = 'vendor/manage/receipt_detail.html'
+    template_name = 'vendor/manage/subscription_detail.html'
     model = Receipt
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        payment = Payment.objects.get(transaction=context['object'].transaction)
 
-        context['payment'] = Payment.objects.get(transaction=context['object'].transaction)
+        context['payment'] = payment
+        context['payment_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
+        context['billing_form'] = AddressForm(instance=payment.billing_address)
+
         return context
 
 
@@ -232,13 +237,25 @@ class AdminProfileDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['products'] = self.object.receipts.filter(products__in=Product.on_site.all(), order_item__offer__terms__gte=TermType.PERPETUAL)
+        context['receipts'] = self.object.receipts.filter(products__in=Product.on_site.all(), order_item__offer__terms__gte=TermType.PERPETUAL)
         context['subscriptions'] = self.object.receipts.filter(products__in=Product.on_site.all(), order_item__offer__terms__lt=TermType.PERPETUAL)
 
-        context['products'] = [ product for receipt in self.object.receipts.all() for product in receipt.products.all() ]
+        # context['products'] = [ product for receipt in self.object.receipts.all() for product in receipt.products.all() ]
 
         return context
 
+
+class VoidProductView(LoginRequiredMixin, View):
+    success_url = reverse_lazy('vendor_admin:manage-profiles')
+
+    def post(self, request, *args, **kwargs):
+        receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
+        receipt.end_date = timezone.now()
+        receipt.save()
+
+        return redirect(request.META.get('HTTP_REFERER', self.success_url))
+
+# TODO: Need to implement. This will come the next pr.
 class AddProductToProfile(LoginRequiredMixin, TemplateView):
     template_name = 'vendor/manage/add_product_to_profile.html'
 

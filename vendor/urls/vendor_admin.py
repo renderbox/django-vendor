@@ -20,6 +20,7 @@ urlpatterns = [
     path('profiles/', admin_views.AdminProfileListView.as_view(), name="manager-profiles"),
     path('profile/<int:pk>', admin_views.AdminProfileDetailView.as_view(), name="manager-profile"),
     path('profile/<int:pk>/products', admin_views.AddProductToProfile.as_view(), name="manager-profile-add-product"),
+    path('product/<uuid:uuid>/remove', admin_views.VoidProductView.as_view(), name="manager-profile-remove-product"),
 
     # reports
     path('reports/receipts/download/', report_views.ReceiptListCSV.as_view(), name="manager-receipt-download"),
