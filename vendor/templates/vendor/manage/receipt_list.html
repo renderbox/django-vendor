@@ -28,7 +28,7 @@
         <tbody>
           {% for item in object_list %}
           <tr>
-            <td>{{ item.transaction }}</td>
+            <td><a href="{% url 'vendor_admin:manager-subscription' item.uuid %}">{{ item.transaction }}</a></td>
             <td>{{ item.order_item.offer }}</td>
             <td>{{ item.order_item.offer.get_terms_display }}</td>
             <td>{{ item.profile }}</td>

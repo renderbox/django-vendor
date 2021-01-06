@@ -3,53 +3,112 @@
 
 {% block vendor_content %}
 
-<h2>{% trans 'Admin: Profile Purchase History' %}</h2>
+<h2>{% trans 'Admin: Profile Details' %}</h2>
 <div class='row'>
   <div class='col-6'>
-    <h3>{% trans 'Profile Detail' %}</h3>
+    <div class='card'>
+      <div class='card-header'>
+        {% trans 'Profile Detail' %}
+      </div>
+      <div class='card-body'>
+        <div class='row'>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Name' %}
+            </div>
+            {{ object.user.first_name }}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Last Name' %}
+            </div>
+            {{ object.user.last_name }}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'E-Mail' %}
+            </div>
+            {{ object.user.email }}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Username' %}
+            </div>
+            {{ object.user.username }}
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <div class='col-6'>
-    <h3>{% trans 'Saved Addresses' %}</h3>
+    <div class='card'>
+      <div class='card-header'>
+        <div class='d-flex flex-row justify-content-between'>
+          {% trans 'Products Owned' %}
+          <a href="#" class="btn btn-sm btn-primary">+</a>
+        </div>
+      </div>
+      <div class='card-body'>
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="border-top-0">{% trans 'Product' %}</th>
+              <th class="border-top-0">{% trans 'Actions' %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+            <tr>
+              <th>{{ product.name }}</th>
+              <th>
+                <a href="#" class="btn btn-sm btn-danger">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                  <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                </svg>
+              </a>
+              </th>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
-  <div class='col-6'>
-    <p class="m-0 p-0">{% trans 'Name:' %} {{ object.user.name }}</p>
-    <p class="m-0 p-0">{% trans 'Last Name:' %} {{ object.user.last_name }}</p>
-    <p class="m-0 p-0">{% trans 'Username:' %} {{ object.user.username }}</p>
-    <p class="m-0 p-0">{% trans 'Email:' %} {{ object.user.email }}</p>
-  </div>
-  <div class='col-6'>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Address</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for address in object.addresses.all %}
-        <tr>
-          <th>{{forloop.counter}}</th>
-          <th>{{ address.get_address_display }}</th>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class='col-12 my-4'>
+    <div class='card'>
+      <div class='card-header '>
+        <div class='d-flex flex-row justify-content-between'>
+          {% trans 'Saved Addresses' %}
+          <a href="#" class="btn btn-sm btn-primary">{% trans 'New' %}</a>
+        </div>
+      </div>
+      <div class='card-body'>
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="border-top-0">{% trans '#' %}</th>
+              <th class="border-top-0">{% trans 'Address' %}</th>
+              <th class="border-top-0">{% trans 'Actions' %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for address in object.addresses.all %}
+            <tr>
+              <th>{{forloop.counter}}</th>
+              <th>{{ address.get_address_display }}</th>
+              <th>
+                <a href="#" class="btn btn-sm btn-info">{% trans 'Update' %}</a>
+                <a href="#" class="btn btn-sm btn-info">{% trans 'Remove' %}</a>
+              </th>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
-<div class='row'>
-  <div class='col-12'>
-  </div>
-  <div class='col-12'>
-  </div>
-  <div class='col-12'>
-  </div>
-  <div class='col-12'>
-  </div>
-</div>
-
-<div class='row'>
-</div>
-
 <div class='row'>
   <h3>{% trans 'Invoices' %}</h3>
   <table class="table mb-0">

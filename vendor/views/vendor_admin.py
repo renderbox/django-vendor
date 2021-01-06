@@ -7,7 +7,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import Invoice, Offer, Price, Receipt, CustomerProfile
+from vendor.models import Invoice, Offer, Price, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType
 from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet
 from django.utils.translation import ugettext as _
@@ -202,8 +202,16 @@ class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
     '''
     Gets all Customer Profile information for quick lookup and management
     '''
-    template_name = 'vendor/manage/profile_detail.html'
+    template_name = 'vendor/manage/receipt_detail.html'
     model = Receipt
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['payment'] = Payment.objects.get(transaction=context['object'].transaction)
+        return context
 
 
 class AdminProfileListView(LoginRequiredMixin, ListView):
@@ -221,4 +229,12 @@ class AdminProfileDetailView(LoginRequiredMixin, DetailView):
     template_name = 'vendor/manage/profile_detail.html'
     model = CustomerProfile
 
-        
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['products'] = self.object.receipts.filter(products__in=Product.on_site.all(), order_item__offer__terms__gte=TermType.PERPETUAL)
+        context['subscriptions'] = self.object.receipts.filter(products__in=Product.on_site.all(), order_item__offer__terms__lt=TermType.PERPETUAL)
+
+        context['products'] = [ product for receipt in self.object.receipts.all() for product in receipt.products.all() ]
+
+        return context
