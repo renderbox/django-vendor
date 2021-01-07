@@ -119,6 +119,7 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
 
         context['customer_who_own'] = customer_who_own
         context['customers_who_dont_own'] = customers_who_dont_own
+        context['formset'] = PriceFormSet(instance=self.object)
         return context
 
 
