@@ -348,8 +348,8 @@ class AuthorizeNetProcessorTests(TestCase):
         billing information. The test send an invalid expiration date to test the 
         transation fails.
         """
-        self.form_data['credit_card_form']['expire_month'] = str(timezone.now().month - 1)
-        self.form_data['credit_card_form']['expire_year'] = str(timezone.now().year)
+        self.form_data['credit_card_form']['expire_month'] = str(timezone.now().month)
+        self.form_data['credit_card_form']['expire_year'] = str(timezone.now().year - 1)
         
         self.processor.get_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
         self.processor.get_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
