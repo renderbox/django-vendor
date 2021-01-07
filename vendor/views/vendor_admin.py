@@ -282,8 +282,8 @@ class AddOfferToProfileView(LoginRequiredMixin, View):
 
         cart.add_offer(offer)
 
-        if not offer.current_price or not cart.total:
-            messages.info(request, _("Offer must have zero value"))
+        if offer.current_price or cart.total:
+            messages.info(request, _("Offer and Invoice must have zero value"))
             return redirect('vendor_admin:manager-offer-update', uuid=offer.uuid)
         
         processor = payment_processor(cart)
