@@ -973,7 +973,7 @@ msgstr "管理者：領収書の詳細"
 #: templates/vendor/manage/receipt_detail.html:11
 #: templates/vendor/manage/subscription_detail.html:11
 msgid "Overview"
-msgstr "Overview"
+msgstr "概要概要"
 
 #: templates/vendor/manage/receipt_detail.html:31
 #: templates/vendor/manage/subscription_detail.html:31

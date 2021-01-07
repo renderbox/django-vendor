@@ -28,7 +28,17 @@
         <tbody>
           {% for item in object_list %}
           <tr>
-            <td><a href="{% url 'vendor_admin:manager-subscription' item.uuid %}">{{ item.transaction }}</a></td>
+            <td>
+              {% if 'free' in item.transaction %}
+              <a class="text-dark">
+                {{ item.transaction|slice:"-10:" }}
+              </a>
+              {% else %}
+              <a href="{% url 'vendor_admin:manager-subscription' item.uuid %}">
+                {{ item.transaction }}
+              </a>
+              {% endif %}
+            </td>
             <td>{{ item.order_item.offer }}</td>
             <td>{{ item.order_item.offer.get_terms_display }}</td>
             <td>{{ item.profile }}</td>
