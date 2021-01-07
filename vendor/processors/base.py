@@ -146,6 +146,20 @@ class PaymentProcessorBase(object):
         """
         return today + timedelta(days=add_days)
 
+    def get_payment_schedule_start_date(self, subscription):
+        """
+        Determines the start date offset so the paymente gateway starts charging the monthly subscriptions
+        If the customer has already purchased the subscriptin it will return timezone.now()
+        """
+        if list(set(subscription.offer.products.all()) & self.invoice.profile.get_customer_products()):
+            return timezone.now()
+
+        units = subscription.offer.term_details.get('term_units', TermDetailUnits.MONTH)
+        if units == TermDetailUnits.MONTH:
+            return self.get_future_date_months(timezone.now(), self.get_trial_occurrences(subscription))
+        elif units == TermDetailUnits.DAY:
+            return self.get_future_date_days(timezone.now(), self.get_trial_occurrences(subscription))
+
     def create_receipt_by_term_type(self, product, order_item, term_type):
         today = timezone.now()
         receipt = Receipt()
@@ -161,8 +175,9 @@ class PaymentProcessorBase(object):
             receipt.end_date = self.get_future_date_months(today, total_months)
             receipt.auto_renew = True
         else:
-            total_months = term_type - 100
-            receipt.end_date = self.get_future_date_months(today, total_months)
+            total_months = term_type - 100                                             # Get if it is monthy, bi-monthly, quartarly of annually
+            trial_offset = self.get_payment_schedule_start_date(order_item.offer)      # If there are any trial days or months you need to offset it on the end date. 
+            receipt.end_date = self.get_future_date_months(offset, total_months)
             receipt.auto_renew = True
 
         return receipt
@@ -261,6 +276,9 @@ class PaymentProcessorBase(object):
         """
         # TODO: Should this validation be outside the call to authorize the payment the call?
         # Why bother to call the processor is the forms are wrong
+        if not self.invoice.total:
+            self.free_payment()
+            return None
         if not self.is_data_valid():
             return None
 
@@ -272,9 +290,7 @@ class PaymentProcessorBase(object):
         self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         vendor_process_payment.send(sender=self.__class__, invoice=self.invoice)
 
-        if not self.invoice.total:
-            self.free_payment()
-        elif self.invoice.get_one_time_transaction_order_items():
+        if self.invoice.get_one_time_transaction_order_items():
             self.create_payment_model()
             self.process_payment()
             self.save_payment_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)

@@ -246,20 +246,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def get_trial_occurrences(self, subscription):
         return subscription.offer.term_details.get('trial_occurrences', 0)
 
-    def get_payment_schedule_start_date(self, subscription):
-        """
-        Determines the start date offset so the paymente gateway starts charging the monthly subscriptions
-        If the customer has already purchased the subscriptin it will return timezone.now()
-        """
-        if list(set(subscription.offer.products.all()) & self.invoice.profile.get_customer_products()):
-            return timezone.now()
-
-        units = subscription.offer.term_details.get('term_units', TermDetailUnits.MONTH)
-        if units == TermDetailUnits.MONTH:
-            return self.get_future_date_months(timezone.now(), self.get_trial_occurrences(subscription))
-        elif units == TermDetailUnits.DAY:
-            return self.get_future_date_days(timezone.now(), self.get_trial_occurrences(subscription))
-
     def create_payment_scheduale_interval_type(self, subscription, subscription_type):
         """
         Create an interval schedule with fixed months as units for period lenght.
