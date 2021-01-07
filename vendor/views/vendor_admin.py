@@ -268,6 +268,7 @@ class VoidProductView(LoginRequiredMixin, View):
         messages.info(request, _("Customer has no longer access to Product"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
+
 class AddOfferToProfileView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
