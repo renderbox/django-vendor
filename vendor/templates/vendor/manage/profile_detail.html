@@ -45,8 +45,6 @@
       <div class='card-header'>
         <div class='d-flex flex-row justify-content-between'>
           {% trans 'Products Owned' %}
-          <a href="#" class="btn btn-sm btn-primary">+</a>
-        </div>
       </div>
       <div class='card-body'>
         <table class="table">
@@ -81,7 +79,10 @@
       <div class='card-header '>
         <div class='d-flex flex-row justify-content-between'>
           {% trans 'Saved Addresses' %}
+          {% comment %}
+          <!-- TODO: Need to implement -->
           <a href="#" class="btn btn-sm btn-primary">{% trans 'New' %}</a>
+          {% endcomment %}
         </div>
       </div>
       <div class='card-body'>
@@ -99,8 +100,12 @@
               <th>{{forloop.counter}}</th>
               <th>{{ address.get_address_display }}</th>
               <th>
+                <a href="#" class="btn btn-sm btn-info">{% trans 'TBD' %}</a>
+                {% comment %}
+                <!-- TODO: Need to implement -->
                 <a href="#" class="btn btn-sm btn-info">{% trans 'Update' %}</a>
                 <a href="#" class="btn btn-sm btn-info">{% trans 'Remove' %}</a>
+                {% endcomment %}
               </th>
             </tr>
             {% endfor %}
@@ -186,7 +191,11 @@
             <th>{{receipt.start_date|date:'Y-m-d'}}</th>
             <th>{{receipt.end_date|date:'Y-m-d'}}</th>
             <th>{{receipt.get_status_display}}</th>
+            <th><a class="btn btn-sm btn-warning">{% trans 'TBD' %}</a></th>
+            {% comment %}
+            <!-- TODO: Need to implement -->
             <th><a class="btn btn-sm btn-warning">{% trans 'Refund' %}</a></th>
+            {% endcomment %}
           </tr>
           {% endfor %}
           {% endfor %}
