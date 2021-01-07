@@ -269,11 +269,10 @@ class VoidProductView(LoginRequiredMixin, View):
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
 class AddOfferToProfileView(LoginRequiredMixin, View):
-    template_name = 'vendor/manage/add_product_to_profile.html'
 
     def get(self, request, *args, **kwargs):
-        customer_profile = CustomerProfile.objects.get(pk=kwargs.get('pk'))
-        offer = Offer.objects.get(uuid=kwargs['uuid'])
+        customer_profile = CustomerProfile.objects.get(pk=kwargs.get('uuid_profile'))
+        offer = Offer.objects.get(uuid=kwargs['uuid_offer'])
 
         cart = customer_profile.get_cart_or_checkout_cart()
         if cart.order_items.all().count():

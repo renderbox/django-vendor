@@ -818,7 +818,7 @@ class AuthorizeNetProcessorTests(TestCase):
     def test_subscription_update_payment(self):
         self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         subscription_list = self.processor.get_list_of_subscriptions()
-        if not subscription_list:
+        if not len(subscription_list):
             print("No subscriptions, Skipping Test")
             return
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
@@ -846,7 +846,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
     def test_cancel_subscription_success(self):
         subscription_list = self.processor.get_list_of_subscriptions()
-        if not subscription_list:
+        if not len(subscription_list):
             print("No subscriptions, Skipping Test")
             return
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]

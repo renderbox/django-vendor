@@ -18,8 +18,8 @@ urlpatterns = [
     path('subscriptions/', admin_views.AdminSubscriptionListView.as_view(), name="manager-subscriptions"),
     path('subscription/<uuid:uuid>', admin_views.AdminSubscriptionDetailView.as_view(), name="manager-subscription"),
     path('profiles/', admin_views.AdminProfileListView.as_view(), name="manager-profiles"),
-    path('profile/<int:pk>', admin_views.AdminProfileDetailView.as_view(), name="manager-profile"),
-    path('profile/<int:pk>/offer/<uuid:uuid>/add', admin_views.AddOfferToProfileView.as_view(), name="manager-profile-add-offer"),
+    path('profile/<uuid:uuid>', admin_views.AdminProfileDetailView.as_view(), name="manager-profile"),
+    path('profile/<uuid:uuid_profile>/offer/<uuid:uuid_offer>/add', admin_views.AddOfferToProfileView.as_view(), name="manager-profile-add-offer"),
     path('product/<uuid:uuid>/remove', admin_views.VoidProductView.as_view(), name="manager-profile-remove-product"),
 
     # reports

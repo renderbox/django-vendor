@@ -414,7 +414,7 @@ class AddressUpdateView(LoginRequiredMixin, FormView):
 
     def post(self, request, *args, **kwargs):
         address_form = AddressForm(request.POST)
-        address = Address.objects.get(pk=self.kwargs['pk'])
+        address = Address.objects.get(uuid=self.kwargs['uuid'])
 
         if not address_form.is_valid():
             messages.info(request, _(f"Failed: {address_form.errors}"))
