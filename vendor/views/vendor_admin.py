@@ -239,6 +239,7 @@ class AdminProfileListView(LoginRequiredMixin, ListView):
     model = CustomerProfile
     queryset = CustomerProfile.on_site.all()
 
+
 class AdminProfileDetailView(LoginRequiredMixin, DetailView):
     '''
     Gets all Customer Profile information for quick lookup and management
