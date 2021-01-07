@@ -282,7 +282,7 @@ class AddOfferToProfileView(LoginRequiredMixin, View):
 
         cart.add_offer(offer)
 
-        if not offer.current_price and not cart.total:
+        if not offer.current_price or not cart.total:
             messages.info(request, _("Offer must have zero value"))
             return redirect('vendor_admin:manager-offer-update', uuid=offer.uuid)
         
