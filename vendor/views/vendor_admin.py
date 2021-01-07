@@ -1,19 +1,26 @@
 from django.apps import apps
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import TemplateView, View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
-from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import Invoice, Offer, Price, Receipt, CustomerProfile, Payment
-from vendor.models.choice import TermType, PaymentTypes
-from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet, CreditCardForm, AddressForm
 from django.utils.translation import ugettext as _
 from django.utils import timezone
-from django.contrib.sites.shortcuts import get_current_site
+
+from vendor.config import VENDOR_PRODUCT_MODEL
+from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet, CreditCardForm, AddressForm
+from vendor.models import Invoice, Offer, Price, Receipt, CustomerProfile, Payment
+from vendor.models.choice import TermType, PaymentTypes
+from vendor.processors import PaymentProcessor
+from django.contrib.admin.views.main import ChangeList
+
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
+
+payment_processor = PaymentProcessor
 #############
 # Admin Views
 
@@ -106,8 +113,12 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['formset'] = PriceFormSet(instance=self.object)
+        offer_products = self.object.products.all()
+        customer_who_own = set([customer_profile for customer_profile in CustomerProfile.objects.all() if customer_profile.has_product(offer_products) ])
+        customers_who_dont_own =  CustomerProfile.objects.all().exclude(pk__in=[ customer_profile.pk for customer_profile in customer_who_own ])
 
+        context['customer_who_own'] = customer_who_own
+        context['customers_who_dont_own'] = customers_who_dont_own
         return context
 
 
@@ -255,14 +266,26 @@ class VoidProductView(LoginRequiredMixin, View):
 
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
-# TODO: Need to implement. This will come the next pr.
-class AddProductToProfile(LoginRequiredMixin, TemplateView):
+class AddOfferToProfileView(LoginRequiredMixin, View):
     template_name = 'vendor/manage/add_product_to_profile.html'
 
     def get(self, request, *args, **kwargs):
-        context = super().get_context_data(**kwargs)
-        profile = CustomerProfile.objects.get(pk=kwargs.get('pk'))
-        products_owned = profile.get_customer_products()
+        customer_profile = CustomerProfile.objects.get(pk=kwargs.get('pk'))
+        offer = Offer.objects.get(uuid=kwargs['uuid'])
 
+        cart = customer_profile.get_cart_or_checkout_cart()
+        if cart.order_items.all().count():
+            messages.info(request, _("You must empty Cart"))
+            return redirect('vendor_admin:manager-offer-update', uuid=offer.uuid)
 
-        return render(request, self.template_name, context)
+        cart.add_offer(offer)
+
+        if not offer.current_price and not cart.total:
+            messages.info(request, _("Offer must have zero value"))
+            return redirect('vendor_admin:manager-offer-update', uuid=offer.uuid)
+        
+        processor = payment_processor(cart)
+        processor.authorize_payment()
+
+        messages.info(request, _("Offer Added To Customer Profile"))
+        return redirect('vendor_admin:manager-offer-update', uuid=offer.uuid)

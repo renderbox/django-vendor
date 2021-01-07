@@ -11,7 +11,7 @@ from django.conf import settings
 from django.utils import timezone
 from vendor import config
 from vendor.models import Payment, Invoice, Receipt, Address
-from vendor.models.choice import PurchaseStatus, TermType
+from vendor.models.choice import PurchaseStatus, TermType, TermDetailUnits
 ##########
 # SIGNALS
 
@@ -176,8 +176,8 @@ class PaymentProcessorBase(object):
             receipt.auto_renew = True
         else:
             total_months = term_type - 100                                             # Get if it is monthy, bi-monthly, quartarly of annually
-            trial_offset = self.get_payment_schedule_start_date(order_item.offer)      # If there are any trial days or months you need to offset it on the end date. 
-            receipt.end_date = self.get_future_date_months(offset, total_months)
+            trial_offset = self.get_payment_schedule_start_date(order_item)      # If there are any trial days or months you need to offset it on the end date. 
+            receipt.end_date = self.get_future_date_months(trial_offset, total_months)
             receipt.auto_renew = True
 
         return receipt
@@ -324,11 +324,17 @@ class PaymentProcessorBase(object):
         Called to handle an invoice with total zero.  
         This are the base internal steps to process a free payment.
         """
-        self.create_payment_model()
+        self.payment = Payment(profile=self.invoice.profile,
+                               amount=self.invoice.total,
+                               provider=self.provider,
+                               invoice=self.invoice,
+                               created=timezone.now()
+                               )
+        self.payment.save()
         self.transaction_submitted = True
 
         self.payment.success = True
-        self.payment.transation = f"{self.payment.pk}-free"
+        self.payment.transaction = f"{self.payment.uuid}-free"
         self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
         self.payment.save()
         

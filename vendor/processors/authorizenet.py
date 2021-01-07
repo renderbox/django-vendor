@@ -20,7 +20,7 @@ except ModuleNotFoundError:
     pass
 
 from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models.choice import TransactionTypes, PaymentTypes, TermType, PurchaseStatus, TermDetailUnits
+from vendor.models.choice import TransactionTypes, PaymentTypes, TermType, PurchaseStatus
 from vendor.models.invoice import Invoice
 from vendor.models.address import Country
 from vendor.models.payment import Payment
