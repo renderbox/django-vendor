@@ -249,7 +249,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def get_payment_schedule_start_date(self, subscription):
         """
         Determines the start date offset so the paymente gateway starts charging the monthly subscriptions
+        If the customer has already purchased the subscriptin it will return timezone.now()
         """
+        if list(set(subscription.offer.products.all()) & self.invoice.profile.get_customer_products()):
+            return timezone.now()
+
         units = subscription.offer.term_details.get('term_units', TermDetailUnits.MONTH)
         if units == TermDetailUnits.MONTH:
             return self.get_future_date_months(timezone.now(), self.get_trial_occurrences(subscription))

@@ -60,7 +60,7 @@
           <div class='d-flex flex-column w-100 px-3 py-2'>
             <div class='font-weight-bold'>{% trans 'Actions:' %}</div>
             {% if object.status == 30 %}
-            <form id="cancelSubscription" class="align-itmes-center" method="post" action="">
+            <form class="align-itmes-center" method="post" action="{{ object.order_item.offer.add_to_cart_link }}">
               {% csrf_token %}
               <button class="btn btn-sm btn-primary" type="submit">{% trans 'Renew Subscription' %}</button>
             </form>

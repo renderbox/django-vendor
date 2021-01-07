@@ -112,7 +112,10 @@ class CustomerProfile(CreateUpdateModelBase):
         return address, created
 
     def get_customer_products(self):
-        return [ product for receipt in self.receipts.filter(status__gte=PurchaseStatus.COMPLETE) for product in receipt.products.all() ]
-
+        """
+        Get all products that a customer profile has ever owned
+        """
+        return set([ product for receipt in self.receipts.filter(status__gte=PurchaseStatus.COMPLETE) for product in receipt.products.all() ])
+    
     def get_completed_receipts(self):
         return self.receipts.filter(status__gte=PurchaseStatus.COMPLETE)
