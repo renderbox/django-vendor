@@ -119,6 +119,12 @@ class CustomerProfile(CreateUpdateModelBase):
         Get all products that the customer has purchased and returns True if it has.
         """
         return bool(self.receipts.filter(Q(products__in=products), Q(status__gte=PurchaseStatus.COMPLETE)).first())
+
+    def get_products_pk_previously_owned(self, products):
+        """
+        Get all products pk that the customer has purchased. .
+        """
+        return self.receipts.filter(Q(products__in=products), Q(status__gte=PurchaseStatus.COMPLETE)).values_list('products', flat=True)
     
     def get_completed_receipts(self):
         return self.receipts.filter(status__gte=PurchaseStatus.COMPLETE)
