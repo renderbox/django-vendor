@@ -114,10 +114,10 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
 
         offer_products = self.object.products.all()
-        customer_who_own = set([customer_profile for customer_profile in CustomerProfile.objects.all() if customer_profile.has_product(offer_products) ])
-        customers_who_dont_own =  CustomerProfile.objects.all().exclude(pk__in=[ customer_profile.pk for customer_profile in customer_who_own ])
+        customers_who_own = CustomerProfile.objects.filter(receipts__products__in=offer_products)
+        customers_who_dont_own =  CustomerProfile.objects.all().exclude(pk__in=[ customer_profile.pk for customer_profile in customers_who_own.all() ])
 
-        context['customer_who_own'] = customer_who_own
+        context['customers_who_own'] = customers_who_own
         context['customers_who_dont_own'] = customers_who_dont_own
         context['formset'] = PriceFormSet(instance=self.object)
         return context
@@ -246,6 +246,8 @@ class AdminProfileDetailView(LoginRequiredMixin, DetailView):
     '''
     template_name = 'vendor/manage/profile_detail.html'
     model = CustomerProfile
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -273,7 +275,7 @@ class VoidProductView(LoginRequiredMixin, View):
 class AddOfferToProfileView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
-        customer_profile = CustomerProfile.objects.get(pk=kwargs.get('uuid_profile'))
+        customer_profile = CustomerProfile.objects.get(uuid=kwargs.get('uuid_profile'))
         offer = Offer.objects.get(uuid=kwargs['uuid_offer'])
 
         cart = customer_profile.get_cart_or_checkout_cart()
@@ -283,8 +285,9 @@ class AddOfferToProfileView(LoginRequiredMixin, View):
 
         cart.add_offer(offer)
 
-        if offer.current_price or cart.total:
+        if offer.current_price() or cart.total:
             messages.info(request, _("Offer and Invoice must have zero value"))
+            cart.remove_offer(offer)
             return redirect('vendor_admin:manager-offer-update', uuid=offer.uuid)
         
         processor = payment_processor(cart)

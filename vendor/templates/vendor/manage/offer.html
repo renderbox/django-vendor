@@ -35,7 +35,7 @@
             </div>
             <div class='card-body'>
                 <ul class="list-group">
-                    {% for customer_profile in customer_who_own %}
+                    {% for customer_profile in customers_who_own.all %}
                     <li class="list-group-item">{{customer_profile}}</li>
                     {% endfor %}
                 </ul>

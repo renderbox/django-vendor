@@ -114,11 +114,11 @@ class CustomerProfile(CreateUpdateModelBase):
         address, created = self.addresses.get_or_create(name=address.address_1, first_name=address.first_name, last_name=address.last_name, address_1=address.address_1, address_2=address.address_2, locality=address.locality, state=address.state, country=address.country, postal_code=address.postal_code, profile=self)
         return address, created
 
-    def get_customer_products(self):
+    def has_previously_owned_products(self, products):
         """
-        Get all products that a customer profile has ever owned
+        Get all products that the customer has purchased and returns True if it has.
         """
-        return set([ product for receipt in self.receipts.filter(status__gte=PurchaseStatus.COMPLETE) for product in receipt.products.all() ])
+        return bool(self.receipts.filter(Q(products__in=products), Q(status__gte=PurchaseStatus.COMPLETE)))
     
     def get_completed_receipts(self):
         return self.receipts.filter(status__gte=PurchaseStatus.COMPLETE)
