@@ -1,5 +1,6 @@
 import uuid
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
@@ -12,7 +13,9 @@ from .choice import CURRENCY_CHOICES, TermType, PurchaseStatus
 from .invoice import Invoice
 from .utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
+# from vendor.config import DEFAULT_CURRENCY, VENDOR_PRODUCT_MODEL
 
+# Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 #####################
 # CUSTOMER PROFILE
 #####################
@@ -120,11 +123,8 @@ class CustomerProfile(CreateUpdateModelBase):
         """
         return bool(self.receipts.filter(Q(products__in=products), Q(status__gte=PurchaseStatus.COMPLETE)).first())
 
-    def get_products_pk_previously_owned(self, products):
-        """
-        Get all products pk that the customer has purchased. .
-        """
-        return self.receipts.filter(Q(products__in=products), Q(status__gte=PurchaseStatus.COMPLETE)).values_list('products', flat=True)
-    
+    # def get_customer_products(self):
+    #     return Product.objects.filter(receipts__profile=self)
+
     def get_completed_receipts(self):
         return self.receipts.filter(status__gte=PurchaseStatus.COMPLETE)
