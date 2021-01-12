@@ -2,11 +2,12 @@ from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.views import View
 from django.utils import timezone
-
+from django.views.decorators.csrf import csrf_exempt
 from vendor.models import Receipt, Invoice, Payment
 from vendor.processors import PaymentProcessor
 
 payment_processor = PaymentProcessor
+
 
 class AuthroizeCaptureAPI(View):
     """
@@ -14,6 +15,10 @@ class AuthroizeCaptureAPI(View):
     If there is a subscription id the endpoint will create a Invoice, Payment and receipt
     to update such subscription. If no subscription id is passed there is nothing to process.
     """
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+    
     def post(self, request, *args, **kwargs):
         if 'subscription' not in kwargs:
             return JsonResponse({})
