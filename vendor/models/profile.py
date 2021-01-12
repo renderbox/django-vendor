@@ -13,8 +13,8 @@ from .choice import CURRENCY_CHOICES, TermType, PurchaseStatus
 from .invoice import Invoice
 from .utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
+# TODO: Need to find way to properly import and load the products to the profile model to be able to get the products the profile has had
 # from vendor.config import DEFAULT_CURRENCY, VENDOR_PRODUCT_MODEL
-
 # Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 #####################
 # CUSTOMER PROFILE
@@ -122,7 +122,7 @@ class CustomerProfile(CreateUpdateModelBase):
         Get all products that the customer has purchased and returns True if it has.
         """
         return bool(self.receipts.filter(products__in=products, status__gte=PurchaseStatus.COMPLETE).first())
-
+    # TODO: Need to find way to properly import and load the products to the profile model to be able to get the products the profile has had
     # def get_customer_products(self):
     #     return Product.objects.filter(receipts__profile=self)
 
