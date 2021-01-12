@@ -148,8 +148,8 @@ class PaymentProcessorBase(object):
 
     def get_payment_schedule_start_date(self, subscription):
         """
-        Determines the start date offset so the paymente gateway starts charging the monthly subscriptions
-        If the customer has already purchased the subscriptin it will return timezone.now()
+        Determines the start date offset so the payment gateway starts charging the monthly subscriptions
+        If the customer has already purchased the subscription it will return timezone.now()
         """
         if self.invoice.profile.has_previously_owned_products(subscription.offer.products.all()):
             return timezone.now()

@@ -22,8 +22,7 @@ class ModelInvoiceTests(TestCase):
         self.shirt_offer = Offer.objects.get(pk=1)
         self.hamster = Offer.objects.get(pk=3)
         self.mug_offer = Offer.objects.get(pk=4)
-
-    
+ 
     def test_default_site_id_saved(self):
         invoice = Invoice()
         invoice.profile = CustomerProfile.objects.get(pk=1)
@@ -122,6 +121,18 @@ class ModelInvoiceTests(TestCase):
         self.existing_invoice.add_offer(recurring_offer)
 
         self.assertEquals(self.existing_invoice.get_one_time_transaction_order_items().count(), self.existing_invoice.order_items.all().count() - 1)
+
+    def test_empty_cart(self):
+        self.assertNotEqual(0, self.existing_invoice.order_items.count())
+        self.existing_invoice.empty_cart()
+        self.assertEqual(0, self.existing_invoice.order_items.count())
+
+    def test_empty_cart_in_checkout_state(self):
+        self.existing_invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        self.existing_invoice.save()
+        self.assertNotEqual(0, self.existing_invoice.order_items.count())
+        self.existing_invoice.empty_cart()
+        self.assertNotEqual(0, self.existing_invoice.order_items.count())
     
 
 class CartViewTests(TestCase):

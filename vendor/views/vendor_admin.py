@@ -279,10 +279,7 @@ class AddOfferToProfileView(LoginRequiredMixin, View):
         offer = Offer.objects.get(uuid=kwargs['uuid_offer'])
 
         cart = customer_profile.get_cart_or_checkout_cart()
-        if cart.order_items.all().count():
-            messages.info(request, _("You must empty Cart"))
-            return redirect('vendor_admin:manager-offer-update', uuid=offer.uuid)
-
+        cart.empty_cart()
         cart.add_offer(offer)
 
         if offer.current_price() or cart.total:

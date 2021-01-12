@@ -2,10 +2,12 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.utils import timezone
 
 from core.models import Product
 
 from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerProfile
+from vendor.models.choice import PurchaseStatus, TermType
 
 
 
@@ -17,6 +19,7 @@ class ModelCustomerProfileTests(TestCase):
         self.user = User(username='test', first_name='Bob', last_name='Ross', password='helloworld')
         self.user.save()
         self.customer_profile = CustomerProfile()
+        self.customer_profile.save()
 
         self.customer_profile_existing = CustomerProfile.objects.get(pk=1)
 
@@ -99,7 +102,111 @@ class ModelCustomerProfileTests(TestCase):
     
         self.assertEqual(cart.status, Invoice.InvoiceStatus.CHECKOUT)
 
+    def test_get_cart_items_count(self):
+        invoice = Invoice.objects.get(pk=1)
+        self.assertEqual(invoice.order_items.count(), self.customer_profile_existing.get_cart_items_count())
 
-class ViewCustomerProfileTests(TestCase):
+    def test_get_cart_items_count_empty(self):
+        self.assertEqual(0, self.customer_profile.get_cart_items_count())
+    
+    def test_get_recurring_receipts(self):
+        cart = self.customer_profile.get_cart_or_checkout_cart()
+        subscription_offer = Offer.objects.get(pk=5)
+        cart.add_offer(subscription_offer)
+
+        receipt = Receipt(profile=self.customer_profile,
+                          order_item=cart.order_items.first(),
+                          start_date=timezone.now(),
+                          transaction="123",
+                          status=PurchaseStatus.COMPLETE)
+        receipt.save()
+        self.assertEqual(1, len(self.customer_profile.get_recurring_receipts()))
+        self.assertEqual(0, len(self.customer_profile.get_one_time_transaction_receipts()))
+
+
+    def test_get_one_time_transaction_receipts(self):
+        cart = self.customer_profile.get_cart_or_checkout_cart()
+        offer = Offer.objects.get(pk=3)
+        cart.add_offer(offer)
+
+        receipt = Receipt(profile=self.customer_profile,
+                          order_item=cart.order_items.first(),
+                          start_date=timezone.now(),
+                          transaction="123",
+                          status=PurchaseStatus.COMPLETE)
+        receipt.save()
+        self.assertEqual(0, len(self.customer_profile.get_recurring_receipts()))
+        self.assertEqual(1, len(self.customer_profile.get_one_time_transaction_receipts()))
+
+    def test_has_previously_owned_products_true(self):
+        cart = self.customer_profile.get_cart_or_checkout_cart()
+        offer = Offer.objects.get(pk=3)
+        cart.add_offer(offer)
+
+        receipt = Receipt(profile=self.customer_profile,
+                          order_item=cart.order_items.first(),
+                          start_date=timezone.now(),
+                          transaction="123",
+                          status=PurchaseStatus.COMPLETE)
+        receipt.save()
+        receipt.products.add(offer.products.first())
+        self.assertTrue(self.customer_profile.has_previously_owned_products(Product.objects.filter(pk=3)))
+
+    def test_has_previously_owned_products_false(self):
+        cart = self.customer_profile.get_cart_or_checkout_cart()
+        
+        self.assertFalse(self.customer_profile.has_previously_owned_products(Product.objects.filter(pk=3)))
+    
+    def test_get_completed_receipts(self):
+        cart = self.customer_profile.get_cart_or_checkout_cart()
+        offer = Offer.objects.get(pk=3)
+        cart.add_offer(offer)
+
+        receipt = Receipt(profile=self.customer_profile,
+                          order_item=cart.order_items.first(),
+                          start_date=timezone.now(),
+                          transaction="123",
+                          status=PurchaseStatus.COMPLETE)
+        receipt.save()
+        self.assertEqual(1, len(self.customer_profile.get_completed_receipts()))
+    
+    def test_get_completed_receipts_empty(self):
+        cart = self.customer_profile.get_cart_or_checkout_cart()
+        offer = Offer.objects.get(pk=3)
+        cart.add_offer(offer)
+
+        self.assertEqual(0, len(self.customer_profile.get_completed_receipts()))
+
+class AddOfferToProfileView(TestCase):
+
+    fixtures = ['user', 'unit_test']
+
     def setUp(self):
-        pass
+        self.client = Client()
+        self.user = User.objects.get(pk=1)
+        self.client.force_login(self.user)
+        self.customer_profile = CustomerProfile.objects.get(pk=1)
+        self.free_offer = Offer.objects.create(name='Free Offer',
+                                               start_date=timezone.now(),
+                                               terms=TermType.MONTHLY_SUBSCRIPTION,
+                                               term_details={ "term_units": 20,
+                                                              "trail_occurrences": 1})
+        price = Price.objects.create(offer=self.free_offer, cost=0, start_date=timezone.now())
+        self.free_offer.products.add(Product.objects.get(pk=4))
+
+    def test_view_cart_status_code(self):
+        url = reverse('vendor_admin:manager-profile-add-offer', kwargs={'uuid_profile': self.customer_profile.uuid, 'uuid_offer': self.free_offer.uuid})
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 302)
+
+    def test_adds_free_product_to_profile_success(self):
+        url = reverse('vendor_admin:manager-profile-add-offer', kwargs={'uuid_profile': self.customer_profile.uuid, 'uuid_offer': self.free_offer.uuid})
+        response = self.client.get(url)
+        self.assertTrue(self.customer_profile.receipts.count())
+
+    def test_adds_free_product_to_profile_fail(self):
+        url = reverse('vendor_admin:manager-profile-add-offer', kwargs={'uuid_profile': self.customer_profile.uuid, 'uuid_offer': Offer.objects.get(pk=1).uuid})
+        response = self.client.get(url)
+        self.assertFalse(self.customer_profile.receipts.count())
+
+    
