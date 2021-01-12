@@ -408,7 +408,7 @@ class PaymentProcessorBase(object):
         self.transaction_submitted = True
 
         self.payment.success = True
-        payment.transaction = subscription_id
+        self.payment.transaction = subscription_id
         self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
         
         self.payment.save()
