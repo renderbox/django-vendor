@@ -180,6 +180,7 @@
     "fields": {
         "created": "2020-06-30T01:15:00.350Z",
         "updated": "2020-06-30T01:15:00.350Z",
+        "uuid": "cbb49050-c7df-465f-91d1-261c0afa6c0f",
         "user": 1,
         "currency": "mxn",
         "site": 1

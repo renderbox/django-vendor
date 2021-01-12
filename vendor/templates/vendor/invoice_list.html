@@ -26,7 +26,7 @@
         <tbody>
           {% for item in object_list %}
           <tr>
-            <td><a class="text-primary" href="{% url 'vendor_admin:manager-order-detail' item.uuid %}">{{ item.uuid }}</a>
+            <td><a class="text-primary" href="{% url 'vendor_admin:manager-order-detail' item.uuid %}">{{ item.pk }}</a>
             </td>
             <td>{{ item.get_invoice_display }}</td>
             <td>{{ item.get_status_display }}</td>

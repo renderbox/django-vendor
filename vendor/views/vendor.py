@@ -344,6 +344,7 @@ class ProductsListView(LoginRequiredMixin, ListView):
     template_name = 'vendor/purchase_list.html'
 
     def get_queryset(self):
+        # return self.request.user.customer_profile.get(site=get_current_site(self.request)).get_completed_receipts()
         return self.request.user.customer_profile.get(site=get_current_site(self.request)).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
 
 
@@ -385,7 +386,6 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
 
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
-
 class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
     form_class = CreditCardForm()
     success_url = reverse_lazy('vendor:customer-subscriptions')
@@ -409,6 +409,36 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
         messages.info(request, _(f"Success: Payment Updated"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
+class AddressUpdateView(LoginRequiredMixin, FormView):
+    form_class = BillingAddressForm
+
+    def post(self, request, *args, **kwargs):
+        address_form = AddressForm(request.POST)
+        address = Address.objects.get(uuid=self.kwargs['uuid'])
+
+        if not address_form.is_valid():
+            messages.info(request, _(f"Failed: {address_form.errors}"))
+        else:
+            messages.info(request, _(f"Success: Address Updated"))
+            update_address = address_form.save(commit=False)
+            address.first_name = update_address.first_name
+            address.last_name = update_address.last_name
+            address.address_1 = update_address.address_1
+            address.address_2 = update_address.address_2
+            address.locality = update_address.locality
+            address.state = update_address.state
+            address.country = update_address.country
+            address.postal_code = update_address.postal_code
+            address.save()
+        
+        return redirect(request.META.get('HTTP_REFERER', self.success_url))
+
+
+class RenewSubscription(LoginRequiredMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        pass
+        
 
 class ShippingAddressUpdateView(LoginRequiredMixin, UpdateView):
     model = Address
@@ -421,4 +451,3 @@ class ShippingAddressUpdateView(LoginRequiredMixin, UpdateView):
         messages.info(self.request, _("Shipping Address Updated"))
         return self.request.META.get('HTTP_REFERER', self.success_url)
     
-

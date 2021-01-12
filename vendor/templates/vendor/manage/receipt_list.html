@@ -1,0 +1,64 @@
+{% extends "vendor/manage/base.html" %}
+{% load i18n %}
+
+{% block vendor_content %}
+<div class="container-fluid">
+
+  <nav aria-label="breadcrumb">
+    <!-- <ol class="breadcrumb"> -->
+    <h1>{% trans 'Customers subscriptions' %}</h1>
+    <!-- </ol> -->
+  </nav>
+  <div class="row">
+    <div class="col">
+      <table class="table table-striped">
+
+        <thead>
+          <tr>
+            <th scope="col">{% trans 'Subscription ID' %}</th>
+            <th scope="col">{% trans 'Subscription' %}</th>
+            <th scope="col">{% trans 'Terms' %}</th>
+            <th scope="col">{% trans 'Profile' %}</th>
+            <th scope="col">{% trans 'Start Date' %}</th>
+            <th scope="col">{% trans 'End Date' %}</th>
+            <th scope="col">{% trans 'Status' %}</th>
+            <th scope="col">{% trans 'Total' %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in object_list %}
+          <tr>
+            <td>
+              {% if 'free' in item.transaction %}
+              <a class="text-dark">
+                {{ item.transaction|slice:"-10:" }}
+              </a>
+              {% else %}
+              <a href="{% url 'vendor_admin:manager-subscription' item.uuid %}">
+                {{ item.transaction }}
+              </a>
+              {% endif %}
+            </td>
+            <td>{{ item.order_item.offer }}</td>
+            <td>{{ item.order_item.offer.get_terms_display }}</td>
+            <td>{{ item.profile }}</td>
+            <td>{{ item.start_date|date:"M d, Y" }}</td>
+            <td>{{ item.end_date|date:"M d, Y" }}</td>
+            <td>{{ item.get_status_display }}</td>
+            <td>${{ item.order_item.price }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td>
+              {% trans 'No Orders' %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
