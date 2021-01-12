@@ -61,7 +61,7 @@ class BaseProcessorTests(TestCase):
 
     def test_create_payment_model_success(self):
         self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
-        self.base_processor.get_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+        self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
         self.base_processor.is_data_valid()
         self.base_processor.create_payment_model()
 
@@ -152,12 +152,12 @@ class BaseProcessorTests(TestCase):
         self.assertIsNotNone(self.base_processor.billing_address)
         self.assertIn(self.form_data['billing_address_form']['address_1'], self.base_processor.billing_address.data['address_1'])
 
-    def test_get_payment_info_form_data_fail(self):
+    def test_set_payment_info_form_data_fail(self):
         with self.assertRaises(TypeError):
-            self.base_processor.get_payment_info_form_data(self.form_data)
+            self.base_processor.set_payment_info_form_data(self.form_data)
 
-    def test_get_payment_info_form_data_success(self):
-        self.base_processor.get_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+    def test_set_payment_info_form_data_success(self):
+        self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
 
         self.assertIsNotNone(self.base_processor.payment_info)
         self.assertIn(self.form_data['credit_card_form']['cvv_number'], self.base_processor.payment_info.data['cvv_number'])
@@ -175,7 +175,7 @@ class BaseProcessorTests(TestCase):
         base_processor = PaymentProcessorBase(invoice)
 
         base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)        
-        base_processor.get_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+        base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
 
         base_processor.authorize_payment()
 
@@ -327,7 +327,7 @@ class AuthorizeNetProcessorTests(TestCase):
         address, process the payment and make sure it succeeds.
         """
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
         self.processor.authorize_payment()
 
@@ -345,7 +345,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['card_number'] = '5424000000015'
 
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         self.processor.authorize_payment()
 
         self.assertIsNone(self.processor.payment)
@@ -362,7 +362,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['expire_year'] = str(timezone.now().year - 1)
         
         self.processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
         
         self.processor.authorize_payment()
 
@@ -383,7 +383,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
@@ -404,7 +404,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
@@ -426,7 +426,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
@@ -447,7 +447,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
@@ -472,7 +472,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['billing_address_form']['postal_code'] = '46201'
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
@@ -489,7 +489,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['card_number'] = '2223000010309711'
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
                         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
@@ -509,7 +509,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['card_number'] = '4007000000027'
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
@@ -529,7 +529,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['card_number'] = '2223000010309711'
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
@@ -549,7 +549,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
@@ -570,7 +570,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['billing_address_form']['postal_code'] = '46208'
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
         self.processor.authorize_payment()
 
@@ -589,7 +589,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
@@ -609,7 +609,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
@@ -629,7 +629,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
@@ -649,7 +649,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         
         self.processor.invoice.total = randrange(1,1000)
         self.processor.authorize_payment()
@@ -817,7 +817,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
         
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
 
         self.processor.authorize_payment()
 
@@ -844,7 +844,7 @@ class AuthorizeNetProcessorTests(TestCase):
         dummy_payment.save()
 
         if active_subscriptions:
-            self.processor.get_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+            self.processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
             self.processor.subscription_update_payment(dummy_receipt)
             dummy_payment.refresh_from_db()
             print(f'Message: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}\nSubscription ID: {dummy_receipt.transaction}')
@@ -880,7 +880,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.existing_invoice.save()
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         self.processor.is_data_valid()
         self.processor.create_payment_model()
         self.assertTrue(self.processor.is_card_valid())
@@ -896,7 +896,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.existing_invoice.save()
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.get_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         self.processor.is_data_valid()
         self.processor.create_payment_model()
         self.assertFalse(self.processor.is_card_valid())
