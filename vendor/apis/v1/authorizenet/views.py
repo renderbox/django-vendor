@@ -1,11 +1,12 @@
-import urllib.parse
+import json
 import hashlib
 import hmac
+import urllib.parse
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, QueryDict
 from django.views import View
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -17,14 +18,23 @@ payment_processor = PaymentProcessor
 
 
 class AuthorizeNetBaseAPI(View):
+    """
+    Base class to handel Authroize.Net webhooks.
+    """
 
     @csrf_exempt
     def dispatch(self, *args, **kwargs):
-        if not self.valid_post():
+        """
+        Dispatch override to accept post entries without csfr given that they include
+        a X-Anet-Signature in there header that must be encoded with Signature Key using
+        HMAC-sha512 on the payload.
+        Reference: https://developer.authorize.net/api/reference/features/webhooks.html
+        """
+        if self.request.POST and not self.is_valid_post():
             raise PermissionDenied()
         return super().dispatch(*args, **kwargs)
     
-    def valid_post(self):
+    def is_valid_post(self):
         payload_encoded = urllib.parse.urlencode(self.request.POST).encode('utf8')
         hash_value =  hmac.new(bytes(settings.AUTHORIZE_NET_SIGNITURE_KEY, 'utf-8'), payload_encoded, hashlib.sha512).hexdigest()
         
@@ -37,12 +47,15 @@ class AuthorizeNetBaseAPI(View):
 class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
     """
     API endpoint to get event notifications from authorizenet when a authcaputre is created.
-    If there is a subscription id the endpoint will create a Invoice, Payment and receipt
-    to update such subscription. If no subscription id is passed there is nothing to process.
+    If there is a subscription tied to the transaction, it will renew such subscription
     """
     
     def post(self, request, *args, **kwargs):
-        transaction_id = request.POST.get('id')
+        if isinstance(request.POST.get('payload'), dict):
+            payload = request.POST.get('payload')
+        else:
+            payload = json.loads(request.POST.get('payload'))
+        transaction_id = payload['id']
         dummy_invoice = Invoice()
 
         processor = payment_processor(dummy_invoice)
@@ -52,41 +65,21 @@ class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
         if not hasattr(transaction_detail, 'subscription'):
             return JsonResponse({})
 
-        past_receipt = Receipt.objects.get(transaction=transaction_detail.subscription.id.text)
+        past_receipt = Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created').first()
 
         payment_info = {
             'account_number': transaction_detail.payment.creditCard.cardNumber.text[-4:],
             'account_type': transaction_detail.payment.creditCard.cardType.text,
-            'full_name': " ".join(transaction_detail.billTo.firstName.text,transaction_detail.billTo.lastName.text),
+            'full_name': " ".join([transaction_detail.billTo.firstName.text,transaction_detail.billTo.lastName.text]),
             'raw': str({**request.POST, **(request.POST.__dict__)})}
         
 
         invoice = Invoice(status=Invoice.InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
-        invoice.profile = past_receipt.customer_profile
+        invoice.profile = past_receipt.profile
         invoice.save()
-        invoice.addOffer(past_receipt.order_item.offer)
+        invoice.add_offer(past_receipt.order_item.offer)
         
         processor = PaymentProcessor(invoice)
         processor.renew_subscription(past_receipt, payment_info)
-
-        # payment = Payment()
-        # payment.transaction = old_receipt.transaction
-        # payment.invoice = invoice
-        # payment.provider = 'TODO:'
-        # payment.amount = invoice.total
-        # payment.billing_address = Payment.objects.get(transaction=old_receipt.transaction).values_list('billing_address')
-        # payment.result['raw'] = str({**kwargs, **(kwargs.__dict__)})
-        # payment.success = True
-        # payment.payee_full_name = 'todo'
-        # payment.save()
-
-        # new_receipt = Receipt()
-        # new_receipt = old_receipt.profile
-        # new_receipt.order_item = old_receipt.order_item
-        # new_receipt.start_date = timezone.now()
-        # new_receipt.end_date = 'todo'
-        # new_receipt.transaction = old_receipt.transaction
-        # new_receipt.status = old_receipt.status
-        # new_receipt.save
 
         return JsonResponse({})
