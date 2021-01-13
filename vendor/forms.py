@@ -55,17 +55,6 @@ class OfferForm(forms.ModelForm):
         return cleaned_data
 
 
-PriceFormSet = inlineformset_factory(
-    Offer,
-    Price,
-    form=PriceForm,
-    can_delete=True,
-    exclude=('offer',),
-    validate_max=True,
-    min_num=1,
-    extra=0)
-
-
 class AddressForm(forms.ModelForm):
 
     class Meta:
@@ -232,7 +221,7 @@ class CreditCardForm(PaymentFrom):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         today = datetime.now()
-        self.fields['expire_year'].choices = [(x, x) for x in range(today.year, today.year + 15)]
+        self.fields['expire_year'].choices = [(x, x) for x in range(today.year - 1, today.year + 15)]
         self.fields['expire_year'].initial = (today.year, today.year)
 
 
@@ -300,3 +289,19 @@ class DateRangeForm(forms.Form):
             del(cleaned_data['end_date'])
             
         return cleaned_data
+
+
+
+##########
+# From Sets
+##########
+
+PriceFormSet = inlineformset_factory(
+    Offer,
+    Price,
+    form=PriceForm,
+    can_delete=True,
+    exclude=('offer',),
+    validate_max=True,
+    min_num=1,
+    extra=0)

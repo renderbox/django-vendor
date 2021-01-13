@@ -20,7 +20,7 @@ except ModuleNotFoundError:
     pass
 
 from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models.choice import TransactionTypes, PaymentTypes, TermType, PurchaseStatus, TermDetailUnits
+from vendor.models.choice import TransactionTypes, PaymentTypes, TermType, PurchaseStatus
 from vendor.models.invoice import Invoice
 from vendor.models.address import Country
 from vendor.models.payment import Payment
@@ -245,16 +245,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def get_trial_occurrences(self, subscription):
         return subscription.offer.term_details.get('trial_occurrences', 0)
-
-    def get_payment_schedule_start_date(self, subscription):
-        """
-        Determines the start date offset so the paymente gateway starts charging the monthly subscriptions
-        """
-        units = subscription.offer.term_details.get('term_units', TermDetailUnits.MONTH)
-        if units == TermDetailUnits.MONTH:
-            return self.get_future_date_months(timezone.now(), self.get_trial_occurrences(subscription))
-        elif units == TermDetailUnits.DAY:
-            return self.get_future_date_days(timezone.now(), self.get_trial_occurrences(subscription))
 
     def create_payment_scheduale_interval_type(self, subscription, subscription_type):
         """
@@ -486,6 +476,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         if self.transaction_submitted:
             receipt.status = PurchaseStatus.CANCELED
+            receipt.auto_renew = False
             receipt.save()
 
     def subscription_info(self, subscription_id):

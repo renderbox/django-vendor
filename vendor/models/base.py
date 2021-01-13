@@ -2,6 +2,7 @@ import uuid
 
 from autoslug import AutoSlugField
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
@@ -13,6 +14,10 @@ from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY, AVAILABLE_CURR
 
 from .validator import validate_msrp
 from .utils import set_default_site_id, is_currency_available
+
+
+def get_product_model():
+    return apps.get_model(VENDOR_PRODUCT_MODEL)
 
 ##################
 # DEFAULTS

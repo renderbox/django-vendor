@@ -2,14 +2,13 @@
 {% load i18n %}
 {% block vendor_content %}
 
-<div class="container-fluid">
 
-    <nav aria-label="breadcrumb">
-        <h1>{% trans 'Product' %}</h1>
-    </nav>
+<nav aria-label="breadcrumb">
+    <h1>{% trans 'Product' %}</h1>
+</nav>
 
-    <div class="row">
-
+<div class='row'>
+    <div class='d-flex flex-column mr-auto ml-auto w-75'>
         <div class='card'>
             <div class='card-header'>
                 {% trans 'Product' %}
@@ -25,6 +24,6 @@
         </div>
     </div>
 </div>
-
-
+    
+    
 {% endblock %}

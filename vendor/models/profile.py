@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
@@ -6,10 +8,14 @@ from django.db.models import Q, QuerySet
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from .base import CreateUpdateModelBase
-from .choice import CURRENCY_CHOICES, TermType
+from .choice import CURRENCY_CHOICES, TermType, PurchaseStatus
 from .invoice import Invoice
 from .utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
+
+from vendor.config import DEFAULT_CURRENCY
+
+from vendor.models.base import get_product_model
 
 #####################
 # CUSTOMER PROFILE
@@ -21,6 +27,7 @@ class CustomerProfile(CreateUpdateModelBase):
     Additional customer information related to purchasing.
     This is what the Invoices are attached to.  This is abstracted from the user model directly do it can be mre flexible in the future.
     '''
+    uuid = models.UUIDField(_("UUID"), editable=False, unique=True, default=uuid.uuid4, null=False, blank=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), null=True, on_delete=models.SET_NULL, related_name="customer_profile")
     currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES,default=DEFAULT_CURRENCY)      # User's default currency
     site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="customer_profile")                      # For multi-site support
@@ -110,3 +117,16 @@ class CustomerProfile(CreateUpdateModelBase):
     def get_or_create_address(self, address):
         address, created = self.addresses.get_or_create(name=address.address_1, first_name=address.first_name, last_name=address.last_name, address_1=address.address_1, address_2=address.address_2, locality=address.locality, state=address.state, country=address.country, postal_code=address.postal_code, profile=self)
         return address, created
+
+    def has_previously_owned_products(self, products):
+        """
+        Get all products that the customer has purchased and returns True if it has.
+        """
+        return bool(self.receipts.filter(products__in=products, status__gte=PurchaseStatus.COMPLETE).first())
+    
+    def get_customer_products(self):
+        Product = get_product_model()
+        return Product.objects.filter(receipts__profile=self)
+
+    def get_completed_receipts(self):
+        return self.receipts.filter(status__gte=PurchaseStatus.COMPLETE)
