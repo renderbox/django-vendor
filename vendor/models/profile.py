@@ -1,6 +1,5 @@
 import uuid
 
-from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
@@ -14,11 +13,10 @@ from .invoice import Invoice
 from .utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
 
-from vendor.config import DEFAULT_CURRENCY, VENDOR_PRODUCT_MODEL
+from vendor.config import DEFAULT_CURRENCY
 
+from vendor.models.base import get_product_model
 
-def get_product_model():
-    return apps.get_model(VENDOR_PRODUCT_MODEL)
 #####################
 # CUSTOMER PROFILE
 #####################

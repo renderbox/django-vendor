@@ -178,8 +178,8 @@ class ModelCustomerProfileTests(TestCase):
         self.assertEqual(0, len(self.customer_profile.get_completed_receipts()))
 
     def test_get_products(self):
-        self.customer_profile.get_customer_products()
-        
+        self.assertFalse(self.customer_profile.get_customer_products())
+
 
 class AddOfferToProfileView(TestCase):
 

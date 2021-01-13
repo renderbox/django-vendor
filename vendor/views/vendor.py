@@ -165,8 +165,6 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         clear_session_purchase_data(request)
         
-        profile = CustomerProfile.objects.get(user=request.user)
-        
         invoice = get_purchase_invoice(request.user)
         if not invoice.order_items.count():
             return redirect('vendor:cart')
