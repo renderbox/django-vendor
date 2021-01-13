@@ -25,4 +25,7 @@ urlpatterns = [
     # reports
     path('reports/receipts/download/', report_views.ReceiptListCSV.as_view(), name="manager-receipt-download"),
     path('reports/invoices/download/', report_views.InvoiceListCSV.as_view(), name="manager-invoice-download"),
+
+    # api config
+    path('authorizenet/webhook/config', admin_views.VoidProductView.as_view(), name="manager-profile-remove-product"),
 ]

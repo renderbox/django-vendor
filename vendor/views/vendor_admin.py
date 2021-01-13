@@ -292,3 +292,13 @@ class AddOfferToProfileView(LoginRequiredMixin, View):
 
         messages.info(request, _("Offer Added To Customer Profile"))
         return redirect('vendor_admin:manager-offer-update', uuid=offer.uuid)
+
+
+class AuthorizeNetWebhookConfigView(LoginRequiredMixin, TemplateView):
+    """
+    View to configure Authorize.Net Webhooks
+    """
+    def get(self, request, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        pass
+        rreturn render(request, self.template_name, context)
