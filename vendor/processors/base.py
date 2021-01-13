@@ -146,6 +146,9 @@ class PaymentProcessorBase(object):
         """
         return today + timedelta(days=add_days)
 
+    def get_trial_occurrences(self, subscription):
+        return subscription.offer.term_details.get('trial_occurrences', 0)
+
     def get_payment_schedule_start_date(self, subscription):
         """
         Determines the start date offset so the payment gateway starts charging the monthly subscriptions

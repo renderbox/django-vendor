@@ -243,9 +243,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         else:
             return subscription_type - 100
 
-    def get_trial_occurrences(self, subscription):
-        return subscription.offer.term_details.get('trial_occurrences', 0)
-
     def create_payment_scheduale_interval_type(self, subscription, subscription_type):
         """
         Create an interval schedule with fixed months as units for period lenght.
