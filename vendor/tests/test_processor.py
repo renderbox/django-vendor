@@ -901,6 +901,14 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.create_payment_model()
         self.assertFalse(self.processor.is_card_valid())
 
+    ##########
+    # Report details
+    ##########
+    def test_get_transaction_details(self):
+        transaction_id = '60160039986'    
+        self.processor = AuthorizeNetProcessor(self.existing_invoice)
+        transaction_detail = self.processor.get_transaction_detail(transaction_id)
+        self.assertTrue(transaction_detail)
 
 
     ##########

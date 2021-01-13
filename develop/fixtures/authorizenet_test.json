@@ -75,75 +75,55 @@
 }
 // Transaction detail with no subscription
 {
-    "transaction": {
-        "transId": "60160070229",
-        "submitTimeUTC": "2021-01-12T14:08:09.687Z",
-        "submitTimeLocal": "2021-01-12T06:08:09.687",
-        "transactionType": "authCaptureTransaction",
-        "transactionStatus": "capturedPendingSettlement",
-        "responseCode": 1,
-        "responseReasonCode": 1,
-        "responseReasonDescription": "Approval",
-        "authCode": "L4RWU3",
-        "AVSResponse": "Y",
-        "cardCodeResponse": "M",
-        "authAmount": 19.98,
-        "settleAmount": 19.98,
-        "lineItems": [
-            {
-                "itemId": "7",
-                "name": "Wheel of Wensleydale",
-                "description": "This is a food item",
-                "quantity": 1,
-                "unitPrice": 19.99,
-                "taxable": false,
-                "taxRate": 0,
-                "taxAmount": 0,
-                "nationalTax": 0,
-                "localTax": 0,
-                "vatRate": 0,
-                "alternateTaxRate": 0,
-                "alternateTaxAmount": 0,
-                "totalAmount": 0,
-                "discountRate": 0,
-                "discountAmount": 0,
-                "taxIncludedInTotal": false,
-                "taxIsAfterDiscount": false
-            }
-        ],
-        "taxExempt": false,
-        "payment": {
-            "creditCard": {
-                "cardNumber": "XXXX0002",
-                "expirationDate": "XXXX",
-                "cardType": "AmericanExpress"
-            }
-        },
-        "billTo": {
-            "firstName": "roberto",
-            "lastName": "Himmelbauer",
-            "address": "14002 Palawan way, None",
-            "city": "MDR",
-            "state": "CA",
-            "zip": "90292",
-            "country": "USA"
-        },
-        "recurringBilling": false,
-        "customerIP": "187.167.54.203",
-        "product": "Card Not Present",
-        "marketType": "eCommerce",
-        "networkTransId": "L4V1UP9ZFUJE41DU4R13FZS",
-        "authorizationIndicator": "final"
-    },
-    "clientId": "sdk-python-1.1.3",
-    "transrefId": "1-1-2-168683",
-    "messages": {
-        "resultCode": "Ok",
-        "message": [
-            {
+    "getTransactionListResponse": {
+        "-xmlns": "AnetApi/xml/v1/schema/AnetApiSchema.xsd",
+        "messages": {
+            "resultCode": "Ok",
+            "message": {
                 "code": "I00001",
                 "text": "Successful."
             }
-        ]
+        },
+        "transactions": {
+            "transaction": [
+                {
+                    "transId": "12345",
+                    "submitTimeUTC": "2009-05-30T09:00:00",
+                    "submitTimeLocal": "2009-05-30T04:00:00",
+                    "transactionStatus": "settledSuccessfully",
+                    "invoice": "INV00001",
+                    "firstName": "John",
+                    "lastName": "Doe",
+                    "amount": "2.00",
+                    "accountType": "Visa",
+                    "accountNumber": "XXXX1111",
+                    "settleAmount": "2.00",
+                    "subscription": {
+                        "id": "145521",
+                        "payNum": "1"
+                    },
+                    "profile": {
+                        "customerProfileId": "1806660050",
+                        "customerPaymentProfileId": "1805324550"
+                    }
+                },
+                {
+                    "transId": "12345",
+                    "submitTimeUTC": "2009-05-30T09:00:00",
+                    "submitTimeLocal": "2009-05-30T04:00:00",
+                    "transactionStatus": "settledSuccessfully",
+                    "invoice": "INV00001",
+                    "firstName": "John",
+                    "lastName": "Doe",
+                    "amount": "2.00",
+                    "accountType": "Visa",
+                    "accountNumber": "XXXX1111",
+                    "marketType": "eCommerce",
+                    "product": "Card Not Present",
+                    "mobileDeviceId": "2354578983274523978"
+                }
+            ]
+        },
+        "totalNumInResultSet": "2"
     }
 }

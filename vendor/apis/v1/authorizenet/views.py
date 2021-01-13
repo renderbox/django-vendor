@@ -26,13 +26,12 @@ class AuthorizeNetBaseAPI(View):
     
     def valid_post(self):
         payload_encoded = urllib.parse.urlencode(self.request.POST).encode('utf8')
-        hash_value =  hmac.new(settings.AUTHORIZE_NET_SIGNITURA_KEY, payload_encoded, hashlib.sha512).hexdigest()
+        hash_value =  hmac.new(bytes(settings.AUTHORIZE_NET_SIGNITURE_KEY, 'utf-8'), payload_encoded, hashlib.sha512).hexdigest()
         
-        if hash_value == settings.AUTHORIZE_NET_SIGNITURA_KEY:
+        if hash_value == self.request.META.get('X-Anet-Signature'):
             return True
 
         return False
-
 
 
 class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
@@ -44,23 +43,31 @@ class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
     
     def post(self, request, *args, **kwargs):
         transaction_id = request.POST.get('id')
-        dummpy_invoice = Invoice()
+        dummy_invoice = Invoice()
 
         processor = payment_processor(dummy_invoice)
         transaction_detail = processor.get_transaction_detail(transaction_id)
 
-        if 'subscription' not in transaction_detail:
+
+        if not hasattr(transaction_detail, 'subscription'):
             return JsonResponse({})
 
-        old_receipt = Receipt.objects.get(transaction=transaction_detail['subscription']['id'])
+        past_receipt = Receipt.objects.get(transaction=transaction_detail.subscription.id.text)
 
-        invoice = Invoice(status=Invoice.InvoiceStatus.PROCESSING, site=old_receipt.order_item.invoice.site)
-        invoice.profile = old_receipt.customer_profile
+        payment_info = {
+            'account_number': transaction_detail.payment.creditCard.cardNumber.text[-4:],
+            'account_type': transaction_detail.payment.creditCard.cardType.text,
+            'full_name': " ".join(transaction_detail.billTo.firstName.text,transaction_detail.billTo.lastName.text),
+            'raw': str({**request.POST, **(request.POST.__dict__)})}
+        
+
+        invoice = Invoice(status=Invoice.InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
+        invoice.profile = past_receipt.customer_profile
         invoice.save()
-        invoice.addOffer(old_receipt.order_item.offer)
+        invoice.addOffer(past_receipt.order_item.offer)
         
         processor = PaymentProcessor(invoice)
-        processor.renew_subscription(old_receipt.transaction)
+        processor.renew_subscription(past_receipt, payment_info)
 
         # payment = Payment()
         # payment.transaction = old_receipt.transaction
