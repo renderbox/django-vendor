@@ -344,7 +344,6 @@ class ProductsListView(LoginRequiredMixin, ListView):
     template_name = 'vendor/purchase_list.html'
 
     def get_queryset(self):
-        # return self.request.user.customer_profile.get(site=get_current_site(self.request)).get_completed_receipts()
         return self.request.user.customer_profile.get(site=get_current_site(self.request)).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
 
 

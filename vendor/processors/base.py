@@ -146,10 +146,13 @@ class PaymentProcessorBase(object):
         """
         return today + timedelta(days=add_days)
 
+    def get_trial_occurrences(self, subscription):
+        return subscription.offer.term_details.get('trial_occurrences', 0)
+
     def get_payment_schedule_start_date(self, subscription):
         """
-        Determines the start date offset so the paymente gateway starts charging the monthly subscriptions
-        If the customer has already purchased the subscriptin it will return timezone.now()
+        Determines the start date offset so the payment gateway starts charging the monthly subscriptions
+        If the customer has already purchased the subscription it will return timezone.now()
         """
         if self.invoice.profile.has_previously_owned_products(subscription.offer.products.all()):
             return timezone.now()

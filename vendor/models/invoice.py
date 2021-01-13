@@ -1,3 +1,4 @@
+import itertools
 import uuid
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -158,6 +159,16 @@ class Invoice(CreateUpdateModelBase):
         Gets the total price for order items that will be purchased on a single transation. 
         """
         return sum([ order_item.total for order_item in self.order_items.filter(offer__terms__gte=TermType.PERPETUAL)])
+    
+    def empty_cart(self):
+        """
+        Remove any offer/order_item if the invoice is in Cart State.
+        """
+        if self.status == self.InvoiceStatus.CART:
+            offers = []
+            offers = list(itertools.chain.from_iterable([ [order_item.offer] * order_item.quantity for order_item in self.order_items.all()]))
+            for offer in offers:
+                self.remove_offer(offer)
 
     
 class OrderItem(CreateUpdateModelBase):
