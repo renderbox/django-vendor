@@ -1,17 +1,26 @@
 from django.apps import apps
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
-from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import Invoice, Offer, Price
-from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet
 from django.utils.translation import ugettext as _
+from django.utils import timezone
+
+from vendor.config import VENDOR_PRODUCT_MODEL
+from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet, CreditCardForm, AddressForm
+from vendor.models import Invoice, Offer, Price, Receipt, CustomerProfile, Payment
+from vendor.models.choice import TermType, PaymentTypes
+from vendor.processors import PaymentProcessor
+from django.contrib.admin.views.main import ChangeList
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
+
+payment_processor = PaymentProcessor
 #############
 # Admin Views
 
@@ -104,8 +113,13 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['formset'] = PriceFormSet(instance=self.object)
+        offer_products = self.object.products.all()
+        customers_who_own = CustomerProfile.objects.filter(receipts__products__in=offer_products)
+        customers_who_dont_own =  CustomerProfile.objects.all().exclude(pk__in=[ customer_profile.pk for customer_profile in customers_who_own.all() ])
 
+        context['customers_who_own'] = customers_who_own
+        context['customers_who_dont_own'] = customers_who_dont_own
+        context['formset'] = PriceFormSet(instance=self.object)
         return context
 
 
@@ -184,3 +198,97 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
             price.save()
 
         return redirect('vendor_admin:manager-offer-list')
+
+
+class AdminSubscriptionListView(LoginRequiredMixin, ListView):
+    '''
+    List of all the invoices generated on the current site.
+    '''
+    template_name = "vendor/manage/receipt_list.html"
+    model = Receipt
+
+    def get_queryset(self):
+        return self.model.objects.filter(products__in=Product.on_site.all(), order_item__offer__terms__lt=TermType.PERPETUAL)
+
+
+class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
+    '''
+    Gets all Customer Profile information for quick lookup and management
+    '''
+    template_name = 'vendor/manage/subscription_detail.html'
+    model = Receipt
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        payment = Payment.objects.get(transaction=context['object'].transaction)
+
+        context['payment'] = payment
+        context['payment_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
+        context['billing_form'] = AddressForm(instance=payment.billing_address)
+
+        return context
+
+
+class AdminProfileListView(LoginRequiredMixin, ListView):
+    """
+    List of CustomerProfiles on site
+    """
+    template_name = "vendor/manage/profile_list.html"
+    model = CustomerProfile
+    queryset = CustomerProfile.on_site.all()
+
+
+class AdminProfileDetailView(LoginRequiredMixin, DetailView):
+    '''
+    Gets all Customer Profile information for quick lookup and management
+    '''
+    template_name = 'vendor/manage/profile_detail.html'
+    model = CustomerProfile
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['receipts'] = self.object.receipts.filter(products__in=Product.on_site.all(), order_item__offer__terms__gte=TermType.PERPETUAL)
+        context['subscriptions'] = self.object.receipts.filter(products__in=Product.on_site.all(), order_item__offer__terms__lt=TermType.PERPETUAL)
+
+        # context['products'] = [ product for receipt in self.object.receipts.all() for product in receipt.products.all() ]
+
+        return context
+
+
+class VoidProductView(LoginRequiredMixin, View):
+    success_url = reverse_lazy('vendor_admin:manage-profiles')
+
+    def post(self, request, *args, **kwargs):
+        receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
+        receipt.end_date = timezone.now()
+        receipt.save()
+
+        messages.info(request, _("Customer has no longer access to Product"))
+        return redirect(request.META.get('HTTP_REFERER', self.success_url))
+
+
+class AddOfferToProfileView(LoginRequiredMixin, View):
+
+    def get(self, request, *args, **kwargs):
+        customer_profile = CustomerProfile.objects.get(uuid=kwargs.get('uuid_profile'))
+        offer = Offer.objects.get(uuid=kwargs['uuid_offer'])
+
+        cart = customer_profile.get_cart_or_checkout_cart()
+        cart.empty_cart()
+        cart.add_offer(offer)
+
+        if offer.current_price() or cart.total:
+            messages.info(request, _("Offer and Invoice must have zero value"))
+            cart.remove_offer(offer)
+            return redirect('vendor_admin:manager-offer-update', uuid=offer.uuid)
+        
+        processor = payment_processor(cart)
+        processor.authorize_payment()
+
+        messages.info(request, _("Offer Added To Customer Profile"))
+        return redirect('vendor_admin:manager-offer-update', uuid=offer.uuid)

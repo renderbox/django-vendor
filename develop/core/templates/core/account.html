@@ -44,7 +44,7 @@
                     </div>
                     {% comment %}
                     <a class="edit-name-button btn text-primary p-0"
-                        href="{% url 'vendor:shipping-update' payment.billing_address.pk 'billing' %}"><i
+                        href="{% url 'vendor:customer-shipping-update' payment.billing_address.uuid 'billing' %}"><i
                             class="fas fa-pen"></i></a>
                     <a class="edit-name-button btn text-primary p-0" href="{% url 'core-account-edit' 'billing' %}"><i
                             class="fas fa-pen"></i></a>

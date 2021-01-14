@@ -11,7 +11,7 @@ from django.conf import settings
 from django.utils import timezone
 from vendor import config
 from vendor.models import Payment, Invoice, Receipt, Address
-from vendor.models.choice import PurchaseStatus, TermType
+from vendor.models.choice import PurchaseStatus, TermType, TermDetailUnits
 ##########
 # SIGNALS
 
@@ -146,6 +146,23 @@ class PaymentProcessorBase(object):
         """
         return today + timedelta(days=add_days)
 
+    def get_trial_occurrences(self, subscription):
+        return subscription.offer.term_details.get('trial_occurrences', 0)
+
+    def get_payment_schedule_start_date(self, subscription):
+        """
+        Determines the start date offset so the payment gateway starts charging the monthly subscriptions
+        If the customer has already purchased the subscription it will return timezone.now()
+        """
+        if self.invoice.profile.has_previously_owned_products(subscription.offer.products.all()):
+            return timezone.now()
+
+        units = subscription.offer.term_details.get('term_units', TermDetailUnits.MONTH)
+        if units == TermDetailUnits.MONTH:
+            return self.get_future_date_months(timezone.now(), self.get_trial_occurrences(subscription))
+        elif units == TermDetailUnits.DAY:
+            return self.get_future_date_days(timezone.now(), self.get_trial_occurrences(subscription))
+
     def create_receipt_by_term_type(self, product, order_item, term_type):
         today = timezone.now()
         receipt = Receipt()
@@ -161,8 +178,9 @@ class PaymentProcessorBase(object):
             receipt.end_date = self.get_future_date_months(today, total_months)
             receipt.auto_renew = True
         else:
-            total_months = term_type - 100
-            receipt.end_date = self.get_future_date_months(today, total_months)
+            total_months = term_type - 100                                             # Get if it is monthy, bi-monthly, quartarly of annually
+            trial_offset = self.get_payment_schedule_start_date(order_item)      # If there are any trial days or months you need to offset it on the end date. 
+            receipt.end_date = self.get_future_date_months(trial_offset, total_months)
             receipt.auto_renew = True
 
         return receipt
@@ -261,6 +279,9 @@ class PaymentProcessorBase(object):
         """
         # TODO: Should this validation be outside the call to authorize the payment the call?
         # Why bother to call the processor is the forms are wrong
+        if not self.invoice.total:
+            self.free_payment()
+            return None
         if not self.is_data_valid():
             return None
 
@@ -272,9 +293,7 @@ class PaymentProcessorBase(object):
         self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
         vendor_process_payment.send(sender=self.__class__, invoice=self.invoice)
 
-        if not self.invoice.total:
-            self.free_payment()
-        elif self.invoice.get_one_time_transaction_order_items():
+        if self.invoice.get_one_time_transaction_order_items():
             self.create_payment_model()
             self.process_payment()
             self.save_payment_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
@@ -308,11 +327,17 @@ class PaymentProcessorBase(object):
         Called to handle an invoice with total zero.  
         This are the base internal steps to process a free payment.
         """
-        self.create_payment_model()
+        self.payment = Payment(profile=self.invoice.profile,
+                               amount=self.invoice.total,
+                               provider=self.provider,
+                               invoice=self.invoice,
+                               created=timezone.now()
+                               )
+        self.payment.save()
         self.transaction_submitted = True
 
         self.payment.success = True
-        self.payment.transation = f"{self.payment.pk}-free"
+        self.payment.transaction = f"{self.payment.uuid}-free"
         self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
         self.payment.save()
         

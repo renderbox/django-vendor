@@ -1,0 +1,105 @@
+{% extends "vendor/manage/base.html" %}
+{% load i18n %}
+
+{% block vendor_content %}
+
+<h2>{% trans 'Admin: Receipt Detail' %}</h2>
+<div class='row'>
+  <div class='col-6'>
+    <div class='card'>
+      <div class='card-header'>
+        {% trans 'Overview' %}
+      </div>
+      <div class='card-body'>
+        <h4>{{ object.order_item.name}}</h4>
+        <p>{{ object.order_item.offer.offer_description|default_if_none:"" }}</p>
+        <div class='row'>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Transaction' %}
+            </div>
+            {{object.transaction}}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Auto Renew' %}
+            </div>
+            {{ object.auto_renew }}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Term Type' %}
+            </div>
+            {{object.order_item.offer.get_terms_display}}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Trial Period' %}
+            </div>
+            {{object.order_item.offer.term_details.trial_occurrences|default:'0'}}
+            {% if object.order_item.offer.term_details.term_units == 10 %}
+            {% trans 'Days' %}
+            {% else %}
+            {% trans 'Months' %}
+            {% endif %}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Ends On' %}
+            </div>
+            {{ object.end_date|date:'Y-M -d' }}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Cost' %}
+            </div>
+            ${{ object.order_item.get_total_display }} {{ object.order_item.invoice.currency|upper }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class='col-6'>
+    <div class='card'>
+      <div class='card-header'>
+        {% trans 'Billing' %}
+      </div>
+      <div class='card-body'>
+        <div class='row'>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Customer Name' %}</div>
+            {{payment.profile.user.first_name}}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Customer Last Name' %}</div>
+            {{payment.profile.user.last_name}}
+          </div>
+          <div class='d-flex flex-column w-100 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Customer E-Mail' %}</div>
+            {{payment.profile.user.email}}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Name on Card' %}</div>
+            {{payment.payee_full_name}}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Account' %}</div>
+            {{payment.result.account_number}}
+          </div>
+          <div class='d-flex flex-column w-100 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Billing Address:' %}</div>
+            {{payment.billing_address.get_address_display}}
+          </div>
+          <div class='d-flex flex-column w-100 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Actions:' %}</div>
+            <div class='d-flex flex-row'>
+              <a href="#" class="btn btn-info mr-2">{% trans 'Update Billing' %}</a>
+              <a href="#" class="btn btn-info">{% trans 'Cancel Subscription' %}</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends "vendor/manage/base.html" %}
+{% load i18n %}
+
+{% block vendor_content %}
+
+<h2>{% trans 'Admin: Subscription Detail' %}</h2>
+<div class='row'>
+  <div class='col-6'>
+    <div class='card'>
+      <div class='card-header'>
+        {% trans 'Overview' %}
+      </div>
+      <div class='card-body'>
+        <h4>{{ object.order_item.name}}</h4>
+        <p>{{ object.order_item.offer.offer_description|default_if_none:"" }}</p>
+        <div class='row'>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Transaction' %}
+            </div>
+            {{object.transaction}}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Auto Renew' %}
+            </div>
+            {{ object.auto_renew }}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Term Type' %}
+            </div>
+            {{object.order_item.offer.get_terms_display}}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Trial Period' %}
+            </div>
+            {{object.order_item.offer.term_details.trail_occurrences|default:'0'}}
+            {% if object.order_item.offer.term_details.term_units == 10 %}
+            {% trans 'Days' %}
+            {% else %}
+            {% trans 'Months' %}
+            {% endif %}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Ends On' %}
+            </div>
+            <div class="{% if not object.auto_renew %}text-danger{% endif %}">
+              {{ object.end_date|date:'Y-M -d' }}
+            </div>
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>
+              {% trans 'Cost' %}
+            </div>
+            ${{ object.order_item.get_total_display }} {{ object.order_item.invoice.currency|upper }}
+          </div>
+          <div class='d-flex flex-column w-100 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Actions:' %}</div>
+            {% if object.status == 30 %}
+            <form class="align-itmes-center" method="post" action="{{ object.order_item.offer.add_to_cart_link }}">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-primary" type="submit">{% trans 'Renew Subscription' %}</button>
+            </form>
+            {% else %}
+            <form id="cancelSubscription" class="align-itmes-center" method="post"
+              action="{% url 'vendor:customer-subscription-cancel' object.uuid %}">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-primary" type="submit">{% trans 'Cancel Subscription' %}</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class='col-6'>
+    <div class='card'>
+      <div class='card-header'>
+        {% trans 'Billing' %}
+      </div>
+      <div class='card-body'>
+        <div class='row'>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Customer Name' %}</div>
+            {{payment.profile.user.first_name}}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Customer Last Name' %}</div>
+            {{payment.profile.user.last_name}}
+          </div>
+          <div class='d-flex flex-column w-100 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Customer E-Mail' %}</div>
+            {{payment.profile.user.email}}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Name on Card' %}</div>
+            {{payment.payee_full_name}}
+          </div>
+          <div class='d-flex flex-column w-50 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Account' %}</div>
+            {{payment.result.account_number}}
+          </div>
+          <div class='d-flex flex-column w-100 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Billing Address:' %}</div>
+            {{payment.billing_address.get_address_display}}
+          </div>
+          <div class='d-flex flex-column w-100 px-3 py-2'>
+            <div class='font-weight-bold'>{% trans 'Actions:' %}</div>
+            <div class='d-flex flex-row'>
+              <form class="mr-3">
+                <a class="btn btn-sm btn-primary" data-toggle="modal" data-target="#update_billing_info">
+                  {% trans 'Update Card' %}
+                </a>
+              </form>
+              <form>
+                <a class="btn btn-sm btn-primary" data-toggle="modal" data-target="#update_billing_address">
+                  {% trans 'Update Address' %}
+                </a>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class='modal fade' tabindex="1" role="dialog" id="update_billing_info">
+    <div class='modal-dialog modal-dialog-centered' role="document">
+      <div class='modal-content p-5'>
+        <h3 class="mb-3">{% trans 'Update Card Info' %}</h3>
+        <hr class="m-0" />
+        <div class='d-flex flex-row w-100 align-items-center my-3'>
+          <form method="POST" action="{% url 'vendor:customer-subscription-update-payment' object.uuid %}">
+            {% csrf_token %}
+            {{ payment_form.as_p }}
+            <button class="btn btn-primary mt-3">{% trans 'Update' %}</button>
+            <button class="btn btn-link mt-3" type="button" role="button" aria-pressed="true" data-toggle="modal"
+              data-target="#update_billing_info">{% trans 'Cancel' %}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class='modal fade' tabindex="1" role="dialog" id="update_billing_address">
+    <div class='modal-dialog modal-dialog-centered' role="document">
+      <div class='modal-content p-5'>
+        <h3 class="mb-3">{% trans 'Update Billing Address' %}</h3>
+        <hr class="m-0" />
+        <div class='d-flex flex-row w-100 align-items-center my-3'>
+          <form method="POST" action="{% url 'vendor:customer-billing-update' billing_form.instance.uuid %}">
+            {% csrf_token %}
+            {{ billing_form.as_p }}
+            <button class="btn btn-primary mt-3">{% trans 'Update' %}</button>
+            <button class="btn btn-link mt-3" type="button" role="button" aria-pressed="true" data-toggle="modal"
+              data-target="#update_billing_address">{% trans 'Cancel' %}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

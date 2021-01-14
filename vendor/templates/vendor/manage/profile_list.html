@@ -1,0 +1,50 @@
+{% extends "vendor/manage/base.html" %}
+{% load i18n %}
+
+{% block vendor_content %}
+<div class="container-fluid">
+
+  <nav aria-label="breadcrumb">
+    <!-- <ol class="breadcrumb"> -->
+    <h1>{% trans 'Customers Profiles' %}</h1>
+    <!-- </ol> -->
+  </nav>
+  <div class="row">
+    <div class="col">
+      <table class="table table-striped">
+
+        <thead>
+          <tr>
+            <th scope="col">{% trans 'User ID' %}</th>
+            <th scope="col">{% trans 'User Name' %}</th>
+            <th scope="col">{% trans 'Fist Name' %}</th>
+            <th scope="col">{% trans 'Last Name' %}</th>
+            <th scope="col">{% trans 'Site' %}</th>
+            <th scope="col">{% trans 'Currency' %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in object_list %}
+          <tr>
+            <td><a href="{% url 'vendor_admin:manager-profile' item.uuid %}">{{ item.pk }}</a></td>
+            <td>{{ item.user.username }}</td>
+            <td>{{ item.user.first_name }}</td>
+            <td>{{ item.user.last_name }}</td>
+            <td>{{ item.site }}</td>
+            <td>{{ item.currency }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td>
+              {% trans 'No Customer Profiles' %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
