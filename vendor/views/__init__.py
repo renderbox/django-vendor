@@ -17,13 +17,13 @@ from django.http import HttpResponse
 
 from vendor.models import Offer, OrderItem, Invoice, Payment, Address
 from vendor.models.address import Address as GoogleAddress
-from vendor.processors import PaymentProcessor
+from vendor.processors import get_payment_processor
 from vendor.forms import BillingAddressForm, CreditCardForm
 
 from .vendor_admin import AdminDashboardView, AdminInvoiceDetailView, AdminInvoiceListView
 
 
-payment_processor = PaymentProcessor              # The Payment Processor configured in settings.py
+payment_processor = get_payment_processor()              # The Payment Processor configured in settings.py
 
 # class CartView(LoginRequiredMixin, DetailView):
 #     '''
@@ -77,7 +77,7 @@ payment_processor = PaymentProcessor              # The Payment Processor config
 #     template_name = "vendor/checkout.html"
 #     # billing_address_form_class = BillingAddressForm
 #     # card_form_class = CreditCardForm
-#     # payment_processor = PaymentProcessor
+#     # payment_processor = get_payment_processor()
 
 #     # def get_context_data(self, **kwargs):
 #     #     context = super().get_context_data(**kwargs)
@@ -90,7 +90,7 @@ payment_processor = PaymentProcessor              # The Payment Processor config
 #     #     context = processor.get_checkout_context(context=context)
 
 #     #     context['billing_form'] = self.billing_form_class()
-#     #     # TODO: Set below in the PaymentProcessor Context. It should set the address form and card form?
+#     #     # TODO: Set below in the get_payment_processor() Context. It should set the address form and card form?
 #     #     context['address_form'] = self.address_form_class(prefix='addr')
 #     #     context['card_form'] = self.card_form_class(prefix='card')
 

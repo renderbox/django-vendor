@@ -18,12 +18,12 @@ from iso4217 import Currency
 from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile, OrderItem, Receipt
 from vendor.models.choice import TermType, PurchaseStatus
 from vendor.models.utils import set_default_site_id
-from vendor.processors import PaymentProcessor
+from vendor.processors import get_payment_processor
 from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm, AddressForm
 # from vendor.models.address import Address as GoogleAddress
 
 # The Payment Processor configured in settings.py
-payment_processor = PaymentProcessor
+payment_processor = get_payment_processor()
 
 # TODO: Need to remove the login required
 

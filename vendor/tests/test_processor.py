@@ -16,7 +16,9 @@ from vendor.models.address import Country
 from vendor.models.choice import TermType, PurchaseStatus
 from vendor.processors.base import PaymentProcessorBase
 from vendor.processors.authorizenet import AuthorizeNetProcessor
-from vendor.processors import PaymentProcessor
+from vendor.processors import get_payment_processor
+
+payment_processor = get_payment_processor()
 
 ###############################
 # Test constants
@@ -227,12 +229,12 @@ class SupportedProcessorsSetupTests(TestCase):
 
     def test_configured_processor_setup(self):
         """
-        Test the initialized of the PaymentProcessor defined in the setting file
+        Test the initialized of the payment_processor defined in the setting file
         """
         try:
-            processor = PaymentProcessor(self.invoice)
+            processor = payment_processor(self.invoice)
         except:
-            print("Warning PaymentProcessor defined in settings file did not pass init")
+            print("Warning payment_processor defined in settings file did not pass init")
         finally:
             pass
 

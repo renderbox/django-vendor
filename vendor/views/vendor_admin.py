@@ -15,12 +15,12 @@ from vendor.config import VENDOR_PRODUCT_MODEL
 from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet, CreditCardForm, AddressForm
 from vendor.models import Invoice, Offer, Price, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType, PaymentTypes
-from vendor.processors import PaymentProcessor
+from vendor.processors import get_payment_processor
 from django.contrib.admin.views.main import ChangeList
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
-payment_processor = PaymentProcessor
+payment_processor = get_payment_processor()
 #############
 # Admin Views
 
