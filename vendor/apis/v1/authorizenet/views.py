@@ -35,8 +35,8 @@ class AuthorizeNetBaseAPI(View):
         return super().dispatch(*args, **kwargs)
     
     def is_valid_post(self):
-        payload_encoded = urllib.parse.urlencode(self.request.POST).encode('utf8')
-        hash_value =  hmac.new(bytes(settings.AUTHORIZE_NET_SIGNITURE_KEY, 'utf-8'), payload_encoded, hashlib.sha512).hexdigest()
+        payload_encoded = urllib.parse.urlencode(self.request.body).encode('utf8')
+        hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNITURE_KEY, 'utf-8'), payload_encoded, hashlib.sha512).hexdigest()
         
         if hash_value == self.request.META.get('X-Anet-Signature'):
             return True
