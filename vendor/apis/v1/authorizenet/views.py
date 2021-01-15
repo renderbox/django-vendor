@@ -30,15 +30,12 @@ class AuthorizeNetBaseAPI(View):
         HMAC-sha512 on the payload.
         Reference: https://developer.authorize.net/api/reference/features/webhooks.html
         """
-        if self.request.POST and not self.is_valid_post():
-            raise PermissionDenied()
         return super().dispatch(*args, **kwargs)
     
     def is_valid_post(self):
-        payload_encoded = urllib.parse.urlencode(self.request.body).encode('utf8')
-        hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNITURE_KEY, 'utf-8'), payload_encoded, hashlib.sha512).hexdigest()
+        hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNITURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
         
-        if hash_value == self.request.META.get('X-Anet-Signature'):
+        if hash_value == self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]:
             return True
 
         return False
@@ -51,6 +48,9 @@ class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
     """
     
     def post(self, request, *args, **kwargs):
+        if not self.is_valid_post():
+            raise PermissionDenied()
+
         if isinstance(request.POST.get('payload'), dict):
             payload = request.POST.get('payload')
         else:
