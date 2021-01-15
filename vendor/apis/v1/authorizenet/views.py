@@ -48,14 +48,12 @@ class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
     """
     
     def post(self, request, *args, **kwargs):
-        if not self.is_valid_post():
+        if self.is_valid_post():
             raise PermissionDenied()
 
-        if isinstance(request.POST.get('payload'), dict):
-            payload = request.POST.get('payload')
-        else:
-            payload = json.loads(request.POST.get('payload'))
-        transaction_id = payload['id']
+        json_data = json.loads(request.body)
+
+        transaction_id = json_data['payload']['id']
         dummy_invoice = Invoice()
 
         processor = payment_processor(dummy_invoice)
