@@ -40,6 +40,36 @@ class AuthorizeNetBaseAPI(View):
 
         return False
 
+def renew_subscription_task(json_data):
+    """
+    function to be added or called to a task queue to handle the the a subscription renewal.
+    """
+    transaction_id = json_data['payload']['id']
+    dummy_invoice = Invoice()
+
+    processor = payment_processor(dummy_invoice)
+    transaction_detail = processor.get_transaction_detail(transaction_id)
+
+
+    if not hasattr(transaction_detail, 'subscription'):
+        return JsonResponse({})
+
+    past_receipt = Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created').first()
+
+    payment_info = {
+        'account_number': transaction_detail.payment.creditCard.cardNumber.text[-4:],
+        'account_type': transaction_detail.payment.creditCard.cardType.text,
+        'full_name': " ".join([transaction_detail.billTo.firstName.text,transaction_detail.billTo.lastName.text]),
+        'raw': str({**request.POST, **(request.POST.__dict__)})}
+    
+
+    invoice = Invoice(status=Invoice.InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
+    invoice.profile = past_receipt.profile
+    invoice.save()
+    invoice.add_offer(past_receipt.order_item.offer)
+    
+    processor = PaymentProcessor(invoice)
+    processor.renew_subscription(past_receipt, payment_info)
 
 class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
     """
@@ -51,33 +81,6 @@ class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
         if self.is_valid_post():
             raise PermissionDenied()
 
-        json_data = json.loads(request.body)
-
-        transaction_id = json_data['payload']['id']
-        dummy_invoice = Invoice()
-
-        processor = payment_processor(dummy_invoice)
-        transaction_detail = processor.get_transaction_detail(transaction_id)
-
-
-        if not hasattr(transaction_detail, 'subscription'):
-            return JsonResponse({})
-
-        past_receipt = Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created').first()
-
-        payment_info = {
-            'account_number': transaction_detail.payment.creditCard.cardNumber.text[-4:],
-            'account_type': transaction_detail.payment.creditCard.cardType.text,
-            'full_name': " ".join([transaction_detail.billTo.firstName.text,transaction_detail.billTo.lastName.text]),
-            'raw': str({**request.POST, **(request.POST.__dict__)})}
-        
-
-        invoice = Invoice(status=Invoice.InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
-        invoice.profile = past_receipt.profile
-        invoice.save()
-        invoice.add_offer(past_receipt.order_item.offer)
-        
-        processor = PaymentProcessor(invoice)
-        processor.renew_subscription(past_receipt, payment_info)
+        renew_subscription_task(json.loads(request.body))
 
         return JsonResponse({})
