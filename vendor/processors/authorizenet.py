@@ -457,6 +457,44 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         
         self.payment.save()
 
+    def subscription_update_billing_address(self, receipt):
+        """
+        Updates the credit card information for the subscriptions in authorize.net 
+        and updates the payment record associated with the receipt.
+        """
+        self.payment = Payment.objects.get(success=True, transaction=receipt.transaction, invoice=receipt.order_item.invoice)
+
+        self.transaction_type = apicontractsv1.ARBSubscriptionType()
+        self.transaction_type.payment = self.create_authorize_payment()
+
+        self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.subscriptionId = str(receipt.transaction)
+        self.transaction.subscription = self.transaction_type
+
+        self.controller = ARBUpdateSubscriptionController(self.transaction)
+        self.set_controller_api_endpoint()
+        self.controller.execute()
+
+        response = self.controller.getresponse()
+
+        self.check_subscription_response(response)
+
+        receipt.meta[f"payment-update-{timezone.now():%Y-%m-%d %H:%M}"] = {'raw': str({**self.transaction_message, **response})}
+        receipt.save()
+
+        subscription_info = self.subscription_info(receipt.transaction)
+
+        account_number = getattr(subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'], 'cardNumber', None)
+        if account_number:
+            self.payment.result['account_number'] = account_number.text
+            
+        account_type = getattr(subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'], 'accountType', None)
+        if account_type:
+            self.payment.result['account_type'] = account_type.text
+        
+        self.payment.save()
+
     def subscription_cancel(self, receipt):
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
@@ -531,7 +569,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
 
         self.check_response(response)
-
 
     def is_card_valid(self):
         """
