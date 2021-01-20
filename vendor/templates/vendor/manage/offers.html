@@ -1,51 +1,60 @@
 {% extends "vendor/manage/base.html" %}
 {% load i18n %}
-
 {% block vendor_content %}
 
 <div class="container-fluid">
 
-    <nav aria-label="breadcrumb">
-        <h1>{% trans 'Offers' %}</h1>
-    </nav>
+  <nav aria-label="breadcrumb">
+    <h1>{% trans 'Offers' %}</h1>
+  </nav>
 
-    <div class="row">
-        <div class="col">
-          <h3>{% trans 'Offer List' %}</h3>
-          <table class="table table-striped">
-  
-            <thead>
-              <tr>
-                <th scope="col">{% trans 'Name' %}</th>
-                <th scope="col">{% trans 'Start Date' %}</th>
-                <th scope="col">{% trans 'End Date' %}</th>
-                <th scope="col">{% trans 'Terms' %}</th>
-                <th scope="col">{% trans 'Available' %}</th>
-              </tr>
-            </thead>
-  
-            <tbody>
-              {% for item in object_list %}
-              <tr>
-                <td><a class="text-primary" href="{% url 'vendor_admin:manager-offer-update' item.uuid %}">{{ item.name}}</a></td>
-                  <td>{{ item.start_date }}</td>
-                  <td>{{ item.end_date }}</td>
-                  <td>{{ item.get_terms_display }}</td>
-                  <td>{{ item.available }}</td>
-                </tr>
-              {% empty %}
-              <tr>
-                <td>
-                  {% trans 'No Offers' %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-  
-          </table>
-        </div>
-      </div>
-      <p><a href="{% url 'vendor_admin:manager-offer-create' %}" class="btn btn-primary">{% trans 'Add Offer' %}</a></p>
+  <div class="row">
+    <div class="col">
+      <h3>{% trans 'Offer List' %}</h3>
+      <table class="table table-striped">
+
+        <thead>
+          <tr>
+            <th scope="col">{% trans '#' %}</th>
+            <th scope="col">{% trans 'Name' %}</th>
+            <th scope="col">{% trans 'Start Date' %}</th>
+            <th scope="col">{% trans 'End Date' %}</th>
+            <th scope="col">{% trans 'Terms' %}</th>
+            <th scope="col">{% trans 'Available' %}</th>
+            <th scope="col">{% trans 'Actions' %}</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for item in object_list %}
+          <tr>
+            <td>
+              <a class="text-primary" href="{% url 'vendor_admin:manager-offer-update' item.uuid %}">{{ item.pk }}</a>
+            </td>
+            <td>{{ item.name}}</td>
+            <td>{{ item.start_date }}</td>
+            <td>{{ item.end_date|default_if_none:"" }}</td>
+            <td>{{ item.get_terms_display }}</td>
+            <td>{{ item.available }}</td>
+            <td>
+              {% if item.current_price == 0 %}
+              <a class="btn btn-outline-secondary btn-sm">{% trans 'Offer Availibility' %}</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td>
+              {% trans 'No Offers' %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+  <p><a href="{% url 'vendor_admin:manager-offer-create' %}" class="btn btn-primary">{% trans 'Add Offer' %}</a></p>
 </div>
 
 
