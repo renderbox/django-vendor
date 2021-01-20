@@ -122,7 +122,6 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
         context['formset'] = PriceFormSet(instance=self.object)
         return context
 
-
     def form_valid(self, form):
         price_formset = PriceFormSet(self.request.POST, self.request.FILES, instance=Offer.objects.get(uuid=self.kwargs['uuid']))
 
