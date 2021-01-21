@@ -22,6 +22,7 @@
             <th scope="col">{% trans 'Terms' %}</th>
             <th scope="col">{% trans 'Available' %}</th>
             <th scope="col">{% trans 'Actions' %}</th>
+            <th scope="col">{% trans 'Price' %}</th>
           </tr>
         </thead>
 
@@ -32,8 +33,8 @@
               <a class="text-primary" href="{% url 'vendor_admin:manager-offer-update' item.uuid %}">{{ item.pk }}</a>
             </td>
             <td>{{ item.name}}</td>
-            <td>{{ item.start_date }}</td>
-            <td>{{ item.end_date|default_if_none:"" }}</td>
+            <td>{{ item.start_date|date:"M-d-Y" }}</td>
+            <td>{{ item.end_date|default_if_none:""|date:"M-d-Y" }}</td>
             <td>{{ item.get_terms_display }}</td>
             <td>{{ item.available }}</td>
             <td>
@@ -41,6 +42,7 @@
               <a class="btn btn-outline-secondary btn-sm">{% trans 'Offer Availibility' %}</a>
               {% endif %}
             </td>
+            <td>{{ item.current_price }}</td>
           </tr>
           {% empty %}
           <tr>

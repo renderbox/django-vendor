@@ -5,7 +5,7 @@ from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.db.models import IntegerChoices
 from django.forms import inlineformset_factory
-from django.forms.widgets import SelectDateWidget
+from django.forms.widgets import SelectDateWidget, TextInput
 from django.utils.translation import ugettext_lazy as _
 
 from .config import VENDOR_PRODUCT_MODEL
@@ -16,11 +16,22 @@ Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
         
 class PriceForm(forms.ModelForm):
-    start_date = forms.DateField(label=_("Start Date"), widget=SelectDateWidget())
-    end_date = forms.DateField(label=_("End Date"), widget=SelectDateWidget())
+    CHOICES = [('not_free', _('Purchase Price')), 
+               ('free', _('Free'))]
+    price_select = forms.ChoiceField(label="", choices=CHOICES, widget=forms.widgets.RadioSelect(), required=False)
     class Meta:
         model = Price
-        fields = ['cost', 'currency', 'start_date', 'end_date', 'priority']
+        fields = ['price_select', 'cost', 'currency', 'start_date', 'end_date']
+
+    def __init__(self, *args, **kwargs):
+        super(PriceForm, self).__init__(*args, **kwargs)
+        self.fields['start_date'].widget.attrs['class'] = 'datepicker'
+        self.fields['end_date'].widget.attrs['class'] = 'datepicker'
+        self.fields['cost'].label = ('Price')
+        self.fields['cost'].widget = TextInput()
+        self.fields['cost'].widget.attrs['placeholder'] = '##.##'
+        self.fields['cost'].widget.attrs['class'] = 'w-50'
+
 
 
 class ProductForm(forms.ModelForm):
@@ -31,13 +42,17 @@ class ProductForm(forms.ModelForm):
 
 class OfferForm(forms.ModelForm):
     products = forms.ModelMultipleChoiceField(label=_("Available Products:"), required=True, queryset=Product.on_site.filter(available=True))
-    start_date = forms.DateField(label=_("Start Date"), widget=SelectDateWidget())
-    end_date = forms.DateField(label=_("End Date"), widget=SelectDateWidget())
-    term_start_date = forms.DateField(label=_("Term Start Date"), widget=SelectDateWidget())
 
     class Meta:
         model = Offer
         fields = ['name', 'start_date', 'end_date', 'terms', 'term_details', 'term_start_date', 'available', 'offer_description', 'allow_multiple']
+
+    def __init__(self, *args, **kwargs):
+        super(OfferForm, self).__init__(*args, **kwargs)
+        self.fields['start_date'].widget.attrs['class'] = 'datepicker'
+        self.fields['end_date'].widget.attrs['class'] = 'datepicker'
+        self.fields['term_start_date'].widget.attrs['class'] = 'datepicker'
+        self.fields['available'].label = _('Available to Purchase')
 
     def clean(self):
         cleaned_data = super().clean()
@@ -300,7 +315,7 @@ PriceFormSet = inlineformset_factory(
     Offer,
     Price,
     form=PriceForm,
-    can_delete=True,
+    can_delete=False,
     exclude=('offer',),
     validate_max=True,
     min_num=1,

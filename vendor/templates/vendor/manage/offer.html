@@ -1,9 +1,14 @@
 {% extends "vendor/manage/base.html" %}
 {% load i18n %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+{% endblock %}
+
+{% block extra_head_js %}
+{% endblock %}
+
 {% block vendor_content %}
-
-
 <nav aria-label="breadcrumb">
     <h1>{% trans 'Offer' %}</h1>
 </nav>
@@ -15,11 +20,349 @@
         <div class='card-body'>
             <form method="post">
                 {% csrf_token %}
-                {{ form.media }}
-                {{ form.as_p }}
-                <h4>{% trans 'Price' %}</h4>
+                {% comment %}
+                <!-- None Fields Errors -->
+                {% endcomment %}
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    {% for error in form.non_field_errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% comment %}
+                <!-- Name -->
+                {% endcomment %}
+                <div class='form-row my-3'>
+                    <div class='col-md-6'>
+                        <!-- Address 1 -->
+                        {{ form.name.label_tag }}
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        {% for error in form.name.errors %}
+                        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+
+                        {% if form.name.help_text %}
+                        <small class="form-text text-muted">
+                            {{ form.name.help_text }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% comment %}
+                <!-- Start and End Date -->
+                {% endcomment %}
+                <div class='form-row my-3'>
+                    <div class="col-md-12 my-2">{% trans 'Offer available through:' %}</div>
+                    <div class='col-md-4'>
+                        <small>{{ form.start_date.label_tag }}</small>
+                        {{ form.start_date }}
+                        {% if form.start_date.errors %}
+                        {% for error in form.start_date.errors %}
+                        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+
+                        {% if form.start_date.help_text %}
+                        <small class="form-text text-muted">
+                            {{ form.start_date.help_text }}
+                        </small>
+                        {% endif %}
+                    </div>
+                    <div class='col-md-4'>
+                        <small>{{ form.end_date.label_tag }}</small>
+                        {{ form.end_date }}
+                        {% if form.end_date.errors %}
+                        {% for error in form.end_date.errors %}
+                        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+
+                        {% if form.end_date.help_text %}
+                        <small class="form-text text-muted">
+                            {{ form.end_date.help_text }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% comment %}
+                <!-- Terms -->
+                {% endcomment %}
+                <div class='form-row my-3'>
+                    <div class='col-md-6'>
+                        {{ form.terms.label_tag }}
+                        {{ form.terms }}
+                        {% if form.terms.errors %}
+                        {% for error in form.terms.errors %}
+                        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+
+                        {% if form.terms.help_text %}
+                        <small class="form-text text-muted">
+                            {{ form.terms.help_text }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% comment %}
+                <!-- Terms Details -->
+                {% endcomment %}
+                <div class='form-row my-3'>
+                    <div class='col-md-6'>
+                        {{ form.term_details.label_tag }}
+                        {{ form.term_details }}
+                        {% if form.term_details.errors %}
+                        {% for error in form.term_details.errors %}
+                        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+
+                        {% if form.term_details.help_text %}
+                        <small class="form-text text-muted">
+                            {{ form.term_details.help_text }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% comment %}
+                <!-- Terms Start Date -->
+                {% endcomment %}
+                <div class='form-row my-3'>
+                    <div class='col-md-6'>
+                        {{ form.term_start_date.label_tag }}
+                        {{ form.term_start_date }}
+                        {% if form.term_start_date.errors %}
+                        {% for error in form.term_start_date.errors %}
+                        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+
+                        {% if form.term_start_date.help_text %}
+                        <small class="form-text text-muted">
+                            {{ form.term_start_date.help_text }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% comment %}
+                <!-- Available -->
+                {% endcomment %}
+                <div class='form-row my-3'>
+                    <div class='col-md-6'>
+                        {{ form.available.label_tag }}
+                        {{ form.available }}
+                        {% if form.available.errors %}
+                        {% for error in form.available.errors %}
+                        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+
+                        {% if form.available.help_text %}
+                        <small class="form-text text-muted">
+                            {{ form.available.help_text }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% comment %}
+                <!-- Description -->
+                {% endcomment %}
+                <div class='form-row my-3'>
+                    <div class='col-md-6'>
+                        {{ form.offer_description.label_tag }}
+                        {{ form.offer_description }}
+                        {% if form.offer_description.errors %}
+                        {% for error in form.offer_description.errors %}
+                        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+
+                        {% if form.offer_description.help_text %}
+                        <small class="form-text text-muted">
+                            {{ form.offer_description.help_text }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% comment %}
+                <!-- Allow Multiple -->
+                {% endcomment %}
+                <div class='form-row my-3'>
+                    <div class='col-md-6'>
+                        {{ form.allow_multiple.label_tag }}
+                        {{ form.allow_multiple }}
+                        {% if form.allow_multiple.errors %}
+                        {% for error in form.allow_multiple.errors %}
+                        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+
+                        {% if form.allow_multiple.help_text %}
+                        <small class="form-text text-muted">
+                            {{ form.allow_multiple.help_text }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% comment %}
+                <!-- Products -->
+                {% endcomment %}
+                <div class='form-row my-3'>
+                    <div class='col-md-6'>
+                        {{ form.products.label_tag }}
+                        {{ form.products }}
+                        {% if form.products.errors %}
+                        {% for error in form.products.errors %}
+                        <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+
+                        {% if form.products.help_text %}
+                        <small class="form-text text-muted">
+                            {{ form.products.help_text }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <h5>{% trans 'Cost' %}</h5>
                 <table>
-                    {{ formset.as_p }}
+                    {{ formset.management_form }}
+                    {% for price_form in formset.forms %}
+                    {% comment %}
+                    <!-- Price Select -->
+                    {% endcomment %}
+                    <div class='form-row my-3'>
+                        <div class="col-12">
+                            {{ price_form.price_select.label_tag }}
+                        </div>
+                        <div class='d-flex flex-row align-items-center mx-1'>
+                            {% for choice in price_form.price_select.field.choices %}
+                            <input class="align-self-center" type="radio" name="price_select" value="{{choice.0}}" {% ifequal price_form.price_select.data choice.0 %} checked="checked" {% endifequal %} />
+                            <div for="" class="ml-1 mr-3 align-self-center">{{choice.1}}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-12">
+                            {% if price_form.price_select.errors %}
+                            {% for error in price_form.price_select.errors %}
+                            <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                                {{ error }}
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+
+                            {% if price_form.price_select.help_text %}
+                            <small class="form-text text-muted">
+                                {{ price_form.price_select.help_text }}
+                            </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% comment %}
+                    <!-- Cost and Currency -->
+                    {% endcomment %}
+                    <div class='form-row my-3' id="price_select">
+                        <div class="d-flex flex-row ml-1">
+                            <div class="d-flex flex-column">
+                                <small>{{ price_form.cost.label_tag }}</small>
+                                {{ price_form.cost }}
+                                {% if price_form.cost.errors %}
+                                {% for error in price_form.cost.errors %}
+                                <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+                                {% endif %}
+
+                                {% if price_form.cost.help_text %}
+                                <small class="form-text text-muted">
+                                    {{ price_form.cost.help_text }}
+                                </small>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex flex-column">
+                                <small>{{ price_form.currency.label_tag }}</small>
+                                {{ price_form.currency }}
+                                {% if price_form.currency.errors %}
+                                {% for error in price_form.currency.errors %}
+                                <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+                                {% endif %}
+
+                                {% if price_form.currency.help_text %}
+                                <small class="form-text text-muted">
+                                    {{ price_form.currency.help_text }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% comment %}
+                    <!-- Start and End Date -->
+                    {% endcomment %}
+                    <div class='form-row my-3'>
+                        <div class="col-md-12 my-2">{% trans 'Price for this offer available through:' %}</div>
+                        <div class='col-md-4'>
+                            <small>{{ price_form.start_date.label_tag }}</small>
+                            {{ price_form.start_date }}
+                            {% if price_form.start_date.errors %}
+                            {% for error in price_form.start_date.errors %}
+                            <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                                {{ error }}
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+
+                            {% if price_form.start_date.help_text %}
+                            <small class="form-text text-muted">
+                                {{ price_form.start_date.help_text }}
+                            </small>
+                            {% endif %}
+                        </div>
+                        <div class='col-md-4'>
+                            <small>{{ price_form.end_date.label_tag }}</small>
+                            {{ price_form.end_date }}
+                            {% if price_form.end_date.errors %}
+                            {% for error in price_form.end_date.errors %}
+                            <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                                {{ error }}
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+
+                            {% if price_form.end_date.help_text %}
+                            <small class="form-text text-muted">
+                                {{ price_form.end_date.help_text }}
+                            </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
                 </table>
                 <button class="btn btn-primary btn-lg btn-block" type="submit">{% trans 'Save Offer' %}</button>
             </form>
@@ -55,7 +398,8 @@
                     </button>
                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         {% for customer_profile in customers_who_dont_own %}
-                        <a class="dropdown-item" href="{% url 'vendor_admin:manager-profile-add-offer' customer_profile.uuid offer.uuid %}">{{customer_profile}}</a>
+                        <a class="dropdown-item"
+                            href="{% url 'vendor_admin:manager-profile-add-offer' customer_profile.uuid form.instance.uuid %}">{{customer_profile}}</a>
                         {% endfor %}
                     </div>
                 </div>
@@ -63,5 +407,12 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script>
+    $(".datepicker").datepicker();
+</script>
 {% endblock %}
