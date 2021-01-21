@@ -27,7 +27,7 @@ class PriceForm(forms.ModelForm):
         super(PriceForm, self).__init__(*args, **kwargs)
         self.fields['start_date'].widget.attrs['class'] = 'datepicker'
         self.fields['end_date'].widget.attrs['class'] = 'datepicker'
-        self.fields['cost'].label = ('Price')
+        self.fields['cost'].label = _('Price')
         self.fields['cost'].widget = TextInput()
         self.fields['cost'].widget.attrs['placeholder'] = '##.##'
         self.fields['cost'].widget.attrs['class'] = 'w-50'
