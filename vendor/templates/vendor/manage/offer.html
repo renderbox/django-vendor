@@ -372,7 +372,9 @@
         </div>
     </div>
 </div>
-
+{% comment %}
+<!-- TODO: remove once offer availiblity finished -->
+<!-- This is just reference code for the time being until full offer to profile link has been finished -->
 <div class="row">
     <div class='col-6'>
         <div class='card'>
@@ -396,20 +398,21 @@
             <div class='card-body'>
                 <div class='dropdown'>
                     <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton"
-                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        {% trans 'Add Customer' %}
-                    </button>
-                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        {% for customer_profile in customers_who_dont_own %}
-                        <a class="dropdown-item"
-                            href="{% url 'vendor_admin:manager-profile-add-offer' customer_profile.uuid form.instance.uuid %}">{{customer_profile}}</a>
-                        {% endfor %}
-                    </div>
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    {% trans 'Add Customer' %}
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    {% for customer_profile in customers_who_dont_own %}
+                    <a class="dropdown-item"
+                    href="{% url 'vendor_admin:manager-profile-add-offer' customer_profile.uuid form.instance.uuid %}">{{customer_profile}}</a>
+                    {% endfor %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+</div>
+{% endcomment %}
 {% endblock %}
 
 {% block extra_js %}
