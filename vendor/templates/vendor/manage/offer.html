@@ -249,9 +249,10 @@
                 </div>
 
                 <h5>{% trans 'Cost' %}</h5>
+                {{ formset.management_form }}
                 <table>
-                    {{ formset.management_form }}
                     {% for price_form in formset.forms %}
+                    {{ price_form.id }}
                     {% comment %}
                     <!-- Price Select -->
                     {% endcomment %}
@@ -260,9 +261,11 @@
                             {{ price_form.price_select.label_tag }}
                         </div>
                         <div class='d-flex flex-row align-items-center mx-1'>
-                            {% for choice in price_form.price_select.field.choices %}
-                            <input class="align-self-center" type="radio" name="price_select" value="{{choice.0}}" {% ifequal price_form.price_select.data choice.0 %} checked="checked" {% endifequal %} />
-                            <div for="" class="ml-1 mr-3 align-self-center">{{choice.1}}</div>
+                            {% for radio in price_form.price_select %}
+                            <label class="mr-2" for="{{ radio.id_for_label }}">
+                                <span class="radio">{{ radio.tag }}</span>
+                                {{ radio.choice_label }}
+                            </label>
                             {% endfor %}
                         </div>
                         <div class="col-12">
@@ -414,5 +417,19 @@
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script>
     $(".datepicker").datepicker();
+    if ($('input[type=radio]:checked').val() == 'free')
+    {
+        $('#price_select').addClass('d-none');
+    }
+</script>
+<script>
+    $('input[type=radio]').change(function() {
+    if (this.value == 'not_free') {
+        $('#price_select').removeClass('d-none');
+    }
+    else if (this.value == 'free') {
+        $('#price_select').addClass('d-none');
+    }
+});
 </script>
 {% endblock %}

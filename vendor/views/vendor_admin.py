@@ -119,29 +119,38 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
 
         context['customers_who_own'] = customers_who_own
         context['customers_who_dont_own'] = customers_who_dont_own
+        
         context['formset'] = PriceFormSet(instance=self.object)
+
         return context
 
     def form_valid(self, form):
         price_formset = PriceFormSet(self.request.POST, self.request.FILES, instance=Offer.objects.get(uuid=self.kwargs['uuid']))
 
-        if not (price_formset.is_valid() or form.is_valid()):
+        if not form.is_valid():
             return render(self.request, self.template_name, {'form': form, 'formsert': price_formset})
 
         offer = form.save(commit=False)
 
         if len(form.cleaned_data['products']) > 1:
             offer.bundle=True
-        
         offer.save()
 
         for product in form.cleaned_data['products']:
             offer.products.add(product)
 
-        for price_form in price_formset:
-            price = price_form.save(commit=False)
-            price.offer = offer
-            price.save()
+        if price_formset.has_changed() and not price_formset.is_valid():
+            return render(self.request, self.template_name, {'form': form, 'formset': price_formset})
+        elif price_formset.is_valid():
+            for price_form in price_formset:
+                price = price_form.save(commit=False)
+                price.offer = offer
+                if price_form.cleaned_data['price_select'] == 'free':
+                    price.cost = 0
+                price.save()
+        else:
+            return render(self.request, self.template_name, {'form': form, 'formset': price_formset})
+
 
         return redirect('vendor_admin:manager-offer-list')
 
@@ -165,22 +174,8 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
         offer_form = self.form_class(request.POST)
         price_formset = PriceFormSet(request.POST)
 
-
-        if not (price_formset.is_valid() and offer_form.is_valid()):
+        if not offer_form.is_valid():
             return render(request, self.template_name, {'form': offer_form, 'formset': price_formset})
-        
-        product_currencies = {}
-        price_currency = [ price_form.cleaned_data['currency'] for price_form in price_formset ]
-
-        for product in Product.objects.filter(pk__in=offer_form.cleaned_data['products']):
-            for currency in product.meta['msrp'].keys():
-                product_currencies[currency] = currency
-
-        for price_form in price_formset:
-            if price_form.cleaned_data['currency'] not in product_currencies:
-                price_formset[0].add_error('currency', _('Invalid currency'))
-                return render(request, self.template_name, {'form': offer_form, 'formset': price_formset})
-                
 
         offer = offer_form.save(commit=False)
         if len(offer_form.cleaned_data['products']) > 1:
@@ -189,12 +184,26 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
         offer.save()
         for product in offer_form.cleaned_data['products']:
             offer.products.add(product)
+        
+        if price_formset.has_changed() and not price_formset.is_valid():
+            return render(request, self.template_name, {'form': offer_form, 'formset': price_formset})
+        elif price_formset.has_changed() and price_formset.is_valid():
+            product_currencies = {}
+            price_currency = [ price_form.cleaned_data['currency'] for price_form in price_formset ]
 
+            for product in Product.objects.filter(pk__in=offer_form.cleaned_data['products']):
+                for currency in product.meta['msrp'].keys():
+                    product_currencies[currency] = currency
 
-        for price_form in price_formset:
-            price = price_form.save(commit=False)
-            price.offer = offer
-            price.save()
+            for price_form in price_formset:
+                if price_form.cleaned_data['currency'] not in product_currencies:
+                    price_formset[0].add_error('currency', _('Invalid currency'))
+                    return render(request, self.template_name, {'form': offer_form, 'formset': price_formset})
+            
+            for price_form in price_formset:
+                price = price_form.save(commit=False)
+                price.offer = offer
+                price.save()
 
         return redirect('vendor_admin:manager-offer-list')
 

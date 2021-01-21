@@ -18,7 +18,7 @@ Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 class PriceForm(forms.ModelForm):
     CHOICES = [('not_free', _('Purchase Price')), 
                ('free', _('Free'))]
-    price_select = forms.ChoiceField(label="", choices=CHOICES, widget=forms.widgets.RadioSelect(), required=False)
+    price_select = forms.ChoiceField(label="", choices=CHOICES, widget=forms.widgets.RadioSelect())
     class Meta:
         model = Price
         fields = ['price_select', 'cost', 'currency', 'start_date', 'end_date']
@@ -31,6 +31,11 @@ class PriceForm(forms.ModelForm):
         self.fields['cost'].widget = TextInput()
         self.fields['cost'].widget.attrs['placeholder'] = '##.##'
         self.fields['cost'].widget.attrs['class'] = 'w-50'
+        
+        if self.instance.cost:
+            self.initial['price_select'] = self.CHOICES[0]
+        else:
+            self.initial['price_select'] = self.CHOICES[1]
 
 
 
