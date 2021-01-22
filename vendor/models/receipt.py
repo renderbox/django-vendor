@@ -41,7 +41,7 @@ class Receipt(CreateUpdateModelBase):
     def get_absolute_url(self):
         return reverse('vendor:customer-receipt', kwargs={'uuid': self.uuid})
 
-    def void_receipt(self):
+    def void(self):
         """
         Funtion to void (not cancel) a receipt by making the end_date now and disabling 
         access to the customer to that given product. If the receipt is related to a
