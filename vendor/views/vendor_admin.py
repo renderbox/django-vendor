@@ -127,9 +127,6 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         price_formset = PriceFormSet(self.request.POST, self.request.FILES, instance=Offer.objects.get(uuid=self.kwargs['uuid']))
 
-        if not form.is_valid():
-            return render(self.request, self.template_name, {'form': form, 'formsert': price_formset})
-
         offer = form.save(commit=False)
 
         if len(form.cleaned_data['products']) > 1:
