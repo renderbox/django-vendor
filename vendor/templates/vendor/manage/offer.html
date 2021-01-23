@@ -365,6 +365,28 @@
                             {% endif %}
                         </div>
                     </div>
+                    {% comment %}
+                    <!-- Priority -->
+                    {% endcomment %}
+                    <div class='form-row my-3'>
+                        <div class='col-md-4'>
+                            <small>{{ price_form.priority.label_tag }}</small>
+                            {{ price_form.priority }}
+                            {% if price_form.priority.errors %}
+                            {% for error in price_form.priority.errors %}
+                            <div style='width: 100%; margin-top: .25rem; font-size: 80%; color: #dc3545;'>
+                                {{ error }}
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+
+                            {% if price_form.priority.help_text %}
+                            <small class="form-text text-muted">
+                                {{ price_form.priority.help_text }}
+                            </small>
+                            {% endif %}
+                        </div>
+                    </div>
                     {% endfor %}
                 </table>
                 <button class="btn btn-primary btn-lg btn-block" type="submit">{% trans 'Save Offer' %}</button>
