@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
+from django.utils import timezone
 
 from .base import CreateUpdateModelBase
 
@@ -40,5 +41,14 @@ class Receipt(CreateUpdateModelBase):
     def get_absolute_url(self):
         return reverse('vendor:customer-receipt', kwargs={'uuid': self.uuid})
 
+    def void(self):
+        """
+        Funtion to void (not cancel) a receipt by making the end_date now and disabling 
+        access to the customer to that given product. If the receipt is related to a
+        subscription to a Payment Gateway, make sure to also cancel such subscription
+        in the given Payment Gateway. 
+        """
+        self.end_date = timezone.now()
+        self.meta['voided_on'] = self.end_date
 
 
