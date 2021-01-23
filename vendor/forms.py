@@ -21,7 +21,7 @@ class PriceForm(forms.ModelForm):
     price_select = forms.ChoiceField(label="", choices=CHOICES, widget=forms.widgets.RadioSelect())
     class Meta:
         model = Price
-        fields = ['price_select', 'cost', 'currency', 'start_date', 'end_date']
+        fields = ['price_select', 'cost', 'currency', 'start_date', 'end_date', 'priority']
 
     def __init__(self, *args, **kwargs):
         super(PriceForm, self).__init__(*args, **kwargs)
