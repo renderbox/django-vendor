@@ -310,8 +310,6 @@ class DateRangeForm(forms.Form):
             
         return cleaned_data
 
-
-
 ##########
 # From Sets
 ##########
