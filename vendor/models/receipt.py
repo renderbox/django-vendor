@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, dateformat
 
 from .base import CreateUpdateModelBase
 
@@ -49,6 +49,6 @@ class Receipt(CreateUpdateModelBase):
         in the given Payment Gateway. 
         """
         self.end_date = timezone.now()
-        self.meta['voided_on'] = self.end_date
+        self.meta['voided_on'] = dateformat.format(self.end_date, 'Y-M-d H:i:s')
 
 
