@@ -532,7 +532,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.check_response(response)
 
-
     def is_card_valid(self):
         """
         Handles an Authorize Only transaction to ensure that the funds are in the customers bank account

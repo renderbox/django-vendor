@@ -289,8 +289,8 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         
         processor = payment_processor(invoice)
         
-        processor.get_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
-        processor.get_payment_info_form_data(request.session.get('credit_card_form'), CreditCardForm)
+        processor.set_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
+        processor.set_payment_info_form_data(request.session.get('credit_card_form'), CreditCardForm)
 
         processor.authorize_payment()
 
@@ -398,7 +398,7 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
             return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
         processor = PaymentProcessor(receipt.order_item.invoice)
-        processor.get_payment_info_form_data(request.POST, CreditCardForm)
+        processor.set_payment_info_form_data(request.POST, CreditCardForm)
         processor.subscription_update_payment(receipt)
 
         if not processor.transaction_submitted:

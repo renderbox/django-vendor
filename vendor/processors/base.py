@@ -226,10 +226,10 @@ class PaymentProcessorBase(object):
     def get_transaction_id(self):
         return "{}-{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk, str(self.payment.created)[-12:-6])
 
-    def get_billing_address_form_data(self, form_data, form_class):
+    def set_billing_address_form_data(self, form_data, form_class):
         self.billing_address = form_class(form_data)
     
-    def get_payment_info_form_data(self, form_data, form_class):
+    def set_payment_info_form_data(self, form_data, form_class):
         self.payment_info = form_class(form_data)
 
     def is_data_valid(self):
@@ -401,6 +401,28 @@ class PaymentProcessorBase(object):
         Function to validate a credit card by method of makeing a microtransaction and voiding it if authorized.
         """
         pass
+
+    def renew_subscription(self, past_receipt, payment_info):
+        """
+        Function to renew already paid subscriptions form the payment gateway provider.
+        """
+        self.payment = Payment(profile=self.invoice.profile,
+                                      amount=self.invoice.total,
+                                      invoice=self.invoice,
+                                      created=timezone.now())
+        self.payment.result = payment_info
+
+        self.transaction_submitted = True
+
+        self.payment.success = True
+        self.payment.transaction = past_receipt.transaction
+        self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+        
+        self.payment.save()
+        
+        self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+
+        self.create_receipts(self.invoice.order_items.all())
 
     #-------------------
     # Refund a Payment
