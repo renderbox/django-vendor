@@ -187,9 +187,13 @@ class BaseProcessorTests(TestCase):
         invoice = Invoice(profile=customer)
         invoice.save()
         invoice.add_offer(Offer.objects.get(pk=5))
+        past_receipt = Receipt.objects.get(pk=1)
         
         base_processor = PaymentProcessorBase(invoice)
-        base_processor.renew_subscription("1223")
+        payment_info = {
+            'account_number': '0002',
+        }
+        base_processor.renew_subscription(past_receipt, payment_info)
     
 
     # def test_get_header_javascript_success(self):
