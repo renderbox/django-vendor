@@ -191,11 +191,11 @@ class ModelCustomerProfileTests(TestCase):
                           transaction="123",
                           status=PurchaseStatus.COMPLETE)
         receipt.save()
-        self.assertIsNotNone(self.customer_profile.get_active_offer_receipts(offer))
+        self.assertTrue(len(self.customer_profile.get_active_offer_receipts(offer)) > 0)
 
     def test_get_active_offer_receipts_empty(self):
         offer = Offer.objects.get(pk=3)
-        self.assertIsNone(self.customer_profile.get_active_offer_receipts(offer))
+        self.assertTrue(len(self.customer_profile.get_active_offer_receipts(offer)) == 0)
 
 
 class AddOfferToProfileView(TestCase):

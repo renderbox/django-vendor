@@ -132,4 +132,4 @@ class CustomerProfile(CreateUpdateModelBase):
         return self.receipts.filter(status__gte=PurchaseStatus.COMPLETE)
     
     def get_active_offer_receipts(self, offer):
-        return self.receipts.filter(Q(order_item__offer=offer), Q(end_date__gte=now) | Q(end_date=None))
+        return self.receipts.filter(Q(order_item__offer=offer), Q(end_date__gte=timezone.now()) | Q(end_date=None))
