@@ -22,7 +22,10 @@ from .utils import set_default_site_id, is_currency_available
 # OFFER
 #########
 def offer_term_details_default():
-    "Sets the default term values as a monthly subscription for a period of 12 months, with not trail days"
+    """
+    Sets the default term values as a monthly subscription for a 
+    period of 12 months, with not trail days
+    """
     return { 
         'period_length': 1,
         'payment_occurrences': 12,
