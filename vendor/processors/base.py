@@ -175,14 +175,12 @@ class PaymentProcessorBase(object):
             receipt.auto_renew = False
         elif term_type == TermType.SUBSCRIPTION:
             total_months = int(order_item.offer.term_details['period_length']) * int(order_item.offer.term_details['payment_occurrences'])
-            receipt.end_date = self.get_future_date_months(today, total_months)
-            receipt.auto_renew = True
         else:
             total_months = term_type - 100                                             # Get if it is monthy, bi-monthly, quartarly of annually
-            trial_offset = self.get_payment_schedule_start_date(order_item)      # If there are any trial days or months you need to offset it on the end date. 
-            receipt.end_date = self.get_future_date_months(trial_offset, total_months)
-            receipt.auto_renew = True
 
+        trial_offset = self.get_payment_schedule_start_date(order_item)      # If there are any trial days or months you need to offset it on the end date. 
+        receipt.end_date = self.get_future_date_months(trial_offset, total_months)
+        receipt.auto_renew = True
         return receipt
 
     def create_order_item_receipt(self, order_item):
