@@ -5,7 +5,7 @@ from .base import ProductModelBase
 
 from .address import Address
 from .invoice import Invoice, OrderItem
-from .offer import Offer
+from .offer import Offer, offer_term_details_default
 from .payment import Payment
 from .price import Price
 from .profile import CustomerProfile
