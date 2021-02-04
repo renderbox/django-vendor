@@ -100,7 +100,7 @@ class AccountInformationForm(AddressForm):
 
 
 class BillingAddressForm(AddressForm):
-    same_as_shipping = forms.BooleanField(label=_("Billing address is the same as shipping address"), required=False)
+    same_as_shipping = forms.BooleanField(label=_("Billing address is the same as shipping address"), required=False, initial=True)
 
     class Meta:
         model = Address
@@ -236,7 +236,7 @@ class PaymentFrom(forms.Form):
 class CreditCardForm(PaymentFrom):
     full_name = forms.CharField(required=True, label=_("Name on Card"), max_length=80)
     card_number = CreditCardField(label=_("Credit Card Number"), placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)
-    expire_month = forms.ChoiceField(required=True, label=_("Expiration Month"), choices=[(x, x) for x in range(1, 13)])
+    expire_month = forms.ChoiceField(required=True, label=_("Expiration Month"), choices=[(x, f'{x:02d}') for x in range(1, 13)])
     expire_year = forms.ChoiceField(required=True, label=_("Expiration Year"))
     cvv_number = forms.CharField(required=True, label=_("CVV Number"), max_length=4, min_length=3, widget=forms.TextInput(attrs={'size': '4'}))
 
