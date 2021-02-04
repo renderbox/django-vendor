@@ -385,6 +385,7 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
 
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
+
 class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
     form_class = CreditCardForm()
     success_url = reverse_lazy('vendor:customer-subscriptions')
@@ -407,6 +408,7 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
         
         messages.info(request, _(f"Success: Payment Updated"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
+
 
 class AddressUpdateView(LoginRequiredMixin, FormView):
     form_class = BillingAddressForm

@@ -28,7 +28,7 @@
 
       {% if request.resolver_match.url_name == 'checkout-account' %}
       <div id="collapseOne" class="collapse show" aria-labelledby="account_info" data-parent="#checkout_accordion">
-        <div class="card-body px-2">
+        <div class="card-body px-0">
           <form method="post">
             {% csrf_token %}
             <h3 class='card-title'>
@@ -61,14 +61,14 @@
 
       {% if request.resolver_match.url_name == 'checkout-payment' %}
       <div id="collapseTwo" class="collapse show" aria-labelledby="billing_info" data-parent="#checkout_accordion">
-        <div class="card-body px-2">
+        <div class="card-body px-0">
           <form id="payment-form" method="post">
             {% csrf_token %}
             <h3 class='card-title'>
               {% trans 'Billing Address' %}
             </h3>
             {% include "./includes/billing_address_form.html" with billing_address_form=billing_address_form %}
-            <div id="shipping-address" class='d-none'>
+            <div id="shipping-address">
               <p class="mb-0">{{invoice.shipping_address.address_1}},
                 {{invoice.shipping_address.address_2|default_if_none:""}}</p>
               <p>{{invoice.shipping_address.state}},
@@ -100,7 +100,7 @@
 
       {% if request.resolver_match.url_name == 'checkout-review' %}
       <div id="collapseThree" class="collapse show" aria-labelledby="review" data-parent="#checkout_accordion">
-        <div class="card-body px-2">
+        <div class="card-body px-0">
           <h3 class='card-title'>
             <div class='d-flex flex-row align-items-center'>
               <div>{% trans 'Shipping Address' %}</div>
@@ -202,10 +202,13 @@
 
 {% block extra_js %}
 <script>
-  $('#id_same_as_shipping').prop("checked", false);
+  $('#id_same_as_shipping').prop("checked", true);
+  $('.billing-address-form').addClass('d-none');
+  $("#id_address_1").removeAttr('required');
+  $("#id_locality").removeAttr('required');
+  $("#id_state").removeAttr('required');
+  $("#id_postal_code").removeAttr('required');
   $('#id_same_as_shipping').change(function () {
-    console.log('in event');
-    console.log($('#id_same_as_shipping').val());
     if ($('#id_same_as_shipping').val()) {
       $('.billing-address-form').toggleClass('d-none');
       $('#shipping-address').toggleClass('d-none');
