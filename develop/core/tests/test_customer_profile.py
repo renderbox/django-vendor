@@ -180,6 +180,23 @@ class ModelCustomerProfileTests(TestCase):
     def test_get_products(self):
         self.assertFalse(self.customer_profile.get_customer_products())
 
+    def test_get_active_offer_receipts_success(self):
+        cart = self.customer_profile.get_cart_or_checkout_cart()
+        offer = Offer.objects.get(pk=3)
+        cart.add_offer(offer)
+
+        receipt = Receipt(profile=self.customer_profile,
+                          order_item=cart.order_items.first(),
+                          start_date=timezone.now(),
+                          transaction="123",
+                          status=PurchaseStatus.COMPLETE)
+        receipt.save()
+        self.assertTrue(len(self.customer_profile.get_active_offer_receipts(offer)) > 0)
+
+    def test_get_active_offer_receipts_empty(self):
+        offer = Offer.objects.get(pk=3)
+        self.assertTrue(len(self.customer_profile.get_active_offer_receipts(offer)) == 0)
+
 
 class AddOfferToProfileView(TestCase):
 

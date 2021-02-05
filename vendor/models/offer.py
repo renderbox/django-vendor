@@ -22,7 +22,17 @@ from .utils import set_default_site_id, is_currency_available
 # OFFER
 #########
 def offer_term_details_default():
-    return { "term_units": TermDetailUnits.MONTH, "trial_occurrences": 1}
+    """
+    Sets the default term values as a monthly subscription for a 
+    period of 12 months, with 0 trail months 
+    """
+    return { 
+        'period_length': 1,
+        'payment_occurrences': 12,
+        "term_units": TermDetailUnits.MONTH, 
+        "trial_occurrences": 0
+        }
+
 
 class ActiveManager(models.Manager):
     """

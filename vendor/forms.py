@@ -9,7 +9,7 @@ from django.forms.widgets import SelectDateWidget, TextInput
 from django.utils.translation import ugettext_lazy as _
 
 from .config import VENDOR_PRODUCT_MODEL
-from .models import Address, Offer, OrderItem, Price
+from .models import Address, Offer, OrderItem, Price, offer_term_details_default
 from .models.choice import PaymentTypes, TermType
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
@@ -68,8 +68,10 @@ class OfferForm(forms.ModelForm):
                 self.cleaned_data['name'] = product_names[0]
             else:
                 self.cleaned_data['name'] = _("Bundle: ") + ", ".join(product_names)
-
-        if self.data['terms'] == TermType.SUBSCRIPTION and not cleaned_data['term_details']:
+                
+        term_detail_defaults = [ False for default in list(offer_term_details_default().key()) if default not in cleaned_data['term_details']]
+        
+        if self.data['terms'] == TermType.SUBSCRIPTION and False in term_detail_defaults:
             self.add_error('term_details', _("Invalid term details for subscription"))
 
         return cleaned_data
@@ -98,7 +100,7 @@ class AccountInformationForm(AddressForm):
 
 
 class BillingAddressForm(AddressForm):
-    same_as_shipping = forms.BooleanField(label=_("Billing address is the same as shipping address"), required=False)
+    same_as_shipping = forms.BooleanField(label=_("Billing address is the same as shipping address"), required=False, initial=True)
 
     class Meta:
         model = Address
@@ -234,7 +236,7 @@ class PaymentFrom(forms.Form):
 class CreditCardForm(PaymentFrom):
     full_name = forms.CharField(required=True, label=_("Name on Card"), max_length=80)
     card_number = CreditCardField(label=_("Credit Card Number"), placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)
-    expire_month = forms.ChoiceField(required=True, label=_("Expiration Month"), choices=[(x, x) for x in range(1, 13)])
+    expire_month = forms.ChoiceField(required=True, label=_("Expiration Month"), choices=[(x, f'{x:02d}') for x in range(1, 13)])
     expire_year = forms.ChoiceField(required=True, label=_("Expiration Year"))
     cvv_number = forms.CharField(required=True, label=_("CVV Number"), max_length=4, min_length=3, widget=forms.TextInput(attrs={'size': '4'}))
 
