@@ -69,9 +69,9 @@ class OfferForm(forms.ModelForm):
             else:
                 self.cleaned_data['name'] = _("Bundle: ") + ", ".join(product_names)
                 
-        term_detail_defaults = [ False for default in list(offer_term_details_default().key()) if default not in cleaned_data['term_details']]
+        term_detail_defaults = [ False for default in list(offer_term_details_default().keys()) if default not in cleaned_data['term_details']]
         
-        if self.data['terms'] == TermType.SUBSCRIPTION and False in term_detail_defaults:
+        if self.data['terms'] == str(TermType.SUBSCRIPTION) and False in term_detail_defaults:
             self.add_error('term_details', _("Invalid term details for subscription"))
 
         return cleaned_data
