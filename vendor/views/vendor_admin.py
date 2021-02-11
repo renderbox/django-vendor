@@ -199,6 +199,8 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
             
             for price_form in price_formset:
                 price = price_form.save(commit=False)
+                if price_form.cleaned_data['price_select'] == 'free':
+                    price.cost = 0
                 price.offer = offer
                 price.save()
 
