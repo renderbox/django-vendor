@@ -1,6 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.models import Site
 from django.shortcuts import render
+from django.contrib.sites.shortcuts import get_current_site
 from django.utils import timezone
 from django.views.generic import TemplateView
 from django.views.generic.list import ListView
@@ -26,9 +27,7 @@ class ProductAccessView(ProductRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        site = settings.SITE_ID
-        if hasattr(request, 'site'):
-            site = request.site
+        site = get_current_site(request)
         context['object'] = self.model.objects.get(site=site, slug=kwargs['slug'])
         return render(request, self.template_name, context)
 
@@ -36,9 +35,7 @@ class ProductAccessView(ProductRequiredMixin, TemplateView):
         """
         Method to get the Product(s) needed for the check.  Can be overridden to handle complex queries.
         """
-        site = settings.SITE_ID
-        if hasattr(self.request, 'site'):
-            site = self.request.site
+        site = get_current_site(request)
         return self.model.objects.filter(site=site, slug=self.kwargs['slug']).get().products.all()
 
 class AccountView(LoginRequiredMixin, TemplateView):
