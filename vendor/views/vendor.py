@@ -104,9 +104,10 @@ class AddToCartView(View):
         return session_cart
 
     def post(self, request, *args, **kwargs):
-        site = settings.SITE_ID
+        site = get_current_site(request)
         if hasattr(request, 'site'):
             site = request.site
+
         offer = Offer.objects.get(site=site, slug=self.kwargs["slug"])
         if request.user.is_anonymous:
             request.session['session_cart'] = self.session_cart(request, offer)
@@ -133,7 +134,7 @@ class AddToCartView(View):
 class RemoveFromCartView(View):
     
     def post(self, request, *args, **kwargs):
-        site = settings.SITE_ID
+        site = get_current_site(request)
         if hasattr(request, 'site'):
             site = request.site
 
