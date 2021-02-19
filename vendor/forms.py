@@ -3,11 +3,12 @@ from datetime import datetime
 from django import forms
 from django.apps import apps
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
+from django.conf import settings
 from django.db.models import IntegerChoices
 from django.forms import inlineformset_factory
 from django.forms.widgets import SelectDateWidget, TextInput
 from django.utils.translation import ugettext_lazy as _
-
 from .config import VENDOR_PRODUCT_MODEL
 from .models import Address, Offer, OrderItem, Price, offer_term_details_default
 from .models.choice import PaymentTypes, TermType
@@ -46,7 +47,7 @@ class ProductForm(forms.ModelForm):
 
 
 class OfferForm(forms.ModelForm):
-    products = forms.ModelMultipleChoiceField(label=_("Available Products:"), required=True, queryset=Product.on_site.filter(available=True))
+    products = forms.ModelMultipleChoiceField(label=_("Available Products:"), required=True, queryset=Product.objects.filter(site=settings.SITE_ID, available=True))
 
     class Meta:
         model = Offer
@@ -58,6 +59,7 @@ class OfferForm(forms.ModelForm):
         self.fields['end_date'].widget.attrs['class'] = 'datepicker'
         self.fields['term_start_date'].widget.attrs['class'] = 'datepicker'
         self.fields['available'].label = _('Available to Purchase')
+        self.fields['products'].queryset = Product.objects.filter(site=Site.objects.get_current(), available=True)
 
     def clean(self):
         cleaned_data = super().clean()

@@ -2,6 +2,7 @@ import csv
 from itertools import chain
 from django.http import StreamingHttpResponse
 from django.utils.timezone import localtime
+from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.utils.translation import ugettext_lazy as _
@@ -115,7 +116,10 @@ class InvoiceListCSV(CSVStreamRowView):
 
     def get_queryset(self):
         # TODO: Update to handle ranges from a POST
-        return self.model.on_site.all()
+        site = settings.SITE_ID
+        if hasattr(self.request, 'site'):
+            site = self.request.site
+        return self.model.objects.filter(site=site)
     
     def get_row_data(self):
         object_list = self.get_queryset()

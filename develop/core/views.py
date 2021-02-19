@@ -13,7 +13,11 @@ from vendor.models.choice import PurchaseStatus, TermType, PaymentTypes
 class VendorIndexView(ListView):
     template_name = "core/index.html"
     model = Offer
-    queryset = Offer.on_site_active.all()
+
+    def get_queryset(self):
+        if hasattr(self.request, 'site'):
+            return self.model.objects.filter(site=self.request.site)
+        return self.model.on_site.all()
 
 
 class ProductAccessView(ProductRequiredMixin, TemplateView):
@@ -22,26 +26,33 @@ class ProductAccessView(ProductRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['object'] = self.model.on_site.get(slug=kwargs['slug'])
+        site = settings.SITE_ID
+        if hasattr(request, 'site'):
+            site = request.site
+        context['object'] = self.model.objects.get(site=site, slug=kwargs['slug'])
         return render(request, self.template_name, context)
 
     def get_product_queryset(self):
         """
         Method to get the Product(s) needed for the check.  Can be overridden to handle complex queries.
         """
-        return self.model.on_site.filter(slug=self.kwargs['slug']).get().products.all()
+        site = settings.SITE_ID
+        if hasattr(self.request, 'site'):
+            site = self.request.site
+        return self.model.objects.filter(site=site, slug=self.kwargs['slug']).get().products.all()
 
 class AccountView(LoginRequiredMixin, TemplateView):
     template_name = "core/account.html"
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        customer_profile, created = request.user.customer_profile.get_or_create(site=Site.objects.get_current())
+        site = Site.objects.get_current()
+        
+        customer_profile, created = request.user.customer_profile.get_or_create(site=site)
         subscriptions = customer_profile.get_recurring_receipts()
 
         context['payments'] = customer_profile.payments.filter(success=True)
-        context["offers"] = Offer.on_site.filter(available=True).order_by('terms')
+        context["offers"] = Offer.objects.filter(site=site, available=True).order_by('terms')
 
         if subscriptions:
             context['subscription'] = subscriptions.first()

@@ -37,12 +37,12 @@ class ProductRequiredMixin():
 
         TODO: move this to some kind of caching or session variable to avoid hitting the DB on every request.
         """
-
+        site = Site.objects.get_current()
         if self.request.user.is_anonymous:
             self.product_owned = False
         else:
             products = self.get_product_queryset()
-            self.product_owned = self.request.user.customer_profile.filter(site=Site.objects.get_current()).get().has_product(products)
+            self.product_owned = self.request.user.customer_profile.filter(site=site).get().has_product(products)
 
         return self.product_owned
 
@@ -50,10 +50,10 @@ class ProductRequiredMixin():
         """
         Method to get the Product(s) needed for the check.  Can be overridden to handle complex queries.
         """
-
+        site = Site.objects.get_current_site()
         if self.product_queryset is None:
             if self.product_model:
-                return self.product_model.on_site.all()    # Only provide list of products on the current site.
+                return self.product_model.objects.filter(site=site)    # Only provide list of products on the current site.
             else:
                 raise ImproperlyConfigured(
                     "%(cls)s is missing a Product QuerySet. Define "
