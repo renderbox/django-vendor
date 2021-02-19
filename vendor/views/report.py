@@ -116,10 +116,9 @@ class InvoiceListCSV(CSVStreamRowView):
 
     def get_queryset(self):
         # TODO: Update to handle ranges from a POST
-        site = settings.SITE_ID
         if hasattr(self.request, 'site'):
-            site = self.request.site
-        return self.model.objects.filter(site=site)
+            return self.model.objects.filter(site=self.request.site)
+        return self.model.on_site.all()
     
     def get_row_data(self):
         object_list = self.get_queryset()
