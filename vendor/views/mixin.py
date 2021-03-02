@@ -18,6 +18,7 @@ class SetSiteToRequestMixin:
 class ProductRequiredMixin:
     """
     Checks to see if a user has a required product and if not, redirects them.
+    ProductRequiredMixin expects that request.site is set.
     """
     product_queryset = None
     product_model = None
