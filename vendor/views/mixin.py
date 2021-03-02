@@ -7,11 +7,16 @@ from django.shortcuts import redirect
 from django.utils.translation import ugettext as _
 
 
+def get_site_from_request(request):
+    if hasattr(request, 'site'):
+        return request.site
+    return get_current_site(request)
+
+
 class SetSiteToRequestMixin:
 
     def dispatch(self, request, *args, **kwargs):
-        if not hasattr(request, 'site'):
-            request.site = get_current_site(request)
+        request.site = get_site_from_request(request)
         return super().dispatch(request, *args, **kwargs)
 
 
