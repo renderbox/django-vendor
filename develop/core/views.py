@@ -7,10 +7,9 @@ from django.views.generic import TemplateView
 from django.views.generic.list import ListView
 
 from vendor.models import Offer, Payment
-from vendor.views.mixin import ProductRequiredMixin
+from vendor.views.mixin import ProductRequiredMixin, SetSiteToRequestMixin
 from vendor.forms import CreditCardForm
 from vendor.models.choice import PurchaseStatus, TermType, PaymentTypes
-
 class VendorIndexView(ListView):
     template_name = "core/index.html"
     model = Offer
@@ -21,35 +20,33 @@ class VendorIndexView(ListView):
         return self.model.on_site.all()
 
 
-class ProductAccessView(ProductRequiredMixin, TemplateView):
+class ProductAccessView(SetSiteToRequestMixin, ProductRequiredMixin, TemplateView):
     model = Offer
     template_name = "core/product_use.html"
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        site = get_current_site(request)
-        context['object'] = self.model.objects.get(site=site, slug=kwargs['slug'])
+
+        context['object'] = self.model.objects.get(site=request.site, slug=kwargs['slug'])
         return render(request, self.template_name, context)
 
     def get_product_queryset(self):
         """
         Method to get the Product(s) needed for the check.  Can be overridden to handle complex queries.
         """
-        site = get_current_site(request)
-        return self.model.objects.filter(site=site, slug=self.kwargs['slug']).get().products.all()
+        return self.model.objects.filter(site=self.request.site, slug=self.kwargs['slug']).get().products.all()
 
-class AccountView(LoginRequiredMixin, TemplateView):
+class AccountView(LoginRequiredMixin, SetSiteToRequestMixin, TemplateView):
     template_name = "core/account.html"
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        site = Site.objects.get_current()
         
-        customer_profile, created = request.user.customer_profile.get_or_create(site=site)
+        customer_profile, created = request.user.customer_profile.get_or_create(site=request.site)
         subscriptions = customer_profile.get_recurring_receipts()
 
         context['payments'] = customer_profile.payments.filter(success=True)
-        context["offers"] = Offer.objects.filter(site=site, available=True).order_by('terms')
+        context["offers"] = Offer.objects.filter(site=request.site, available=True).order_by('terms')
 
         if subscriptions:
             context['subscription'] = subscriptions.first()
@@ -61,6 +58,5 @@ class AccountView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-
 
         return render(request, self.template_name, context)
