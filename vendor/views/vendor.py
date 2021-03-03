@@ -17,9 +17,9 @@ from iso4217 import Currency
 
 from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile, OrderItem, Receipt
 from vendor.models.choice import TermType, PurchaseStatus
-from vendor.models.utils import set_default_site_id
 from vendor.processors import PaymentProcessor
 from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm, AddressForm
+from vendor.views.mixin import SetSiteToRequestMixin
 # from vendor.models.address import Address as GoogleAddress
 
 # The Payment Processor configured in settings.py
@@ -27,11 +27,11 @@ payment_processor = PaymentProcessor
 
 # TODO: Need to remove the login required
 
-def get_purchase_invoice(user):
+def get_purchase_invoice(user, site):
     """
     Return an invoice that is in checkout or cart state or a newly create invoice in cart state.
     """
-    profile, created = user.customer_profile.get_or_create(site=settings.SITE_ID)
+    profile, created = user.customer_profile.get_or_create(site=site)
     return profile.get_cart_or_checkout_cart()
 
 def clear_session_purchase_data(request):
@@ -54,7 +54,7 @@ def check_offer_items_or_redirect(invoice, request):
         messages.info(request, _("Please add to your cart"))
         redirect('vendor:cart')
 
-class CartView(TemplateView):
+class CartView(SetSiteToRequestMixin, TemplateView):
     '''
     View items in the cart
     '''
@@ -77,7 +77,7 @@ class CartView(TemplateView):
 
             return render(request, self.template_name, context)
 
-        profile, created = self.request.user.customer_profile.get_or_create(site=set_default_site_id())
+        profile, created = self.request.user.customer_profile.get_or_create(site=request.site)
         cart = profile.get_cart_or_checkout_cart()
         context['invoice'] = cart
         context['order_items'] = [ order_item for order_item in cart.order_items.all() ]
@@ -166,14 +166,14 @@ class RemoveFromCartView(View):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-class AccountInformationView(LoginRequiredMixin, TemplateView):
+class AccountInformationView(LoginRequiredMixin, SetSiteToRequestMixin, TemplateView):
     template_name = 'vendor/checkout.html'
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         clear_session_purchase_data(request)
         
-        invoice = get_purchase_invoice(request.user)
+        invoice = get_purchase_invoice(request.user, request.site)
         if not invoice.order_items.count():
             return redirect('vendor:cart')
         
@@ -200,7 +200,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
         shipping_address = form.save(commit=False)
 
-        invoice = get_purchase_invoice(request.user)
+        invoice = get_purchase_invoice(request.user, request.site)
         
         if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
@@ -219,14 +219,14 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         return redirect('vendor:checkout-payment')
 
 
-class PaymentView(LoginRequiredMixin, TemplateView):
+class PaymentView(LoginRequiredMixin, SetSiteToRequestMixin, TemplateView):
     '''
     Review items and submit Payment
     '''
     template_name = "vendor/checkout.html"
 
     def get(self, request, *args, **kwargs):
-        invoice = get_purchase_invoice(request.user)
+        invoice = get_purchase_invoice(request.user, request.site)
         if not invoice.order_items.count():
             return redirect('vendor:cart')
 
@@ -240,7 +240,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        invoice = get_purchase_invoice(request.user)
+        invoice = get_purchase_invoice(request.user, request.site)
         
         if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
@@ -267,11 +267,11 @@ class PaymentView(LoginRequiredMixin, TemplateView):
             return redirect('vendor:checkout-review')
 
 
-class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
+class ReviewCheckoutView(LoginRequiredMixin, SetSiteToRequestMixin, TemplateView):
     template_name = 'vendor/checkout.html'
 
     def get(self, request, *args, **kwargs):
-        invoice = get_purchase_invoice(request.user)
+        invoice = get_purchase_invoice(request.user, request.site)
         if not invoice.order_items.count():
             return redirect('vendor:cart')
 
@@ -289,7 +289,7 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        invoice = get_purchase_invoice(request.user)
+        invoice = get_purchase_invoice(request.user, request.site)
         
         if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
