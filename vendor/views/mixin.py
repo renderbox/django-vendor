@@ -20,6 +20,15 @@ class SetSiteToRequestMixin:
         return super().dispatch(request, *args, **kwargs)
 
 
+class PassRequestToFormKwargsMixin:
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        self.request.site = get_site_from_request(self.request)
+        kwargs['request'] = self.request
+        return kwargs
+
+
 class ProductRequiredMixin:
     """
     Checks to see if a user has a required product and if not, redirects them.

@@ -16,7 +16,7 @@ from vendor.config import VENDOR_PRODUCT_MODEL
 from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet, CreditCardForm, AddressForm
 from vendor.models import Invoice, Offer, Price, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType, PaymentTypes
-from vendor.models.mixin import SetSiteToRequestMixin
+from vendor.views.mixin import SetSiteToRequestMixin, PassRequestToFormKwargsMixin
 from vendor.processors import PaymentProcessor
 from django.contrib.admin.views.main import ChangeList
 
@@ -25,6 +25,7 @@ Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 payment_processor = PaymentProcessor
 #############
 # Admin Views
+
 
 class AdminDashboardView(LoginRequiredMixin, ListView):
     '''
@@ -74,7 +75,7 @@ class AdminProductListView(LoginRequiredMixin, ListView):
     '''
     template_name = "vendor/manage/products.html"
     model = Product
-    
+
     def get_queryset(self):
         if hasattr(self.request, 'site'):
             return self.model.objects.filter(site=self.request.site)
@@ -116,7 +117,7 @@ class AdminOfferListView(LoginRequiredMixin, ListView):
         return self.model.on_site.all()
 
 
-class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
+class AdminOfferUpdateView(LoginRequiredMixin, PassRequestToFormKwargsMixin, UpdateView):
     '''
     Details of an invoice generated on the current site.
     '''
@@ -134,23 +135,26 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
 
         offer_products = self.object.products.all()
-        customers_who_own = CustomerProfile.objects.filter(receipts__products__in=offer_products)
-        customers_who_dont_own =  CustomerProfile.objects.all().exclude(pk__in=[ customer_profile.pk for customer_profile in customers_who_own.all() ])
+        customers_who_own = CustomerProfile.objects.filter(
+            receipts__products__in=offer_products)
+        customers_who_dont_own = CustomerProfile.objects.all().exclude(
+            pk__in=[customer_profile.pk for customer_profile in customers_who_own.all()])
 
         context['customers_who_own'] = customers_who_own
         context['customers_who_dont_own'] = customers_who_dont_own
-        
+
         context['formset'] = PriceFormSet(instance=self.object)
 
         return context
 
     def form_valid(self, form):
-        price_formset = PriceFormSet(self.request.POST, self.request.FILES, instance=Offer.objects.get(uuid=self.kwargs['uuid']))
+        price_formset = PriceFormSet(
+            self.request.POST, self.request.FILES, instance=Offer.objects.get(uuid=self.kwargs['uuid']))
 
         offer = form.save(commit=False)
 
         if len(form.cleaned_data['products']) > 1:
-            offer.bundle=True
+            offer.bundle = True
         offer.save()
 
         for product in form.cleaned_data['products']:
@@ -168,11 +172,10 @@ class AdminOfferUpdateView(LoginRequiredMixin, UpdateView):
         else:
             return render(self.request, self.template_name, {'form': form, 'formset': price_formset})
 
-
         return redirect('vendor_admin:manager-offer-list')
 
 
-class AdminOfferCreateView(LoginRequiredMixin, CreateView):
+class AdminOfferCreateView(LoginRequiredMixin, PassRequestToFormKwargsMixin, CreateView):
     '''
     Creates a Product to be added to offers
     '''
@@ -196,17 +199,18 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
 
         offer = offer_form.save(commit=False)
         if len(offer_form.cleaned_data['products']) > 1:
-            offer.bundle=True
+            offer.bundle = True
 
         offer.save()
         for product in offer_form.cleaned_data['products']:
             offer.products.add(product)
-        
+
         if price_formset.has_changed() and not price_formset.is_valid():
             return render(request, self.template_name, {'form': offer_form, 'formset': price_formset})
         elif price_formset.has_changed() and price_formset.is_valid():
             product_currencies = {}
-            price_currency = [ price_form.cleaned_data['currency'] for price_form in price_formset ]
+            price_currency = [price_form.cleaned_data['currency']
+                              for price_form in price_formset]
 
             for product in Product.objects.filter(pk__in=offer_form.cleaned_data['products']):
                 for currency in product.meta['msrp'].keys():
@@ -214,9 +218,10 @@ class AdminOfferCreateView(LoginRequiredMixin, CreateView):
 
             for price_form in price_formset:
                 if price_form.cleaned_data['currency'] not in product_currencies:
-                    price_formset[0].add_error('currency', _('Invalid currency'))
+                    price_formset[0].add_error(
+                        'currency', _('Invalid currency'))
                     return render(request, self.template_name, {'form': offer_form, 'formset': price_formset})
-            
+
             for price_form in price_formset:
                 price = price_form.save(commit=False)
                 if price_form.cleaned_data['price_select'] == 'free':
@@ -238,7 +243,6 @@ class AdminSubscriptionListView(LoginRequiredMixin, ListView):
         if hasattr(self.request, 'site'):
             return self.model.objects.filter(products__in=Product.objects.filter(site=self.request.site), order_item__offer__terms__lt=TermType.PERPETUAL)
         return self.model.objects.filter(products__in=Product.on_site.all(), order_item__offer__terms__lt=TermType.PERPETUAL)
-    
 
 
 class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
@@ -252,10 +256,12 @@ class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        payment = Payment.objects.get(transaction=context['object'].transaction)
+        payment = Payment.objects.get(
+            transaction=context['object'].transaction)
 
         context['payment'] = payment
-        context['payment_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
+        context['payment_form'] = CreditCardForm(
+            initial={'payment_type': PaymentTypes.CREDIT_CARD})
         context['billing_form'] = AddressForm(instance=payment.billing_address)
 
         return context
@@ -267,7 +273,7 @@ class AdminProfileListView(LoginRequiredMixin, ListView):
     """
     template_name = "vendor/manage/profile_list.html"
     model = CustomerProfile
-    
+
     def get_queryset(self):
         if hasattr(self.request, 'site'):
             return self.model.objects.filter(site=self.request.site)
@@ -286,8 +292,10 @@ class AdminProfileDetailView(LoginRequiredMixin, SetSiteToRequestMixin, DetailVi
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['receipts'] = self.object.receipts.filter(products__in=Product.objects.filter(site=self.request.site), order_item__offer__terms__gte=TermType.PERPETUAL)
-        context['subscriptions'] = self.object.receipts.filter(products__in=Product.objects.filter(site=self.request.site), order_item__offer__terms__lt=TermType.PERPETUAL)
+        context['receipts'] = self.object.receipts.filter(products__in=Product.objects.filter(
+            site=self.request.site), order_item__offer__terms__gte=TermType.PERPETUAL)
+        context['subscriptions'] = self.object.receipts.filter(products__in=Product.objects.filter(
+            site=self.request.site), order_item__offer__terms__lt=TermType.PERPETUAL)
 
         return context
 
@@ -307,7 +315,8 @@ class VoidProductView(LoginRequiredMixin, View):
 class AddOfferToProfileView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
-        customer_profile = CustomerProfile.objects.get(uuid=kwargs.get('uuid_profile'))
+        customer_profile = CustomerProfile.objects.get(
+            uuid=kwargs.get('uuid_profile'))
         offer = Offer.objects.get(uuid=kwargs['uuid_offer'])
 
         cart = customer_profile.get_cart_or_checkout_cart()
@@ -318,7 +327,7 @@ class AddOfferToProfileView(LoginRequiredMixin, View):
             messages.info(request, _("Offer and Invoice must have zero value"))
             cart.remove_offer(offer)
             return redirect('vendor_admin:manager-offer-update', uuid=offer.uuid)
-        
+
         processor = payment_processor(cart)
         processor.authorize_payment()
 

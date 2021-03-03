@@ -54,12 +54,13 @@ class OfferForm(forms.ModelForm):
         fields = ['name', 'start_date', 'end_date', 'terms', 'term_details', 'term_start_date', 'available', 'offer_description', 'allow_multiple']
 
     def __init__(self, *args, **kwargs):
+        request = kwargs.pop('request')
         super(OfferForm, self).__init__(*args, **kwargs)
         self.fields['start_date'].widget.attrs['class'] = 'datepicker'
         self.fields['end_date'].widget.attrs['class'] = 'datepicker'
         self.fields['term_start_date'].widget.attrs['class'] = 'datepicker'
         self.fields['available'].label = _('Available to Purchase')
-        self.fields['products'].queryset = Product.objects.filter(site=Site.objects.get_current(), available=True)
+        self.fields['products'].queryset = Product.objects.filter(site=request.site, available=True)
 
     def clean(self):
         cleaned_data = super().clean()

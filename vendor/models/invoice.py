@@ -11,7 +11,7 @@ from allauth.account.signals import user_logged_in
 
 from vendor.models.utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
-from vendor.views.mixin import get_site_from_request
+# from vendor.views.mixin import get_site_from_request
 
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES, TermType
