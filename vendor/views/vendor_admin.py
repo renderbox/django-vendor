@@ -16,6 +16,7 @@ from vendor.config import VENDOR_PRODUCT_MODEL
 from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet, CreditCardForm, AddressForm
 from vendor.models import Invoice, Offer, Price, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType, PaymentTypes
+from vendor.models.mixin import SetSiteToRequestMixin
 from vendor.processors import PaymentProcessor
 from django.contrib.admin.views.main import ChangeList
 
@@ -273,7 +274,7 @@ class AdminProfileListView(LoginRequiredMixin, ListView):
         return self.model.on_site.all()
 
 
-class AdminProfileDetailView(LoginRequiredMixin, DetailView):
+class AdminProfileDetailView(LoginRequiredMixin, SetSiteToRequestMixin, DetailView):
     '''
     Gets all Customer Profile information for quick lookup and management
     '''
@@ -284,12 +285,9 @@ class AdminProfileDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        site = settings.SITE_ID
-        if hasattr(self.request, 'site'):
-            site = self.request.site
 
-        context['receipts'] = self.object.receipts.filter(products__in=Product.objects.filter(site=site), order_item__offer__terms__gte=TermType.PERPETUAL)
-        context['subscriptions'] = self.object.receipts.filter(products__in=Product.objects.filter(site=site), order_item__offer__terms__lt=TermType.PERPETUAL)
+        context['receipts'] = self.object.receipts.filter(products__in=Product.objects.filter(site=self.request.site), order_item__offer__terms__gte=TermType.PERPETUAL)
+        context['subscriptions'] = self.object.receipts.filter(products__in=Product.objects.filter(site=self.request.site), order_item__offer__terms__lt=TermType.PERPETUAL)
 
         return context
 
