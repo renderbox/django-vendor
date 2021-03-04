@@ -11,10 +11,10 @@ from allauth.account.signals import user_logged_in
 
 from vendor.models.utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
+from vendor.utils import get_site_from_request
 
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES, TermType
-from .utils import set_default_site_id
 from .offer import Offer
 
 #####################
@@ -211,7 +211,7 @@ class OrderItem(CreateUpdateModelBase):
 @receiver(user_logged_in)
 def convert_session_cart_to_invoice(sender, request, **kwargs):
     if 'session_cart' in request.session:
-        profile, created = request.user.customer_profile.get_or_create(site=set_default_site_id())
+        profile, created = request.user.customer_profile.get_or_create(site=get_site_from_request(request))
         cart = profile.get_cart()
         
         for offer_key in request.session['session_cart'].keys():

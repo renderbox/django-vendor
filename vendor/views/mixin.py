@@ -1,16 +1,24 @@
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib import messages
-from django.utils.translation import ugettext as _
+from django.contrib.sites.shortcuts import get_current_site
 from django.http import Http404
-from django.contrib.sites.models import Site
 from django.shortcuts import redirect
+from django.utils.translation import ugettext as _
 
 
-class ProductRequiredMixin():
+class PassRequestToFormKwargsMixin:
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
+
+class ProductRequiredMixin:
     """
     Checks to see if a user has a required product and if not, redirects them.
+    ProductRequiredMixin expects that request.site is set.
     """
-
     product_queryset = None
     product_model = None
     product_redirect = "/"
@@ -20,15 +28,14 @@ class ProductRequiredMixin():
         """
         Verify that the current user owns the product.  Checks on all HTTP methods.
         """
-        
         if not self.user_has_product():
-            print("No Product Ownership")
             return self.handle_no_product()
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['product_owned'] = self.product_owned        # Variable set by ProductRequiredMixin
+        # Variable set by ProductRequiredMixin
+        context['product_owned'] = self.product_owned
         return context
 
     def user_has_product(self):
@@ -37,12 +44,12 @@ class ProductRequiredMixin():
 
         TODO: move this to some kind of caching or session variable to avoid hitting the DB on every request.
         """
-
         if self.request.user.is_anonymous:
             self.product_owned = False
         else:
             products = self.get_product_queryset()
-            self.product_owned = self.request.user.customer_profile.filter(site=Site.objects.get_current()).get().has_product(products)
+            self.product_owned = self.request.user.customer_profile.filter(
+                site=get_site_from_request(self.request)).get().has_product(products)
 
         return self.product_owned
 
@@ -50,10 +57,10 @@ class ProductRequiredMixin():
         """
         Method to get the Product(s) needed for the check.  Can be overridden to handle complex queries.
         """
-
         if self.product_queryset is None:
             if self.product_model:
-                return self.product_model.on_site.all()    # Only provide list of products on the current site.
+                # Only provide list of products on the current site.
+                return self.product_model.objects.filter(site=get_site_from_request(self.request))
             else:
                 raise ImproperlyConfigured(
                     "%(cls)s is missing a Product QuerySet. Define "
@@ -75,7 +82,7 @@ class ProductRequiredMixin():
 
         if not self.product_redirect:
             raise Http404(_("No %(verbose_name)s found matching the query") %
-                    {'verbose_name': self.get_product_queryset().model._meta.verbose_name})
+                          {'verbose_name': self.get_product_queryset().model._meta.verbose_name})
 
         messages.info(self.request, _("Product Purchase required."))
         return redirect(self.product_redirect)

@@ -2,12 +2,14 @@ import csv
 from itertools import chain
 from django.http import StreamingHttpResponse
 from django.utils.timezone import localtime
+from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic.list import BaseListView
 from django.views.generic.edit import FormMixin
 
+from vendor.utils import get_site_from_request
 from vendor.models import Receipt, Invoice
 from vendor.forms import DateRangeForm
 
@@ -115,6 +117,8 @@ class InvoiceListCSV(CSVStreamRowView):
 
     def get_queryset(self):
         # TODO: Update to handle ranges from a POST
+        if hasattr(self.request, 'site'):
+            return self.model.objects.filter(site=get_site_from_request(self.request))
         return self.model.on_site.all()
     
     def get_row_data(self):
