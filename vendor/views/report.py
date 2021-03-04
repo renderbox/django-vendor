@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.generic.list import BaseListView
 from django.views.generic.edit import FormMixin
 
+from vendor.utils import get_site_from_request
 from vendor.models import Receipt, Invoice
 from vendor.forms import DateRangeForm
 
