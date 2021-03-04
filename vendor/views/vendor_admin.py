@@ -16,7 +16,7 @@ from vendor.config import VENDOR_PRODUCT_MODEL
 from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet, CreditCardForm, AddressForm
 from vendor.models import Invoice, Offer, Price, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType, PaymentTypes
-from vendor.views.mixin import SetSiteToRequestMixin, PassRequestToFormKwargsMixin
+from vendor.views.mixin import get_site_from_request, PassRequestToFormKwargsMixin
 from vendor.processors import PaymentProcessor
 from django.contrib.admin.views.main import ChangeList
 
@@ -39,7 +39,7 @@ class AdminDashboardView(LoginRequiredMixin, ListView):
         Return the most recent 10
         """
         if hasattr(self.request, 'site'):
-            return self.model.objects.filter(site=self.request.site)[:10]
+            return self.model.objects.filter(site=get_site_from_request(self.request))[:10]
         return self.model.on_site.all()[:10]
 
 
@@ -55,7 +55,7 @@ class AdminInvoiceListView(LoginRequiredMixin, ListView):
         Ignores Cart state invoices
         """
         if hasattr(self.request, 'site'):
-            return self.model.objects.filter(site=self.request.site, status__gt=Invoice.InvoiceStatus.CART).order_by('updated')
+            return self.model.objects.filter(site=get_site_from_request(self.request), status__gt=Invoice.InvoiceStatus.CART).order_by('updated')
         return self.model.on_site.filter(status__gt=Invoice.InvoiceStatus.CART).order_by('updated')
 
 
@@ -78,7 +78,7 @@ class AdminProductListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         if hasattr(self.request, 'site'):
-            return self.model.objects.filter(site=self.request.site)
+            return self.model.objects.filter(site=get_site_from_request(self.request))
         return self.model.on_site.all()
 
 
@@ -113,7 +113,7 @@ class AdminOfferListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         if hasattr(self.request, 'site'):
-            return self.model.objects.filter(site=self.request.site)
+            return self.model.objects.filter(site=get_site_from_request(self.request))
         return self.model.on_site.all()
 
 
@@ -241,7 +241,8 @@ class AdminSubscriptionListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         if hasattr(self.request, 'site'):
-            return self.model.objects.filter(products__in=Product.objects.filter(site=self.request.site), order_item__offer__terms__lt=TermType.PERPETUAL)
+            return self.model.objects.filter(products__in=Product.objects.filter(site=get_site_from_request(self.request)),
+                                             order_item__offer__terms__lt=TermType.PERPETUAL)
         return self.model.objects.filter(products__in=Product.on_site.all(), order_item__offer__terms__lt=TermType.PERPETUAL)
 
 
@@ -276,11 +277,11 @@ class AdminProfileListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         if hasattr(self.request, 'site'):
-            return self.model.objects.filter(site=self.request.site)
+            return self.model.objects.filter(site=get_site_from_request(self.request))
         return self.model.on_site.all()
 
 
-class AdminProfileDetailView(LoginRequiredMixin, SetSiteToRequestMixin, DetailView):
+class AdminProfileDetailView(LoginRequiredMixin, DetailView):
     '''
     Gets all Customer Profile information for quick lookup and management
     '''
@@ -292,10 +293,11 @@ class AdminProfileDetailView(LoginRequiredMixin, SetSiteToRequestMixin, DetailVi
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['receipts'] = self.object.receipts.filter(products__in=Product.objects.filter(
-            site=self.request.site), order_item__offer__terms__gte=TermType.PERPETUAL)
+        context['receipts'] = self.object.receipts.filter(products__in=Product.objects.filter(site=get_site_from_request(self.request)),
+                                                          order_item__offer__terms__gte=TermType.PERPETUAL)
         context['subscriptions'] = self.object.receipts.filter(products__in=Product.objects.filter(
-            site=self.request.site), order_item__offer__terms__lt=TermType.PERPETUAL)
+                                                               site=get_site_from_request(self.request)),
+                                                               order_item__offer__terms__lt=TermType.PERPETUAL)
 
         return context
 

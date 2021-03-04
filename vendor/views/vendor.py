@@ -19,7 +19,7 @@ from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile, Ord
 from vendor.models.choice import TermType, PurchaseStatus
 from vendor.processors import PaymentProcessor
 from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm, AddressForm
-from vendor.views.mixin import SetSiteToRequestMixin
+from vendor.views.mixin import get_site_from_request, SetSiteToRequestMixin
 # from vendor.models.address import Address as GoogleAddress
 
 # The Payment Processor configured in settings.py
@@ -54,7 +54,7 @@ def check_offer_items_or_redirect(invoice, request):
         messages.info(request, _("Please add to your cart"))
         redirect('vendor:cart')
 
-class CartView(SetSiteToRequestMixin, TemplateView):
+class CartView(TemplateView):
     '''
     View items in the cart
     '''
@@ -77,14 +77,14 @@ class CartView(SetSiteToRequestMixin, TemplateView):
 
             return render(request, self.template_name, context)
 
-        profile, created = self.request.user.customer_profile.get_or_create(site=request.site)
+        profile, created = self.request.user.customer_profile.get_or_create(site=get_site_from_request(request))
         cart = profile.get_cart_or_checkout_cart()
         context['invoice'] = cart
         context['order_items'] = [ order_item for order_item in cart.order_items.all() ]
         return render(request, self.template_name, context)
 
 
-class AddToCartView(SetSiteToRequestMixin, View):
+class AddToCartView(View):
     '''
     Create an order item and add it to the order
     '''
@@ -104,11 +104,11 @@ class AddToCartView(SetSiteToRequestMixin, View):
         return session_cart
 
     def post(self, request, *args, **kwargs):
-        offer = Offer.objects.get(site=request.site, slug=self.kwargs["slug"])
+        offer = Offer.objects.get(site=get_site_from_request(request), slug=self.kwargs["slug"])
         if request.user.is_anonymous:
             request.session['session_cart'] = self.session_cart(request, offer)
         else:
-            profile, created = self.request.user.customer_profile.get_or_create(site=request.site)
+            profile, created = self.request.user.customer_profile.get_or_create(site=get_site_from_request(request))
 
             cart = profile.get_cart_or_checkout_cart()
 
@@ -127,10 +127,10 @@ class AddToCartView(SetSiteToRequestMixin, View):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-class RemoveFromCartView(SetSiteToRequestMixin, View):
+class RemoveFromCartView(View):
     
     def post(self, request, *args, **kwargs):
-        offer = Offer.objects.get(site=request.site, slug=self.kwargs["slug"])
+        offer = Offer.objects.get(site=get_site_from_request(request), slug=self.kwargs["slug"])
         if request.user.is_anonymous:
             offer_key = str(offer.pk)
             session_cart = get_or_create_session_cart(request.session)
@@ -143,7 +143,7 @@ class RemoveFromCartView(SetSiteToRequestMixin, View):
 
             request.session['session_cart'] = session_cart
         else:
-            profile = self.request.user.customer_profile.get(site=request.site)      # Make sure they have a cart
+            profile = self.request.user.customer_profile.get(site=get_site_from_request(request))      # Make sure they have a cart
 
             cart = profile.get_cart_or_checkout_cart()
 
@@ -158,14 +158,14 @@ class RemoveFromCartView(SetSiteToRequestMixin, View):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-class AccountInformationView(LoginRequiredMixin, SetSiteToRequestMixin, TemplateView):
+class AccountInformationView(LoginRequiredMixin, TemplateView):
     template_name = 'vendor/checkout.html'
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         clear_session_purchase_data(request)
         
-        invoice = get_purchase_invoice(request.user, request.site)
+        invoice = get_purchase_invoice(request.user, get_site_from_request(request))
         if not invoice.order_items.count():
             return redirect('vendor:cart')
         
@@ -192,7 +192,7 @@ class AccountInformationView(LoginRequiredMixin, SetSiteToRequestMixin, Template
 
         shipping_address = form.save(commit=False)
 
-        invoice = get_purchase_invoice(request.user, request.site)
+        invoice = get_purchase_invoice(request.user, get_site_from_request(request))
         
         if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
@@ -211,14 +211,14 @@ class AccountInformationView(LoginRequiredMixin, SetSiteToRequestMixin, Template
         return redirect('vendor:checkout-payment')
 
 
-class PaymentView(LoginRequiredMixin, SetSiteToRequestMixin, TemplateView):
+class PaymentView(LoginRequiredMixin, TemplateView):
     '''
     Review items and submit Payment
     '''
     template_name = "vendor/checkout.html"
 
     def get(self, request, *args, **kwargs):
-        invoice = get_purchase_invoice(request.user, request.site)
+        invoice = get_purchase_invoice(request.user, get_site_from_request(request))
         if not invoice.order_items.count():
             return redirect('vendor:cart')
 
@@ -232,7 +232,7 @@ class PaymentView(LoginRequiredMixin, SetSiteToRequestMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        invoice = get_purchase_invoice(request.user, request.site)
+        invoice = get_purchase_invoice(request.user, get_site_from_request(request))
         
         if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
@@ -259,11 +259,11 @@ class PaymentView(LoginRequiredMixin, SetSiteToRequestMixin, TemplateView):
             return redirect('vendor:checkout-review')
 
 
-class ReviewCheckoutView(LoginRequiredMixin, SetSiteToRequestMixin, TemplateView):
+class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
     template_name = 'vendor/checkout.html'
 
     def get(self, request, *args, **kwargs):
-        invoice = get_purchase_invoice(request.user, request.site)
+        invoice = get_purchase_invoice(request.user, get_site_from_request(request))
         if not invoice.order_items.count():
             return redirect('vendor:cart')
 
@@ -281,7 +281,7 @@ class ReviewCheckoutView(LoginRequiredMixin, SetSiteToRequestMixin, TemplateView
 
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        invoice = get_purchase_invoice(request.user, request.site)
+        invoice = get_purchase_invoice(request.user, get_site_from_request(request))
         
         if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
@@ -314,7 +314,7 @@ class PaymentSummaryView(LoginRequiredMixin, DetailView):
         return context
 
 
-class OrderHistoryListView(LoginRequiredMixin, SetSiteToRequestMixin, ListView):
+class OrderHistoryListView(LoginRequiredMixin, ListView):
     '''
     List of all the invoices generated by the current user on the current site.
     '''
@@ -324,7 +324,7 @@ class OrderHistoryListView(LoginRequiredMixin, SetSiteToRequestMixin, ListView):
     def get_queryset(self):
         try:
             # The profile and user are site specific so this should only return what's on the site for that user excluding the cart
-            return self.request.user.customer_profile.get(site=self.request.site).invoices.filter(status__gt=Invoice.InvoiceStatus.CART)
+            return self.request.user.customer_profile.get(site=get_site_from_request(self.request)).invoices.filter(status__gt=Invoice.InvoiceStatus.CART)
         except ObjectDoesNotExist:         # Catch the actual error for the exception
             return []   # Return empty list if there is no customer_profile
 
@@ -339,12 +339,12 @@ class OrderHistoryDetailView(LoginRequiredMixin, DetailView):
     slug_url_kwarg = 'uuid'
 
 
-class ProductsListView(LoginRequiredMixin, SetSiteToRequestMixin, ListView):
+class ProductsListView(LoginRequiredMixin, ListView):
     model = Receipt
     template_name = 'vendor/purchase_list.html'
 
     def get_queryset(self):
-        return self.request.user.customer_profile.get(site=self.request.site).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
+        return self.request.user.customer_profile.get(site=get_site_from_request(self.request)).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
 
 
 class ReceiptDetailView(LoginRequiredMixin, DetailView):
@@ -361,12 +361,15 @@ class ReceiptDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class SubscriptionsListView(LoginRequiredMixin, SetSiteToRequestMixin, ListView):
+class SubscriptionsListView(LoginRequiredMixin, ListView):
     model = Receipt
     template_name = 'vendor/purchase_list.html'
 
     def get_queryset(self):
-        receipts = self.request.user.customer_profile.get(site=self.request.site).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
+        try:
+            receipts = self.request.user.customer_profile.get(site=get_site_from_request(self.request)).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
+        except ObjectDoesNotExist:
+            raise Http_404(_("Not Found"))
         subscriptions = [ receipt for receipt in receipts.all() if receipt.order_item.offer.terms > TermType.PERPETUAL and receipt.order_item.offer.terms < TermType.ONE_TIME_USE ]
         return subscriptions
 

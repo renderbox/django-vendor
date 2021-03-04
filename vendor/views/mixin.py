@@ -12,19 +12,10 @@ def get_site_from_request(request):
         return request.site
     return get_current_site(request)
 
-
-class SetSiteToRequestMixin:
-
-    def dispatch(self, request, *args, **kwargs):
-        request.site = get_site_from_request(request)
-        return super().dispatch(request, *args, **kwargs)
-
-
 class PassRequestToFormKwargsMixin:
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        self.request.site = get_site_from_request(self.request)
         kwargs['request'] = self.request
         return kwargs
 
@@ -64,7 +55,7 @@ class ProductRequiredMixin:
         else:
             products = self.get_product_queryset()
             self.product_owned = self.request.user.customer_profile.filter(
-                site=self.request.site).get().has_product(products)
+                site=get_site_from_request(self.request)).get().has_product(products)
 
         return self.product_owned
 
@@ -75,7 +66,7 @@ class ProductRequiredMixin:
         if self.product_queryset is None:
             if self.product_model:
                 # Only provide list of products on the current site.
-                return self.product_model.objects.filter(site=self.request.site)
+                return self.product_model.objects.filter(site=get_site_from_request(self.request))
             else:
                 raise ImproperlyConfigured(
                     "%(cls)s is missing a Product QuerySet. Define "

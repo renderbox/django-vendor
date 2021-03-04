@@ -12,6 +12,7 @@ from django.utils.translation import ugettext_lazy as _
 from .config import VENDOR_PRODUCT_MODEL
 from .models import Address, Offer, OrderItem, Price, offer_term_details_default
 from .models.choice import PaymentTypes, TermType
+from .models.mixin import get_site_from_request
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
@@ -60,7 +61,7 @@ class OfferForm(forms.ModelForm):
         self.fields['end_date'].widget.attrs['class'] = 'datepicker'
         self.fields['term_start_date'].widget.attrs['class'] = 'datepicker'
         self.fields['available'].label = _('Available to Purchase')
-        self.fields['products'].queryset = Product.objects.filter(site=request.site, available=True)
+        self.fields['products'].queryset = Product.objects.filter(site=get_site_from_request(request), available=True)
 
     def clean(self):
         cleaned_data = super().clean()
