@@ -7,7 +7,8 @@ from django.views.generic import TemplateView
 from django.views.generic.list import ListView
 
 from vendor.models import Offer, Payment
-from vendor.views.mixin import ProductRequiredMixin, get_site_from_request
+from vendor.views.mixin import ProductRequiredMixin
+from vendor.utils import get_site_from_request
 from vendor.forms import CreditCardForm
 from vendor.models.choice import PurchaseStatus, TermType, PaymentTypes
 class VendorIndexView(ListView):

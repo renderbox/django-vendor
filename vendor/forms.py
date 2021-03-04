@@ -2,17 +2,16 @@ from calendar import monthrange
 from datetime import datetime
 from django import forms
 from django.apps import apps
-from django.contrib.auth import get_user_model
-from django.contrib.sites.models import Site
 from django.conf import settings
-from django.db.models import IntegerChoices
 from django.forms import inlineformset_factory
 from django.forms.widgets import SelectDateWidget, TextInput
 from django.utils.translation import ugettext_lazy as _
+
+
 from .config import VENDOR_PRODUCT_MODEL
-from .models import Address, Offer, OrderItem, Price, offer_term_details_default
+from .models import Address, Offer, Price, offer_term_details_default
 from .models.choice import PaymentTypes, TermType
-from .models.mixin import get_site_from_request
+from .utils import get_site_from_request
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 

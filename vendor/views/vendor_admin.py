@@ -16,7 +16,8 @@ from vendor.config import VENDOR_PRODUCT_MODEL
 from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet, CreditCardForm, AddressForm
 from vendor.models import Invoice, Offer, Price, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType, PaymentTypes
-from vendor.views.mixin import get_site_from_request, PassRequestToFormKwargsMixin
+from vendor.views.mixin import PassRequestToFormKwargsMixin
+from vendor.utils import get_site_from_request
 from vendor.processors import PaymentProcessor
 from django.contrib.admin.views.main import ChangeList
 

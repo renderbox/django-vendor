@@ -1,16 +1,10 @@
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib import messages
-from django.contrib.sites.models import Site
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import Http404
 from django.shortcuts import redirect
 from django.utils.translation import ugettext as _
 
-
-def get_site_from_request(request):
-    if hasattr(request, 'site'):
-        return request.site
-    return get_current_site(request)
 
 class PassRequestToFormKwargsMixin:
 

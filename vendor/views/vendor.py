@@ -19,7 +19,7 @@ from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile, Ord
 from vendor.models.choice import TermType, PurchaseStatus
 from vendor.processors import PaymentProcessor
 from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm, AddressForm
-from vendor.views.mixin import get_site_from_request, SetSiteToRequestMixin
+from vendor.utils import get_site_from_request
 # from vendor.models.address import Address as GoogleAddress
 
 # The Payment Processor configured in settings.py
