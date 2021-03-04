@@ -60,7 +60,7 @@ def renew_subscription_task(json_data):
         'account_number': transaction_detail.payment.creditCard.cardNumber.text[-4:],
         'account_type': transaction_detail.payment.creditCard.cardType.text,
         'full_name': " ".join([transaction_detail.billTo.firstName.text,transaction_detail.billTo.lastName.text]),
-        'raw': str({**request.POST, **(request.POST.__dict__)})}
+        'raw': str({**json_data, **(json_data.__dict__)})}
     
 
     invoice = Invoice(status=Invoice.InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
