@@ -1,9 +1,9 @@
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib import messages
-from django.contrib.sites.shortcuts import get_current_site
 from django.http import Http404
 from django.shortcuts import redirect
 from django.utils.translation import ugettext as _
+from vendor.utils import get_site_from_request
 
 
 class PassRequestToFormKwargsMixin:
