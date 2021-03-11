@@ -192,7 +192,7 @@ class AdminOfferCreateView(LoginRequiredMixin, PassRequestToFormKwargsMixin, Cre
         return context
 
     def post(self, request):
-        offer_form = self.form_class(request.POST)
+        offer_form = self.form_class(request.POST, request=request)
         price_formset = PriceFormSet(request.POST)
 
         if not offer_form.is_valid():
