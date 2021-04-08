@@ -46,7 +46,7 @@ class Address(models.Model):
     address_2 = models.CharField(_("Address 2 (Optional)"), max_length=40, blank=True, null=True)
     locality = models.CharField(_("City"), max_length=40, blank=False)
     state = models.CharField(_("State"), max_length=40, blank=False)
-    country = models.IntegerField(_("Country/Region"), choices=Country.choices, default=COUNTRY_DEFAULT)
+    country = models.IntegerField(_("Country/Region"), choices=Country.choices, default=Country[COUNTRY_DEFAULT].value)
     postal_code = models.CharField(_("Postal Code"), max_length=16, blank=True)
 
     # def create_address_from_billing_form(self, billing_form, profile):
@@ -80,4 +80,4 @@ class Address(models.Model):
         return "\n".join([f"{key}: {value}" for key, value in self.__dict__.items()])
 
     def get_address_display(self):
-        return f"{self.profile.user}\n{self.address_1}, {self.address_2}\n{self.locality}, {self.state}, {self.postal_code}".replace('None', '')
+        return f"{self.profile.user}\n{self.address_1}, {self.address_2}\n{self.locality}, {self.state}, {self.get_country_display()}, {self.postal_code}".replace('None', '')

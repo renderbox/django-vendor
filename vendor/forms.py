@@ -105,8 +105,11 @@ class AddressForm(forms.ModelForm):
         self.fields['address_1'].widget.attrs.update({'placeholder': _('Enter Address')})
         self.fields['address_2'].widget.attrs.update({'placeholder': _('Enter Apt, Suite, Unit, Building, Floor, etc')})
         self.fields['locality'].widget.attrs.update({'placeholder': _('Enter City')})
-        self.initial['country'] = Country[COUNTRY_DEFAULT]
         self.fields['country'].choices = get_available_country_choices()
+        if 'instance' in kwargs:
+            self.initial['country'] = kwargs['instance'].country
+        else:
+            self.initial['country'] = Country[COUNTRY_DEFAULT].value
 
 
 class AccountInformationForm(AddressForm):

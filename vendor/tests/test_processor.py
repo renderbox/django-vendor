@@ -35,7 +35,7 @@ class BaseProcessorTests(TestCase):
         self.subscription_offer = Offer.objects.get(pk=4)
         self.form_data = { 
             'billing_address_form': 
-                {'name':'Home','company':'Whitemoon Dreams','country':'581','address_1':'221B Baker Street','address_2':'','locality':'Marylebone','state':'California','postal_code':'90292'}, 
+                {'name':'Home','company':'Whitemoon Dreams','country':'840','address_1':'221B Baker Street','address_2':'','locality':'Marylebone','state':'California','postal_code':'90292'}, 
             'credit_card_form': 
                 {'full_name':'Bob Ross','card_number':'5424000000000015','expire_month':'12','expire_year':'2030','cvv_number':'900','payment_type':'10'}
             }
@@ -286,19 +286,31 @@ class AuthorizeNetProcessorTests(TestCase):
         self.existing_invoice = Invoice.objects.get(pk=1)
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
         self.form_data = { 
-            'billing_address_form': 
-                {'name':'Home','company':'Whitemoon Dreams','country':'581','address_1':'221B Baker Street','address_2':'','locality':'Marylebone','state':'California','postal_code':'90292'}, 
-            'credit_card_form': 
-                {'full_name':'Bob Ross','card_number':'5424000000000015','expire_month':'12','expire_year':'2030','cvv_number':'900','payment_type':'10'}
+            'billing_address_form': {
+                'name': 'Home',
+                'company': 'Whitemoon Dreams',
+                'country': '840',
+                'address_1': '221B Baker Street',
+                'address_2': '',
+                'locality': 'Marylebone',
+                'state': 'California',
+                'postal_code': '90292'},
+            'credit_card_form': {
+                'full_name': 'Bob Ross',
+                'card_number': '5424000000000015',
+                'expire_month': '12',
+                'expire_year': '2030',
+                'cvv_number': '900',
+                'payment_type': '10'}
             }
         self.subscription_offer = Offer.objects.get(pk=4)
         self.client = Client()
         self.user = User.objects.get(pk=1)
         self.client.force_login(self.user)
         price = Price.objects.get(pk=1)
-        price.cost = randrange(1,1000)
+        price.cost = randrange(1, 1000)
         price.save()
-    
+
     ##########
     # Processor Initialization Tests
     ##########
