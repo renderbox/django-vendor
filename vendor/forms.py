@@ -15,23 +15,25 @@ from .utils import get_site_from_request
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
-COUNTRY_CHOICE = getattr(settings, 'VENDOR_COUNTRY_CHOICE', Country.choices)
+COUNTRY_CHOICE = getattr(settings, 'VENDOR_COUNTRY_CHOICE', Country)
 COUNTRY_DEFAULT = getattr(settings, 'VENDOR_COUNTRY_DEFAULT', Country.US)
 
 
 def get_available_country_choices():
-    if isinstance(COUNTRY_CHOICE, Country):
-        return Country.choices
-    return [(country.value, country.label) for country in Country if country.name in COUNTRY_CHOICE]
+    if isinstance(COUNTRY_CHOICE, list):
+        return [(country.value, country.label) for country in Country if country.name in COUNTRY_CHOICE]
+    return Country.choices
 
 
 class PriceForm(forms.ModelForm):
-    CHOICES = [('not_free', _('Purchase Price')), 
+    CHOICES = [('not_free', _('Purchase Price')),
                ('free', _('Free'))]
     price_select = forms.ChoiceField(label="", choices=CHOICES, widget=forms.widgets.RadioSelect())
+
     class Meta:
         model = Price
-        fields = ['price_select', 'cost', 'currency', 'start_date', 'end_date', 'priority']
+        fields = ['price_select', 'cost', 'currency',
+                  'start_date', 'end_date', 'priority']
 
     def __init__(self, *args, **kwargs):
         super(PriceForm, self).__init__(*args, **kwargs)
@@ -41,12 +43,11 @@ class PriceForm(forms.ModelForm):
         self.fields['cost'].widget = TextInput()
         self.fields['cost'].widget.attrs['placeholder'] = '##.##'
         self.fields['cost'].widget.attrs['class'] = 'w-50'
-        
+
         if self.instance.cost:
             self.initial['price_select'] = self.CHOICES[0]
         else:
             self.initial['price_select'] = self.CHOICES[1]
-
 
 
 class ProductForm(forms.ModelForm):
@@ -56,11 +57,13 @@ class ProductForm(forms.ModelForm):
 
 
 class OfferForm(forms.ModelForm):
-    products = forms.ModelMultipleChoiceField(label=_("Available Products:"), required=True, queryset=Product.objects.filter(site=settings.SITE_ID, available=True))
+    products = forms.ModelMultipleChoiceField(label=_(
+        "Available Products:"), required=True, queryset=Product.objects.filter(site=settings.SITE_ID, available=True))
 
     class Meta:
         model = Offer
-        fields = ['name', 'start_date', 'end_date', 'terms', 'term_details', 'term_start_date', 'available', 'offer_description', 'allow_multiple']
+        fields = ['name', 'start_date', 'end_date', 'terms', 'term_details',
+                  'term_start_date', 'available', 'offer_description', 'allow_multiple']
 
     def __init__(self, *args, **kwargs):
         request = kwargs.pop('request')
@@ -75,14 +78,14 @@ class OfferForm(forms.ModelForm):
         cleaned_data = super().clean()
 
         if not cleaned_data['name']:
-            product_names = [ product.name for product in self.cleaned_data['products'] ]
+            product_names = [product.name for product in self.cleaned_data['products']]
             if len(product_names) == 1:
                 self.cleaned_data['name'] = product_names[0]
             else:
                 self.cleaned_data['name'] = _("Bundle: ") + ", ".join(product_names)
-                
-        term_detail_defaults = [ False for default in list(offer_term_details_default().keys()) if default not in cleaned_data['term_details']]
-        
+
+        term_detail_defaults = [False for default in list(offer_term_details_default().keys()) if default not in cleaned_data['term_details']]
+
         if self.data['terms'] == str(TermType.SUBSCRIPTION) and False in term_detail_defaults:
             self.add_error('term_details', _("Invalid term details for subscription"))
 
@@ -93,7 +96,8 @@ class AddressForm(forms.ModelForm):
 
     class Meta:
         model = Address
-        fields = ['name', 'first_name', 'last_name', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
+        fields = ['name', 'first_name', 'last_name', 'country',
+                  'address_1', 'address_2', 'locality', 'state', 'postal_code']
 
     def __init__(self, *args, **kwargs):
         super(AddressForm, self).__init__(*args, **kwargs)
@@ -110,7 +114,8 @@ class AccountInformationForm(AddressForm):
 
     class Meta:
         model = Address
-        fields = ['name', 'first_name', 'last_name', 'email', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
+        fields = ['name', 'first_name', 'last_name', 'email', 'country',
+                  'address_1', 'address_2', 'locality', 'state', 'postal_code']
 
 
 class BillingAddressForm(AddressForm):
@@ -118,7 +123,8 @@ class BillingAddressForm(AddressForm):
 
     class Meta:
         model = Address
-        fields = ['same_as_shipping', 'name', 'first_name', 'last_name', 'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
+        fields = ['same_as_shipping', 'name', 'first_name', 'last_name',
+                  'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
 
     def __init__(self, *args, **kwargs):
         super(BillingAddressForm, self).__init__(*args, **kwargs)
@@ -194,9 +200,7 @@ class CreditCardField(forms.CharField):
     ]
 
     def __init__(self, placeholder=None, *args, **kwargs):
-        super(CreditCardField, self).__init__(
-            # override default widget
-            widget=forms.widgets.TextInput(attrs={'placeholder': placeholder, 'type':'tel'}), *args, **kwargs)
+        super(CreditCardField, self).__init__(widget=forms.widgets.TextInput(attrs={'placeholder': placeholder, 'type': 'tel'}), *args, **kwargs)
 
     default_error_messages = {
         'invalid': _(u'The credit card number is invalid'),
@@ -260,7 +264,6 @@ class CreditCardForm(PaymentFrom):
         self.fields['expire_year'].choices = [(x, x) for x in range(today.year - 1, today.year + 15)]
         self.fields['expire_year'].initial = (today.year, today.year)
 
-
     def clean(self):
         cleaned_data = super(CreditCardForm, self).clean()
         expire_month = cleaned_data.get('expire_month')
@@ -269,7 +272,7 @@ class CreditCardForm(PaymentFrom):
         if not self.expiration_date_valid(expire_month, expire_year):
             del(cleaned_data['expire_month'])
             del(cleaned_data['expire_year'])
-             
+
         return cleaned_data
 
     def clean_expire_month(self):
@@ -287,7 +290,7 @@ class CreditCardForm(PaymentFrom):
             raise forms.ValidationError(_("You must select a valid expiration year"), code='required')
 
         return expire_year
-    
+
     def clean_cvv_number(self):
         cvv_number = self.cleaned_data.get('cvv_number')
 
@@ -295,7 +298,7 @@ class CreditCardForm(PaymentFrom):
             raise forms.ValidationError(_("CVV must be all digits"))
 
         return cvv_number
-    
+
     def expiration_date_valid(self, expire_month, expire_year):
         year = int(expire_year)
         month = int(expire_month)
@@ -323,12 +326,13 @@ class DateRangeForm(forms.Form):
         if end_date and end_date < start_date:
             self.add_error('end_date', _('End Date cannot be before Start Date'))
             del(cleaned_data['end_date'])
-            
+
         return cleaned_data
 
 ##########
 # From Sets
 ##########
+
 
 PriceFormSet = inlineformset_factory(
     Offer,
