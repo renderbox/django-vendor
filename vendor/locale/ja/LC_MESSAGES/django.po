@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-07 20:36+0000\n"
+"POT-Creation-Date: 2021-04-08 22:43+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,170 +22,187 @@ msgstr ""
 msgid "USD Dollars"
 msgstr "米ドル"
 
-#: forms.py:19 forms.py:34 forms.py:279 models/offer.py:53 models/price.py:16
-#: models/receipt.py:22 templates/vendor/manage/offers.html:20
+#: forms.py:29
+msgid "Purchase Price"
+msgstr "購入金額"
+
+#: forms.py:30
+msgid "Free"
+msgstr "自由"
+
+#: forms.py:42 templates/vendor/invoice_history_detail.html:14
+#: templates/vendor/manage/invoice_detail.html:14
+#: templates/vendor/manage/offers.html:25
+#: templates/vendor/purchase_detail.html:27
+#: templates/vendor/refund_list.html:16
+msgid "Price"
+msgstr "価格"
+
+#: forms.py:61
+msgid "Available Products:"
+msgstr "利用可能な製品："
+
+#: forms.py:74
+msgid "Available to Purchase"
+msgstr "購入可能"
+
+#: forms.py:85
+msgid "Bundle: "
+msgstr "バンドル："
+
+#: forms.py:90
+msgid "Invalid term details for subscription"
+msgstr "サブスクリプションの期間の詳細が無効です"
+
+#: forms.py:105
+msgid "Enter Address"
+msgstr "住所を入力してください"
+
+#: forms.py:106
+msgid "Enter Apt, Suite, Unit, Building, Floor, etc"
+msgstr "アパート、スイート、ユニット、建物、フロアなどを入力してください"
+
+#: forms.py:107
+msgid "Enter City"
+msgstr "市に入る"
+
+#: forms.py:116
+msgid "Email Address"
+msgstr "電子メールアドレス"
+
+#: forms.py:125
+msgid "Billing address is the same as shipping address"
+msgstr "請求先住所は配送先住所と同じです"
+
+#: forms.py:134
+msgid "Billing Country/Region"
+msgstr "請求国/地域"
+
+#: forms.py:209
+msgid "The credit card number is invalid"
+msgstr "クレジットカード番号が無効です"
+
+#: forms.py:254
+msgid "Payment Type"
+msgstr "支払いタイプ"
+
+#: forms.py:258 models/payment.py:27
+#: templates/vendor/manage/receipt_detail.html:82
+#: templates/vendor/manage/subscription_detail.html:99
+msgid "Name on Card"
+msgstr "カードの名前"
+
+#: forms.py:259
+msgid "Credit Card Number"
+msgstr "クレジットカード番号"
+
+#: forms.py:260
+msgid "Expiration Month"
+msgstr "有効期限月"
+
+#: forms.py:261
+msgid "Expiration Year"
+msgstr "有効期限"
+
+#: forms.py:262
+msgid "CVV Number"
+msgstr "CVV番号"
+
+#: forms.py:285
+msgid "You must select a valid expiration month"
+msgstr "有効な有効期限を選択する必要があります"
+
+#: forms.py:293
+msgid "You must select a valid expiration year"
+msgstr "有効な有効期限を選択する必要があります"
+
+#: forms.py:301
+msgid "CVV must be all digits"
+msgstr "CVVはすべて数字である必要があります"
+
+#: forms.py:314
+msgid "The expiration date you entered is in the past."
+msgstr "入力した有効期限は過去のものです。"
+
+#: forms.py:315
+msgid "Check expiration"
+msgstr "有効期限を確認してください"
+
+#: forms.py:321 models/offer.py:63 models/price.py:16 models/receipt.py:23
+#: templates/vendor/manage/offers.html:20
 #: templates/vendor/manage/profile_detail.html:179
 #: templates/vendor/manage/receipt_list.html:22
 #: templates/vendor/purchase_detail.html:31
 msgid "Start Date"
 msgstr "開始日"
 
-#: forms.py:20 forms.py:35 forms.py:280 models/offer.py:54 models/price.py:17
-#: models/receipt.py:23 templates/vendor/manage/offers.html:21
+#: forms.py:322 models/offer.py:64 models/price.py:17 models/receipt.py:24
+#: templates/vendor/manage/offers.html:21
 #: templates/vendor/manage/profile_detail.html:180
 #: templates/vendor/manage/receipt_list.html:23
 #: templates/vendor/purchase_detail.html:35
 msgid "End Date"
 msgstr "終了日"
 
-#: forms.py:33
-msgid "Available Products:"
-msgstr "利用可能な製品："
-
-#: forms.py:36 models/offer.py:57
-msgid "Term Start Date"
-msgstr "期間開始日"
-
-#: forms.py:50
-msgid "Bundle: "
-msgstr "バンドル："
-
-#: forms.py:53
-msgid "Invalid term details for subscription"
-msgstr "サブスクリプションの期間の詳細が無効です"
-
-#: forms.py:67
-msgid "Enter Address"
-msgstr "住所を入力してください"
-
-#: forms.py:68
-msgid "Enter Apt, Suite, Unit, Building, Floor, etc"
-msgstr "アパート、スイート、ユニット、建物、フロアなどを入力してください"
-
-#: forms.py:69
-msgid "Enter City"
-msgstr "市に入る"
-
-#: forms.py:73
-msgid "Email Address"
-msgstr "電子メールアドレス"
-
-#: forms.py:81
-msgid "Billing address is the same as shipping address"
-msgstr "請求先住所は配送先住所と同じです"
-
-#: forms.py:89
-msgid "Billing Country/Region"
-msgstr "請求国/地域"
-
-#: forms.py:166
-msgid "The credit card number is invalid"
-msgstr "クレジットカード番号が無効です"
-
-#: forms.py:211
-msgid "Payment Type"
-msgstr "支払いタイプ"
-
-#: forms.py:215 models/payment.py:27
-#: templates/vendor/manage/receipt_detail.html:82
-#: templates/vendor/manage/subscription_detail.html:99
-msgid "Name on Card"
-msgstr "カードの名前"
-
-#: forms.py:216
-msgid "Credit Card Number"
-msgstr "クレジットカード番号"
-
-#: forms.py:217
-msgid "Expiration Month"
-msgstr "有効期限月"
-
-#: forms.py:218
-msgid "Expiration Year"
-msgstr "有効期限"
-
-#: forms.py:219
-msgid "CVV Number"
-msgstr "CVV番号"
-
-#: forms.py:243
-msgid "You must select a valid expiration month"
-msgstr "有効な有効期限を選択する必要があります"
-
-#: forms.py:251
-msgid "You must select a valid expiration year"
-msgstr "有効な有効期限を選択する必要があります"
-
-#: forms.py:259
-msgid "CVV must be all digits"
-msgstr "CVVはすべて数字である必要があります"
-
-#: forms.py:272
-msgid "The expiration date you entered is in the past."
-msgstr "入力した有効期限は過去のものです。"
-
-#: forms.py:273
-msgid "Check expiration"
-msgstr "有効期限を確認してください"
-
-#: forms.py:288
+#: forms.py:330
 msgid "End Date cannot be before Start Date"
 msgstr "あなたはわれあなたのつにこのできました。"
 
-#: models/address.py:21
-msgid "United States"
-msgstr "アメリカ"
+#: models/address.py:39 models/invoice.py:37 models/payment.py:17
+#: models/profile.py:30 models/receipt.py:20
+msgid "UUID"
+msgstr "UUID"
 
-#: models/address.py:48
+#: models/address.py:41
 msgid "Address Name"
 msgstr "住所名"
 
-#: models/address.py:49 models/invoice.py:37 models/profile.py:41
+#: models/address.py:42 models/invoice.py:38 models/profile.py:48
 msgid "Customer Profile"
 msgstr "顧客情報"
 
-#: models/address.py:50
+#: models/address.py:43
 msgid "First Name"
 msgstr "ファーストネーム"
 
-#: models/address.py:51 templates/vendor/manage/profile_detail.html:23
+#: models/address.py:44 templates/vendor/manage/profile_detail.html:23
 #: templates/vendor/manage/profile_list.html:21
 msgid "Last Name"
 msgstr "苗字"
 
-#: models/address.py:52 templates/vendor/manage/profile_detail.html:94
+#: models/address.py:45 templates/vendor/manage/profile_detail.html:94
 msgid "Address"
 msgstr "住所"
 
-#: models/address.py:53
+#: models/address.py:46
 msgid "Address 2 (Optional)"
 msgstr "アドレス2（オプション）"
 
-#: models/address.py:54
+#: models/address.py:47
 msgid "City"
 msgstr "市"
 
-#: models/address.py:55
+#: models/address.py:48
 msgid "State"
 msgstr "状態"
 
-#: models/address.py:56
+#: models/address.py:49
 msgid "Country/Region"
 msgstr "国/地域"
 
-#: models/address.py:57
+#: models/address.py:50
 msgid "Postal Code"
 msgstr "郵便番号"
 
-#: models/base.py:52 templates/vendor/manage/products.html:19
+#: models/base.py:57 templates/vendor/manage/products.html:19
 msgid "SKU"
 msgstr "SKU"
 
-#: models/base.py:52
+#: models/base.py:57
 msgid "User Defineable SKU field"
 msgstr "ユーザー定義可能なSKUフィールド"
 
-#: models/base.py:54 models/offer.py:52 models/tax.py:17 models/wishlist.py:13
+#: models/base.py:59 models/offer.py:62 models/tax.py:17 models/wishlist.py:13
 #: templates/vendor/invoice_list.html:19
 #: templates/vendor/manage/dashboard.html:108
 #: templates/vendor/manage/invoice_list.html:19
@@ -197,33 +214,33 @@ msgstr "ユーザー定義可能なSKUフィールド"
 msgid "Name"
 msgstr "名前"
 
-#: models/base.py:55 models/invoice.py:38 models/offer.py:51
-#: models/profile.py:26 templates/vendor/manage/products.html:21
+#: models/base.py:60 models/invoice.py:39 models/offer.py:61
+#: models/profile.py:33 templates/vendor/manage/products.html:21
 #: templates/vendor/manage/profile_list.html:22
 msgid "Site"
 msgstr "地点"
 
-#: models/base.py:57 models/offer.py:58 templates/vendor/manage/offers.html:23
+#: models/base.py:62 models/offer.py:68 templates/vendor/manage/offers.html:23
 msgid "Available"
 msgstr "利用可能"
 
-#: models/base.py:57 models/offer.py:58
+#: models/base.py:62 models/offer.py:68
 msgid "Is this currently available?"
 msgstr "これは現在利用できますか？"
 
-#: models/base.py:58 templates/vendor/manage/products.html:22
+#: models/base.py:63 templates/vendor/manage/products.html:22
 msgid "Description"
 msgstr "説明"
 
-#: models/base.py:58
+#: models/base.py:63
 msgid "Eg: {'call out': 'The ultimate product'}"
 msgstr "例：{'call out'： '究極の製品'}"
 
-#: models/base.py:59 models/receipt.py:28
+#: models/base.py:64 models/receipt.py:29
 msgid "Meta"
 msgstr "メタ"
 
-#: models/base.py:59
+#: models/base.py:64
 msgid ""
 "Eg: { 'msrp':{'usd':10.99} }\n"
 "(iso4217 Country Code):(MSRP Price)"
@@ -231,131 +248,1079 @@ msgstr ""
 "例：{'msrp'：{'usd'：10.99}} \n"
 "（iso4217国コード）:(希望小売価格）"
 
-#: models/choice.py:13 templates/vendor/manage/receipt_list.html:19
+#: models/choice.py:14 templates/vendor/manage/receipt_list.html:19
 msgid "Subscription"
 msgstr "サブスクリプション"
 
-#: models/choice.py:14
+#: models/choice.py:15
 msgid "Monthly Subscription"
 msgstr "毎月のサブスクリプション"
 
-#: models/choice.py:15
+#: models/choice.py:16
 msgid "Quarterly Subscription"
 msgstr "四半期サブスクリプション"
 
-#: models/choice.py:16
+#: models/choice.py:17
 msgid "Semi-Annual Subscription"
 msgstr "半年ごとのサブスクリプション"
 
-#: models/choice.py:17
+#: models/choice.py:18
 msgid "Annual Subscription"
 msgstr "年間会費"
 
-#: models/choice.py:18
+#: models/choice.py:19
 msgid "Perpetual"
 msgstr "パーペチュアル"
 
-#: models/choice.py:19
+#: models/choice.py:20
 msgid "One-Time Use"
 msgstr "1回限りの使用"
 
-#: models/choice.py:22 models/invoice.py:30
+#: models/choice.py:24 models/invoice.py:31
 msgid "Queued"
 msgstr "キューに入れられました"
 
-#: models/choice.py:23
+#: models/choice.py:25
 msgid "Active"
 msgstr "アクティブ"
 
-#: models/choice.py:24
+#: models/choice.py:26
 msgid "Authorized"
 msgstr "承認済み"
 
-#: models/choice.py:25
+#: models/choice.py:27
 msgid "Captured"
 msgstr "キャプチャされた"
 
-#: models/choice.py:26
+#: models/choice.py:28
 msgid "Completed"
 msgstr "完了"
 
-#: models/choice.py:27
+#: models/choice.py:29
 msgid "Canceled"
 msgstr "キャンセル"
 
-#: models/choice.py:28 models/invoice.py:34
+#: models/choice.py:30 models/invoice.py:35
 msgid "Refunded"
 msgstr "返金"
 
-#: models/choice.py:32 templates/vendor/payment_summary.html:43
+#: models/choice.py:34 templates/vendor/payment_summary.html:43
 msgid "Credit Card"
 msgstr "クレジットカード"
 
-#: models/choice.py:33
+#: models/choice.py:35
 msgid "Bank Account"
 msgstr "銀行口座"
 
-#: models/choice.py:34
+#: models/choice.py:36
 msgid "Pay Pal"
 msgstr "ペイパル"
 
-#: models/choice.py:35
+#: models/choice.py:37
 msgid "Mobile"
 msgstr "モバイル"
 
-#: models/choice.py:39
+#: models/choice.py:41
 msgid "Authorize"
 msgstr "承認する"
 
-#: models/choice.py:40
+#: models/choice.py:42
 msgid "Capture"
 msgstr "キャプチャー"
 
-#: models/choice.py:41
+#: models/choice.py:43
 msgid "Settle"
 msgstr "解決する"
 
-#: models/choice.py:42
+#: models/choice.py:44
 msgid "Void"
 msgstr "無効"
 
-#: models/choice.py:43 templates/vendor/refund_list.html:17
+#: models/choice.py:45 templates/vendor/refund_list.html:17
 msgid "Refund"
 msgstr "払い戻し"
 
-#: models/choice.py:46
+#: models/choice.py:49
 msgid "Day"
 msgstr "日"
 
-#: models/choice.py:47
+#: models/choice.py:50
 msgid "Month"
 msgstr "月"
 
-#: models/invoice.py:28 templates/vendor/orderitem_list.html:4
+#: models/choice.py:58
+msgid "Andorra"
+msgstr "アンドラ"
+
+#: models/choice.py:59
+msgid "United Arab Emirates"
+msgstr "アラブ首長国連邦"
+
+#: models/choice.py:60
+msgid "Afghanistan"
+msgstr "アフガニスタン"
+
+#: models/choice.py:61
+msgid "Antigua And Barbuda"
+msgstr "アンティグアバーブーダ"
+
+#: models/choice.py:62
+msgid "Anguilla"
+msgstr "アンギラ"
+
+#: models/choice.py:63
+msgid "Albania"
+msgstr "アルバニア"
+
+#: models/choice.py:64
+msgid "Armenia"
+msgstr "アルメニア"
+
+#: models/choice.py:65
+msgid "Netherlands Antilles"
+msgstr "オランダ領アンティル"
+
+#: models/choice.py:66
+msgid "Angola"
+msgstr "アンゴラ"
+
+#: models/choice.py:67
+msgid "Antarctica"
+msgstr "南極大陸"
+
+#: models/choice.py:68
+msgid "Argentina"
+msgstr "アルゼンチン"
+
+#: models/choice.py:69
+msgid "American Samoa"
+msgstr "アメリカ領サモア"
+
+#: models/choice.py:70
+msgid "Austria"
+msgstr "オーストリア"
+
+#: models/choice.py:71
+msgid "Australia"
+msgstr "オーストラリア"
+
+#: models/choice.py:72
+msgid "Aruba"
+msgstr "アルバ"
+
+#: models/choice.py:73
+msgid "Azerbaijan"
+msgstr "アゼルバイジャン"
+
+#: models/choice.py:74
+msgid "Bosnia And Herzegowina"
+msgstr "ボスニア・ヘルツェゴビナ"
+
+#: models/choice.py:75
+msgid "Barbados"
+msgstr "バルバドス"
+
+#: models/choice.py:76
+msgid "Bangladesh"
+msgstr "バングラデシュ"
+
+#: models/choice.py:77
+msgid "Belgium"
+msgstr "ベルギー"
+
+#: models/choice.py:78
+msgid "Burkina Faso"
+msgstr "ブルキナファソ"
+
+#: models/choice.py:79
+msgid "Bulgaria"
+msgstr "ブルガリア"
+
+#: models/choice.py:80
+msgid "Bahrain"
+msgstr "バーレーン"
+
+#: models/choice.py:81
+msgid "Burundi"
+msgstr "ブルンジ"
+
+#: models/choice.py:82
+msgid "Benin"
+msgstr "ベナン"
+
+#: models/choice.py:83
+msgid "Bermuda"
+msgstr "バミューダ"
+
+#: models/choice.py:84
+msgid "Brunei Darussalam"
+msgstr "ブルネイダルサラーム"
+
+#: models/choice.py:85
+msgid "Bolivia"
+msgstr "ボリビア"
+
+#: models/choice.py:86
+msgid "Brazil"
+msgstr "ブラジル"
+
+#: models/choice.py:87
+msgid "Bahamas"
+msgstr "バハマ"
+
+#: models/choice.py:88
+msgid "Bhutan"
+msgstr "ブータン"
+
+#: models/choice.py:89
+msgid "Bouvet Island"
+msgstr "ブーベ島"
+
+#: models/choice.py:90
+msgid "Botswana"
+msgstr "ボツワナ"
+
+#: models/choice.py:91
+msgid "Belarus"
+msgstr "ベラルーシ"
+
+#: models/choice.py:92
+msgid "Belize"
+msgstr "ベリーズ"
+
+#: models/choice.py:93
+msgid "Canada"
+msgstr "カナダ"
+
+#: models/choice.py:94
+msgid "Cocos (Keeling) Islands"
+msgstr "ココス（キーリング）諸島"
+
+#: models/choice.py:95
+msgid "The Democratic Republic Of The Congo"
+msgstr "コンゴ民主共和国"
+
+#: models/choice.py:96
+msgid "Central African Republic"
+msgstr "中央アフリカ共和国"
+
+#: models/choice.py:97
+msgid "Congo"
+msgstr "コンゴ"
+
+#: models/choice.py:98
+msgid "Switzerland"
+msgstr "スイス"
+
+#: models/choice.py:99
+msgid "Cote D'ivoire"
+msgstr "コートジボワール"
+
+#: models/choice.py:100
+msgid "Cook Islands"
+msgstr "クック諸島"
+
+#: models/choice.py:101
+msgid "Chile"
+msgstr "チリ"
+
+#: models/choice.py:102
+msgid "Cameroon"
+msgstr "カメルーン"
+
+#: models/choice.py:103
+msgid "China"
+msgstr "中国"
+
+#: models/choice.py:104
+msgid "Colombia"
+msgstr "コロンビア"
+
+#: models/choice.py:105
+msgid "Costa Rica"
+msgstr "コスタリカ"
+
+#: models/choice.py:106
+msgid "Cuba"
+msgstr "キューバ"
+
+#: models/choice.py:107
+msgid "Cape Verde"
+msgstr "カーボベルデ"
+
+#: models/choice.py:108
+msgid "Christmas Island"
+msgstr "クリスマス島"
+
+#: models/choice.py:109
+msgid "Cyprus"
+msgstr "キプロス"
+
+#: models/choice.py:110
+msgid "Czech Republic"
+msgstr "チェコ共和国"
+
+#: models/choice.py:111
+msgid "Germany"
+msgstr "ドイツ"
+
+#: models/choice.py:112
+msgid "Djibouti"
+msgstr "ジブチ"
+
+#: models/choice.py:113
+msgid "Denmark"
+msgstr "デンマーク"
+
+#: models/choice.py:114
+msgid "Dominica"
+msgstr "ドミニカ"
+
+#: models/choice.py:115
+msgid "Dominican Republic"
+msgstr "ドミニカ共和国"
+
+#: models/choice.py:116
+msgid "Algeria"
+msgstr "アルジェリア"
+
+#: models/choice.py:117
+msgid "Ecuador"
+msgstr "エクアドル"
+
+#: models/choice.py:118
+msgid "Estonia"
+msgstr "エストニア"
+
+#: models/choice.py:119
+msgid "Egypt"
+msgstr "エジプト"
+
+#: models/choice.py:120
+msgid "Western Sahara"
+msgstr "西サハラ"
+
+#: models/choice.py:121
+msgid "Eritrea"
+msgstr "エリトリア"
+
+#: models/choice.py:122
+msgid "Spain"
+msgstr "スペイン"
+
+#: models/choice.py:123
+msgid "Ethiopia"
+msgstr "エチオピア"
+
+#: models/choice.py:124
+msgid "Finland"
+msgstr "フィンランド"
+
+#: models/choice.py:125
+msgid "Fiji"
+msgstr "フィジー"
+
+#: models/choice.py:126
+msgid "Falkland Islands (Malvinas)"
+msgstr "フォークランド諸島（マルビナス）"
+
+#: models/choice.py:127
+msgid "Federated States Of Micronesia"
+msgstr "ミクロネシア連邦"
+
+#: models/choice.py:128
+msgid "Faroe Islands"
+msgstr "フェロー諸島"
+
+#: models/choice.py:129
+msgid "France"
+msgstr "フランス"
+
+#: models/choice.py:130
+msgid "France, Metropolitan"
+msgstr "フランス、メトロポリタン"
+
+#: models/choice.py:131
+msgid "Gabon"
+msgstr "ガボン"
+
+#: models/choice.py:132
+msgid "United Kingdom"
+msgstr "イギリス"
+
+#: models/choice.py:133
+msgid "Grenada"
+msgstr "グレナダ"
+
+#: models/choice.py:134
+msgid "Georgia"
+msgstr "ジョージア"
+
+#: models/choice.py:135
+msgid "French Guiana"
+msgstr "フランス領ギアナ"
+
+#: models/choice.py:136
+msgid "Ghana"
+msgstr "ガーナ"
+
+#: models/choice.py:137
+msgid "Gibraltar"
+msgstr "ジブラルタル"
+
+#: models/choice.py:138
+msgid "Greenland"
+msgstr "グリーンランド"
+
+#: models/choice.py:139
+msgid "Gambia"
+msgstr "ガンビア"
+
+#: models/choice.py:140
+msgid "Guinea"
+msgstr "ギニア"
+
+#: models/choice.py:141
+msgid "Guadeloupe"
+msgstr "グアドループ"
+
+#: models/choice.py:142
+msgid "Equatorial Guinea"
+msgstr "赤道ギニア"
+
+#: models/choice.py:143
+msgid "Greece"
+msgstr "ギリシャ"
+
+#: models/choice.py:144
+msgid "South Georgia And The South Sandwich Islands"
+msgstr "サウスジョージア島とサウスサンドイッチ諸島"
+
+#: models/choice.py:145
+msgid "Guatemala"
+msgstr "グアテマラ"
+
+#: models/choice.py:146
+msgid "Guam"
+msgstr "グアム"
+
+#: models/choice.py:147
+msgid "Guinea-bissau"
+msgstr "ギニアビサウ"
+
+#: models/choice.py:148
+msgid "Guyana"
+msgstr "ガイアナ"
+
+#: models/choice.py:149
+msgid "Hong Kong"
+msgstr "香港"
+
+#: models/choice.py:150
+msgid "Heard And Mc Donald Islands"
+msgstr "聞いたマクドナルド諸島"
+
+#: models/choice.py:151
+msgid "Honduras"
+msgstr "ホンジュラス"
+
+#: models/choice.py:152
+msgid "Croatia (Local Name: Hrvatska)"
+msgstr "クロアチア（ローカル名：Hrvatska）"
+
+#: models/choice.py:153
+msgid "Haiti"
+msgstr "ハイチ"
+
+#: models/choice.py:154
+msgid "Hungary"
+msgstr "ハンガリー"
+
+#: models/choice.py:155
+msgid "Indonesia"
+msgstr "インドネシア"
+
+#: models/choice.py:156
+msgid "Ireland"
+msgstr "アイルランド"
+
+#: models/choice.py:157
+msgid "Israel"
+msgstr "イスラエル"
+
+#: models/choice.py:158
+msgid "India"
+msgstr "インド"
+
+#: models/choice.py:159
+msgid "British Indian Ocean Territory"
+msgstr "イギリス領インド洋地域"
+
+#: models/choice.py:160
+msgid "Iraq"
+msgstr "イラク"
+
+#: models/choice.py:161
+msgid "Iran (Islamic Republic Of Iran)"
+msgstr "イラン（イランイスラム共和国）"
+
+#: models/choice.py:162
+msgid "Iceland"
+msgstr "アイスランド"
+
+#: models/choice.py:163
+msgid "Italy"
+msgstr "イタリア"
+
+#: models/choice.py:164
+msgid "Jamaica"
+msgstr "ジャマイカ"
+
+#: models/choice.py:165
+msgid "Jordan"
+msgstr "ヨルダン"
+
+#: models/choice.py:166
+msgid "Japan"
+msgstr "日本"
+
+#: models/choice.py:167
+msgid "Kenya"
+msgstr "ケニア"
+
+#: models/choice.py:168
+msgid "Kyrgyzstan"
+msgstr "キルギスタン"
+
+#: models/choice.py:169
+msgid "Cambodia"
+msgstr "カンボジア"
+
+#: models/choice.py:170
+msgid "Kiribati"
+msgstr "キリバス"
+
+#: models/choice.py:171
+msgid "Comoros"
+msgstr "コモロ"
+
+#: models/choice.py:172
+msgid "Saint Kitts And Nevis"
+msgstr "セントクリストファーネイビス"
+
+#: models/choice.py:173
+msgid "Democratic People's Republic Of Korea"
+msgstr "朝鮮民主主義人民共和国"
+
+#: models/choice.py:174
+msgid "Republic Of Korea"
+msgstr "大韓民国"
+
+#: models/choice.py:175
+msgid "Kuwait"
+msgstr "クウェート"
+
+#: models/choice.py:176
+msgid "Cayman Islands"
+msgstr "ケイマン諸島"
+
+#: models/choice.py:177
+msgid "Kazakhstan"
+msgstr "カザフスタン"
+
+#: models/choice.py:178
+msgid "Lao People's Democratic Republic"
+msgstr "ラオス人民民主共和国"
+
+#: models/choice.py:179
+msgid "Lebanon"
+msgstr "レバノン"
+
+#: models/choice.py:180
+msgid "Saint Lucia"
+msgstr "セントルシア"
+
+#: models/choice.py:181
+msgid "Liechtenstein"
+msgstr "リヒテンシュタイン"
+
+#: models/choice.py:182
+msgid "Sri Lanka"
+msgstr "スリランカ"
+
+#: models/choice.py:183
+msgid "Liberia"
+msgstr "リベリア"
+
+#: models/choice.py:184
+msgid "Lesotho"
+msgstr "レソト"
+
+#: models/choice.py:185
+msgid "Lithuania"
+msgstr "リトアニア"
+
+#: models/choice.py:186
+msgid "Luxembourg"
+msgstr "ルクセンブルク"
+
+#: models/choice.py:187
+msgid "Latvia"
+msgstr "ラトビア"
+
+#: models/choice.py:188
+msgid "Libyan Arab Jamahiriya"
+msgstr "リビアアラブジャマヒリヤ"
+
+#: models/choice.py:189
+msgid "Morocco"
+msgstr "モロッコ"
+
+#: models/choice.py:190
+msgid "Monaco"
+msgstr "モナコ"
+
+#: models/choice.py:191
+msgid "Republic Of Moldova"
+msgstr "モルドバ共和国"
+
+#: models/choice.py:192
+msgid "Madagascar"
+msgstr "マダガスカル"
+
+#: models/choice.py:193
+msgid "Marshall Islands"
+msgstr "マーシャル諸島"
+
+#: models/choice.py:194
+msgid "The Former Yugoslav Republic Of Macedonia "
+msgstr "マケドニア旧ユーゴスラビア共和国"
+
+#: models/choice.py:195
+msgid "Mali"
+msgstr "マリ"
+
+#: models/choice.py:196
+msgid "Myanmar"
+msgstr "ミャンマー"
+
+#: models/choice.py:197
+msgid "Mongolia"
+msgstr "モンゴル"
+
+#: models/choice.py:198
+msgid "Macau"
+msgstr "マカオ"
+
+#: models/choice.py:199
+msgid "Northern Mariana Islands"
+msgstr "北マリアナ諸島"
+
+#: models/choice.py:200
+msgid "Martinique"
+msgstr "マルティニーク"
+
+#: models/choice.py:201
+msgid "Mauritania"
+msgstr "モーリタニア"
+
+#: models/choice.py:202
+msgid "Montserrat"
+msgstr "モントセラト"
+
+#: models/choice.py:203
+msgid "Malta"
+msgstr "マルタ"
+
+#: models/choice.py:204
+msgid "Mauritius"
+msgstr "モーリシャス"
+
+#: models/choice.py:205
+msgid "Maldives"
+msgstr "モルディブ"
+
+#: models/choice.py:206
+msgid "Malawi"
+msgstr "マラウイ"
+
+#: models/choice.py:207
+msgid "Mexico"
+msgstr "メキシコ"
+
+#: models/choice.py:208
+msgid "Malaysia"
+msgstr "マレーシア"
+
+#: models/choice.py:209
+msgid "Mozambique"
+msgstr "モザンビーク"
+
+#: models/choice.py:210
+msgid "Namibia"
+msgstr "ナミビア"
+
+#: models/choice.py:211
+msgid "New Caledonia"
+msgstr "ニューカレドニア"
+
+#: models/choice.py:212
+msgid "Niger"
+msgstr "ニジェール"
+
+#: models/choice.py:213
+msgid "Norfolk Island"
+msgstr "ノーフォーク島"
+
+#: models/choice.py:214
+msgid "Nigeria"
+msgstr "ナイジェリア"
+
+#: models/choice.py:215
+msgid "Nicaragua"
+msgstr "ニカラグア"
+
+#: models/choice.py:216
+msgid "Netherlands"
+msgstr "オランダ"
+
+#: models/choice.py:217
+msgid "Norway"
+msgstr "ノルウェー"
+
+#: models/choice.py:218
+msgid "Nepal"
+msgstr "ネパール"
+
+#: models/choice.py:219
+msgid "Nauru"
+msgstr "ナウル"
+
+#: models/choice.py:220
+msgid "Niue"
+msgstr "ニウエ"
+
+#: models/choice.py:221
+msgid "New Zealand"
+msgstr "ニュージーランド"
+
+#: models/choice.py:222
+msgid "Oman"
+msgstr "オマーン"
+
+#: models/choice.py:223
+msgid "Panama"
+msgstr "パナマ"
+
+#: models/choice.py:224
+msgid "Peru"
+msgstr "ペルー"
+
+#: models/choice.py:225
+msgid "French Polynesia"
+msgstr "フランス領ポリネシア"
+
+#: models/choice.py:226
+msgid "Papua New Guinea"
+msgstr "パプアニューギニア"
+
+#: models/choice.py:227
+msgid "Philippines"
+msgstr "フィリピン"
+
+#: models/choice.py:228
+msgid "Pakistan"
+msgstr "パキスタン"
+
+#: models/choice.py:229
+msgid "Poland"
+msgstr "ポーランド"
+
+#: models/choice.py:230
+msgid "St. Pierre And Miquelon"
+msgstr "サンピエール島ミクロン島"
+
+#: models/choice.py:231
+msgid "Pitcairn"
+msgstr "ピトケアン"
+
+#: models/choice.py:232
+msgid "Puerto Rico"
+msgstr "プエルトリコ"
+
+#: models/choice.py:233
+msgid "Portugal"
+msgstr "ポルトガル"
+
+#: models/choice.py:234
+msgid "Palau"
+msgstr "パラオ"
+
+#: models/choice.py:235
+msgid "Paraguay"
+msgstr "パラグアイ"
+
+#: models/choice.py:236
+msgid "Qatar"
+msgstr "カタール"
+
+#: models/choice.py:237
+msgid "Reunion"
+msgstr "再会"
+
+#: models/choice.py:238
+msgid "Romania"
+msgstr "ルーマニア"
+
+#: models/choice.py:239
+msgid "Russian Federation"
+msgstr "ロシア連邦"
+
+#: models/choice.py:240
+msgid "Rwanda"
+msgstr "ルワンダ"
+
+#: models/choice.py:241
+msgid "Saudi Arabia"
+msgstr "サウジアラビア"
+
+#: models/choice.py:242
+msgid "Solomon Islands"
+msgstr "ソロモン諸島"
+
+#: models/choice.py:243
+msgid "Seychelles"
+msgstr "セイシェル"
+
+#: models/choice.py:244
+msgid "Sudan"
+msgstr "スーダン"
+
+#: models/choice.py:245
+msgid "Sweden"
+msgstr "スウェーデン"
+
+#: models/choice.py:246
+msgid "Singapore"
+msgstr "シンガポール"
+
+#: models/choice.py:247
+msgid "St. Helena"
+msgstr "セントヘレナ"
+
+#: models/choice.py:248
+msgid "Slovenia"
+msgstr "スロベニア"
+
+#: models/choice.py:249
+msgid "Svalbard And Jan Mayen Islands"
+msgstr "スバールバル諸島およびヤンマイエン諸島"
+
+#: models/choice.py:250
+msgid "Slovakia (Slovak Republic)"
+msgstr "スロバキア（スロバキア共和国）"
+
+#: models/choice.py:251
+msgid "Sierra Leone"
+msgstr "シエラレオネ"
+
+#: models/choice.py:252
+msgid "San Marino"
+msgstr "サンマリノ"
+
+#: models/choice.py:253
+msgid "Senegal"
+msgstr "セネガル"
+
+#: models/choice.py:254
+msgid "Somalia"
+msgstr "ソマリア"
+
+#: models/choice.py:255
+msgid "Suriname"
+msgstr "スリナム"
+
+#: models/choice.py:256
+msgid "Sao Tome And Principe"
+msgstr "サントメ・プリンシペ"
+
+#: models/choice.py:257
+msgid "El Salvador"
+msgstr "エルサルバドル"
+
+#: models/choice.py:258
+msgid "Syrian Arab Republic"
+msgstr "シリアアラブ共和国"
+
+#: models/choice.py:259
+msgid "Swaziland"
+msgstr "スワジランド"
+
+#: models/choice.py:260
+msgid "Turks And Caicos Islands"
+msgstr "タークス・カイコス諸島"
+
+#: models/choice.py:261
+msgid "Chad"
+msgstr "チャド"
+
+#: models/choice.py:262
+msgid "French Southern Territories"
+msgstr "フランス領南方南方領土"
+
+#: models/choice.py:263
+msgid "Togo"
+msgstr "トーゴ"
+
+#: models/choice.py:264
+msgid "Thailand"
+msgstr "タイ"
+
+#: models/choice.py:265
+msgid "Tajikistan"
+msgstr "タジキスタン"
+
+#: models/choice.py:266
+msgid "Tokelau"
+msgstr "トケラウ"
+
+#: models/choice.py:267
+msgid "Turkmenistan"
+msgstr "トルクメニスタン"
+
+#: models/choice.py:268
+msgid "Tunisia"
+msgstr "チュニジア"
+
+#: models/choice.py:269
+msgid "Tonga"
+msgstr "トンガ"
+
+#: models/choice.py:270
+msgid "East Timor"
+msgstr "東ティモール"
+
+#: models/choice.py:271
+msgid "Turkey"
+msgstr "七面鳥"
+
+#: models/choice.py:272
+msgid "Trinidad And Tobago"
+msgstr "トリニダード・トバゴ"
+
+#: models/choice.py:273
+msgid "Tuvalu"
+msgstr "ツバル"
+
+#: models/choice.py:274
+msgid "Taiwan, Province Of China"
+msgstr "台湾、中国省"
+
+#: models/choice.py:275
+msgid "United Republic Of Tanzania"
+msgstr "タンザニア連合共和国"
+
+#: models/choice.py:276
+msgid "Ukraine"
+msgstr "ウクライナ"
+
+#: models/choice.py:277
+msgid "Uganda"
+msgstr "ウガンダ"
+
+#: models/choice.py:278
+msgid "United States Minor Outlying Islands"
+msgstr "合衆国領有小島"
+
+#: models/choice.py:279
+msgid "United States"
+msgstr "アメリカ"
+
+#: models/choice.py:280
+msgid "Uruguay"
+msgstr "ウルグアイ"
+
+#: models/choice.py:281
+msgid "Uzbekistan"
+msgstr "ウズベキスタン"
+
+#: models/choice.py:282
+msgid "Holy See (Vatican City State)"
+msgstr "ホーリーシー（バチカン市国）"
+
+#: models/choice.py:283
+msgid "Saint Vincent And The Grenadines"
+msgstr "セントビンセントおよびグレナディーン諸島"
+
+#: models/choice.py:284
+msgid "Venezuela"
+msgstr "ベネズエラ"
+
+#: models/choice.py:285
+msgid "Virgin Islands (British)"
+msgstr "バージン諸島（イギリス）"
+
+#: models/choice.py:286
+msgid "Virgin Islands (U.S.)"
+msgstr "バージン諸島（米国）"
+
+#: models/choice.py:287
+msgid "Viet Nam"
+msgstr "ベトナム"
+
+#: models/choice.py:288
+msgid "Vanuatu"
+msgstr "バヌアツ"
+
+#: models/choice.py:289
+msgid "Wallis And Futuna Islands"
+msgstr "ウォリス・フツナ諸島"
+
+#: models/choice.py:290
+msgid "Samoa"
+msgstr "サモア"
+
+#: models/choice.py:291
+msgid "Yemen"
+msgstr "イエメン"
+
+#: models/choice.py:292
+msgid "Mayotte"
+msgstr "マヨット"
+
+#: models/choice.py:293
+msgid "South Africa"
+msgstr "南アフリカ"
+
+#: models/choice.py:294
+msgid "Zambia"
+msgstr "ザンビア"
+
+#: models/choice.py:295
+msgid "Zimbabwe"
+msgstr "ジンバブエ"
+
+#: models/invoice.py:29 templates/vendor/orderitem_list.html:4
 msgid "Cart"
 msgstr "カート"
 
-#: models/invoice.py:29 templates/vendor/orderitem_list.html:45
+#: models/invoice.py:30 templates/vendor/orderitem_list.html:45
 msgid "Checkout"
 msgstr "チェックアウト"
 
-#: models/invoice.py:31
+#: models/invoice.py:32
 msgid "Processing"
 msgstr "処理"
 
-#: models/invoice.py:32
+#: models/invoice.py:33
 msgid "Failed"
 msgstr "失敗しました"
 
-#: models/invoice.py:33
+#: models/invoice.py:34
 msgid "Complete"
 msgstr "コンプリート"
 
-#: models/invoice.py:36 models/payment.py:17 models/receipt.py:19
-msgid "UUID"
-msgstr "UUID"
-
-#: models/invoice.py:39 models/receipt.py:27
+#: models/invoice.py:40 models/receipt.py:28
 #: templates/vendor/invoice_list.html:20
 #: templates/vendor/manage/dashboard.html:109
 #: templates/vendor/manage/invoice_list.html:20
@@ -367,19 +1332,19 @@ msgstr "UUID"
 msgid "Status"
 msgstr "状態"
 
-#: models/invoice.py:40
+#: models/invoice.py:41
 msgid "Customer Notes"
 msgstr "カスタマーノート"
 
-#: models/invoice.py:41 models/receipt.py:25
+#: models/invoice.py:42 models/receipt.py:26
 msgid "Vendor Notes"
 msgstr "ベンダーノート"
 
-#: models/invoice.py:42
+#: models/invoice.py:43
 msgid "Ordered Date"
 msgstr "注文日"
 
-#: models/invoice.py:47 models/price.py:15 models/profile.py:25
+#: models/invoice.py:48 models/price.py:15 models/profile.py:32
 #: templates/vendor/invoice_list.html:22
 #: templates/vendor/manage/dashboard.html:111
 #: templates/vendor/manage/invoice_list.html:22
@@ -389,75 +1354,79 @@ msgstr "注文日"
 msgid "Currency"
 msgstr "通貨"
 
-#: models/invoice.py:48 templates/vendor/address_detail.html:7
+#: models/invoice.py:49 templates/vendor/address_detail.html:7
 #: templates/vendor/checkout.html:35 templates/vendor/checkout.html:106
 msgid "Shipping Address"
 msgstr "お届け先の住所"
 
-#: models/invoice.py:71
+#: models/invoice.py:72
 msgid "{self.profile.user.username} Invoice ({self.created:%Y-%m-%d %H:%M})"
 msgstr "{self.profile.user.username}請求書({self.created:%Y-%m-%d %H:%M})"
 
-#: models/invoice.py:167 models/payment.py:18
+#: models/invoice.py:178 models/payment.py:18
 #: templates/vendor/payment_detail.html:6
 msgid "Invoice"
 msgstr "請求書"
 
-#: models/invoice.py:168 models/price.py:13 models/wishlist.py:31
-#: templates/vendor/manage/offer.html:8
+#: models/invoice.py:179 models/price.py:13 models/wishlist.py:31
+#: templates/vendor/manage/offer.html:13
 msgid "Offer"
 msgstr "提供"
 
-#: models/invoice.py:169 templates/vendor/checkout.html:182
+#: models/invoice.py:180 templates/vendor/checkout.html:182
 #: templates/vendor/invoice_history_detail.html:15
 #: templates/vendor/manage/invoice_detail.html:15
 #: templates/vendor/orderitem_list.html:19
 #: templates/vendor/ordersummary.html:14
 #: templates/vendor/payment_summary.html:23
-#: templates/vendor/purchase_detail.html:23 views/report.py:54
+#: templates/vendor/purchase_detail.html:23 views/report.py:56
 msgid "Quantity"
 msgstr "量"
 
-#: models/offer.py:53
+#: models/offer.py:63
 msgid "What date should this offer become available?"
 msgstr "このオファーが利用可能になるのはいつですか？"
 
-#: models/offer.py:54
+#: models/offer.py:64
 msgid "Expiration Date?"
 msgstr "賞味期限？"
 
-#: models/offer.py:55 templates/vendor/manage/offers.html:22
+#: models/offer.py:65 templates/vendor/manage/offers.html:22
 #: templates/vendor/manage/receipt_list.html:20
 #: templates/vendor/purchase_detail.html:19
 #: templates/vendor/purchase_list.html:18
 msgid "Terms"
 msgstr "条項"
 
-#: models/offer.py:56
+#: models/offer.py:66
 msgid "Term Details"
 msgstr "期間の詳細"
 
-#: models/offer.py:56
+#: models/offer.py:66
 msgid "term_units: 10/20(Day/Month), trial_occurrences: 1(defualt)"
 msgstr "term_units：10/20（日/月）、試行回数：1（デフォルト）"
 
-#: models/offer.py:57
+#: models/offer.py:67
+msgid "Term Start Date"
+msgstr "期間開始日"
+
+#: models/offer.py:67
 msgid "When is this product available to use?"
 msgstr "この製品はいつ使用できますか？"
 
-#: models/offer.py:59
+#: models/offer.py:69
 msgid "Is a Bundle?"
 msgstr "バンドルですか？"
 
-#: models/offer.py:59
+#: models/offer.py:69
 msgid "Is this a product bundle? (auto-generated)"
 msgstr "これは製品バンドルですか？ （自動生成）"
 
-#: models/offer.py:60
+#: models/offer.py:70
 msgid "Offer Description"
 msgstr "オファーの説明"
 
-#: models/offer.py:60
+#: models/offer.py:70
 msgid ""
 "You can enter a list of descriptions. Note: if you inputs something here the "
 "product description will not show up."
@@ -465,19 +1434,19 @@ msgstr ""
 "説明のリストを入力できます。 注：ここに何かを入力すると商品説明は表示されませ"
 "ん"
 
-#: models/offer.py:61
+#: models/offer.py:71
 msgid "List Bundled Items"
 msgstr "バンドルアイテムのリスト"
 
-#: models/offer.py:61
+#: models/offer.py:71
 msgid "When showing to customers, display the included items in a list?"
 msgstr "顧客に表示するときに、含まれているアイテムをリストに表示しますか？"
 
-#: models/offer.py:62
+#: models/offer.py:72
 msgid "Allow Multiple Purchase"
 msgstr "複数購入を許可する"
 
-#: models/offer.py:62
+#: models/offer.py:72
 msgid ""
 "Confirm the user wants to buy multiples of the product where typically there "
 "is just one purchased at a time."
@@ -501,7 +1470,7 @@ msgstr "支払いプロバイダー"
 msgid "Amount"
 msgstr "量"
 
-#: models/payment.py:23 models/receipt.py:20 models/wishlist.py:12
+#: models/payment.py:23 models/receipt.py:21 models/wishlist.py:12
 msgid "Purchase Profile"
 msgstr "購入プロファイル"
 
@@ -523,7 +1492,8 @@ msgstr "成功"
 msgid "Company"
 msgstr "会社"
 
-#: models/price.py:14 templates/vendor/manage/receipt_detail.html:54
+#: models/price.py:14 templates/vendor/manage/offer.html:261
+#: templates/vendor/manage/receipt_detail.html:54
 #: templates/vendor/manage/subscription_detail.html:56
 #: templates/vendor/orderitem_list.html:21
 #: templates/vendor/ordersummary.html:16
@@ -546,20 +1516,20 @@ msgstr "優先度"
 msgid "Higher number takes priority"
 msgstr "数値が大きいほど優先されます"
 
-#: models/profile.py:24 templates/vendor/refund_list.html:13
+#: models/profile.py:31 templates/vendor/refund_list.html:13
 msgid "User"
 msgstr "ユーザー"
 
-#: models/receipt.py:21
+#: models/receipt.py:22
 msgid "Order Item"
 msgstr "注文アイテム"
 
-#: models/receipt.py:24 templates/vendor/manage/receipt_detail.html:25
+#: models/receipt.py:25 templates/vendor/manage/receipt_detail.html:25
 #: templates/vendor/manage/subscription_detail.html:25
 msgid "Auto Renew"
 msgstr "自動更新"
 
-#: models/receipt.py:26 templates/vendor/manage/profile_detail.html:151
+#: models/receipt.py:27 templates/vendor/manage/profile_detail.html:151
 #: templates/vendor/manage/profile_detail.html:177
 #: templates/vendor/manage/receipt_detail.html:19
 #: templates/vendor/manage/subscription_detail.html:19
@@ -647,7 +1617,7 @@ msgid "Estimated Tax"
 msgstr "推定税額"
 
 #: templates/vendor/includes/cost_overview.html:23
-msgid "Total (%(currency)s)"
+msgid "Total (%(currency)s) "
 msgstr "合計( (%(currency)s)"
 
 #: templates/vendor/invoice_detail.html:7
@@ -717,6 +1687,7 @@ msgstr "注文詳細"
 #: templates/vendor/manage/dashboard.html:107
 #: templates/vendor/manage/invoice_detail.html:12
 #: templates/vendor/manage/invoice_list.html:18
+#: templates/vendor/manage/offers.html:18
 #: templates/vendor/manage/profile_detail.html:93
 #: templates/vendor/manage/profile_detail.html:125
 #: templates/vendor/manage/profile_detail.html:150
@@ -729,14 +1700,6 @@ msgstr "＃"
 #: templates/vendor/manage/invoice_detail.html:13
 msgid "Item"
 msgstr "項目"
-
-#: templates/vendor/invoice_history_detail.html:14
-#: templates/vendor/manage/invoice_detail.html:14
-#: templates/vendor/manage/offer.html:20
-#: templates/vendor/purchase_detail.html:27
-#: templates/vendor/refund_list.html:16
-msgid "Price"
-msgstr "価格"
 
 #: templates/vendor/invoice_history_detail.html:16
 #: templates/vendor/invoice_list.html:23
@@ -769,22 +1732,9 @@ msgstr "日付"
 #: templates/vendor/invoice_list.html:40
 #: templates/vendor/manage/dashboard.html:129
 #: templates/vendor/manage/invoice_list.html:40
-#: templates/vendor/manage/receipt_list.html:43
+#: templates/vendor/manage/receipt_list.html:53
 msgid "No Orders"
 msgstr "注文なし"
-
-#: templates/vendor/manage/add_product_to_profile.html:11
-msgid "Offer Overview"
-msgstr "オファーの概要"
-
-#: templates/vendor/manage/add_product_to_profile.html:18
-#: templates/vendor/manage/offer.html:54
-msgid "Add Customer"
-msgstr "顧客を追加"
-
-#: templates/vendor/manage/add_product_to_profile.html:32
-msgid "Customers Owning the Offer"
-msgstr "オファーを所有している顧客"
 
 #: templates/vendor/manage/dashboard.html:9
 msgid "Admin Purchase Dashboard"
@@ -814,35 +1764,47 @@ msgstr "管理者：注文の詳細"
 msgid "Cart is Empty"
 msgstr "カートが空です"
 
-#: templates/vendor/manage/offer.html:13
+#: templates/vendor/manage/offer.html:18
 msgid "Offer Detail"
 msgstr "オファーの詳細"
 
-#: templates/vendor/manage/offer.html:24
+#: templates/vendor/manage/offer.html:63
+msgid "Offer available through:"
+msgstr "利用可能なオファー："
+
+#: templates/vendor/manage/offer.html:345
+msgid "Price for this offer available through:"
+msgstr "このオファーの価格は次の方法で入手できます。"
+
+#: templates/vendor/manage/offer.html:406
 msgid "Save Offer"
 msgstr "オファーを保存"
 
-#: templates/vendor/manage/offer.html:34
-msgid "Customers Owning"
-msgstr "所有している顧客"
-
-#: templates/vendor/manage/offer.html:48
-msgid "Customers Not Owning"
-msgstr "所有していない顧客"
-
-#: templates/vendor/manage/offers.html:9
+#: templates/vendor/manage/offers.html:8
 msgid "Offers"
 msgstr "オファー"
 
-#: templates/vendor/manage/offers.html:14
+#: templates/vendor/manage/offers.html:13
 msgid "Offer List"
 msgstr "オファーリスト"
 
-#: templates/vendor/manage/offers.html:39
+#: templates/vendor/manage/offers.html:24
+#: templates/vendor/manage/profile_detail.html:54
+#: templates/vendor/manage/profile_detail.html:95
+#: templates/vendor/manage/profile_detail.html:182
+#: templates/vendor/purchase_detail.html:64
+msgid "Actions"
+msgstr "行動"
+
+#: templates/vendor/manage/offers.html:42
+msgid "Offer Availibility"
+msgstr "オファーの可用性"
+
+#: templates/vendor/manage/offers.html:50
 msgid "No Offers"
 msgstr "オファーなし"
 
-#: templates/vendor/manage/offers.html:48
+#: templates/vendor/manage/offers.html:59
 msgid "Add Offer"
 msgstr "オファーを追加"
 
@@ -895,13 +1857,6 @@ msgstr "ユーザー名"
 #: templates/vendor/manage/profile_detail.html:47
 msgid "Products Owned"
 msgstr "所有する製品"
-
-#: templates/vendor/manage/profile_detail.html:54
-#: templates/vendor/manage/profile_detail.html:95
-#: templates/vendor/manage/profile_detail.html:182
-#: templates/vendor/purchase_detail.html:64
-msgid "Actions"
-msgstr "行動"
 
 #: templates/vendor/manage/profile_detail.html:66
 msgid "VOID"
@@ -1078,6 +2033,7 @@ msgid "Update Billing Address"
 msgstr "請求先住所の更新"
 
 #: templates/vendor/orderitem_confirm_delete.html:6
+#, python-format
 msgid "Are you sure you want to remove? %(product_name)s from the cart"
 msgstr "本当に捨ててもいいのかい？カートからの%(product_name)s"
 
@@ -1104,6 +2060,7 @@ msgstr "アイテムを削除"
 
 #: templates/vendor/orderitem_list.html:43
 #: templates/vendor/ordersummary.html:27
+#, python-format
 msgid "Total number of items: %(item_count)s "
 msgstr "アイテムの総数：%(item_count)s"
 
@@ -1123,7 +2080,7 @@ msgstr "アイテムを追加"
 msgid "Order Summary"
 msgstr "注文の概要"
 
-#: templates/vendor/ordersummary.html:28 views/report.py:54
+#: templates/vendor/ordersummary.html:28 views/report.py:56
 msgid "Order Total"
 msgstr "注文合計"
 
@@ -1196,91 +2153,92 @@ msgstr "払い戻しリクエスト"
 msgid "Reason"
 msgstr "理由"
 
-#: views/mixin.py:77
+#: views/mixin.py:84
+#, python-format
 msgid "No %(verbose_name)s found matching the query"
 msgstr "クエリに一致する%(verbose_name)sが見つかりません"
 
-#: views/mixin.py:80
+#: views/mixin.py:87
 msgid "Product Purchase required."
 msgstr "製品の購入が必要です。"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Order ID"
 msgstr "注文ID"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Title"
 msgstr "題名"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Order Date"
 msgstr "注文日"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Order Status"
 msgstr "注文の状況"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Product ID"
 msgstr "製品番号"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Product Name"
 msgstr "商品名"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Item Cost"
 msgstr "アイテムコスト"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Item Total"
 msgstr "アイテム合計"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Discount Amount "
 msgstr "割引額"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Coupon Code"
 msgstr "クーポンコード"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Coupons Used"
 msgstr "使用したクーポン"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Total Discount Amount"
 msgstr "合計割引額"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Refund ID"
 msgstr "払い戻しID"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Refund Total"
 msgstr "払い戻し合計"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Refund Amounts"
 msgstr "返金金額"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Refund Reason"
 msgstr "払い戻しの理由"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Refund Date"
 msgstr "返金日"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Refund Author Email"
 msgstr "返金著者のメール"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Date Type"
 msgstr "日付タイプ"
 
-#: views/report.py:54
+#: views/report.py:56
 msgid "Dates"
 msgstr "日付"
 
@@ -1314,55 +2272,73 @@ msgstr "チェックアウトプロセス中にカートが変更されました
 msgid "The payment gateway did not authorize payment."
 msgstr "支払いゲートウェイは支払いを承認しませんでした。"
 
-#: views/vendor.py:385
+#: views/vendor.py:372
+msgid "Not Found"
+msgstr "見つかりません"
+
+#: views/vendor.py:387
 msgid "Subscription Cancelled"
 msgstr "サブスクリプションがキャンセルされました"
 
-#: views/vendor.py:398
+#: views/vendor.py:401
 msgid "Invalid Card"
 msgstr "無効なカード"
 
-#: views/vendor.py:406
+#: views/vendor.py:409
 msgid ""
 "Payment gateway error: {processor.transaction_message.get('message', '')}"
 msgstr ""
 "支払いゲートウェイエラー：{processor.transaction_message.get('message', '')}"
 
-#: views/vendor.py:409
+#: views/vendor.py:412
 msgid "Success: Payment Updated"
 msgstr "成功：支払いが更新されました"
 
-#: views/vendor.py:420
-msgid "Failed: %(address_form.errors)s"
+#: views/vendor.py:424
+msgid "Failed: {address_form.errors}"
 msgstr "失敗：%(address_form.errors)s"
 
-#: views/vendor.py:422
+#: views/vendor.py:426
 msgid "Success: Address Updated"
 msgstr "成功：アドレスが更新されました"
 
-#: views/vendor.py:451
+#: views/vendor.py:455
 msgid "Shipping Address Updated"
 msgstr "配送先住所が更新されました"
 
-#: views/vendor_admin.py:182
+#: views/vendor_admin.py:223
 msgid "Invalid currency"
 msgstr "通貨が無効です"
 
-#: views/vendor_admin.py:268
+#: views/vendor_admin.py:314
 msgid "Customer has no longer access to Product"
 msgstr "お客様は製品にアクセスできなくなります"
 
-#: views/vendor_admin.py:280
-msgid "You must empty Cart"
-msgstr "カートを空にする必要があります"
-
-#: views/vendor_admin.py:286
+#: views/vendor_admin.py:330
 msgid "Offer and Invoice must have zero value"
 msgstr "オファーと請求書の値はゼロでなければなりません"
 
-#: views/vendor_admin.py:292
+#: views/vendor_admin.py:337
 msgid "Offer Added To Customer Profile"
 msgstr "顧客プロファイルにオファーが追加されました"
+
+#~ msgid "Offer Overview"
+#~ msgstr "オファーの概要"
+
+#~ msgid "Add Customer"
+#~ msgstr "顧客を追加"
+
+#~ msgid "Customers Owning the Offer"
+#~ msgstr "オファーを所有している顧客"
+
+#~ msgid "Customers Owning"
+#~ msgstr "所有している顧客"
+
+#~ msgid "Customers Not Owning"
+#~ msgstr "所有していない顧客"
+
+#~ msgid "You must empty Cart"
+#~ msgstr "カートを空にする必要があります"
 
 #~ msgid "Term"
 #~ msgstr "期間"
