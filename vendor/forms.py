@@ -10,12 +10,21 @@ from django.utils.translation import ugettext_lazy as _
 
 from .config import VENDOR_PRODUCT_MODEL
 from .models import Address, Offer, Price, offer_term_details_default
-from .models.choice import PaymentTypes, TermType
+from .models.choice import PaymentTypes, TermType, Country
 from .utils import get_site_from_request
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
-        
+COUNTRY_CHOICE = getattr(settings, 'VENDOR_COUNTRY_CHOICE', Country.choices)
+COUNTRY_DEFAULT = getattr(settings, 'VENDOR_COUNTRY_DEFAULT', Country.US)
+
+
+def get_available_country_choices():
+    if isinstance(COUNTRY_CHOICE, Country):
+        return Country.choices
+    return [(country.value, country.label) for country in Country if country.name in COUNTRY_CHOICE]
+
+
 class PriceForm(forms.ModelForm):
     CHOICES = [('not_free', _('Purchase Price')), 
                ('free', _('Free'))]
@@ -89,9 +98,11 @@ class AddressForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(AddressForm, self).__init__(*args, **kwargs)
         self.fields['name'].hidden = True
-        self.fields['address_1'].widget.attrs.update({'placeholder' : _('Enter Address')})
-        self.fields['address_2'].widget.attrs.update({'placeholder' : _('Enter Apt, Suite, Unit, Building, Floor, etc')})
-        self.fields['locality'].widget.attrs.update({'placeholder' : _('Enter City')})
+        self.fields['address_1'].widget.attrs.update({'placeholder': _('Enter Address')})
+        self.fields['address_2'].widget.attrs.update({'placeholder': _('Enter Apt, Suite, Unit, Building, Floor, etc')})
+        self.fields['locality'].widget.attrs.update({'placeholder': _('Enter City')})
+        self.initial['country'] = Country[COUNTRY_DEFAULT]
+        self.fields['country'].choices = get_available_country_choices()
 
 
 class AccountInformationForm(AddressForm):
