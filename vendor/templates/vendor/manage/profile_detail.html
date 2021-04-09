@@ -40,40 +40,6 @@
       </div>
     </div>
   </div>
-  <div class='col-6'>
-    <div class='card'>
-      <div class='card-header'>
-        <div class='d-flex flex-row justify-content-between'>
-          {% trans 'Products Owned' %}
-      </div>
-      <div class='card-body'>
-        <table class="table">
-          <thead>
-            <tr>
-              <th class="border-top-0">{% trans 'Product' %}</th>
-              <th class="border-top-0">{% trans 'Actions' %}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for receipt in object.receipts.all %}
-            <tr>
-              <th>{{ receipt.products.first.name }}</th>
-              <th>
-                <form class="align-itmes-center" method="post"
-                  action="{% url 'vendor_admin:manager-profile-remove-product' receipt.uuid %}">
-                  {% csrf_token %}
-                  <button class="btn btn-sm btn-danger" type="submit">
-                    {% trans 'VOID' %}
-                  </button>
-                </form>
-              </th>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
   <div class='col-12 my-4'>
     <div class='card'>
       <div class='card-header '>
@@ -114,6 +80,74 @@
       </div>
     </div>
   </div>
+  <div class='col-6'>
+    <div class='card'>
+      <div class='card-header'>
+        <div class='d-flex flex-row justify-content-between'>
+          {% trans 'Products Owned' %}
+        </div>
+      </div>
+      <div class='card-body'>
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="border-top-0">{% trans 'Product' %}</th>
+              <th class="border-top-0">{% trans 'Actions' %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for receipt in object.receipts.all %}
+            <tr>
+              <th>{{ receipt.products.first.name }}</th>
+              <th>
+                <form class="align-itmes-center" method="post"
+                  action="{% url 'vendor_admin:manager-profile-remove-product' receipt.uuid %}">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-danger" type="submit">
+                    {% trans 'VOID' %}
+                  </button>
+                </form>
+              </th>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-6">
+    <div class='card'>
+      <div class='card-header'>
+        {% trans 'Assign Free Offers To Profile' %}
+      </div>
+      <div class='card-body'>
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="border-top-0">{% trans 'Offer' %}</th>
+              <th class="border-top-0"></th>
+            </tr>
+        </thead>
+        <tbody>
+          {% for offer in free_offers %}
+            <th>{{ offer }}</th>
+            <th>
+              <form action="{% url 'vendor_admin:manager-profile-add-offer' object.uuid offer.uuid %}">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-primary" type="submit">
+                  {% trans 'ASSIGN' %}
+                </button>
+              </form>
+            </th>
+          {% endfor %}
+        </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<div class='row'>
+
 </div>
 <div class='row'>
   <h3>{% trans 'Invoices' %}</h3>
