@@ -132,7 +132,7 @@ class ModelInvoiceTests(TestCase):
         self.existing_invoice.save()
         self.assertNotEqual(0, self.existing_invoice.order_items.count())
         self.existing_invoice.empty_cart()
-        self.assertNotEqual(0, self.existing_invoice.order_items.count())
+        self.assertEqual(0, self.existing_invoice.order_items.count())
     
 
 class CartViewTests(TestCase):
