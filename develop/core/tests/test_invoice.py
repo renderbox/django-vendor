@@ -132,7 +132,7 @@ class ModelInvoiceTests(TestCase):
         self.existing_invoice.save()
         self.assertNotEqual(0, self.existing_invoice.order_items.count())
         self.existing_invoice.empty_cart()
-        self.assertNotEqual(0, self.existing_invoice.order_items.count())
+        self.assertEqual(0, self.existing_invoice.order_items.count())
     
 
 class CartViewTests(TestCase):
@@ -294,11 +294,23 @@ class ReviewCheckoutViewTests(TestCase):
         self.invoice.status = Invoice.InvoiceStatus.CHECKOUT
         self.invoice.save()
         Payment.objects.all().delete()
-        form_data = { 
-            'billing_address_form': 
-                {'name':'Home','company':'Whitemoon Dreams','country':'581','address_1':'221B Baker Street','address_2':'','locality':'Marylebone','state':'California','postal_code':'90292'}, 
-            'credit_card_form': 
-                {'full_name':'Bob Ross','card_number':'5424000000000015','expire_month':'12','expire_year':'2030','cvv_number':'900','payment_type':'10'}
+        form_data = {
+            'billing_address_form': {
+                'name': 'Home',
+                'company': 'Whitemoon Dreams',
+                'country': 840,
+                'address_1': '221B Baker Street',
+                'address_2': '',
+                'locality': 'Marylebone',
+                'state': 'California',
+                'postal_code': '90292'},
+            'credit_card_form': {
+                'full_name': 'Bob Ross',
+                'card_number': '5424000000000015',
+                'expire_month': '12',
+                'expire_year': '2030',
+                'cvv_number': '900',
+                'payment_type': '10'}
             }
 
         billing_address = BillingAddressForm(form_data['billing_address_form'])

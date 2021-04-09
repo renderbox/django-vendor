@@ -191,3 +191,10 @@ STRIPE_LIVE_MODE = False
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
+VENDOR_COUNTRY_CHOICE = [
+    'US',
+    'JP',
+    'MX'
+]
+
+VENDOR_COUNTRY_DEFAULT = 'US'

@@ -294,6 +294,7 @@ class AdminProfileDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        context['free_offers'] = Offer.objects.filter(prices__cost=0)
         context['receipts'] = self.object.receipts.filter(products__in=Product.objects.filter(site=get_site_from_request(self.request)),
                                                           order_item__offer__terms__gte=TermType.PERPETUAL)
         context['subscriptions'] = self.object.receipts.filter(products__in=Product.objects.filter(
@@ -308,7 +309,7 @@ class VoidProductView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
-        receipt.end_date = timezone.now()
+        receipt.void()
         receipt.save()
 
         messages.info(request, _("Customer has no longer access to Product"))
@@ -318,8 +319,7 @@ class VoidProductView(LoginRequiredMixin, View):
 class AddOfferToProfileView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
-        customer_profile = CustomerProfile.objects.get(
-            uuid=kwargs.get('uuid_profile'))
+        customer_profile = CustomerProfile.objects.get(uuid=kwargs.get('uuid_profile'))
         offer = Offer.objects.get(uuid=kwargs['uuid_offer'])
 
         cart = customer_profile.get_cart_or_checkout_cart()
@@ -329,10 +329,10 @@ class AddOfferToProfileView(LoginRequiredMixin, View):
         if offer.current_price() or cart.total:
             messages.info(request, _("Offer and Invoice must have zero value"))
             cart.remove_offer(offer)
-            return redirect('vendor_admin:manager-offer-update', uuid=offer.uuid)
+            return redirect(reverse('vendor_admin:manager-profile', kwargs={'uuid': customer_profile.uuid}))
 
         processor = payment_processor(cart)
         processor.authorize_payment()
 
         messages.info(request, _("Offer Added To Customer Profile"))
-        return redirect('vendor_admin:manager-offer-update', uuid=offer.uuid)
+        return redirect(reverse('vendor_admin:manager-profile', kwargs={'uuid': customer_profile.uuid}))
