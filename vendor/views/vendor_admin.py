@@ -309,7 +309,7 @@ class VoidProductView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
-        receipt.end_date = timezone.now()
+        receipt.void()
         receipt.save()
 
         messages.info(request, _("Customer has no longer access to Product"))
