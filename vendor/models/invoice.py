@@ -164,11 +164,10 @@ class Invoice(CreateUpdateModelBase):
         """
         Remove any offer/order_item if the invoice is in Cart State.
         """
-        if self.status == self.InvoiceStatus.CART:
-            offers = []
-            offers = list(itertools.chain.from_iterable([ [order_item.offer] * order_item.quantity for order_item in self.order_items.all()]))
-            for offer in offers:
-                self.remove_offer(offer)
+        offers = []
+        offers = list(itertools.chain.from_iterable([ [order_item.offer] * order_item.quantity for order_item in self.order_items.all()]))
+        for offer in offers:
+            self.remove_offer(offer)
 
     
 class OrderItem(CreateUpdateModelBase):
