@@ -43,12 +43,16 @@ class Receipt(CreateUpdateModelBase):
 
     def void(self):
         """
-        Funtion to void (not cancel) a receipt by making the end_date now and disabling 
+        Funtion to void (not cancel) a receipt by making the end_date now and disabling
         access to the customer to that given product. If the receipt is related to a
         subscription to a Payment Gateway, make sure to also cancel such subscription
         in the given Payment Gateway. 
         """
         self.end_date = timezone.now()
         self.meta['voided_on'] = dateformat.format(self.end_date, 'Y-M-d H:i:s')
+
+    def cancel(self):
+        self.status = PurchaseStatus.CANCELED
+        self.auto_renew = False
 
 

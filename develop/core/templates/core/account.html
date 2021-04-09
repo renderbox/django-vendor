@@ -28,10 +28,12 @@
                         <div>{% trans 'No current Payments' %}</div>
                         {% endif %}
                     </div>
-                    <a class="edit-name-button btn text-primary p-0"
-                        href="{% url 'vendor:subscription-cancel' subscription.uuid %}"><i class="fas fa-pen"></i></a>
-                    <a class="edit-name-button btn text-primary p-0" href="{% url 'core-account-edit' 'billing' %}"><i
-                            class="fas fa-pen"></i></a>
+                    <a class="edit-name-button btn text-primary p-0 bg-success" href="{% url 'vendor:subscription-cancel' subscription.uuid %}" style="width: 1rem;">
+                        <i class="fas fa-pen"></i>
+                    </a>
+                    <a class="edit-name-button btn text-primary p-0" href="{% url 'core-account-edit' 'billing' %}">
+                        <i class="fas fa-pen"></i>
+                    </a>
                 </div>
                 {% endcomment %}
                 <div class="d-flex justify-content-between align-items-end mt-3">
@@ -54,8 +56,8 @@
                 {% if subscription %}
                 <div class="d-flex mt-2">
                     <div class="text-primary text-left">{{ subscription.order_item.name }}</div>
-                    <a class="edit-name-button btn text-primary p-0 ml-auto" data-toggle="modal"
-                        data-target="#update_subscription"><i class="fas fa-pen"></i></a>
+                    <a class="edit-name-button btn text-primary p-0 ml-auto bg-success" style="width: 1rem;" data-toggle="modal"
+                        data-target="#update_subscription"><i class="w-100 fas fa-pen"></i></a>
                 </div>
                 <div class="text-left">
                     {% blocktrans with terms=subscription.order_item.offer.get_terms_display total=subscription.order_item.total end_date=subscription.end_date|date:"M d, Y" %}

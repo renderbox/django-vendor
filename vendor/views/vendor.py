@@ -381,7 +381,6 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
         receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
 
         processor = PaymentProcessor(receipt.order_item.invoice)
-
         processor.subscription_cancel(receipt)
 
         messages.info(self.request, _("Subscription Cancelled"))

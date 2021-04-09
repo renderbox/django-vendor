@@ -309,7 +309,7 @@ class VoidProductView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
-        receipt.end_date = timezone.now()
+        receipt.void()
         receipt.save()
 
         messages.info(request, _("Customer has no longer access to Product"))
@@ -329,10 +329,10 @@ class AddOfferToProfileView(LoginRequiredMixin, View):
         if offer.current_price() or cart.total:
             messages.info(request, _("Offer and Invoice must have zero value"))
             cart.remove_offer(offer)
-            return redirect(request.META.get('HTTP_REFERER', customer_profile.uuid))
+            return redirect(reverse('vendor_admin:manager-profile', kwargs={'uuid': customer_profile.uuid}))
 
         processor = payment_processor(cart)
         processor.authorize_payment()
 
         messages.info(request, _("Offer Added To Customer Profile"))
-        return redirect(request.META.get('HTTP_REFERER', customer_profile.uuid))
+        return redirect(reverse('vendor_admin:manager-profile', kwargs={'uuid': customer_profile.uuid}))
