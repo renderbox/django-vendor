@@ -458,6 +458,16 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.payment.save()
 
     def subscription_cancel(self, receipt):
+        """
+        If receipt.invoice.total is zero, no need to call Gateway as there is no
+        transaction for it. Otherwise it will cancel the subscription on the Gateway
+        and if successfull it will cancel it on the receipt.
+        """
+        if not receipt.order_item.invoice.total:
+            receipt.cancel()
+            receipt.save()
+            return None
+        
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.subscriptionId = str(receipt.transaction)
