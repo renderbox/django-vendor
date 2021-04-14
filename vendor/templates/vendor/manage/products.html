@@ -1,50 +1,78 @@
 {% extends "vendor/manage/base.html" %}
+
 {% load i18n %}
 
 {% block vendor_content %}
 
-<div class="container-fluid">
-
-    <nav aria-label="breadcrumb">
-        <h1>{% trans 'Products' %}</h1>
-    </nav>
-
-    <div class="row">
-        <div class="col">
-          <h3>{% trans 'Product List' %}</h3>
-          <table class="table table-striped">
-  
-            <thead>
-              <tr>
-                <th scope="col">{% trans 'SKU' %}</th>
-                <th scope="col">{% trans 'Name' %}</th>
-                <th scope="col">{% trans 'Site' %}</th>
-                <th scope="col">{% trans 'Description' %}</th>
-              </tr>
-            </thead>
-  
-            <tbody>
-              {% for item in object_list %}
-              <tr>
-                  <td>{{ item.sku }}</td>
-                  <td><a class="text-primary" href="{% url 'vendor_admin:manager-product-update' item.uuid %}">{{ item.name}}</a></td>
-                <td>{{ item.site.name }}</td>
-                <td>{{ item.description.info|default:""}}</td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td>
-                  {% trans 'No Products' %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-  
-          </table>
-        </div>
-      </div>
-      <p><a href="{% url 'vendor_admin:manager-product-create' %}" class="btn btn-primary">{% trans 'Add Product' %}</a></p>
+<div class="d-flex flex-row justify-content-between my-3">
+  <h1 class="h1 mb-0 text-gray-800">{% trans 'Product Licenses' %}</h1>
+  <a class='btn btn-success' href="{% url 'vendor_admin:manager-product-create' %}">
+    <i class="fas fa-plus mr-2"></i>
+    {% trans 'Create Product License' %}
+  </a>
 </div>
 
 
+<div class='card shadow'>
+  <div class="card-header bg-light font-weight-bold text-primary p-3 mb-0">
+    {% trans 'Manage Users' %}
+  </div>
+  <div class="card-body">
+    <div class="search-bar d-flex justify-content-between align-items-center mb-2">
+      <form id="profile_search_filter" action="" method="get" class="form form-inline">
+        <div id="div_id_user_filter" class="form-group">
+          <div class="input-group  flex-nowrap">
+            <input type="text" name="user_filter" class="textinput textInput form-control" id="id_user_filter"
+              placeholder="{% trans 'Search' %}">
+            <div class="input-group-append">
+              <button class="btn bg-transparent close" type="button" role="close" aria-role="close" id="search_close"
+                style="margin-left: -1.5rem; z-index: 10;">
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+            <div class="input-group-append">
+              <button class="btn btn-success" type="submit" style="z-index: 15;">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+      <form id="profile_pagination_form" action="" method="get" class="form form-inline text-right">
+        <span class="text-dark mr-2">
+          {% trans 'Show:' %}
+        </span>
+        <select class="selectpicker w-auto" name="paginate_by" id="paginate_by" data-show-tick="true">
+          <option>25</option>
+          <option>50</option>
+          <option>100</option>
+        </select>
+      </form>
+    </div>
+    <div class="table-container table-responsive tc-table">
+      <table class='table table-striped'>
+        <thead>
+          <tr class="d-flex border-0">
+            <th class="text-left col-3">{% trans 'Product License' %}</th>
+            <th class="col-2 text-center">{% trans 'Product Offers' %}</th>
+            <th class="col-2 text-center">{% trans 'Availability' %}</th>
+            <th class="ml-auto flex-grow-1"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in object_list %}
+          <tr class="d-flex">
+            <td class="col-3 text-left">{{product.name}}</td>
+            <td class="col-2 text-center">{{product.offers.count}}</td>
+            <td class="col-2 text-center">{{product.available}}</td>
+            <td class="ml-auto flex-grow-1 text-right">
+              <a class="btn btn-sm btn-primary" href="{% url 'vendor_admin:manager-product-update' product.uuid %}">Edit</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}
