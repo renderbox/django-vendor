@@ -1,50 +1,185 @@
 {% extends "vendor/manage/base.html" %}
+
 {% load i18n %}
 
 {% block vendor_content %}
 
-<div class="container-fluid">
-
-    <nav aria-label="breadcrumb">
-        <h1>{% trans 'Products' %}</h1>
-    </nav>
-
-    <div class="row">
-        <div class="col">
-          <h3>{% trans 'Product List' %}</h3>
-          <table class="table table-striped">
-  
-            <thead>
-              <tr>
-                <th scope="col">{% trans 'SKU' %}</th>
-                <th scope="col">{% trans 'Name' %}</th>
-                <th scope="col">{% trans 'Site' %}</th>
-                <th scope="col">{% trans 'Description' %}</th>
-              </tr>
-            </thead>
-  
-            <tbody>
-              {% for item in object_list %}
-              <tr>
-                  <td>{{ item.sku }}</td>
-                  <td><a class="text-primary" href="{% url 'vendor_admin:manager-product-update' item.uuid %}">{{ item.name}}</a></td>
-                <td>{{ item.site.name }}</td>
-                <td>{{ item.description.info|default:""}}</td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td>
-                  {% trans 'No Products' %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-  
-          </table>
-        </div>
-      </div>
-      <p><a href="{% url 'vendor_admin:manager-product-create' %}" class="btn btn-primary">{% trans 'Add Product' %}</a></p>
+<div class="d-flex flex-row justify-content-between my-3">
+  <h1 class="h1 mb-0 text-gray-800">{% trans 'Product Licenses' %}</h1>
+  <a class='btn btn-success' href="{% url 'vendor_admin:manager-product-create' %}">
+    <i class="fas fa-plus mr-2"></i>
+    {% trans 'Create Product License' %}
+  </a>
 </div>
 
 
+<div class='card shadow'>
+  <div class="card-header bg-light font-weight-bold text-primary p-3 mb-0">
+    {% trans 'Manage Users' %}
+  </div>
+  <div class="card-body">
+    <div class="search-bar d-flex justify-content-between align-items-center mb-2">
+      <div class="input-group  flex-nowrap">
+        <input type="text" name="search_filter" class="textinput textInput" id="search_filter" placeholder="{% trans 'Search' %}" 
+        {% if request.GET.search_filter %} value="{{request.GET.search_filter}}" {% endif %}>
+        <div class="input-group-append">
+          <button class="btn bg-transparent close" type="button" role="close" aria-role="close" id="search_close" style="margin-left: -1.5rem; z-index: 10;">
+            <i class="fa fa-times"></i>
+          </button>
+        </div>
+        <div class="input-group-append">
+          <button id="search_button" class="btn btn-success" style="z-index: 15;">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+      </div>
+      <form id="profile_pagination_form" method="get" class="form form-inline text-right">
+        <span class="text-dark mr-2">
+          {% trans 'Show:' %}
+        </span>
+        <select class="selectpicker w-auto" name="paginate_by" id="paginate_by" data-show-tick="true">
+          <option {% if request.GET.paginate_by == '25' %}selected{% endif %}>25</option>
+          <option {% if request.GET.paginate_by == '50' %}selected{% endif %}>50</option>
+          <option {% if request.GET.paginate_by == '100' %}selected{% endif %}>100</option>
+        </select>
+      </form>
+    </div>
+    <div class="table-container table-responsive tc-table">
+      <table class='table table-striped'>
+        <thead>
+          <tr class="d-flex border-0">
+            <th id="product_order" class="text-left col-3{% if '-name' in request.GET.ordering %} desc{% elif 'name' in request.GET.ordering %} asc{% endif %}">{% trans 'Product License' %}</th>
+            <th class="col-2 text-center">{% trans 'Product Offers' %}</th>
+            <th id="availability_order" class="col-2 text-center {% if '-available' in request.GET.ordering %} desc{% elif 'available' in request.GET.ordering %} asc{% endif %}">{% trans 'Availability' %}</th>
+            <th class="ml-auto flex-grow-1"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in object_list %}
+          <tr class="d-flex">
+            <td class="col-3 text-left">{{product.name}}</td>
+            <td class="col-2 text-center">{{product.offers.count}}</td>
+            <td class="col-2 text-center">{{product.available}}</td>
+            <td class="ml-auto flex-grow-1 text-right">
+              <a class="btn btn-sm btn-primary"
+                href="{% url 'vendor_admin:manager-product-update' product.uuid %}">{% trans 'Edit' %}</a>
+            </td>
+          </tr>
+
+          {% empty %}
+          <tr>
+            <td>{% trans 'No Products' %}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+
+    <div class="pagination justify-content-between">
+      <span>
+        {% blocktrans with object_list|length as total_entries %}
+        Showing {{page_obj.number}} to {{page_obj.number + page_obj.paginate_by }} of {{total_entries}}
+        {% endblocktrans %}
+      </span>
+      <span>
+        {% if page_obj.has_previous %}
+        <a href="?page=1">&laquo; first</a>
+        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+      </span>
+    </div>
+  </div>
+</div>
+
+
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function () {
+
+    function getFilterKWARG() {
+      let search = $("#search_filter").val()
+      let paginate_by = $("#paginate_by").val()
+      let page = {{ page_obj.number }}
+      let ordering = ""
+
+      if ($("#availability_order").hasClass('asc')){
+        ordering += 'available,'
+      }
+      else if ($("#availability_order").hasClass('desc')) {
+        ordering += '-available,'
+      }
+      if ($("#product_order").hasClass('asc')) {
+        ordering += 'name'
+      }
+      else if ($("#product_order").hasClass('desc')) {
+        ordering += '-name'
+      }
+      return '?search_filter=' + search + '&paginate_by=' + paginate_by + '&page=' + page + '&ordering=' + ordering
+    }
+
+    $("#profile_pagination_form").on("change", function (event) {
+      $(location).attr('href', getFilterKWARG());
+    })
+
+    $("#search_filter").on("keyup", function (event) {
+      if (event.keyCode === 13) {
+        $(location).attr('href', getFilterKWARG());
+      }
+    })
+
+    $("#search_button").on("click", function (event) {
+      $(location).attr('href', getFilterKWARG());
+    })
+
+    $("#product_order").on("click", function (event) {
+      console.log("#product_order");
+      if ($("#product_order").hasClass("asc")) {
+        $("#product_order").removeClass("asc")
+        $("#product_order").addClass("desc")
+      }
+      else if ($("#product_order").hasClass("desc")) {
+        $("#product_order").removeClass("desc")
+        $("#product_order").removeClass("asc")
+      }
+      else if (!$("#product_order").hasClass("desc") && !$("#product_order").hasClass("asc")) {
+        $("#product_order").addClass("asc")
+      }
+
+      $(location).attr('href', getFilterKWARG());
+    })
+
+    $("#availability_order").on("click", function (event) {
+      if ($("#availability_order").hasClass("asc")) {
+        $("#availability_order").removeClass("asc")
+        $("#availability_order").addClass("desc")
+      }
+      else if ($("#availability_order").hasClass("desc")) {
+        $("#availability_order").removeClass("desc")
+        $("#availability_order").removeClass("asc")
+      }
+      else if (!$("#availability_order").hasClass("desc") && !$("#availability_order").hasClass("asc")) {
+        $("#availability_order").addClass("asc")
+      }
+
+      $(location).attr('href', getFilterKWARG());
+    })
+});
+</script>
 {% endblock %}
