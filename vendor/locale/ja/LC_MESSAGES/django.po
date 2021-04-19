@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-09 15:52+0000\n"
+"POT-Creation-Date: 2021-04-19 23:28+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -194,7 +194,7 @@ msgstr "国/地域"
 msgid "Postal Code"
 msgstr "郵便番号"
 
-#: models/base.py:57 templates/vendor/manage/products.html:19
+#: models/base.py:57
 msgid "SKU"
 msgstr "SKU"
 
@@ -207,7 +207,6 @@ msgstr "ユーザー定義可能なSKUフィールド"
 #: templates/vendor/manage/dashboard.html:108
 #: templates/vendor/manage/invoice_list.html:19
 #: templates/vendor/manage/offers.html:19
-#: templates/vendor/manage/products.html:20
 #: templates/vendor/manage/profile_detail.html:17
 #: templates/vendor/manage/profile_detail.html:212
 #: templates/vendor/purchase_list.html:17
@@ -215,8 +214,7 @@ msgid "Name"
 msgstr "名前"
 
 #: models/base.py:60 models/invoice.py:39 models/offer.py:61
-#: models/profile.py:33 templates/vendor/manage/products.html:21
-#: templates/vendor/manage/profile_list.html:22
+#: models/profile.py:33 templates/vendor/manage/profile_list.html:22
 msgid "Site"
 msgstr "地点"
 
@@ -228,7 +226,7 @@ msgstr "利用可能"
 msgid "Is this currently available?"
 msgstr "これは現在利用できますか？"
 
-#: models/base.py:63 templates/vendor/manage/products.html:22
+#: models/base.py:63
 msgid "Description"
 msgstr "説明"
 
@@ -1618,7 +1616,6 @@ msgid "Estimated Tax"
 msgstr "推定税額"
 
 #: templates/vendor/includes/cost_overview.html:23
-#, python-format
 msgid "Total (%(currency)s) "
 msgstr "合計( (%(currency)s)"
 
@@ -1824,21 +1821,53 @@ msgstr "製品"
 msgid "Save Product"
 msgstr "製品を保存する"
 
-#: templates/vendor/manage/products.html:9
-msgid "Products"
-msgstr "製品"
+#: templates/vendor/manage/products.html:8
+msgid "Product Licenses"
+msgstr "製品ライセンス"
 
-#: templates/vendor/manage/products.html:14
-msgid "Product List"
-msgstr "製品リスト"
+#: templates/vendor/manage/products.html:11
+msgid "Create Product License"
+msgstr "製品ライセンスの作成"
 
-#: templates/vendor/manage/products.html:37
+#: templates/vendor/manage/products.html:18
+msgid "Manage Users"
+msgstr "ユーザーの管理"
+
+#: templates/vendor/manage/products.html:23
+msgid "Search"
+msgstr "探す"
+
+#: templates/vendor/manage/products.html:38
+msgid "Show:"
+msgstr "公演："
+
+#: templates/vendor/manage/products.html:51
+msgid "Product License"
+msgstr "製品ライセンス"
+
+#: templates/vendor/manage/products.html:52
+msgid "Product Offers"
+msgstr "製品のオファー"
+
+#: templates/vendor/manage/products.html:53
+msgid "Availability"
+msgstr "可用性"
+
+#: templates/vendor/manage/products.html:65
+msgid "Edit"
+msgstr "編集"
+
+#: templates/vendor/manage/products.html:71
 msgid "No Products"
 msgstr "製品なし"
 
-#: templates/vendor/manage/products.html:46
-msgid "Add Product"
-msgstr "製品を追加"
+#: templates/vendor/manage/products.html:84
+msgid "Showing %(start)s to %(end)s of %(total)s entries.\n"
+msgstr "%(start)sエントリの%(end)sから%(total)sまでを表示しています。\n"
+
+#: templates/vendor/manage/products.html:103
+msgid "Page %(current)s of %(total)s.\n"
+msgstr "%(current)sのページ%(total)s\n"
 
 #: templates/vendor/manage/profile_detail.html:6
 msgid "Admin: Profile Details"
@@ -2043,7 +2072,6 @@ msgid "Update Billing Address"
 msgstr "請求先住所の更新"
 
 #: templates/vendor/orderitem_confirm_delete.html:6
-#, python-format
 msgid "Are you sure you want to remove? %(product_name)s from the cart"
 msgstr "本当に捨ててもいいのかい？カートからの%(product_name)s"
 
@@ -2070,7 +2098,6 @@ msgstr "アイテムを削除"
 
 #: templates/vendor/orderitem_list.html:43
 #: templates/vendor/ordersummary.html:27
-#, python-format
 msgid "Total number of items: %(item_count)s "
 msgstr "アイテムの総数：%(item_count)s"
 
@@ -2164,7 +2191,6 @@ msgid "Reason"
 msgstr "理由"
 
 #: views/mixin.py:84
-#, python-format
 msgid "No %(verbose_name)s found matching the query"
 msgstr "クエリに一致する%(verbose_name)sが見つかりません"
 
@@ -2286,51 +2312,57 @@ msgstr "支払いゲートウェイは支払いを承認しませんでした。
 msgid "Not Found"
 msgstr "見つかりません"
 
-#: views/vendor.py:387
+#: views/vendor.py:386
 msgid "Subscription Cancelled"
 msgstr "サブスクリプションがキャンセルされました"
 
-#: views/vendor.py:401
+#: views/vendor.py:400
 msgid "Invalid Card"
 msgstr "無効なカード"
 
-#: views/vendor.py:409
+#: views/vendor.py:408
 msgid ""
 "Payment gateway error: {processor.transaction_message.get('message', '')}"
 msgstr ""
 "支払いゲートウェイエラー：{processor.transaction_message.get('message', '')}"
 
-#: views/vendor.py:412
+#: views/vendor.py:411
 msgid "Success: Payment Updated"
 msgstr "成功：支払いが更新されました"
 
-#: views/vendor.py:424
-msgid "Failed: {address_form.errors}"
+#: views/vendor.py:423
+msgid "Failed: %(address_form.errors)s"
 msgstr "失敗：%(address_form.errors)s"
 
-#: views/vendor.py:426
+#: views/vendor.py:425
 msgid "Success: Address Updated"
 msgstr "成功：アドレスが更新されました"
 
-#: views/vendor.py:455
+#: views/vendor.py:454
 msgid "Shipping Address Updated"
 msgstr "配送先住所が更新されました"
 
-#: views/vendor_admin.py:223
+#: views/vendor_admin.py:218
 msgid "Invalid currency"
 msgstr "通貨が無効です"
 
-#: views/vendor_admin.py:315
+#: views/vendor_admin.py:310
 msgid "Customer has no longer access to Product"
 msgstr "お客様は製品にアクセスできなくなります"
 
-#: views/vendor_admin.py:330
+#: views/vendor_admin.py:325
 msgid "Offer and Invoice must have zero value"
 msgstr "オファーと請求書の値はゼロでなければなりません"
 
-#: views/vendor_admin.py:337
+#: views/vendor_admin.py:332
 msgid "Offer Added To Customer Profile"
 msgstr "顧客プロファイルにオファーが追加されました"
+
+#~ msgid "Products"
+#~ msgstr "製品"
+
+#~ msgid "Add Product"
+#~ msgstr "製品を追加"
 
 #~ msgid "Offer Overview"
 #~ msgstr "オファーの概要"
@@ -2386,16 +2418,14 @@ msgstr "顧客プロファイルにオファーが追加されました"
 #~ msgid "New Invoice"
 #~ msgstr "新しい請求書"
 
-#, python-brace-format
-#~ msgid "{username} Customer Profile"
-#~ msgstr "{username}顧客プロファイル"
+#~ msgid "%(username)s Customer Profile"
+#~ msgstr "%(username)s顧客プロファイル"
 
 #~ msgid "Wishlists"
 #~ msgstr "ウィッシュリスト"
 
-#, python-brace-format
-#~ msgid "{username} Invoice ({time})"
-#~ msgstr "{username}請求書（{time}）"
+#~ msgid "%(username)s Invoice %(time)s"
+#~ msgstr "%(username)s請求書 %(time)s"
 
 #~ msgid "Order Items"
 #~ msgstr "注文アイテム"
@@ -2407,9 +2437,6 @@ msgstr "顧客プロファイルにオファーが追加されました"
 #~ msgstr "領収書"
 
 #~ msgid "Product Classifier"
-#~ msgstr "製品分類子"
-
-#~ msgid "Product Classifiers"
 #~ msgstr "製品分類子"
 
 #~ msgid "Wishlist Item"
