@@ -13,7 +13,7 @@ from vendor.config import VENDOR_PRODUCT_MODEL
 from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType, PaymentTypes
-from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin
+from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin
 from vendor.utils import get_site_from_request
 from vendor.processors import PaymentProcessor
 
@@ -66,48 +66,16 @@ class AdminInvoiceDetailView(LoginRequiredMixin, DetailView):
     slug_url_kwarg = 'uuid'
 
 
-class AdminProductListView(LoginRequiredMixin, SiteOnRequestFilterMixin, ListView):
+class AdminProductListView(LoginRequiredMixin, TableFilterMixin, SiteOnRequestFilterMixin, ListView):
     '''
     Creates a Product to be added to offers
     '''
     template_name = "vendor/manage/products.html"
     model = Product
-    paginate_by = 2
+    paginate_by = 25
 
-    # def get_paginator(self):
-    #     paginator = super().get_paginator()
-
-    #     return paginator
-
-    # def get_ordering(self):
-    #     ordering = super().get_ordering()
-
-    #     return ordering
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-
-        search_value = self.request.GET.get('product_filter')
-        paginate_by = self.request.GET.get('paginate_by')
-        ordering = self.request.GET.get('ordering')
-
-        if paginate_by:
-            self.paginate_by = paginate_by
-
-        if ordering:
-            self.ordering = ordering
-
-        if search_value:
-            return queryset.filter(name__icontains=search_value)
-        return queryset
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        context['product_filter'] = self.request.GET.get('product_filter')
-        context['paginate_by'] = self.request.GET.get('paginate_by')
-
-        return context
+    def search_filter(self, queryset):
+        return queryset.filter(name__icontains=self.request.GET.get('search_filter'))
 
 
 class AdminProductUpdateView(LoginRequiredMixin, UpdateView):

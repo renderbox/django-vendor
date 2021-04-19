@@ -20,8 +20,8 @@
   <div class="card-body">
     <div class="search-bar d-flex justify-content-between align-items-center mb-2">
       <div class="input-group  flex-nowrap">
-        <input type="text" name="product_filter" class="textinput textInput" id="search_filter" placeholder="{% trans 'Search' %}" 
-        {% if request.GET.product_filter %} value="{{request.GET.product_filter}}" {% endif %}>
+        <input type="text" name="search_filter" class="textinput textInput" id="search_filter" placeholder="{% trans 'Search' %}" 
+        {% if request.GET.search_filter %} value="{{request.GET.search_filter}}" {% endif %}>
         <div class="input-group-append">
           <button class="btn bg-transparent close" type="button" role="close" aria-role="close" id="search_close" style="margin-left: -1.5rem; z-index: 10;">
             <i class="fa fa-times"></i>
@@ -111,19 +111,19 @@ $(document).ready(function () {
       let page = {{ page_obj.number }}
       let ordering = ""
 
-      if ($("#product_order").hasClass('asc')) {
-        ordering += 'name,'
-      }
-      else if ($("#product_order").hasClass('desc')) {
-        ordering += '-name,'
-      }
       if ($("#availability_order").hasClass('asc')){
-        ordering += 'available'
+        ordering += 'available,'
       }
       else if ($("#availability_order").hasClass('desc')) {
-        ordering += '-available'
+        ordering += '-available,'
       }
-      return '?product_filter=' + search + '&paginate_by=' + paginate_by + '&page=' + page + '&ordering=' + ordering
+      if ($("#product_order").hasClass('asc')) {
+        ordering += 'name'
+      }
+      else if ($("#product_order").hasClass('desc')) {
+        ordering += '-name'
+      }
+      return '?search_filter=' + search + '&paginate_by=' + paginate_by + '&page=' + page + '&ordering=' + ordering
     }
 
     $("#profile_pagination_form").on("change", function (event) {
@@ -158,6 +158,18 @@ $(document).ready(function () {
     })
 
     $("#availability_order").on("click", function (event) {
+      if ($("#availability_order").hasClass("asc")) {
+        $("#availability_order").removeClass("asc")
+        $("#availability_order").addClass("desc")
+      }
+      else if ($("#availability_order").hasClass("desc")) {
+        $("#availability_order").removeClass("desc")
+        $("#availability_order").removeClass("asc")
+      }
+      else if (!$("#availability_order").hasClass("desc") && !$("#availability_order").hasClass("asc")) {
+        $("#availability_order").addClass("asc")
+      }
+
       $(location).attr('href', getFilterKWARG());
     })
 });
