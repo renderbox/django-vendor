@@ -62,8 +62,16 @@
             <td class="col-2 text-center">{{product.available}}</td>
             <td class="ml-auto flex-grow-1 text-right">
               <a class="btn btn-sm btn-primary"
-                href="{% url 'vendor_admin:manager-product-update' product.uuid %}">Edit</a>
+                href="{% url 'vendor_admin:manager-product-update' product.uuid %}">{% trans 'Edit' %}</a>
             </td>
+          </tr>
+
+          {% empty %}
+          <tr>
+            <td>{% trans 'No Products' %}</td>
+            <td></td>
+            <td></td>
+            <td></td>
           </tr>
           {% endfor %}
         </tbody>
