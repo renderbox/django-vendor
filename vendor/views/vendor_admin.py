@@ -1,25 +1,21 @@
 from django.apps import apps
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
-from django.views.generic import TemplateView, View
+from django.views.generic import View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
 from django.utils.translation import ugettext as _
-from django.utils import timezone
 
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.forms import ProductForm, OfferForm, PriceForm, PriceFormSet, CreditCardForm, AddressForm
-from vendor.models import Invoice, Offer, Price, Receipt, CustomerProfile, Payment
+from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm
+from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType, PaymentTypes
-from vendor.views.mixin import PassRequestToFormKwargsMixin
+from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin
 from vendor.utils import get_site_from_request
 from vendor.processors import PaymentProcessor
-from django.contrib.admin.views.main import ChangeList
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
@@ -70,17 +66,48 @@ class AdminInvoiceDetailView(LoginRequiredMixin, DetailView):
     slug_url_kwarg = 'uuid'
 
 
-class AdminProductListView(LoginRequiredMixin, ListView):
+class AdminProductListView(LoginRequiredMixin, SiteOnRequestFilterMixin, ListView):
     '''
     Creates a Product to be added to offers
     '''
     template_name = "vendor/manage/products.html"
     model = Product
+    paginate_by = 2
+
+    # def get_paginator(self):
+    #     paginator = super().get_paginator()
+
+    #     return paginator
+
+    # def get_ordering(self):
+    #     ordering = super().get_ordering()
+
+    #     return ordering
 
     def get_queryset(self):
-        if hasattr(self.request, 'site'):
-            return self.model.objects.filter(site=get_site_from_request(self.request))
-        return self.model.on_site.all()
+        queryset = super().get_queryset()
+
+        search_value = self.request.GET.get('product_filter')
+        paginate_by = self.request.GET.get('paginate_by')
+        ordering = self.request.GET.get('ordering')
+
+        if paginate_by:
+            self.paginate_by = paginate_by
+
+        if ordering:
+            self.ordering = ordering
+
+        if search_value:
+            return queryset.filter(name__icontains=search_value)
+        return queryset
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['product_filter'] = self.request.GET.get('product_filter')
+        context['paginate_by'] = self.request.GET.get('paginate_by')
+
+        return context
 
 
 class AdminProductUpdateView(LoginRequiredMixin, UpdateView):

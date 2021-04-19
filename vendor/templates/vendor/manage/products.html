@@ -19,33 +19,28 @@
   </div>
   <div class="card-body">
     <div class="search-bar d-flex justify-content-between align-items-center mb-2">
-      <form id="profile_search_filter" action="" method="get" class="form form-inline">
-        <div id="div_id_user_filter" class="form-group">
-          <div class="input-group  flex-nowrap">
-            <input type="text" name="user_filter" class="textinput textInput form-control" id="id_user_filter"
-              placeholder="{% trans 'Search' %}">
-            <div class="input-group-append">
-              <button class="btn bg-transparent close" type="button" role="close" aria-role="close" id="search_close"
-                style="margin-left: -1.5rem; z-index: 10;">
-                <i class="fa fa-times"></i>
-              </button>
-            </div>
-            <div class="input-group-append">
-              <button class="btn btn-success" type="submit" style="z-index: 15;">
-                <i class="fas fa-search"></i>
-              </button>
-            </div>
-          </div>
+      <div class="input-group  flex-nowrap">
+        <input type="text" name="product_filter" class="textinput textInput" id="search_filter" placeholder="{% trans 'Search' %}" 
+        {% if request.GET.product_filter %} value="{{request.GET.product_filter}}" {% endif %}>
+        <div class="input-group-append">
+          <button class="btn bg-transparent close" type="button" role="close" aria-role="close" id="search_close" style="margin-left: -1.5rem; z-index: 10;">
+            <i class="fa fa-times"></i>
+          </button>
         </div>
-      </form>
-      <form id="profile_pagination_form" action="" method="get" class="form form-inline text-right">
+        <div class="input-group-append">
+          <button id="search_button" class="btn btn-success" style="z-index: 15;">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+      </div>
+      <form id="profile_pagination_form" method="get" class="form form-inline text-right">
         <span class="text-dark mr-2">
           {% trans 'Show:' %}
         </span>
         <select class="selectpicker w-auto" name="paginate_by" id="paginate_by" data-show-tick="true">
-          <option>25</option>
-          <option>50</option>
-          <option>100</option>
+          <option {% if request.GET.paginate_by == '25' %}selected{% endif %}>25</option>
+          <option {% if request.GET.paginate_by == '50' %}selected{% endif %}>50</option>
+          <option {% if request.GET.paginate_by == '100' %}selected{% endif %}>100</option>
         </select>
       </form>
     </div>
@@ -53,9 +48,9 @@
       <table class='table table-striped'>
         <thead>
           <tr class="d-flex border-0">
-            <th class="text-left col-3">{% trans 'Product License' %}</th>
+            <th id="product_order" class="text-left col-3{% if '-name' in request.GET.ordering %} desc{% elif 'name' in request.GET.ordering %} asc{% endif %}">{% trans 'Product License' %}</th>
             <th class="col-2 text-center">{% trans 'Product Offers' %}</th>
-            <th class="col-2 text-center">{% trans 'Availability' %}</th>
+            <th id="availability_order" class="col-2 text-center {% if '-available' in request.GET.ordering %} desc{% elif 'available' in request.GET.ordering %} asc{% endif %}">{% trans 'Availability' %}</th>
             <th class="ml-auto flex-grow-1"></th>
           </tr>
         </thead>
@@ -66,13 +61,105 @@
             <td class="col-2 text-center">{{product.offers.count}}</td>
             <td class="col-2 text-center">{{product.available}}</td>
             <td class="ml-auto flex-grow-1 text-right">
-              <a class="btn btn-sm btn-primary" href="{% url 'vendor_admin:manager-product-update' product.uuid %}">Edit</a>
+              <a class="btn btn-sm btn-primary"
+                href="{% url 'vendor_admin:manager-product-update' product.uuid %}">Edit</a>
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
+
+    <div class="pagination justify-content-between">
+      <span>
+        {% blocktrans with object_list|length as total_entries %}
+        Showing {{page_obj.number}} to {{page_obj.number + page_obj.paginate_by }} of {{total_entries}}
+        {% endblocktrans %}
+      </span>
+      <span>
+        {% if page_obj.has_previous %}
+        <a href="?page=1">&laquo; first</a>
+        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+      </span>
+    </div>
   </div>
 </div>
+
+
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function () {
+
+    function getFilterKWARG() {
+      let search = $("#search_filter").val()
+      let paginate_by = $("#paginate_by").val()
+      let page = {{ page_obj.number }}
+      let ordering = ""
+
+      if ($("#product_order").hasClass('asc')) {
+        ordering += 'name,'
+      }
+      else if ($("#product_order").hasClass('desc')) {
+        ordering += '-name,'
+      }
+      if ($("#availability_order").hasClass('asc')){
+        ordering += 'available'
+      }
+      else if ($("#availability_order").hasClass('desc')) {
+        ordering += '-available'
+      }
+      return '?product_filter=' + search + '&paginate_by=' + paginate_by + '&page=' + page + '&ordering=' + ordering
+    }
+
+    $("#profile_pagination_form").on("change", function (event) {
+      $(location).attr('href', getFilterKWARG());
+    })
+
+    $("#search_filter").on("keyup", function (event) {
+      if (event.keyCode === 13) {
+        $(location).attr('href', getFilterKWARG());
+      }
+    })
+
+    $("#search_button").on("click", function (event) {
+      $(location).attr('href', getFilterKWARG());
+    })
+
+    $("#product_order").on("click", function (event) {
+      console.log("#product_order");
+      if ($("#product_order").hasClass("asc")) {
+        $("#product_order").removeClass("asc")
+        $("#product_order").addClass("desc")
+      }
+      else if ($("#product_order").hasClass("desc")) {
+        $("#product_order").removeClass("desc")
+        $("#product_order").removeClass("asc")
+      }
+      else if (!$("#product_order").hasClass("desc") && !$("#product_order").hasClass("asc")) {
+        $("#product_order").addClass("asc")
+      }
+
+      $(location).attr('href', getFilterKWARG());
+    })
+
+    $("#availability_order").on("click", function (event) {
+      $(location).attr('href', getFilterKWARG());
+    })
+});
+</script>
 {% endblock %}
