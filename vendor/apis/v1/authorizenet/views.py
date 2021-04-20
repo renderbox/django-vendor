@@ -5,13 +5,11 @@ import urllib.parse
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.db import transaction
-from django.http import HttpResponse, JsonResponse, QueryDict
+from django.http import JsonResponse
 from django.views import View
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
-from vendor.models import Receipt, Invoice, Payment
+from vendor.models import Receipt, Invoice
 from vendor.processors import PaymentProcessor
 
 payment_processor = PaymentProcessor
@@ -60,7 +58,7 @@ def renew_subscription_task(json_data):
         'account_number': transaction_detail.payment.creditCard.cardNumber.text[-4:],
         'account_type': transaction_detail.payment.creditCard.cardType.text,
         'full_name': " ".join([transaction_detail.billTo.firstName.text,transaction_detail.billTo.lastName.text]),
-        'raw': str({**json_data, **(json_data.__dict__)})}
+        'raw': str(json_data)}
     
 
     invoice = Invoice(status=Invoice.InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
