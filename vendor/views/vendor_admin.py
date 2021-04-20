@@ -1,7 +1,7 @@
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import View
 from django.views.generic.detail import DetailView
@@ -253,8 +253,7 @@ class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        payment = Payment.objects.get(
-            transaction=context['object'].transaction)
+        payment = Payment.objects.get(transaction=context['object'].transaction)
 
         context['payment'] = payment
         context['payment_form'] = CreditCardForm(
@@ -331,3 +330,20 @@ class AddOfferToProfileView(LoginRequiredMixin, View):
 
         messages.info(request, _("Offer Added To Customer Profile"))
         return redirect(reverse('vendor_admin:manager-profile', kwargs={'uuid': customer_profile.uuid}))
+
+
+class ProductAvailabilityToggleView(LoginRequiredMixin, View):
+    success_url = reverse_lazy('vendor_admin:manager-product-list')
+
+    def post(self, request, *args, **kwargs):
+        product = get_object_or_404(Product, uuid=self.kwargs.get('uuid'))
+
+        product.available = request.POST.get('available', False)
+        product.save()
+
+        for offer in Offer.objects.filter(products__in=[product]):
+            offer.available = product.available
+            offer.save()
+
+        messages.info(request, _("Product availability Changed"))
+        return redirect(request.META.get('HTTP_REFERER', self.success_url))

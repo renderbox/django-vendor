@@ -1,14 +1,14 @@
+from core.models import Product
+
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.test import TestCase, Client
 from django.urls import reverse
-from iso4217 import Currency
 
 from vendor.models import generate_sku, validate_msrp_format, validate_msrp
-
-from core.models import Product
+from vendor.models import Offer
 
 User = get_user_model()
 
@@ -195,6 +195,40 @@ class ViewsProductTests(TestCase):
         self.assertEquals(response.status_code, 302)
         self.assertIn('login', response.url)
     
+    def test_product_availability_toggle_activate(self):
+        uri = reverse('vendor_admin:manager-product-availablility', kwargs={'uuid': self.product.uuid})
+
+        self.product.available = False
+        self.product.save()
+
+        for offer in Offer.objects.filter(products__in=[self.product]):
+            offer.available = False
+            offer.save()
+
+        response = self.client.post(uri, data={'available': True})
+        self.product.refresh_from_db()
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(self.product.available)
+        self.assertTrue(all((offer.available for offer in Offer.objects.filter(products__in=[self.product]))))
+    
+    def test_product_availability_toggle_inactivate(self):
+        uri = reverse('vendor_admin:manager-product-availablility', kwargs={'uuid': self.product.uuid})
+
+        self.product.available = True
+        self.product.save()
+
+        for offer in Offer.objects.filter(products__in=[self.product]):
+            offer.available = True
+            offer.save()
+
+        response = self.client.post(uri, data={'available': False})
+        self.product.refresh_from_db()
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(self.product.available)
+        self.assertFalse(all((offer.available for offer in Offer.objects.filter(products__in=[self.product]))))
+
 
     # def test_view_uplaod_csv_product(self):
     #     raise NotImplementedError()
