@@ -1,21 +1,16 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.sites.shortcuts import get_current_site
-from django.urls import reverse, reverse_lazy
-from django.conf import settings
+from django.urls import reverse_lazy
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ObjectDoesNotExist
-from django.template import RequestContext
 
-from django.views.generic.edit import DeleteView, UpdateView
+from django.views.generic.edit import UpdateView
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView, View, FormView
 
-from iso4217 import Currency
-
-from vendor.models import Offer, Invoice, Payment, Address, CustomerProfile, OrderItem, Receipt
+from vendor.models import Offer, Invoice, Address, OrderItem, Receipt
 from vendor.models.choice import TermType, PurchaseStatus
 from vendor.processors import PaymentProcessor
 from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm, AddressForm
@@ -25,8 +20,8 @@ from vendor.utils import get_site_from_request
 # The Payment Processor configured in settings.py
 payment_processor = PaymentProcessor
 
-# TODO: Need to remove the login required
 
+# TODO: Need to remove the login required
 def get_purchase_invoice(user, site):
     """
     Return an invoice that is in checkout or cart state or a newly create invoice in cart state.
@@ -34,11 +29,13 @@ def get_purchase_invoice(user, site):
     profile, created = user.customer_profile.get_or_create(site=site)
     return profile.get_cart_or_checkout_cart()
 
+
 def clear_session_purchase_data(request):
     if 'billing_address_form' in request.session:
         del(request.session['billing_address_form'])
     if 'credit_card_form' in request.session:
         del(request.session['credit_card_form'])
+
 
 def get_or_create_session_cart(session):
     session_cart = {}
@@ -47,12 +44,14 @@ def get_or_create_session_cart(session):
     session_cart = session.get('session_cart')
 
     return session_cart
-    
+
+
 def check_offer_items_or_redirect(invoice, request):
-    
+
     if invoice.order_items.count() < 1:
         messages.info(request, _("Please add to your cart"))
         redirect('vendor:cart')
+
 
 class CartView(TemplateView):
     '''
@@ -441,7 +440,7 @@ class RenewSubscription(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         pass
-        
+
 
 class ShippingAddressUpdateView(LoginRequiredMixin, UpdateView):
     model = Address
@@ -453,4 +452,3 @@ class ShippingAddressUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         messages.info(self.request, _("Shipping Address Updated"))
         return self.request.META.get('HTTP_REFERER', self.success_url)
-    
