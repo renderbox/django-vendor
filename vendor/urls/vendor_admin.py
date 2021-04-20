@@ -21,6 +21,7 @@ urlpatterns = [
     path('profile/<uuid:uuid>', admin_views.AdminProfileDetailView.as_view(), name="manager-profile"),
     path('profile/<uuid:uuid_profile>/offer/<uuid:uuid_offer>/add', admin_views.AddOfferToProfileView.as_view(), name="manager-profile-add-offer"),
     path('product/<uuid:uuid>/remove', admin_views.VoidProductView.as_view(), name="manager-profile-remove-product"),
+    path('product/<uuid:uuid>/availability', admin_views.ProductAvailabilityToggleView.as_view(), name="manager-product-availablility"),
 
     # reports
     path('reports/receipts/download/', report_views.ReceiptListCSV.as_view(), name="manager-receipt-download"),
