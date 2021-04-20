@@ -210,7 +210,7 @@ class ViewsProductTests(TestCase):
         
         self.assertEqual(response.status_code, 302)
         self.assertTrue(self.product.available)
-        self.assertTrue(next((offer.available for offer in Offer.objects.filter(products__in=[self.product]) if offer.available), False))
+        self.assertTrue(all((offer.available for offer in Offer.objects.filter(products__in=[self.product]))))
     
     def test_product_availability_toggle_inactivate(self):
         uri = reverse('vendor_admin:manager-product-availablility', kwargs={'uuid': self.product.uuid})
@@ -227,7 +227,7 @@ class ViewsProductTests(TestCase):
         
         self.assertEqual(response.status_code, 302)
         self.assertFalse(self.product.available)
-        self.assertFalse(next((offer.available for offer in Offer.objects.filter(products__in=[self.product]) if not offer.available), True))
+        self.assertFalse(all((offer.available for offer in Offer.objects.filter(products__in=[self.product]))))
 
 
     # def test_view_uplaod_csv_product(self):
