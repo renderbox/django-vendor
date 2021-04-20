@@ -253,8 +253,7 @@ class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        payment = Payment.objects.get(
-            transaction=context['object'].transaction)
+        payment = Payment.objects.get(transaction=context['object'].transaction)
 
         context['payment'] = payment
         context['payment_form'] = CreditCardForm(
@@ -334,16 +333,17 @@ class AddOfferToProfileView(LoginRequiredMixin, View):
 
 
 class ProductAvailabilityToggleView(LoginRequiredMixin, View):
+    success_url = reverse_lazy('vendor_admin:manager-product-list')
 
     def post(self, request, *args, **kwargs):
         product = get_object_or_404(Product, uuid=self.kwargs.get('uuid'))
 
-        product.available = bool(self.kwargs.get('available', False))
+        product.available = request.POST.get('available', False)
         product.save()
 
-        for offer in Offer.objects.filter(product=product):
+        for offer in Offer.objects.filter(products__in=[product]):
             offer.available = product.available
             offer.save()
 
-        messages.info(request, _("Product Availibility Changed"))
+        messages.info(request, _("Product availability Changed"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
