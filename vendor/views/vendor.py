@@ -10,11 +10,12 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 
 
+from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm, AddressForm
 from vendor.models import Offer, Invoice, Address, OrderItem, Receipt
 from vendor.models.choice import TermType, PurchaseStatus
 from vendor.processors import PaymentProcessor
-from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm, AddressForm
 from vendor.utils import get_site_from_request
+from vendor.views.mixin import PassRequestToFormKwargsMixin
 # from vendor.models.address import Address as GoogleAddress
 
 # The Payment Processor configured in settings.py
@@ -171,7 +172,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         invoice.status = Invoice.InvoiceStatus.CHECKOUT
         invoice.save()
 
-        existing_account_address = Address.objects.filter(profile__user=request.user, site=get_site_from_request(request))
+        existing_account_address = Address.objects.filter(profile__user=request.user, profile__site=get_site_from_request(request))
 
         if existing_account_address:
             # TODO: In future the user will be able to select from multiple saved address
