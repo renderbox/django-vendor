@@ -1,14 +1,14 @@
-from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
+from django.shortcuts import render, redirect, Http404
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext as _
-from django.core.exceptions import ObjectDoesNotExist
-
-from django.views.generic.edit import UpdateView
-from django.views.generic.list import ListView
-from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView, View, FormView
+from django.views.generic.edit import UpdateView
+from django.views.generic.detail import DetailView
+from django.views.generic.list import ListView
+
 
 from vendor.models import Offer, Invoice, Address, OrderItem, Receipt
 from vendor.models.choice import TermType, PurchaseStatus
@@ -171,7 +171,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         invoice.status = Invoice.InvoiceStatus.CHECKOUT
         invoice.save()
 
-        existing_account_address = Address.objects.filter(profile__user=request.user)
+        existing_account_address = Address.objects.filter(profile__user=request.user, site=get_site_from_request(request))
 
         if existing_account_address:
             # TODO: In future the user will be able to select from multiple saved address
@@ -368,7 +368,7 @@ class SubscriptionsListView(LoginRequiredMixin, ListView):
         try:
             receipts = self.request.user.customer_profile.get(site=get_site_from_request(self.request)).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
         except ObjectDoesNotExist:
-            raise Http_404(_("Not Found"))
+            raise Http404(_("Not Found"))
         subscriptions = [ receipt for receipt in receipts.all() if receipt.order_item.offer.terms > TermType.PERPETUAL and receipt.order_item.offer.terms < TermType.ONE_TIME_USE ]
         return subscriptions
 
