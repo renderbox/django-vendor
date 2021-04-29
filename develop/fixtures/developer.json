@@ -137,7 +137,7 @@
         "tax": 0.0,
         "shipping": 0.0,
         "total": 309.97,
-        "currency": "jpy",
+        "currency": "usd",
         "shipping_address": null
     }
 },
