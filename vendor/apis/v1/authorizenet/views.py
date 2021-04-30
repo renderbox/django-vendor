@@ -48,7 +48,6 @@ def renew_subscription_task(json_data):
     processor = payment_processor(dummy_invoice)
     transaction_detail = processor.get_transaction_detail(transaction_id)
 
-
     if not hasattr(transaction_detail, 'subscription'):
         return JsonResponse({})
 
@@ -57,9 +56,9 @@ def renew_subscription_task(json_data):
     payment_info = {
         'account_number': transaction_detail.payment.creditCard.cardNumber.text[-4:],
         'account_type': transaction_detail.payment.creditCard.cardType.text,
-        'full_name': " ".join([transaction_detail.billTo.firstName.text,transaction_detail.billTo.lastName.text]),
-        'raw': str(json_data)}
-    
+        'full_name': " ".join([transaction_detail.billTo.firstName.text, transaction_detail.billTo.lastName.text]),
+        'raw': str(json_data)
+    }
 
     invoice = Invoice(status=Invoice.InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
     invoice.profile = past_receipt.profile
