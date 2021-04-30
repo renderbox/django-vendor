@@ -1,14 +1,11 @@
 import uuid
 
-from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 from django.utils import timezone, dateformat
 
-from .base import CreateUpdateModelBase
-
-from vendor.config import VENDOR_PRODUCT_MODEL
+from vendor.models.base import CreateUpdateModelBase
 from vendor.models.choice import PurchaseStatus
 
 
