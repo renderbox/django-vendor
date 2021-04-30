@@ -11,6 +11,8 @@ from vendor.views.mixin import ProductRequiredMixin
 from vendor.utils import get_site_from_request
 from vendor.forms import CreditCardForm
 from vendor.models.choice import PurchaseStatus, TermType, PaymentTypes
+
+
 class VendorIndexView(ListView):
     template_name = "core/index.html"
     model = Offer

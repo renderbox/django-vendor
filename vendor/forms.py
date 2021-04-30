@@ -57,13 +57,12 @@ class ProductForm(forms.ModelForm):
 
 
 class OfferForm(forms.ModelForm):
-    products = forms.ModelMultipleChoiceField(label=_(
-        "Available Products:"), required=True, queryset=Product.objects.filter(site=settings.SITE_ID, available=True))
+    products = forms.ModelMultipleChoiceField(label=_("Available Products:"), required=True, queryset=Product.objects.filter(site=settings.SITE_ID, available=True))
 
     class Meta:
         model = Offer
         fields = ['name', 'start_date', 'end_date', 'terms', 'term_details',
-                  'term_start_date', 'available', 'offer_description', 'allow_multiple']
+                         'term_start_date', 'available', 'offer_description', 'allow_multiple']
 
     def __init__(self, *args, **kwargs):
         request = kwargs.pop('request')
