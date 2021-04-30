@@ -13,8 +13,6 @@ from .invoice import Invoice
 from .utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
 
-from vendor.config import DEFAULT_CURRENCY
-
 from vendor.models.base import get_product_model
 
 #####################
@@ -130,6 +128,12 @@ class CustomerProfile(CreateUpdateModelBase):
 
     def get_completed_receipts(self):
         return self.receipts.filter(status__gte=PurchaseStatus.COMPLETE)
-    
+
     def get_active_offer_receipts(self, offer):
         return self.receipts.filter(Q(order_item__offer=offer), Q(end_date__gte=timezone.now()) | Q(end_date=None))
+
+    def get_active_reciepts(self):
+        return self.receipts.filter(Q(end_date__gte=timezone.now()) | Q(end_date=None))
+
+    def get_inactive_receipts(self):
+        return self.receipts.filter(end_date__lt=timezone.now())
