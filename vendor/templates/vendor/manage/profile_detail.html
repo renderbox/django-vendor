@@ -80,11 +80,11 @@
       </div>
     </div>
   </div>
-  <div class='col-6'>
+  <div class='col-4'>
     <div class='card'>
       <div class='card-header'>
         <div class='d-flex flex-row justify-content-between'>
-          {% trans 'Products Owned' %}
+          {% trans 'Ative Products Owned' %}
         </div>
       </div>
       <div class='card-body'>
@@ -96,9 +96,12 @@
             </tr>
           </thead>
           <tbody>
-            {% for receipt in object.receipts.all %}
+            {% for receipt in object.get_active_reciepts %}
             <tr>
-              <th>{{ receipt.products.first.name }}</th>
+              <th>
+                {{ receipt.products.first.name }}
+                <p><small>{{receipt.start_date|date:"Y-m-d"}} to {{receipt.end_date|default_if_none:"inf"|date:"Y-m-d"}}</small></p>
+              </th>
               <th>
                 <form class="align-itmes-center" method="post"
                   action="{% url 'vendor_admin:manager-profile-remove-product' receipt.uuid %}">
@@ -115,7 +118,45 @@
       </div>
     </div>
   </div>
-  <div class="col-6">
+  <div class='col-4'>
+    <div class='card'>
+      <div class='card-header'>
+        <div class='d-flex flex-row justify-content-between'>
+          {% trans 'Inative Products Owned' %}
+        </div>
+      </div>
+      <div class='card-body'>
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="border-top-0">{% trans 'Product' %}</th>
+              <th class="border-top-0">{% trans 'Actions' %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for receipt in object.get_inactive_receipts %}
+            <tr>
+              <th>
+                {{ receipt.products.first.name }}
+                <p>{{receipt.start_date|date:"Y-m-d"}} to {{receipt.end_date|date:"Y-m-d"}}</p>
+              </th>
+              <th>
+                <form class="align-itmes-center" method="post"
+                  action="{% url 'vendor_admin:manager-product-renew' receipt.uuid %}">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-danger" type="submit">
+                    {% trans 'Renew' %}
+                  </button>
+                </form>
+              </th>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-4">
     <div class='card'>
       <div class='card-header'>
         {% trans 'Assign Free Offers To Profile' %}
@@ -130,6 +171,7 @@
         </thead>
         <tbody>
           {% for offer in free_offers %}
+          <tr>
             <th>{{ offer }}</th>
             <th>
               <form action="{% url 'vendor_admin:manager-profile-add-offer' object.uuid offer.uuid %}">
@@ -139,6 +181,7 @@
                 </button>
               </form>
             </th>
+          </tr>
           {% endfor %}
         </tbody>
         </table>

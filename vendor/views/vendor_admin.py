@@ -289,11 +289,6 @@ class AdminProfileDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
 
         context['free_offers'] = Offer.objects.filter(prices__cost=0)
-        context['receipts'] = self.object.receipts.filter(products__in=Product.objects.filter(site=get_site_from_request(self.request)),
-                                                          order_item__offer__terms__gte=TermType.PERPETUAL)
-        context['subscriptions'] = self.object.receipts.filter(products__in=Product.objects.filter(
-                                                               site=get_site_from_request(self.request)),
-                                                               order_item__offer__terms__lt=TermType.PERPETUAL)
 
         return context
 
@@ -346,4 +341,29 @@ class ProductAvailabilityToggleView(LoginRequiredMixin, View):
             offer.save()
 
         messages.info(request, _("Product availability Changed"))
+        return redirect(request.META.get('HTTP_REFERER', self.success_url))
+
+
+class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
+    success_url = reverse_lazy('vendor_admin:manage-profiles')
+    model = Receipt
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
+    
+    def post(self, request, *args, **kwargs):
+        past_receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
+
+        payment_info = {
+            'msg': 'renewed manually' 
+        }
+
+        invoice = Invoice(status=Invoice.InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
+        invoice.profile = past_receipt.profile
+        invoice.save()
+        invoice.add_offer(past_receipt.order_item.offer)
+
+        processor = PaymentProcessor(invoice)
+        processor.renew_subscription(past_receipt, payment_info)
+            
+        messages.info(request, _("Subscription Renewed"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
