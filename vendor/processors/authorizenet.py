@@ -20,11 +20,12 @@ except ModuleNotFoundError:
     pass
 
 from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models.choice import TransactionTypes, PaymentTypes, TermType, PurchaseStatus
+from vendor.models.choice import TransactionTypes, PaymentTypes, TermType
 from vendor.models.invoice import Invoice
 from vendor.models.address import Country
 from vendor.models.payment import Payment
 from .base import PaymentProcessorBase
+
 
 class AuthorizeNetProcessor(PaymentProcessorBase):
     """
@@ -209,7 +210,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         billing_address.firstName = " ".join(self.payment_info.data.get('full_name', "").split(" ")[:-1])[:50]
         billing_address.lastName = (self.payment_info.data.get('full_name', "").split(" ")[-1])[:50]
         billing_address.company = self.billing_address.data.get('company', "")[:50]
-        billing_address.address = ", ".join([self.billing_address.data.get('address_1',""), str(self.billing_address.data.get('address_2', ""))])[:60]
+        address_lines = self.billing_address.data.get('address_1', "")
+        if self.billing_address.data['address_2']:
+            address_lines += f", {self.billing_address.data['address_2']}"
+        billing_address.address = address_lines
         billing_address.city = self.billing_address.data.get("locality", "")[:40]
         billing_address.state = self.billing_address.data.get("state", "")[:40]
         billing_address.zip = self.billing_address.data.get("postal_code")[:20]
