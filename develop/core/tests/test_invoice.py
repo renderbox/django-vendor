@@ -1,13 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
-from django.test import TestCase, Client, override_settings
+from django.test import TestCase, Client
 from django.urls import reverse
-from django.conf import settings
 
-from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerProfile, Payment
+from vendor.models import Offer, Invoice, OrderItem, CustomerProfile, Payment
 from vendor.forms import BillingAddressForm, CreditCardForm
 
 User = get_user_model()
+
 
 class ModelInvoiceTests(TestCase):
 
@@ -133,7 +133,23 @@ class ModelInvoiceTests(TestCase):
         self.assertNotEqual(0, self.existing_invoice.order_items.count())
         self.existing_invoice.empty_cart()
         self.assertEqual(0, self.existing_invoice.order_items.count())
-    
+
+    def test_swap_offers_success(self):
+        hulk_offer = Offer.objects.get(pk=4)
+        free_hulk_offer = Offer.objects.get(pk=5)
+        self.new_invoice.add_offer(hulk_offer)
+        self.new_invoice.swap_offer(hulk_offer, free_hulk_offer)
+        self.assertFalse(self.new_invoice.order_items.filter(offer=hulk_offer).exists())
+        self.assertTrue(self.new_invoice.order_items.filter(offer=free_hulk_offer).exists())
+
+    def test_swap_offers_fail_no_matching_products(self):
+        hulk_offer = Offer.objects.get(pk=4)
+        cheese_offer = Offer.objects.get(pk=2)
+        self.new_invoice.add_offer(hulk_offer)
+        self.new_invoice.swap_offer(hulk_offer, cheese_offer)
+        self.assertFalse(self.new_invoice.order_items.filter(offer=cheese_offer).exists())
+        self.assertTrue(self.new_invoice.order_items.filter(offer=hulk_offer).exists())
+
 
 class CartViewTests(TestCase):
 
