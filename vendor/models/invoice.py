@@ -67,13 +67,13 @@ class Invoice(CreateUpdateModelBase):
     def __str__(self):
         if not self.profile.user:   # Can this ever even happen?
             return "New Invoice"
-        return str(self.profile.user.username) + " Invoice (" + self.created.strftime('%Y-%m-%d %H:%M') + ")"
+        return f"{self.profile.user.username} - {self.uuid}"
 
     def get_invoice_display(self):
         return _(f"{self.profile.user.username} Invoice ({self.created:%Y-%m-%d %H:%M})")
 
     def add_offer(self, offer, quantity=1):
-        
+
         order_item, created = self.order_items.get_or_create(offer=offer)
         # make sure the invoice pk is also in the OriderItem
         if not created and order_item.offer.allow_multiple:

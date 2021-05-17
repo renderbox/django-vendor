@@ -55,7 +55,7 @@ class CustomerProfileAdmin(admin.ModelAdmin):
 
 
 class InvoiceAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid',)
+    readonly_fields = ('uuid', 'profile', 'shipping_address')
     list_display = ('__str__', 'profile', 'site', 'status', 'created')
     inlines = [
         OrderItemInline,
@@ -64,15 +64,18 @@ class InvoiceAdmin(admin.ModelAdmin):
 
 class OfferAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid',)
-    list_display = ('name', 'site')
+    list_display = ('name', 'slug', 'site', 'terms', 'available')
+    search_fields = ('name', 'site', )
     inlines = [
         PriceInline,
     ]
 
 
 class PaymentAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid',)
-    list_display = ('__str__', 'transaction', 'invoice', 'profile', 'amount')
+    readonly_fields = ('uuid', 'invoice', 'created', 'transaction', 'amount', 'profile', )
+    list_display = ('transaction', 'created', 'invoice', 'profile', 'amount')
+    search_fields = ('transaction', 'profile__user__username', )
+    exclude = ('billing_address', )
 
 
 class ReceiptAdmin(admin.ModelAdmin):
