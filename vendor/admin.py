@@ -1,18 +1,12 @@
-from django import forms
-from django.apps import apps
-from django.conf import settings
 from django.contrib import admin
 
 from vendor.models import TaxClassifier, Offer, Price, CustomerProfile, \
     Invoice, OrderItem, Receipt, Wishlist, WishlistItem, Address, Payment
 
-from vendor.config import VENDOR_PRODUCT_MODEL
 
 ###############
 # INLINES
 ###############
-
-
 class InvoiceInline(admin.TabularInline):
     model = Invoice
     extra = 1
@@ -42,11 +36,10 @@ class WishlistItemInline(admin.TabularInline):
     model = WishlistItem
     extra = 1
 
+
 ###############
 # MODEL ADMINS
 ###############
-
-
 class AddressAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid',)
     list_display = ('name', 'profile', 'postal_code')
@@ -83,8 +76,10 @@ class PaymentAdmin(admin.ModelAdmin):
 
 
 class ReceiptAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid',)
-    list_display = ('__str__', 'transaction', 'profile', 'order_item', 'status')
+    readonly_fields = ('uuid', 'profile', 'order_item', 'created')
+    exclude = ('updated', )
+    list_display = ('transaction', 'created', 'profile', 'order_item', 'status', )
+    search_fields = ('transaction', 'profile__user__username', )
 
 
 class TaxClassifierAdmin(admin.ModelAdmin):

@@ -40,7 +40,7 @@ class CustomerProfile(CreateUpdateModelBase):
     def __str__(self):
         if not self.user:
             return "New Customer Profile"
-        return "{username} Customer Profile".format(username=self.user.username)
+        return f"{self.user.username} - {self.site}"
 
     def get_customer_profile_display(self):
         return str(self.user.username) + _("Customer Profile")

@@ -202,7 +202,7 @@ class OrderItem(CreateUpdateModelBase):
         verbose_name_plural = "Order Items"
 
     def __str__(self):
-        return "%s - %s" % (self.invoice.profile.user.username, self.offer.name)
+        return f"{self.offer} - {self.invoice.uuid}"
 
     @property
     def total(self):

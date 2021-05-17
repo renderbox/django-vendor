@@ -33,7 +33,7 @@ class Receipt(CreateUpdateModelBase):
         verbose_name_plural = "Receipts"
 
     def __str__(self):
-        return "%s - %s - %s" % (self.profile.user.username, self.order_item.offer.name, self.created.strftime('%Y-%m-%d %H:%M'))
+        return f"{self.profile.user.username} - {self.order_item.offer.name}"
 
     def get_absolute_url(self):
         return reverse('vendor:customer-receipt', kwargs={'uuid': self.uuid})
