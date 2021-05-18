@@ -1,18 +1,12 @@
-from django import forms
-from django.apps import apps
-from django.conf import settings
 from django.contrib import admin
 
 from vendor.models import TaxClassifier, Offer, Price, CustomerProfile, \
     Invoice, OrderItem, Receipt, Wishlist, WishlistItem, Address, Payment
 
-from vendor.config import VENDOR_PRODUCT_MODEL
 
 ###############
 # INLINES
 ###############
-
-
 class InvoiceInline(admin.TabularInline):
     model = Invoice
     extra = 1
@@ -42,11 +36,10 @@ class WishlistItemInline(admin.TabularInline):
     model = WishlistItem
     extra = 1
 
+
 ###############
 # MODEL ADMINS
 ###############
-
-
 class AddressAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid',)
     list_display = ('name', 'profile', 'postal_code')
@@ -62,7 +55,7 @@ class CustomerProfileAdmin(admin.ModelAdmin):
 
 
 class InvoiceAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid',)
+    readonly_fields = ('uuid', 'profile', 'shipping_address')
     list_display = ('__str__', 'profile', 'site', 'status', 'created')
     inlines = [
         OrderItemInline,
@@ -71,20 +64,25 @@ class InvoiceAdmin(admin.ModelAdmin):
 
 class OfferAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid',)
-    list_display = ('name', 'site')
+    list_display = ('name', 'slug', 'site', 'terms', 'available')
+    search_fields = ('name', 'site', )
     inlines = [
         PriceInline,
     ]
 
 
 class PaymentAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid',)
-    list_display = ('__str__', 'transaction', 'invoice', 'profile', 'amount')
+    readonly_fields = ('uuid', 'invoice', 'created', 'transaction', 'amount', 'profile', )
+    list_display = ('transaction', 'created', 'invoice', 'profile', 'amount')
+    search_fields = ('transaction', 'profile__user__username', )
+    exclude = ('billing_address', )
 
 
 class ReceiptAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid',)
-    list_display = ('__str__', 'transaction', 'profile', 'order_item', 'status')
+    readonly_fields = ('uuid', 'profile', 'order_item', 'created')
+    exclude = ('updated', )
+    list_display = ('transaction', 'created', 'profile', 'order_item', 'status', )
+    search_fields = ('transaction', 'profile__user__username', )
 
 
 class TaxClassifierAdmin(admin.ModelAdmin):

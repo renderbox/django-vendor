@@ -6,27 +6,26 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY, AVAILABLE_CURRENCIES
+from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
 
 from .validator import validate_msrp
-from .utils import set_default_site_id, is_currency_available
+from .utils import is_currency_available
 
 
 def get_product_model():
     return apps.get_model(VENDOR_PRODUCT_MODEL)
 
+
 ##################
 # DEFAULTS
 ##################
-
 # TODO: Nice to have class MSRP(NestedModels)
-
 def product_meta_default():
-    return {'msrp':{'default':DEFAULT_CURRENCY, DEFAULT_CURRENCY: 0.00}}
+    return {'msrp': {'default': DEFAULT_CURRENCY, DEFAULT_CURRENCY: 0.00}}
+
 
 def product_description_default():
     return {
@@ -80,7 +79,7 @@ class ProductModelBase(CreateUpdateModelBase):
             return self.meta['msrp'][currency]
         else:
             return self.meta['msrp'][self.meta['msrp']['default']]
-            
+
     def add_to_cart_url(self):
         """
         Link to add the item to the user's cart.
@@ -96,4 +95,3 @@ class ProductModelBase(CreateUpdateModelBase):
             return currency
         else:
             return self.meta['msrp']['default']
-

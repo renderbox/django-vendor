@@ -280,7 +280,7 @@ class AdminProfileDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['free_offers'] = Offer.objects.filter(prices__cost=0)
+        context['free_offers'] = Offer.objects.filter(prices__cost=0, site=self.object.site)
 
         return context
 

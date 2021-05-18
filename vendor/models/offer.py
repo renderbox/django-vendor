@@ -2,29 +2,28 @@ import uuid
 
 from autoslug import AutoSlugField
 from decimal import Decimal, ROUND_UP
-from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
-from django.core.exceptions import FieldError
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
-from iso4217 import Currency
 
-from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
+from vendor.config import DEFAULT_CURRENCY
 
 from .base import CreateUpdateModelBase
 from .choice import TermType, TermDetailUnits
 from .utils import set_default_site_id, is_currency_available
+
+
 #########
 # OFFER
 #########
 def offer_term_details_default():
     """
     Sets the default term values as a monthly subscription for a 
-    period of 12 months, with 0 trail months 
+    period of 12 months, with 0 trail months
     """
     return { 
         'period_length': 1,
@@ -41,6 +40,7 @@ class ActiveManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(available=True)
 
+
 class ActiveCurrentSiteManager(CurrentSiteManager):
     """
     This Model Manager return offers per site that are available
@@ -51,8 +51,8 @@ class ActiveCurrentSiteManager(CurrentSiteManager):
 
 class Offer(CreateUpdateModelBase):
     '''
-    Offer attaches to a record from the designated VENDOR_PRODUCT_MODEL.  
-    This is so more than one offer can be made per product, with different 
+    Offer attaches to a record from the designated VENDOR_PRODUCT_MODEL.
+    This is so more than one offer can be made per product, with different
     priorities.  It also allows for the bundling of several products into
     a single Offer on the site.
     '''
@@ -62,7 +62,7 @@ class Offer(CreateUpdateModelBase):
     name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
     start_date = models.DateTimeField(_("Start Date"), help_text=_("What date should this offer become available?"))
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text=_("Expiration Date?"))
-    terms =  models.IntegerField(_("Terms"), default=0, choices=TermType.choices)
+    terms = models.IntegerField(_("Terms"), default=0, choices=TermType.choices)
     term_details = models.JSONField(_("Term Details"), default=offer_term_details_default, blank=True, null=True, help_text=_("term_units: 10/20(Day/Month), trial_occurrences: 1(defualt)"))
     term_start_date = models.DateTimeField(_("Term Start Date"), help_text=_("When is this product available to use?"), blank=True, null=True) # Useful for Event Tickets or Pre-Orders
     available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))
@@ -102,18 +102,18 @@ class Offer(CreateUpdateModelBase):
                                     Q(currency=currency)).order_by('-priority').first()            # first()/last() returns the model object or None
 
         if price is None:
-            return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
+            return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price".
         elif price.cost is None:
-            return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price". 
+            return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price".
 
         return price.cost
 
     def add_to_cart_link(self):
-        return reverse("vendor:add-to-cart", kwargs={"slug":self.slug})
+        return reverse("vendor:add-to-cart", kwargs={"slug": self.slug})
 
     def remove_from_cart_link(self):
-        return reverse("vendor:remove-from-cart", kwargs={"slug":self.slug})
-    
+        return reverse("vendor:remove-from-cart", kwargs={"slug": self.slug})
+
     def set_name_if_empty(self):
         product_names = [ product.name for product in self.products.all() ]
         if len(product_names) == 1:
@@ -127,7 +127,7 @@ class Offer(CreateUpdateModelBase):
             return self.offer_description
         else:
             return self.products.all().first().description
-    
+
     def savings(self, currency=DEFAULT_CURRENCY):
         """
         Gets the savings between the difference between the product's msrp and the currenct price
@@ -147,4 +147,3 @@ class Offer(CreateUpdateModelBase):
             return currency
 
         return DEFAULT_CURRENCY
-
