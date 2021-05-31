@@ -103,7 +103,12 @@ class AddToCartView(View):
         return session_cart
 
     def post(self, request, *args, **kwargs):
-        offer = Offer.objects.get(site=get_site_from_request(request), slug=self.kwargs["slug"])
+        try:
+            offer = Offer.objects.get(site=get_site_from_request(request), slug=self.kwargs["slug"])
+        except ObjectDoesNotExist:
+            messages.error(_("Offer those not exist"))
+            return redirect('vendor:cart')
+
         if request.user.is_anonymous:
             request.session['session_cart'] = self.session_cart(request, offer)
         else:
