@@ -1,19 +1,14 @@
-from core.models import Product
 from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.sites.models import Site
-from django.http import HttpRequest, QueryDict
 from django.utils import timezone
 from django.urls import reverse
 from django.test import TestCase, Client
 from unittest import skipIf
 from random import randrange, choice
-from string import ascii_letters
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem
-from vendor.models.address import Country
-from vendor.models.choice import TermType, PurchaseStatus
+from vendor.models.choice import PurchaseStatus
 from vendor.processors.base import PaymentProcessorBase
 from vendor.processors.authorizenet import AuthorizeNetProcessor
 from vendor.processors import PaymentProcessor
@@ -34,10 +29,10 @@ class BaseProcessorTests(TestCase):
         self.base_processor = PaymentProcessorBase(self.existing_invoice)
         self.subscription_offer = Offer.objects.get(pk=4)
         self.form_data = { 
-            'billing_address_form': 
-                {'name':'Home','company':'Whitemoon Dreams','country':'840','address_1':'221B Baker Street','address_2':'','locality':'Marylebone','state':'California','postal_code':'90292'}, 
-            'credit_card_form': 
-                {'full_name':'Bob Ross','card_number':'5424000000000015','expire_month':'12','expire_year':'2030','cvv_number':'900','payment_type':'10'}
+            'billing_address_form':
+                {'name': 'Home', 'company': 'Whitemoon Dreams', 'country': '840', 'address_1': '221B Baker Street', 'address_2': '', 'locality': 'Marylebone', 'state': 'California', 'postal_code': '90292'},
+            'credit_card_form':
+                {'full_name': 'Bob Ross', 'card_number': '5424000000000015', 'expire_month': '12', 'expire_year': '2030', 'cvv_number': '900', 'payment_type': '10'}
             }
 
     def test_base_processor_init_fail(self):
