@@ -36,7 +36,7 @@ class Invoice(CreateUpdateModelBase):
         REFUNDED = 60, _("Refunded")      # Invoice Refunded to client.
 
     uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
-    profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")     # TODO: [GK-3029] remove null=True.  This should not be allowed.
+    profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Customer Profile"), on_delete=models.CASCADE, related_name="invoices")
     site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="invoices")                      # For multi-site support
     status = models.IntegerField(_("Status"), choices=InvoiceStatus.choices, default=InvoiceStatus.CART)
     customer_notes = models.JSONField(_("Customer Notes"), default=dict, blank=True, null=True)
@@ -70,6 +70,8 @@ class Invoice(CreateUpdateModelBase):
         return f"{self.profile.user.username} - {self.uuid}"
 
     def get_invoice_display(self):
+        if self.profile.user.username is None:
+            return _(f"Invoice ({self.created:%Y-%m-%d %H:%M})")
         return _(f"{self.profile.user.username} Invoice ({self.created:%Y-%m-%d %H:%M})")
 
     def add_offer(self, offer, quantity=1):
