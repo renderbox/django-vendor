@@ -43,9 +43,9 @@ class StripeProcessor(PaymentProcessorBase):
             # Use Stripe's library to make requests...
             # All necessary chage information should come from the invoice
             charge = stripe.Charge.create(
-                amount = amount,
-                currency = self.invoice.currency,
-                source = self.transaction_token
+                amount=amount,
+                currency=self.invoice.currency,
+                source=self.transaction_token
             )
 
             payment.transaction = charge['id']
