@@ -33,7 +33,7 @@ class Receipt(CreateUpdateModelBase):
         verbose_name_plural = "Receipts"
 
     def __str__(self):
-        return "%s - %s - %s" % (self.profile.user.username, self.order_item.offer.name, self.created.strftime('%Y-%m-%d %H:%M'))
+        return f"{self.profile.user.username} - {self.order_item.offer.name}"
 
     def get_absolute_url(self):
         return reverse('vendor:customer-receipt', kwargs={'uuid': self.uuid})
@@ -43,7 +43,7 @@ class Receipt(CreateUpdateModelBase):
         Funtion to void (not cancel) a receipt by making the end_date now and disabling
         access to the customer to that given product. If the receipt is related to a
         subscription to a Payment Gateway, make sure to also cancel such subscription
-        in the given Payment Gateway. 
+        in the given Payment Gateway.
         """
         self.end_date = timezone.now()
         self.meta['voided_on'] = dateformat.format(self.end_date, 'Y-M-d H:i:s')
@@ -51,5 +51,3 @@ class Receipt(CreateUpdateModelBase):
     def cancel(self):
         self.status = PurchaseStatus.CANCELED
         self.auto_renew = False
-
-

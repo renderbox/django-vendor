@@ -107,7 +107,7 @@ class TableFilterMixin:
 
     def search_filter(self, queryset):
         """
-        Override this funtion in the ListView to filter wanted fields for the model 
+        Override this funtion in the ListView to filter wanted fields for the model
         defined in the ListView
         """
         # Override funtion in List View to filter wanted model fields
@@ -124,7 +124,7 @@ class TableFilterMixin:
         """
         Sets a ordering list that can be intrepreted by the order_by() query method.
         """
-        self.ordering = []        
+        self.ordering = []
         if self.request.GET.get('ordering', []):
             self.ordering = [order for order in self.request.GET.get('ordering', []).split(',') if order]
 

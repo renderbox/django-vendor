@@ -3,25 +3,23 @@ Base Payment processor used by all derived processors.
 """
 import django.dispatch
 
-from copy import deepcopy
 from datetime import timedelta, date
 from calendar import mdays
-from django.db.models import Sum
 from django.conf import settings
 from django.utils import timezone
 from vendor import config
-from vendor.models import Payment, Invoice, Receipt, Address
+from vendor.models import Payment, Invoice, Receipt
 from vendor.models.choice import PurchaseStatus, TermType, TermDetailUnits
 ##########
 # SIGNALS
 
 vendor_pre_authorization = django.dispatch.Signal()
-vendor_process_payment =  django.dispatch.Signal()
-vendor_post_authorization =  django.dispatch.Signal()
+vendor_process_payment = django.dispatch.Signal()
+vendor_post_authorization = django.dispatch.Signal()
+
 
 #############
 # BASE CLASS
-
 class PaymentProcessorBase(object):
     """
     Setup the core functionality for all processors.
@@ -39,7 +37,6 @@ class PaymentProcessorBase(object):
     transaction_submitted = False
     transaction_message = {}
     transaction_response = {}
-
 
     def __init__(self, invoice):
         """
@@ -64,7 +61,7 @@ class PaymentProcessorBase(object):
     def processor_setup(self):
         """
         This is for setting up any of the settings needed for the payment processing.
-        For example, here you would set the 
+        For example, here you would set the
         """
         pass
 
@@ -99,7 +96,7 @@ class PaymentProcessorBase(object):
 
     def save_payment_transaction_result(self, payment_success, transaction_id, result_info):
         """
-        Saves the result output of any transaction. 
+        Saves the result output of any transaction.
         """
         self.payment.success = payment_success
         self.payment.transaction = transaction_id
@@ -109,7 +106,7 @@ class PaymentProcessorBase(object):
     def update_invoice_status(self, new_status):
         """
         Updates the Invoice status if the transaction was submitted.
-        Otherwise it returns the invoice to the Cart. The error is saved in 
+        Otherwise it returns the invoice to the Cart. The error is saved in
         the payment for the transaction.
         """
         if self.transaction_submitted:
@@ -126,14 +123,14 @@ class PaymentProcessorBase(object):
         if self.payment.success and self.invoice.status == Invoice.InvoiceStatus.COMPLETE:
             return True
         return False
-    
+
     def get_future_date_months(self, today, add_months):
         """
         Returns a datetime object with the a new added months
         """
         newday = today.day
         newmonth = (((today.month - 1) + add_months) % 12) + 1
-        newyear  = today.year + (((today.month - 1) + add_months) // 12)
+        newyear = today.year + (((today.month - 1) + add_months) // 12)
         if newday > mdays[newmonth]:
             newday = mdays[newmonth]
         if newyear % 4 == 0 and newmonth == 2:
@@ -176,10 +173,10 @@ class PaymentProcessorBase(object):
         elif term_type == TermType.SUBSCRIPTION:
             total_months = int(order_item.offer.term_details['period_length']) * int(order_item.offer.term_details['payment_occurrences'])
         else:
-            total_months = term_type - 100    
-                                                     # Get if it is monthy, bi-monthly, quartarly of annually
+            total_months = term_type - 100
+        # Get if it is monthy, bi-monthly, quartarly of annually
         if term_type < TermType.PERPETUAL:
-            trial_offset = self.get_payment_schedule_start_date(order_item)      # If there are any trial days or months you need to offset it on the end date. 
+            trial_offset = self.get_payment_schedule_start_date(order_item)      # If there are any trial days or months you need to offset it on the end date.
             receipt.end_date = self.get_future_date_months(trial_offset, total_months)
             receipt.auto_renew = True
         return receipt
@@ -187,7 +184,7 @@ class PaymentProcessorBase(object):
     def create_order_item_receipt(self, order_item):
         """
         Creates a receipt for every product in the order item according to its,
-        offering term type. 
+        offering term type.
         """
         for product in order_item.offer.products.all():
             receipt = self.create_receipt_by_term_type(product, order_item, order_item.offer.terms)
@@ -196,7 +193,7 @@ class PaymentProcessorBase(object):
 
     def create_receipts(self, order_items):
         """
-        It then creates receipt for the order items supplied. 
+        It then creates receipt for the order items supplied.
         """
         for order_item in order_items.all():
             self.create_order_item_receipt(order_item)
@@ -227,7 +224,7 @@ class PaymentProcessorBase(object):
 
     def set_billing_address_form_data(self, form_data, form_class):
         self.billing_address = form_class(form_data)
-    
+
     def set_payment_info_form_data(self, form_data, form_class):
         self.payment_info = form_class(form_data)
 
@@ -235,9 +232,9 @@ class PaymentProcessorBase(object):
         if not (self.billing_address.is_valid() and self.payment_info.is_valid() and self.invoice and self.invoice.order_items.count()):
             return False
         return True
-    #-------------------
-    # Data for the View
 
+    # -------------------
+    # Data for the View
     def get_checkout_context(self, request=None, context={}):
         '''
         The Invoice plus any additional values to include in the payment record.
@@ -268,12 +265,11 @@ class PaymentProcessorBase(object):
         """
         pass
 
-    #-------------------
+    # -------------------
     # Process a Payment
     def authorize_payment(self):
         """
         This runs the chain of events in a transaction.
-        
         This should not be overriden.  Override one of the methods it calls if you need to.
         """
         # TODO: Should this validation be outside the call to authorize the payment the call?
@@ -301,7 +297,7 @@ class PaymentProcessorBase(object):
                 self.create_receipts(self.invoice.get_one_time_transaction_order_items())
 
         if self.invoice.get_recurring_order_items():
-            self.process_subscriptions()        
+            self.process_subscriptions()
 
         vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()
@@ -316,14 +312,14 @@ class PaymentProcessorBase(object):
 
     def process_payment(self):
         """
-        Called to handle the authorization.  
+        Called to handle the authorization.
         This is where the core of the payment processing happens.
         """
         # Gateway Transaction goes here...
-            
+
     def free_payment(self):
         """
-        Called to handle an invoice with total zero.  
+        Called to handle an invoice with total zero.
         This are the base internal steps to process a free payment.
         """
         self.payment = Payment(profile=self.invoice.profile,
@@ -339,7 +335,7 @@ class PaymentProcessorBase(object):
         self.payment.transaction = f"{self.payment.uuid}-free"
         self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
         self.payment.save()
-        
+
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 
         self.create_receipts(self.invoice.order_items.all())
@@ -362,7 +358,7 @@ class PaymentProcessorBase(object):
         """
         pass
 
-    #-------------------
+    # -------------------
     # Process a Subscription
     def process_subscriptions(self):
         """
@@ -379,7 +375,7 @@ class PaymentProcessorBase(object):
             self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
             if self.is_payment_and_invoice_complete():
                 self.create_order_item_receipt(subscription)
-        
+
     def subscription_payment(self, subscription):
         """
         Call handels the authrization and creation for a subscription.
@@ -406,9 +402,9 @@ class PaymentProcessorBase(object):
         Function to renew already paid subscriptions form the payment gateway provider.
         """
         self.payment = Payment(profile=self.invoice.profile,
-                                                          amount=self.invoice.total,
-                                                          invoice=self.invoice,
-                                                          created=timezone.now())
+                               amount=self.invoice.total,
+                               invoice=self.invoice,
+                               created=timezone.now())
         self.payment.result = payment_info
 
         self.transaction_submitted = True
@@ -416,17 +412,15 @@ class PaymentProcessorBase(object):
         self.payment.success = True
         self.payment.transaction = past_receipt.transaction
         self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
-        
+
         self.payment.save()
-        
+
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
 
         self.create_receipts(self.invoice.order_items.all())
 
-    #-------------------
+    # -------------------
     # Refund a Payment
 
     def refund_payment(self):
         pass
-
-    

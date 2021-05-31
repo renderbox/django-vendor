@@ -15,7 +15,6 @@ from vendor.models import Offer, Invoice, Address, OrderItem, Receipt
 from vendor.models.choice import TermType, PurchaseStatus
 from vendor.processors import PaymentProcessor
 from vendor.utils import get_site_from_request
-from vendor.views.mixin import PassRequestToFormKwargsMixin
 # from vendor.models.address import Address as GoogleAddress
 
 # The Payment Processor configured in settings.py
@@ -128,7 +127,7 @@ class AddToCartView(View):
 
 
 class RemoveFromCartView(View):
-    
+
     def post(self, request, *args, **kwargs):
         offer = Offer.objects.get(site=get_site_from_request(request), slug=self.kwargs["slug"])
         if request.user.is_anonymous:
@@ -164,11 +163,11 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         clear_session_purchase_data(request)
-        
+
         invoice = get_purchase_invoice(request.user, get_site_from_request(request))
         if not invoice.order_items.count():
             return redirect('vendor:cart')
-        
+
         invoice.status = Invoice.InvoiceStatus.CHECKOUT
         invoice.save()
 
@@ -179,7 +178,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
             form = AccountInformationForm(initial={'email': request.user.email}, instance=existing_account_address[0])
         else:
             form = AccountInformationForm(initial={'first_name': request.user.first_name, 'last_name': request.user.last_name, 'email': request.user.email})
-        
+
         context['form'] = form
         context['invoice'] = invoice
         return render(request, self.template_name, context)
@@ -193,7 +192,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         shipping_address = form.save(commit=False)
 
         invoice = get_purchase_invoice(request.user, get_site_from_request(request))
-        
+
         if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
@@ -233,7 +232,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user, get_site_from_request(request))
-        
+
         if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
@@ -274,21 +273,21 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
             context['billing_address_form'] = BillingAddressForm(request.session['billing_address_form'])
         if 'credit_card_form' in request.session:
             context['credit_card_form'] = CreditCardForm(request.session['credit_card_form'])
-        
+
         context = processor.get_checkout_context(context=context)
-        
+
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
-        context = super().get_context_data(**kwargs)
+        # context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user, get_site_from_request(request))
-        
+
         if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
-        
+
         processor = payment_processor(invoice)
-        
+
         processor.set_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
         processor.set_payment_info_form_data(request.session.get('credit_card_form'), CreditCardForm)
 
@@ -297,7 +296,7 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         if processor.transaction_submitted:
             return redirect('vendor:purchase-summary', uuid=invoice.uuid)
         else:
-            # TODO: Make message configurable for the site in the settings 
+            # TODO: Make message configurable for the site in the settings
             messages.info(self.request, _("The payment gateway did not authorize payment."))
             return redirect('vendor:checkout-account')
 
@@ -391,11 +390,11 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
 class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
     form_class = CreditCardForm()
     success_url = reverse_lazy('vendor:customer-subscriptions')
-    
+
     def post(self, request, *args, **kwargs):
         receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
         payment_form = CreditCardForm(request.POST)
-        
+
         if not payment_form.is_valid():
             messages.info(request, _("Invalid Card"))
             return redirect(request.META.get('HTTP_REFERER', self.success_url))
@@ -407,8 +406,8 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
         if not processor.transaction_submitted:
             messages.info(request, _(f"Payment gateway error: {processor.transaction_message.get('message', '')}"))
             return redirect(request.META.get('HTTP_REFERER', self.success_url))
-        
-        messages.info(request, _(f"Success: Payment Updated"))
+
+        messages.info(request, _("Success: Payment Updated"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
 
@@ -422,7 +421,7 @@ class AddressUpdateView(LoginRequiredMixin, FormView):
         if not address_form.is_valid():
             messages.info(request, _(f"Failed: {address_form.errors}"))
         else:
-            messages.info(request, _(f"Success: Address Updated"))
+            messages.info(request, _("Success: Address Updated"))
             update_address = address_form.save(commit=False)
             address.first_name = update_address.first_name
             address.last_name = update_address.last_name
@@ -433,7 +432,7 @@ class AddressUpdateView(LoginRequiredMixin, FormView):
             address.country = update_address.country
             address.postal_code = update_address.postal_code
             address.save()
-        
+
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
 

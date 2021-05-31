@@ -320,7 +320,7 @@
     "fields": {
         "offer": 3,
         "cost": 25.0,
-        "currency": "484",
+        "currency": "usd",
         "start_date": "2020-06-30T02:38:30Z",
         "end_date": null,
         "priority": 0

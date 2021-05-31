@@ -27,7 +27,7 @@ class CustomerProfile(CreateUpdateModelBase):
     '''
     uuid = models.UUIDField(_("UUID"), editable=False, unique=True, default=uuid.uuid4, null=False, blank=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), null=True, on_delete=models.SET_NULL, related_name="customer_profile")
-    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES,default=DEFAULT_CURRENCY)      # User's default currency
+    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY)      # User's default currency
     site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="customer_profile")                      # For multi-site support
 
     objects = models.Manager()
@@ -40,7 +40,7 @@ class CustomerProfile(CreateUpdateModelBase):
     def __str__(self):
         if not self.user:
             return "New Customer Profile"
-        return "{username} Customer Profile".format(username=self.user.username)
+        return f"{self.user.username} - {self.site}"
 
     def get_customer_profile_display(self):
         return str(self.user.username) + _("Customer Profile")
@@ -61,16 +61,16 @@ class CustomerProfile(CreateUpdateModelBase):
 
     def get_cart_or_checkout_cart(self):
         carts_status = [cart.status for cart in self.invoices.filter(status__in=[Invoice.InvoiceStatus.CHECKOUT, Invoice.InvoiceStatus.CART])]
-        
+
         if Invoice.InvoiceStatus.CHECKOUT in carts_status:
             return self.invoices.get(status=Invoice.InvoiceStatus.CHECKOUT)
         else:
             cart, created = self.invoices.get_or_create(status=Invoice.InvoiceStatus.CART)
             return cart
-    
+
     def has_invoice_in_checkout(self):
         return bool(self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT).count())
-        
+
     def filter_products(self, products):
         """
         returns the list of receipts that the user has a receipt for filtered by the products provided.
@@ -80,13 +80,13 @@ class CustomerProfile(CreateUpdateModelBase):
         # Queryset or List of model records
         if isinstance(products, QuerySet) or isinstance(products, list):
             return self.receipts.filter(Q(products__in=products),
-                                Q(start_date__lte=now) | Q(start_date=None),
-                                Q(end_date__gte=now) | Q(end_date=None))
+                                        Q(start_date__lte=now) | Q(start_date=None),
+                                        Q(end_date__gte=now) | Q(end_date=None))
 
         # Single model record
         return self.receipts.filter(Q(products=products),
-                                Q(start_date__lte=now) | Q(start_date=None),
-                                Q(end_date__gte=now) | Q(end_date=None))
+                                    Q(start_date__lte=now) | Q(start_date=None),
+                                    Q(end_date__gte=now) | Q(end_date=None))
 
     def has_product(self, products):
         """
@@ -94,7 +94,7 @@ class CustomerProfile(CreateUpdateModelBase):
         it also checks against elegibility start/end/empty dates on consumable products and subscriptions
         """
         return bool(self.filter_products(products).count())
-    
+
     def get_recurring_receipts(self):
         """
         Gets the recurring receipts the customer profile might have
@@ -121,7 +121,7 @@ class CustomerProfile(CreateUpdateModelBase):
         Get all products that the customer has purchased and returns True if it has.
         """
         return bool(self.receipts.filter(products__in=products, status__gte=PurchaseStatus.COMPLETE).first())
-    
+
     def get_customer_products(self):
         Product = get_product_model()
         return Product.objects.filter(receipts__profile=self)

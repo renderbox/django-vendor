@@ -1,23 +1,24 @@
 import csv
+
 from itertools import chain
-from django.http import StreamingHttpResponse
-from django.utils.timezone import localtime
-from django.conf import settings
+from django.contrib import messages
 from django.contrib.sites.models import Site
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.http import StreamingHttpResponse
+from django.shortcuts import redirect
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic.list import BaseListView
 from django.views.generic.edit import FormMixin
 
-from vendor.utils import get_site_from_request
-from vendor.models import Receipt, Invoice
 from vendor.forms import DateRangeForm
+from vendor.models import Receipt, Invoice
+from vendor.utils import get_site_from_request
+
 
 class Echo:
     """An object that implements just the write method of the file-like
     interface.
     """
-    
+
     def write(self, value):
         """Write the value by returning it, instead of storing in a buffer."""
         return value
@@ -27,11 +28,10 @@ class CSVStreamRowView(BaseListView):
     """A base view for displaying a list of objects."""
 
     filename = "receipt_list.csv"
-    # headers = 
 
     def get_queryset(self):
         return super().get_queryset()
-    
+
     def get_row_data(self):
         header = [["ROW_NAME", "ROW_COUNT"]]  # Has to be a list inside an iterable (another list) for the chain to work.
         rows = (["Row {}".format(idx), str(idx)] for idx in range(500))     # Dummy data to show that its working.
@@ -41,7 +41,7 @@ class CSVStreamRowView(BaseListView):
         rows = self.get_row_data()
         pseudo_buffer = Echo()
         writer = csv.writer(pseudo_buffer)
-        #TODO: Figure out what to prepend the header without breaking the streaming generator
+        # TODO: Figure out what to prepend the header without breaking the streaming generator
         response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
 
         # Set the filename
@@ -88,7 +88,7 @@ class ReceiptListCSV(FormMixin, CSVStreamRowView):
             "",                                          # TODO: Refound Amounts
             "",                                          # TODO: Refund Reason
             "",                                          # TODO: Refund Date
-            "",                                          # TODO: Refund Author Email 
+            "",                                          # TODO: Refund Author Email
             'multiple' if obj.end_date is None else f'range',                                          # TODO: Date Type
             " ".join([ '' if obj.start_date is None else f'{obj.start_date:%Y-%m-%d}', '' if obj.end_date is None else f'{obj.end_date:%Y-%m-%d}']),
             ] for obj in object_list]
@@ -100,17 +100,18 @@ class ReceiptListCSV(FormMixin, CSVStreamRowView):
         if not form.is_valid():
             messages.info(self.request, ",".join([error for error in form.errors]))
             return redirect(request.META.get('HTTP_REFERER', self.success_url))
-        
+
         rows = self.get_row_data()
         pseudo_buffer = Echo()
         writer = csv.writer(pseudo_buffer)
-        #TODO: Figure out what to prepend the header without breaking the streaming generator
+        # TODO: Figure out what to prepend the header without breaking the streaming generator
         response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
 
         # Set the filename
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(self.filename)
         return response
-        
+
+
 class InvoiceListCSV(CSVStreamRowView):
     filename = "invoices.csv"
     model = Invoice
@@ -120,7 +121,7 @@ class InvoiceListCSV(CSVStreamRowView):
         if hasattr(self.request, 'site'):
             return self.model.objects.filter(site=get_site_from_request(self.request))
         return self.model.on_site.all()
-    
+
     def get_row_data(self):
         object_list = self.get_queryset()
         header = [["INVOICE_ID", "CREATED_TIME(ISO)", "USERNAME", "CURRENCY", "TOTAL"]]  # Has to be a list inside an iterable (another list) for the chain to work.

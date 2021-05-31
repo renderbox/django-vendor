@@ -1,6 +1,7 @@
 import itertools
 import uuid
-from django.conf import settings
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
@@ -17,22 +18,22 @@ from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES, TermType
 from .offer import Offer
 
+
 #####################
 # INVOICE
 #####################
-
 class Invoice(CreateUpdateModelBase):
     '''
     An invoice starts off as a Cart until it is puchased, then it becomes an Invoice.
     '''
     class InvoiceStatus(models.IntegerChoices):
-        CART = 0, _("Cart")             # total = subtotal = sum(OrderItems.Offer.Price + Product.TaxClassifier). Avalara
-        CHECKOUT = 10, _("Checkout")    # total = subtotal + shipping + Tax against Addrr if any.
-        QUEUED = 20, _("Queued")        # Queued to for Payment Processor.
-        PROCESSING = 30, _("Processing")# Payment Processor update, start of payment.
-        FAILED = 40, _("Failed")        # Payment Processor Failed Transaction.
-        COMPLETE = 50, _("Complete")    # Payment Processor Completed Transaction.
-        REFUNDED = 60, _("Refunded")    # Invoice Refunded to client. 
+        CART = 0, _("Cart")               # total = subtotal = sum(OrderItems.Offer.Price + Product.TaxClassifier). Avalara
+        CHECKOUT = 10, _("Checkout")      # total = subtotal + shipping + Tax against Addrr if any.
+        QUEUED = 20, _("Queued")          # Queued to for Payment Processor.
+        PROCESSING = 30, _("Processing")  # Payment Processor update, start of payment.
+        FAILED = 40, _("Failed")          # Payment Processor Failed Transaction.
+        COMPLETE = 50, _("Complete")      # Payment Processor Completed Transaction.
+        REFUNDED = 60, _("Refunded")      # Invoice Refunded to client.
 
     uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
     profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")     # TODO: [GK-3029] remove null=True.  This should not be allowed.
@@ -41,7 +42,7 @@ class Invoice(CreateUpdateModelBase):
     customer_notes = models.JSONField(_("Customer Notes"), default=dict, blank=True, null=True)
     vendor_notes = models.JSONField(_("Vendor Notes"), default=dict, blank=True, null=True)
     ordered_date = models.DateTimeField(_("Ordered Date"), blank=True, null=True)               # When was the purchase made?
-    subtotal = models.FloatField(default=0.0)                                   
+    subtotal = models.FloatField(default=0.0)
     tax = models.FloatField(blank=True, null=True)                              # Set on checkout
     shipping = models.FloatField(blank=True, null=True)                         # Set on checkout
     total = models.FloatField(blank=True, null=True)                            # Set on purchase
@@ -66,13 +67,13 @@ class Invoice(CreateUpdateModelBase):
     def __str__(self):
         if not self.profile.user:   # Can this ever even happen?
             return "New Invoice"
-        return str(self.profile.user.username) + " Invoice (" + self.created.strftime('%Y-%m-%d %H:%M') + ")"
+        return f"{self.profile.user.username} - {self.uuid}"
 
     def get_invoice_display(self):
         return _(f"{self.profile.user.username} Invoice ({self.created:%Y-%m-%d %H:%M})")
 
     def add_offer(self, offer, quantity=1):
-        
+
         order_item, created = self.order_items.get_or_create(offer=offer)
         # make sure the invoice pk is also in the OriderItem
         if not created and order_item.offer.allow_multiple:
@@ -83,15 +84,15 @@ class Invoice(CreateUpdateModelBase):
         self.save()
         return order_item
 
-    def remove_offer(self, offer):
+    def remove_offer(self, offer, clear=False):
         try:
             order_item = self.order_items.get(offer=offer)      # Get the order item if it's present
-        except:
+        except ObjectDoesNotExist:
             return 0
 
         order_item.quantity -= 1
 
-        if order_item.quantity == 0:
+        if order_item.quantity == 0 or clear:
             order_item.delete()
         else:
             order_item.save()
@@ -99,6 +100,24 @@ class Invoice(CreateUpdateModelBase):
         self.update_totals()
         self.save()
         return order_item
+
+    def swap_offer(self, existing_offer, new_offer):
+        """
+        Functions swaps offers that have the same linked product. It will not remove bundle offers
+        that also have shared product with the new offer. The function comes in handy to swap
+        an offer that has the normal price with one that has a discount price or terms.
+        """
+        if not existing_offer.products.filter(pk__in=[offer.pk for offer in new_offer.products.all()]).exists():
+            return None
+
+        if self.order_items.filter(offer=existing_offer).exists():
+            order_items_same_product = self.order_items.filter(offer=existing_offer).exclude(offer__bundle=True)
+            for order_item in order_items_same_product:
+                self.remove_offer(order_item.offer, clear=True)
+
+        self.add_offer(new_offer)
+        self.update_totals()
+        self.save()
 
     def calculate_shipping(self):
         '''
@@ -156,10 +175,10 @@ class Invoice(CreateUpdateModelBase):
 
     def get_one_time_transaction_total(self):
         """
-        Gets the total price for order items that will be purchased on a single transation. 
+        Gets the total price for order items that will be purchased on a single transation.
         """
         return sum([ order_item.total for order_item in self.order_items.filter(offer__terms__gte=TermType.PERPETUAL)])
-    
+
     def empty_cart(self):
         """
         Remove any offer/order_item if the invoice is in Cart State.
@@ -169,7 +188,7 @@ class Invoice(CreateUpdateModelBase):
         for offer in offers:
             self.remove_offer(offer)
 
-    
+
 class OrderItem(CreateUpdateModelBase):
     '''
     A link for each item to a user after it's been purchased
@@ -183,7 +202,7 @@ class OrderItem(CreateUpdateModelBase):
         verbose_name_plural = "Order Items"
 
     def __str__(self):
-        return "%s - %s" % (self.invoice.profile.user.username, self.offer.name)
+        return f"{self.offer} - {self.invoice.uuid}"
 
     @property
     def total(self):
@@ -200,7 +219,7 @@ class OrderItem(CreateUpdateModelBase):
     def get_total_display(self):
         if not self.total:
             return "0.00"
-        
+
         return f'{self.total:2}'
 
 
@@ -212,9 +231,8 @@ def convert_session_cart_to_invoice(sender, request, **kwargs):
     if 'session_cart' in request.session:
         profile, created = request.user.customer_profile.get_or_create(site=get_site_from_request(request))
         cart = profile.get_cart()
-        
+
         for offer_key in request.session['session_cart'].keys():
             cart.add_offer(Offer.objects.get(pk=offer_key), quantity=request.session['session_cart'][offer_key]['quantity'])
 
         del(request.session['session_cart'])
-

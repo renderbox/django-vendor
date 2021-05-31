@@ -62,7 +62,7 @@ class OfferForm(forms.ModelForm):
     class Meta:
         model = Offer
         fields = ['name', 'start_date', 'end_date', 'terms', 'term_details',
-                         'term_start_date', 'available', 'offer_description', 'allow_multiple']
+                  'term_start_date', 'available', 'offer_description', 'allow_multiple']
 
     def __init__(self, *args, **kwargs):
         request = kwargs.pop('request')
