@@ -6,13 +6,12 @@ from django.utils import timezone
 
 from core.models import Product
 
-from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerProfile
+from vendor.models import Offer, Price, Invoice, Receipt, CustomerProfile
 from vendor.models.choice import PurchaseStatus, TermType
 
 
-
 class ModelCustomerProfileTests(TestCase):
-    
+
     fixtures = ['user', 'unit_test']
 
     def setUp(self):
@@ -32,7 +31,7 @@ class ModelCustomerProfileTests(TestCase):
         self.customer_profile.save()
 
         self.assertEquals(Site.objects.get_current(), self.customer_profile.site)
-    
+
     def test_get_invoice_cart(self):
         cp = CustomerProfile.objects.get(pk=1)
         invoice = cp.get_cart()
@@ -41,9 +40,9 @@ class ModelCustomerProfileTests(TestCase):
 
     def test_new_invoice_cart(self):
         new_invoice = self.customer_profile_user.get_cart()
-        
+
         self.assertIsNotNone(new_invoice)
-    
+
     def test_new_invoice_after_previous_paid(self):
         cp = CustomerProfile.objects.get(pk=1)
         invoice = cp.get_cart()
@@ -55,7 +54,7 @@ class ModelCustomerProfileTests(TestCase):
         new_invoice.save()
 
         self.assertNotEqual(invoice.pk, new_invoice.pk)
-    
+
     def test_get_cart_items_count_new_user(self):
         customer_profile = CustomerProfile(user=self.user)
         customer_profile.save()
@@ -91,15 +90,14 @@ class ModelCustomerProfileTests(TestCase):
 
     def test_gets_cart(self):
         cart = self.customer_profile_existing.get_cart_or_checkout_cart()
-    
+
         self.assertEqual(cart.status, Invoice.InvoiceStatus.CART)
 
     def test_gets_checkout_cart(self):
-        invoice = Invoice.objects.get(pk=1)
-        self.customer_profile_existing.invoices.add(Invoice.objects.create(status=Invoice.InvoiceStatus.CHECKOUT))
+        self.customer_profile_existing.invoices.add(Invoice.objects.create(status=Invoice.InvoiceStatus.CHECKOUT, profile=self.customer_profile_existing))
 
         cart = self.customer_profile_existing.get_cart_or_checkout_cart()
-    
+
         self.assertEqual(cart.status, Invoice.InvoiceStatus.CHECKOUT)
 
     def test_get_cart_items_count(self):
@@ -108,7 +106,7 @@ class ModelCustomerProfileTests(TestCase):
 
     def test_get_cart_items_count_empty(self):
         self.assertEqual(0, self.customer_profile.get_cart_items_count())
-    
+
     def test_get_recurring_receipts(self):
         cart = self.customer_profile.get_cart_or_checkout_cart()
         subscription_offer = Offer.objects.get(pk=5)
@@ -122,7 +120,6 @@ class ModelCustomerProfileTests(TestCase):
         receipt.save()
         self.assertEqual(1, len(self.customer_profile.get_recurring_receipts()))
         self.assertEqual(0, len(self.customer_profile.get_one_time_transaction_receipts()))
-
 
     def test_get_one_time_transaction_receipts(self):
         cart = self.customer_profile.get_cart_or_checkout_cart()
@@ -154,9 +151,9 @@ class ModelCustomerProfileTests(TestCase):
 
     def test_has_previously_owned_products_false(self):
         cart = self.customer_profile.get_cart_or_checkout_cart()
-        
+
         self.assertFalse(self.customer_profile.has_previously_owned_products(Product.objects.filter(pk=3)))
-    
+
     def test_get_completed_receipts(self):
         cart = self.customer_profile.get_cart_or_checkout_cart()
         offer = Offer.objects.get(pk=3)
@@ -169,7 +166,7 @@ class ModelCustomerProfileTests(TestCase):
                           status=PurchaseStatus.COMPLETE)
         receipt.save()
         self.assertEqual(1, len(self.customer_profile.get_completed_receipts()))
-    
+
     def test_get_completed_receipts_empty(self):
         cart = self.customer_profile.get_cart_or_checkout_cart()
         offer = Offer.objects.get(pk=3)
@@ -230,4 +227,3 @@ class AddOfferToProfileView(TestCase):
         response = self.client.get(url)
         self.assertFalse(self.customer_profile.receipts.count())
 
-    
