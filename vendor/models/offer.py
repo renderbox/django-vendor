@@ -22,15 +22,15 @@ from .utils import set_default_site_id, is_currency_available
 #########
 def offer_term_details_default():
     """
-    Sets the default term values as a monthly subscription for a 
+    Sets the default term values as a monthly subscription for a
     period of 12 months, with 0 trail months
     """
-    return { 
+    return {
         'period_length': 1,
         'payment_occurrences': 12,
-        "term_units": TermDetailUnits.MONTH, 
+        "term_units": TermDetailUnits.MONTH,
         "trial_occurrences": 0
-        }
+    }
 
 
 class ActiveManager(models.Manager):
@@ -57,14 +57,14 @@ class Offer(CreateUpdateModelBase):
     a single Offer on the site.
     '''
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)                                # Used to track the product
-    slug = AutoSlugField(populate_from='name', unique_with='site__id')                                               # SEO friendly 
+    slug = AutoSlugField(populate_from='name', unique_with='site__id')                                               # SEO friendly
     site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="product_offers")                      # For multi-site support
     name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
     start_date = models.DateTimeField(_("Start Date"), help_text=_("What date should this offer become available?"))
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text=_("Expiration Date?"))
     terms = models.IntegerField(_("Terms"), default=0, choices=TermType.choices)
     term_details = models.JSONField(_("Term Details"), default=offer_term_details_default, blank=True, null=True, help_text=_("term_units: 10/20(Day/Month), trial_occurrences: 1(defualt)"))
-    term_start_date = models.DateTimeField(_("Term Start Date"), help_text=_("When is this product available to use?"), blank=True, null=True) # Useful for Event Tickets or Pre-Orders
+    term_start_date = models.DateTimeField(_("Term Start Date"), help_text=_("When is this product available to use?"), blank=True, null=True)  # Useful for Event Tickets or Pre-Orders
     available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))
     bundle = models.BooleanField(_("Is a Bundle?"), default=False, help_text=_("Is this a product bundle? (auto-generated)"))  # Auto-generated based on if the count of the products is greater than 1.
     offer_description = models.TextField(_("Offer Description"), default=None, blank=True, null=True, help_text=_("You can enter a list of descriptions. Note: if you inputs something here the product description will not show up."))

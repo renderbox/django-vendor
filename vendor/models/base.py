@@ -29,9 +29,9 @@ def product_meta_default():
 
 def product_description_default():
     return {
-            'description': '',
-            'call_out': ' '
-            }
+        'description': '',
+        'call_out': ' '
+    }
 
 
 ##################
@@ -84,7 +84,7 @@ class ProductModelBase(CreateUpdateModelBase):
         """
         Link to add the item to the user's cart.
         """
-    # TODO: ADD trigger when object becomes unavailable to disable offer if it exisits. 
+    # TODO: ADD trigger when object becomes unavailable to disable offer if it exisits.
 
     def get_best_currency(self, currency=DEFAULT_CURRENCY):
         """

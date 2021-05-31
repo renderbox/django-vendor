@@ -14,7 +14,6 @@ from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType, PaymentTypes
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin
-from vendor.utils import get_site_from_request
 from vendor.processors import PaymentProcessor
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
@@ -100,7 +99,7 @@ class AdminProductCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         new_product = form.save(commit=False)
-
+        new_product.save()
         return redirect(self.success_url)
 
 
@@ -204,8 +203,8 @@ class AdminOfferCreateView(LoginRequiredMixin, PassRequestToFormKwargsMixin, Cre
             return render(request, self.template_name, {'form': offer_form, 'formset': price_formset})
         elif price_formset.has_changed() and price_formset.is_valid():
             product_currencies = {}
-            price_currency = [price_form.cleaned_data['currency']
-                              for price_form in price_formset]
+            # price_currency = [price_form.cleaned_data['currency']
+            #                   for price_form in price_formset]
 
             for product in Product.objects.filter(pk__in=offer_form.cleaned_data['products']):
                 for currency in product.meta['msrp'].keys():
@@ -341,12 +340,12 @@ class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
     model = Receipt
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
-    
+
     def post(self, request, *args, **kwargs):
         past_receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
 
         payment_info = {
-            'msg': 'renewed manually' 
+            'msg': 'renewed manually'
         }
 
         invoice = Invoice(status=Invoice.InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
@@ -356,6 +355,6 @@ class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
 
         processor = PaymentProcessor(invoice)
         processor.renew_subscription(past_receipt, payment_info)
-            
+
         messages.info(request, _("Subscription Renewed"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))

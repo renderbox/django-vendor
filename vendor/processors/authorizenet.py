@@ -66,7 +66,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def processor_setup(self):
         """
-        Merchant Information needed to aprove the transaction. 
+        Merchant Information needed to aprove the transaction.
         """
         if not (settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID):
             raise ValueError(
@@ -95,7 +95,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             PaymentTypes.PAY_PAL: self.create_pay_pal_payment,
             PaymentTypes.MOBILE: self.create_mobile_payment,
         }
-    
+
     def set_api_endpoint(self):
         """
         Sets the API endpoint for debugging or production.It is dependent on the VENDOR_STATE
@@ -136,7 +136,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def create_credit_card_payment(self):
         """
-        Creates and credit card payment type instance form the payment information set. 
+        Creates and credit card payment type instance form the payment information set.
         """
         creditCard = apicontractsv1.creditCardType()
         creditCard.cardNumber = self.payment_info.data.get('card_number')
@@ -237,7 +237,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def get_payment_occurrences(self, subscription, subscription_type):
         """
         Gets the defined payment ocurrences for a Subscription. It defaults to
-        9999 which means it will charge that amount until the customer cancels the subscription. 
+        9999 which means it will charge that amount until the customer cancels the subscription.
         """
         return subscription.offer.term_details.get('payment_occurrences', 9999)
 
@@ -345,7 +345,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
                     self.transaction_message['error_text'] = response.messages.message[0]['text'].text
         else:
             self.transaction_message['msg'] = 'Null Response.'
-    
+
     def check_subscription_response(self, response):
         self.transaction_response = response
         self.transaction_message = {}
@@ -354,7 +354,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_message['code'] = response.messages.message[0]['code'].text
         self.transaction_message['message'] = response.messages.message[0]['text'].text
 
-        if (response.messages.resultCode=="Ok"):
+        if (response.messages.resultCode == "Ok"):
             self.transaction_submitted = True
             self.transaction_message['msg'] = "Subscription Tansaction Complete"
             if 'subscriptionId' in response.__dict__:
@@ -363,6 +363,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def to_valid_decimal(self, number):
         # TODO: Need to check currency to determin decimal places.
         return Decimal(number).quantize(Decimal('.00'), rounding=ROUND_DOWN)
+
     ##########
     # Base Processor Transaction Implementations
     ##########
@@ -389,7 +390,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.check_response(response)
 
         self.process_payment_transaction_response()
-    
+
     def subscription_payment(self, subscription):
         """
         subscription: Type: OrderItem
@@ -404,7 +405,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_type.billTo = self.create_billing_address(apicontractsv1.nameAndAddressType())
         self.transaction_type.payment = self.create_authorize_payment()
 
-        # Optional to add Order information. 
+        # Optional to add Order information.
         self.transaction_type.order = self.create_order_type()
 
         # Creating the request
@@ -425,7 +426,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def subscription_update_payment(self, receipt):
         """
-        Updates the credit card information for the subscriptions in authorize.net 
+        Updates the credit card information for the subscriptions in authorize.net
         and updates the payment record associated with the receipt.
         """
         self.payment = Payment.objects.get(success=True, transaction=receipt.transaction, invoice=receipt.order_item.invoice)
@@ -454,11 +455,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         account_number = getattr(subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'], 'cardNumber', None)
         if account_number:
             self.payment.result['account_number'] = account_number.text
-            
+
         account_type = getattr(subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'], 'accountType', None)
         if account_type:
             self.payment.result['account_type'] = account_type.text
-        
+
         self.payment.save()
 
     def subscription_cancel(self, receipt):
@@ -471,7 +472,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             receipt.cancel()
             receipt.save()
             return None
-        
+
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.subscriptionId = str(receipt.transaction)
@@ -638,5 +639,3 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             return response.subscriptionDetails.subscriptionDetail
         else:
             return []
-
-

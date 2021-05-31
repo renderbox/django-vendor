@@ -27,13 +27,13 @@ class Invoice(CreateUpdateModelBase):
     An invoice starts off as a Cart until it is puchased, then it becomes an Invoice.
     '''
     class InvoiceStatus(models.IntegerChoices):
-        CART = 0, _("Cart")             # total = subtotal = sum(OrderItems.Offer.Price + Product.TaxClassifier). Avalara
-        CHECKOUT = 10, _("Checkout")    # total = subtotal + shipping + Tax against Addrr if any.
-        QUEUED = 20, _("Queued")        # Queued to for Payment Processor.
-        PROCESSING = 30, _("Processing")# Payment Processor update, start of payment.
-        FAILED = 40, _("Failed")        # Payment Processor Failed Transaction.
-        COMPLETE = 50, _("Complete")    # Payment Processor Completed Transaction.
-        REFUNDED = 60, _("Refunded")    # Invoice Refunded to client. 
+        CART = 0, _("Cart")               # total = subtotal = sum(OrderItems.Offer.Price + Product.TaxClassifier). Avalara
+        CHECKOUT = 10, _("Checkout")      # total = subtotal + shipping + Tax against Addrr if any.
+        QUEUED = 20, _("Queued")          # Queued to for Payment Processor.
+        PROCESSING = 30, _("Processing")  # Payment Processor update, start of payment.
+        FAILED = 40, _("Failed")          # Payment Processor Failed Transaction.
+        COMPLETE = 50, _("Complete")      # Payment Processor Completed Transaction.
+        REFUNDED = 60, _("Refunded")      # Invoice Refunded to client.
 
     uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
     profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="invoices")     # TODO: [GK-3029] remove null=True.  This should not be allowed.
@@ -175,10 +175,10 @@ class Invoice(CreateUpdateModelBase):
 
     def get_one_time_transaction_total(self):
         """
-        Gets the total price for order items that will be purchased on a single transation. 
+        Gets the total price for order items that will be purchased on a single transation.
         """
         return sum([ order_item.total for order_item in self.order_items.filter(offer__terms__gte=TermType.PERPETUAL)])
-    
+
     def empty_cart(self):
         """
         Remove any offer/order_item if the invoice is in Cart State.
@@ -188,7 +188,7 @@ class Invoice(CreateUpdateModelBase):
         for offer in offers:
             self.remove_offer(offer)
 
-    
+
 class OrderItem(CreateUpdateModelBase):
     '''
     A link for each item to a user after it's been purchased
@@ -219,7 +219,7 @@ class OrderItem(CreateUpdateModelBase):
     def get_total_display(self):
         if not self.total:
             return "0.00"
-        
+
         return f'{self.total:2}'
 
 
@@ -231,9 +231,8 @@ def convert_session_cart_to_invoice(sender, request, **kwargs):
     if 'session_cart' in request.session:
         profile, created = request.user.customer_profile.get_or_create(site=get_site_from_request(request))
         cart = profile.get_cart()
-        
+
         for offer_key in request.session['session_cart'].keys():
             cart.add_offer(Offer.objects.get(pk=offer_key), quantity=request.session['session_cart'][offer_key]['quantity'])
 
         del(request.session['session_cart'])
-
