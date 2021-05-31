@@ -113,6 +113,7 @@ class AddressForm(forms.ModelForm):
 
 class AccountInformationForm(AddressForm):
     email = forms.EmailField(label=_('Email Address'), required=True)
+    prefix = "account_info"
 
     class Meta:
         model = Address
@@ -122,6 +123,7 @@ class AccountInformationForm(AddressForm):
 
 class BillingAddressForm(AddressForm):
     same_as_shipping = forms.BooleanField(label=_("Billing address is the same as shipping address"), required=False, initial=True)
+    prefix = "billing"
 
     class Meta:
         model = Address
