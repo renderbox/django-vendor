@@ -20,7 +20,7 @@ def validate_msrp_format(value):
 
     if len(msrp) != 2 or not msrp:
         raise ValidationError(_("Invalid MSRP Value"), params={'value': value})
-    
+
     if not msrp[0] or not msrp[1]:
         raise ValidationError(_("Invalid MSRP Value"), params={'value': value})
 
@@ -30,8 +30,7 @@ def validate_msrp_format(value):
 
 def validate_msrp(value):
     if value['msrp']['default'] not in AVAILABLE_CURRENCIES.keys():
-        raise ValidationError(_(f'Currency not available'))
-    
-    if False in [ is_currency_available(value['msrp'].keys(), currency=msrp_currency) for msrp_currency in value['msrp'].keys() if msrp_currency != 'default']:
-        raise ValidationError(_(f'Currency not available'))
+        raise ValidationError(_('Currency not available'))
 
+    if False in [ is_currency_available(value['msrp'].keys(), currency=msrp_currency) for msrp_currency in value['msrp'].keys() if msrp_currency != 'default']:
+        raise ValidationError(_('Currency not available'))

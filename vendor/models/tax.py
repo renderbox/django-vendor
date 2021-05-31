@@ -1,16 +1,15 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+
 #####################
 # TAX CLASSIFIER
 #####################
-
 class TaxClassifier(models.Model):
     '''
     This for things like "Digital Goods", "Furniture" or "Food" which may or
     may not be taxable depending on the location.  These are determined by the
-    manager of all sites.  
-    
+    manager of all sites.
     These classifiers will retain certian provider specific codes that are used
     to help calculate the tax liability in the sale.
     '''

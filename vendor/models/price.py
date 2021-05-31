@@ -1,14 +1,13 @@
-from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from .choice import CURRENCY_CHOICES
 from vendor.config import DEFAULT_CURRENCY
 
+
 #########
 # PRICE
 #########
-
 class Price(models.Model):
     offer = models.ForeignKey("vendor.Offer", verbose_name=_("Offer"), on_delete=models.CASCADE, related_name="prices")
     cost = models.FloatField(_("Cost"), blank=True, null=True)

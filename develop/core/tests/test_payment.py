@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
-from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse
 
 from vendor.models import Invoice
 
 User = get_user_model()
+
 
 class PaymentModelTests(TestCase):
 
@@ -15,17 +15,16 @@ class PaymentModelTests(TestCase):
         pass
 
     def test_payment_save_completed(self):
-          
         pass
 
     def test_pyament_save_refund(self):
         # TODO: Implement Test
         pass
-    
+
     def test_payment_save_failed(self):
         # TODO: Implement Test
         pass
-    
+
 
 class PaymentViewTests(TestCase):
 
@@ -45,7 +44,6 @@ class PaymentViewTests(TestCase):
     def test_view_payment_status_code_fail_no_login(self):
         client = Client()
         response = client.get(reverse("vendor:purchase-summary", kwargs={'uuid': Invoice.objects.get(pk=1).uuid}))
-        
+
         self.assertEquals(response.status_code, 302)
         self.assertIn('login', response.url)
-    

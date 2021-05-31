@@ -1,10 +1,13 @@
-from django.contrib.auth.models import User  #TODO: CHANGE TO GET_USER_MODEL
+from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
+from vendor.models import Offer
+
 from core.models import Product
-from vendor.models import Offer, Price, OrderItem
+
+User = get_user_model()
 
 
 class ModelOfferTests(TestCase):
@@ -21,7 +24,6 @@ class ModelOfferTests(TestCase):
         offer.save()
         offer.products.add(Product.objects.all().first())
         pass
-
 
     def test_default_site_id(self):
         offer = Offer()
@@ -44,18 +46,18 @@ class ModelOfferTests(TestCase):
     def test_add_offer_to_cart_slug(self):
         mug_offer = Offer.objects.get(pk=4)
         slug = mug_offer.add_to_cart_link()
-        self.assertEquals(slug,'/sales/cart/add/' + mug_offer.slug + '/')
+        self.assertEquals(slug, '/sales/cart/add/' + mug_offer.slug + '/')
 
     def test_remove_offer_to_cart_slug(self):
         mug_offer = Offer.objects.get(pk=4)
         slug = mug_offer.remove_from_cart_link()
-        self.assertEquals(slug,'/sales/cart/remove/' + mug_offer.slug + '/')
-    
+        self.assertEquals(slug, '/sales/cart/remove/' + mug_offer.slug + '/')
+
     def test_get_current_price_is_msrp(self):
         offer = Offer.objects.get(pk=4)
         price = offer.current_price('mxn')
         self.assertEquals(price, 21.12)
-    
+
     def test_get_current_price_is_msrp_default(self):
         offer = Offer.objects.get(pk=4)
         price = offer.current_price()
@@ -68,7 +70,7 @@ class ModelOfferTests(TestCase):
     def test_get_current_price_is_between_start_end_date(self):
         offer = Offer.objects.get(pk=3)
         self.assertEquals(offer.current_price(), 25.2)
-    
+
     def test_get_current_price_acording_to_priority(self):
         offer = Offer.objects.get(pk=3)
         self.assertEquals(offer.current_price(), 25.2)
@@ -110,7 +112,7 @@ class ModelOfferTests(TestCase):
         # offer.start_date = timezone.now()
         # offer.save()
         # p1 = Product.objects.get(pk=1)
-    
+
         # self.assertEquals("Bundle: " + ", ".join([p1,p2]), offer.name)
         # raise NotImplementedError()
 
@@ -141,11 +143,12 @@ class ModelOfferTests(TestCase):
         offer = Offer.objects.get(pk=4)
 
         self.assertEquals(offer.get_best_currency('jpy'), 'usd')
-    
+
+
 class ViewOfferTests(TestCase):
-    
+
     fixtures = ['user', 'unit_test']
-    
+
     def setUp(self):
         self.product = Product.objects.get(pk=1)
 
@@ -225,8 +228,7 @@ class ViewOfferTests(TestCase):
 
         self.assertEquals(response.status_code, 302)
         self.assertEquals(response.url, reverse('vendor:cart'))
-        
-    
+
     def test_check_remove_from_cart_link_request(self):
         url = self.shirt_offer.remove_from_cart_link()
 
@@ -234,7 +236,6 @@ class ViewOfferTests(TestCase):
 
         self.assertEquals(response.status_code, 302)
         self.assertEquals(response.url, reverse('vendor:cart'))
-    
 
     # def test_view_only_available_offers(self):
     #     raise NotImplementedError()
@@ -247,9 +248,6 @@ class ViewOfferTests(TestCase):
 
     # def test_valid_remove_to_cart_offer(self):
     #     raise NotImplementedError()
-    
+
     # def test_create_profile_invoice_order_item_add_offer(self):
     #     raise NotImplementedError()
-
-    
-    
