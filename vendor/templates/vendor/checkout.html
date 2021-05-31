@@ -203,35 +203,37 @@
   </div>
 </div>
 
-{% block extra_js %}
-<script>
-  $("#id_account_info-postal_code").attr('required', "");
-  $('#id_billing-same_as_shipping').prop("checked", true);
-  $('.billing-address-form').addClass('d-none');
-  $("#id_billing-address_1").removeAttr('required');
-  $("#id_billing-locality").removeAttr('required');
-  $("#id_billing-state").removeAttr('required');
-  $("#id_billing-postal_code").removeAttr('required');
-  $('#id_billing-same_as_shipping').change(function () {
-    if ($('#id_billing-same_as_shipping').val()) {
-      $('.billing-address-form').toggleClass('d-none');
-      $('#shipping-address').toggleClass('d-none');
-    }
-    // TODO: This needs to change in the future, very easy to break.
-    if ($(".billing-address-form").hasClass('d-none')){
-      $("#id_billing-address_1").removeAttr('required');
-      $("#id_billing-locality").removeAttr('required');
-      $("#id_billing-state").removeAttr('required');
-      $("#id_billing-postal_code").removeAttr('required');
-    }
-    else {
-      $("#id_billing-address_1").attr('required', "");
-      $("#id_billing-locality").attr('required', "");
-      $("#id_billing-state").attr('required', "");
-      $("#id_billing-postal_code").attr('required', "");
-    }
-  });
-</script>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        $("#id_account_info-postal_code").attr('required', "");
+        $('#id_billing-same_as_shipping').prop("checked", true);
+        $('.billing-address-form').addClass('d-none');
+        $("#id_billing-address_1").removeAttr('required');
+        $("#id_billing-locality").removeAttr('required');
+        $("#id_billing-state").removeAttr('required');
+        $("#id_billing-postal_code").removeAttr('required');
+        $('#id_billing-same_as_shipping').change(function () {
+            if ($('#id_billing-same_as_shipping').val()) {
+                $('.billing-address-form').toggleClass('d-none');
+                $('#shipping-address').toggleClass('d-none');
+            }
+            // TODO: This needs to change in the future, very easy to break.
+            if ($(".billing-address-form").hasClass('d-none')) {
+                $("#id_billing-address_1").removeAttr('required');
+                $("#id_billing-locality").removeAttr('required');
+                $("#id_billing-state").removeAttr('required');
+                $("#id_billing-postal_code").removeAttr('required');
+            }
+            else {
+                $("#id_billing-address_1").attr('required', "");
+                $("#id_billing-locality").attr('required', "");
+                $("#id_billing-state").attr('required', "");
+                $("#id_billing-postal_code").attr('required', "");
+            }
+        });
+    });
+</script>
 {% endblock %}
