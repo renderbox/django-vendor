@@ -238,9 +238,9 @@ class PaymentView(LoginRequiredMixin, TemplateView):
             return redirect('vendor:cart')
 
         credit_card_form = CreditCardForm(request.POST)
-        if request.POST.get('same_as_shipping') == 'on':
+        if request.POST.get('billing-same_as_shipping') == 'on':
             billing_address_form = BillingAddressForm(instance=invoice.shipping_address)
-            billing_address_form.data = billing_address_form.initial
+            billing_address_form.data = {f'billing-{key}': value for key, value in billing_address_form.initial.items()}
             billing_address_form.is_bound = True
         else:
             billing_address_form = BillingAddressForm(request.POST)
