@@ -408,7 +408,6 @@ class PaymentProcessorBase(object):
                                invoice=self.invoice,
                                created=timezone.now())
         self.payment.result = payment_info
-        self.payment.result['first'] = False
 
         self.transaction_submitted = True
 
