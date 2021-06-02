@@ -258,7 +258,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
         else:
             billing_address_form.full_clean()
             credit_card_form.full_clean()
-            request.session['billing_address_form'] = billing_address_form.cleaned_data
+            request.session['billing_address_form'] = {f'billing-{key}': value for key, value in billing_address_form.cleaned_data.items()}
             request.session['credit_card_form'] = credit_card_form.cleaned_data
             return redirect('vendor:checkout-review')
 
@@ -275,7 +275,9 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 
         processor = payment_processor(invoice)
         if 'billing_address_form' in request.session:
-            context['billing_address_form'] = BillingAddressForm(request.session['billing_address_form'])
+            billing_address_form = BillingAddressForm(request.session['billing_address_form'])
+            billing_address_form.is_valid()
+            context['billing_address_form'] = billing_address_form
         if 'credit_card_form' in request.session:
             context['credit_card_form'] = CreditCardForm(request.session['credit_card_form'])
 
