@@ -103,7 +103,12 @@ class AddToCartView(View):
         return session_cart
 
     def post(self, request, *args, **kwargs):
-        offer = Offer.objects.get(site=get_site_from_request(request), slug=self.kwargs["slug"])
+        try:
+            offer = Offer.objects.get(site=get_site_from_request(request), slug=self.kwargs["slug"], available=True)
+        except ObjectDoesNotExist:
+            messages.error(_("Offer does not exist or is unavailable"))
+            return redirect('vendor:cart')
+
         if request.user.is_anonymous:
             request.session['session_cart'] = self.session_cart(request, offer)
         else:
@@ -238,9 +243,9 @@ class PaymentView(LoginRequiredMixin, TemplateView):
             return redirect('vendor:cart')
 
         credit_card_form = CreditCardForm(request.POST)
-        if request.POST.get('same_as_shipping') == 'on':
+        if request.POST.get('billing-same_as_shipping') == 'on':
             billing_address_form = BillingAddressForm(instance=invoice.shipping_address)
-            billing_address_form.data = billing_address_form.initial
+            billing_address_form.data = {f'billing-{key}': value for key, value in billing_address_form.initial.items()}
             billing_address_form.is_bound = True
         else:
             billing_address_form = BillingAddressForm(request.POST)

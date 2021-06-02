@@ -20,7 +20,7 @@ class Payment(models.Model):
     transaction = models.CharField(_("Transaction ID"), max_length=50)
     provider = models.CharField(_("Payment Provider"), max_length=30)
     amount = models.FloatField(_("Amount"))
-    profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Purchase Profile"), blank=True, null=True, on_delete=models.SET_NULL, related_name="payments")
+    profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Purchase Profile"), blank=True, on_delete=models.CASCADE, related_name="payments")
     billing_address = models.ForeignKey("vendor.Address", verbose_name=_("Billing Address"), on_delete=models.CASCADE, blank=True, null=True)
     result = models.JSONField(_("Result"), default=dict, blank=True, null=True)
     success = models.BooleanField(_("Successful"), default=False)

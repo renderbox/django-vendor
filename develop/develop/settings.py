@@ -189,3 +189,10 @@ VENDOR_COUNTRY_CHOICE = [
 ]
 
 VENDOR_COUNTRY_DEFAULT = 'US'
+
+#################
+# IMPORTANT FOR MIGRATION 0023_profile_null_false
+# If you want to set a different User ID as a default for
+# Invoice, Receipts, CustomerProfile, and Payments you
+# can change the value on MIGRATION_0023_DEFAULT_USER
+MIGRATION_0023_DEFAULT_USER = None

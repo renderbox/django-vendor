@@ -29,10 +29,24 @@ class BaseProcessorTests(TestCase):
         self.base_processor = PaymentProcessorBase(self.existing_invoice)
         self.subscription_offer = Offer.objects.get(pk=4)
         self.form_data = {
-            'billing_address_form':
-                {'name': 'Home', 'company': 'Whitemoon Dreams', 'country': '840', 'address_1': '221B Baker Street', 'address_2': '', 'locality': 'Marylebone', 'state': 'California', 'postal_code': '90292'},
-            'credit_card_form':
-                {'full_name': 'Bob Ross', 'card_number': '5424000000000015', 'expire_month': '12', 'expire_year': '2030', 'cvv_number': '900', 'payment_type': '10'}
+            'billing_address_form': {
+                'billing-name': 'Home',
+                'billing-company': 'Whitemoon Dreams',
+                'billing-country': '840',
+                'billing-address_1': '221B Baker Street',
+                'billing-address_2': '',
+                'billing-locality': 'Marylebone',
+                'billing-state': 'California',
+                'billing-postal_code': '90292'
+            },
+            'credit_card_form': {
+                'full_name': 'Bob Ross',
+                'card_number': '5424000000000015',
+                'expire_month': '12',
+                'expire_year': '2030',
+                'cvv_number': '900',
+                'payment_type': '10'
+            }
         }
 
     def test_base_processor_init_fail(self):
@@ -145,7 +159,7 @@ class BaseProcessorTests(TestCase):
         self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
 
         self.assertIsNotNone(self.base_processor.billing_address)
-        self.assertIn(self.form_data['billing_address_form']['address_1'], self.base_processor.billing_address.data['address_1'])
+        self.assertIn(self.form_data['billing_address_form']['billing-address_1'], self.base_processor.billing_address.data['billing-address_1'])
 
     def test_set_payment_info_form_data_fail(self):
         with self.assertRaises(TypeError):
@@ -283,14 +297,14 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
         self.form_data = {
             'billing_address_form': {
-                'name': 'Home',
-                'company': 'Whitemoon Dreams',
-                'country': '840',
-                'address_1': '221B Baker Street',
-                'address_2': '',
-                'locality': 'Marylebone',
-                'state': 'California',
-                'postal_code': '90292'},
+                'billing-name': 'Home',
+                'billing-company': 'Whitemoon Dreams',
+                'billing-country': '840',
+                'billing-address_1': '221B Baker Street',
+                'billing-address_2': '',
+                'billing-locality': 'Marylebone',
+                'billing-state': 'California',
+                'billing-postal_code': '90292'},
             'credit_card_form': {
                 'full_name': 'Bob Ross',
                 'card_number': '5424000000000015',
@@ -481,7 +495,7 @@ class AuthorizeNetProcessorTests(TestCase):
         A = Street Address: Match -- First 5 Digits of ZIP: No Match
         Postal Code: 46201
         """
-        self.form_data['billing_address_form']['postal_code'] = '46201'
+        self.form_data['billing_address_form']['billing-postal_code'] = '46201'
 
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
@@ -497,7 +511,7 @@ class AuthorizeNetProcessorTests(TestCase):
         E = AVS Error
         Postal Code: 46203
         """
-        self.form_data['billing_address_form']['postal_code'] = '46203'
+        self.form_data['billing_address_form']['billing-postal_code'] = '46203'
         self.form_data['credit_card_form']['card_number'] = '2223000010309711'
 
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
@@ -517,7 +531,7 @@ class AuthorizeNetProcessorTests(TestCase):
         G = Non U.S. Card Issuing Bank
         Postal Code: 46204
         """
-        self.form_data['billing_address_form']['postal_code'] = '46204'
+        self.form_data['billing_address_form']['billing-postal_code'] = '46204'
         self.form_data['credit_card_form']['card_number'] = '4007000000027'
 
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
@@ -537,7 +551,7 @@ class AuthorizeNetProcessorTests(TestCase):
         N = Street Address: No Match -- First 5 Digits of ZIP: No Match
         Postal Code: 46205
         """
-        self.form_data['billing_address_form']['postal_code'] = '46205'
+        self.form_data['billing_address_form']['billing-postal_code'] = '46205'
         self.form_data['credit_card_form']['card_number'] = '2223000010309711'
 
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
@@ -557,7 +571,7 @@ class AuthorizeNetProcessorTests(TestCase):
         R = Retry, System Is Unavailable
         Postal Code: 46207
         """
-        self.form_data['billing_address_form']['postal_code'] = '46207'
+        self.form_data['billing_address_form']['billing-postal_code'] = '46207'
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
 
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
@@ -579,7 +593,7 @@ class AuthorizeNetProcessorTests(TestCase):
         S = AVS Not Supported by Card Issuing Bank
         Postal Code: 46208
         """
-        self.form_data['billing_address_form']['postal_code'] = '46208'
+        self.form_data['billing_address_form']['billing-postal_code'] = '46208'
 
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
@@ -597,7 +611,7 @@ class AuthorizeNetProcessorTests(TestCase):
         U = Address Information For This Cardholder Is Unavailable
         Postal Code: 46209
         """
-        self.form_data['billing_address_form']['postal_code'] = '46209'
+        self.form_data['billing_address_form']['billing-postal_code'] = '46209'
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
 
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
@@ -617,7 +631,7 @@ class AuthorizeNetProcessorTests(TestCase):
         W = Street Address: No Match -- All 9 Digits of ZIP: Match
         Postal Code: 46211
         """
-        self.form_data['billing_address_form']['postal_code'] = '46211'
+        self.form_data['billing_address_form']['billing-postal_code'] = '46211'
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
 
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
@@ -637,7 +651,7 @@ class AuthorizeNetProcessorTests(TestCase):
         X = Street Address: Match -- All 9 Digits of ZIP: Match
         Postal Code: 46214
         """
-        self.form_data['billing_address_form']['postal_code'] = '46214'
+        self.form_data['billing_address_form']['billing-postal_code'] = '46214'
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
 
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
@@ -657,7 +671,7 @@ class AuthorizeNetProcessorTests(TestCase):
         Z = Street Address: No Match - First 5 Digits of ZIP: Match
         Postal Code: 46217
         """
-        self.form_data['billing_address_form']['postal_code'] = '46217'
+        self.form_data['billing_address_form']['billing-postal_code'] = '46217'
         self.form_data['credit_card_form']['card_number'] = '5424000000000015'
 
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
@@ -706,6 +720,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.invoice = self.existing_invoice
         payment.transaction = successfull_transactions[random_index].transId.text
         payment.result["raw"] = str({ 'accountNumber': successfull_transactions[random_index].accountNumber.text})
+        payment.profile = CustomerProfile.objects.get(pk=1)
         payment.save()
         self.processor.payment = payment
 
@@ -736,6 +751,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 0.01
         payment.transaction = transaction_list[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': '6699'})
+        payment.profile = CustomerProfile.objects.get(pk=1)
         payment.save()
         self.processor.payment = payment
 
@@ -763,6 +779,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 1000000.00
         payment.transaction = transaction_list[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+        payment.profile = CustomerProfile.objects.get(pk=1)
         payment.save()
         self.processor.payment = payment
 
@@ -791,6 +808,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 0.01
         payment.transaction = '111222333412'
         payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+        payment.profile = CustomerProfile.objects.get(pk=1)
         payment.save()
         self.processor.payment = payment
 
@@ -848,6 +866,7 @@ class AuthorizeNetProcessorTests(TestCase):
             return
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         dummy_receipt = Receipt(order_item=OrderItem.objects.get(pk=2))
+        dummy_receipt.profile = CustomerProfile.objects.get(pk=1)
         dummy_receipt.transaction = active_subscriptions[-1].id.pyval
         dummy_payment = Payment.objects.create(invoice=self.existing_invoice,
                                                transaction=dummy_receipt.transaction,
@@ -856,6 +875,7 @@ class AuthorizeNetProcessorTests(TestCase):
                                                amount=dummy_receipt.order_item.invoice.total)
         dummy_payment.result['account_number'] = ""
         dummy_payment.result['account_type'] = ""
+        dummy_payment.profile = CustomerProfile.objects.get(pk=1)
         dummy_payment.save()
 
         if active_subscriptions:
@@ -879,6 +899,7 @@ class AuthorizeNetProcessorTests(TestCase):
             return
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         dummy_receipt = Receipt(order_item=OrderItem.objects.get(pk=2))
+        dummy_receipt.profile = CustomerProfile.objects.get(pk=1)
         dummy_receipt.transaction = active_subscriptions[0].id.pyval
 
         if active_subscriptions:
