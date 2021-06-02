@@ -132,10 +132,10 @@
             </div>
           </h3>
 
-          <p class="mb-0">{{billing_address_form.data.address_1}},
-            {{billing_address_form.data.address_2|default_if_none:""}}</p>
-            <p>{{billing_address_form.data.state}},
-              {{billing_address_form.instance.get_country_display}}, {{billing_address_form.data.postal_code}}
+          <p class="mb-0">{{billing_address_form.cleaned_data.address_1}},
+            {{billing_address_form.cleaned_data.address_2|default_if_none:""}}</p>
+            <p>{{billing_address_form.cleaned_data.state}},
+              {{billing_address_form.instance.get_country_display}}, {{billing_address_form.cleaned_data.postal_code}}
             </p>
             <h3 class='card-title'>
               {% trans 'Payment Method' %}
