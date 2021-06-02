@@ -332,10 +332,10 @@ class PaymentProcessorBase(object):
                                )
         self.payment.save()
         self.transaction_submitted = True
-
         self.payment.success = True
         self.payment.transaction = f"{self.payment.uuid}-free"
         self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+        self.payment.result = {'first': True}
         self.payment.save()
 
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
@@ -408,7 +408,7 @@ class PaymentProcessorBase(object):
                                invoice=self.invoice,
                                created=timezone.now())
         self.payment.result = payment_info
-        self.payment['first'] = False
+        self.payment.result['first'] = False
 
         self.transaction_submitted = True
 
