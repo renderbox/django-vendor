@@ -18,6 +18,7 @@ class ModelCustomerProfileTests(TestCase):
         self.user = User(username='test', first_name='Bob', last_name='Ross', password='helloworld')
         self.user.save()
         self.customer_profile = CustomerProfile()
+        self.customer_profile.user = User.objects.get(pk=2)
         self.customer_profile.save()
 
         self.customer_profile_existing = CustomerProfile.objects.get(pk=1)

@@ -706,6 +706,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.invoice = self.existing_invoice
         payment.transaction = successfull_transactions[random_index].transId.text
         payment.result["raw"] = str({ 'accountNumber': successfull_transactions[random_index].accountNumber.text})
+        payment.profile = CustomerProfile.objects.get(pk=1)
         payment.save()
         self.processor.payment = payment
 
@@ -736,6 +737,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 0.01
         payment.transaction = transaction_list[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': '6699'})
+        payment.profile = CustomerProfile.objects.get(pk=1)
         payment.save()
         self.processor.payment = payment
 
@@ -763,6 +765,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 1000000.00
         payment.transaction = transaction_list[-1].transId.text
         payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+        payment.profile = CustomerProfile.objects.get(pk=1)
         payment.save()
         self.processor.payment = payment
 
@@ -791,6 +794,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 0.01
         payment.transaction = '111222333412'
         payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+        payment.profile = CustomerProfile.objects.get(pk=1)
         payment.save()
         self.processor.payment = payment
 
@@ -848,6 +852,7 @@ class AuthorizeNetProcessorTests(TestCase):
             return
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         dummy_receipt = Receipt(order_item=OrderItem.objects.get(pk=2))
+        dummy_receipt.profile = CustomerProfile.objects.get(pk=1)
         dummy_receipt.transaction = active_subscriptions[-1].id.pyval
         dummy_payment = Payment.objects.create(invoice=self.existing_invoice,
                                                transaction=dummy_receipt.transaction,
@@ -856,6 +861,7 @@ class AuthorizeNetProcessorTests(TestCase):
                                                amount=dummy_receipt.order_item.invoice.total)
         dummy_payment.result['account_number'] = ""
         dummy_payment.result['account_type'] = ""
+        dummy_payment.profile = CustomerProfile.objects.get(pk=1)
         dummy_payment.save()
 
         if active_subscriptions:
@@ -879,6 +885,7 @@ class AuthorizeNetProcessorTests(TestCase):
             return
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         dummy_receipt = Receipt(order_item=OrderItem.objects.get(pk=2))
+        dummy_receipt.profile = CustomerProfile.objects.get(pk=1)
         dummy_receipt.transaction = active_subscriptions[0].id.pyval
 
         if active_subscriptions:
