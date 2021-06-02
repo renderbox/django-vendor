@@ -82,6 +82,7 @@ class PaymentProcessorBase(object):
                                created=timezone.now()
                                )
         self.payment.result['account_number'] = self.payment_info.cleaned_data.get('card_number')[-4:]
+        self.payment.result['first'] = True
         self.payment.payee_full_name = self.payment_info.cleaned_data.get('full_name')
         self.payment.payee_company = self.billing_address.cleaned_data.get('company')
 
@@ -166,6 +167,7 @@ class PaymentProcessorBase(object):
         receipt.profile = self.invoice.profile
         receipt.order_item = order_item
         receipt.transaction = self.payment.transaction
+        receipt.meta.update(self.payment.result)
         receipt.status = PurchaseStatus.COMPLETE
         receipt.start_date = today
         if term_type == TermType.PERPETUAL or term_type == TermType.ONE_TIME_USE:
@@ -330,10 +332,10 @@ class PaymentProcessorBase(object):
                                )
         self.payment.save()
         self.transaction_submitted = True
-
         self.payment.success = True
         self.payment.transaction = f"{self.payment.uuid}-free"
         self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+        self.payment.result = {'first': True}
         self.payment.save()
 
         self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
@@ -406,6 +408,7 @@ class PaymentProcessorBase(object):
                                invoice=self.invoice,
                                created=timezone.now())
         self.payment.result = payment_info
+        self.payment.result['first'] = False
 
         self.transaction_submitted = True
 
