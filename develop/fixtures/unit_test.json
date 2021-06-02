@@ -213,7 +213,7 @@
         "terms": 200,
         "term_details": null,
         "term_start_date": "2020-06-30T00:53:31Z",
-        "available": false,
+        "available": true,
         "bundle": false,
         "offer_description": ""
     }
@@ -233,7 +233,7 @@
         "terms": 200,
         "term_details": "{}",
         "term_start_date": null,
-        "available": false,
+        "available": true,
         "bundle": false,
         "offer_description": ""
     }
@@ -253,7 +253,7 @@
         "terms": 200,
         "term_details": "{}",
         "term_start_date": null,
-        "available": false,
+        "available": true,
         "bundle": false,
         "offer_description": ""
     }
@@ -276,7 +276,7 @@
             "payment_occurrences": 3
         },
         "term_start_date": null,
-        "available": false,
+        "available": true,
         "bundle": false,
         "offer_description": "Best deal on a Hulk Mug"
     }

@@ -273,7 +273,7 @@ class PaymentViewTests(TestCase):
 class ReviewCheckoutViewTests(TestCase):
 
     fixtures = ['user', 'unit_test']
-    
+
     def setUp(self):
         self.client = Client()
         self.user = User.objects.get(pk=1)
@@ -284,10 +284,10 @@ class ReviewCheckoutViewTests(TestCase):
     def test_view_status_code_200(self):
         response = self.client.get(self.view_url)
         self.assertEquals(response.status_code, 200)
-        
+
     # def test_view_cart_no_shipping_address(self):
     #     raise NotImplementedError()
-    
+
     def test_view_redirect_login(self):
         self.client.logout()
         response = self.client.get(self.view_url)
@@ -312,14 +312,14 @@ class ReviewCheckoutViewTests(TestCase):
         Payment.objects.all().delete()
         form_data = {
             'billing_address_form': {
-                'name': 'Home',
-                'company': 'Whitemoon Dreams',
-                'country': 840,
-                'address_1': '221B Baker Street',
-                'address_2': '',
-                'locality': 'Marylebone',
-                'state': 'California',
-                'postal_code': '90292'},
+                'billing-name': 'Home',
+                'billing-company': 'Whitemoon Dreams',
+                'billing-country': 840,
+                'billing-address_1': '221B Baker Street',
+                'billing-address_2': '',
+                'billing-locality': 'Marylebone',
+                'billing-state': 'California',
+                'billing-postal_code': '90292'},
             'credit_card_form': {
                 'full_name': 'Bob Ross',
                 'card_number': '5424000000000015',
@@ -327,7 +327,7 @@ class ReviewCheckoutViewTests(TestCase):
                 'expire_year': '2030',
                 'cvv_number': '900',
                 'payment_type': '10'}
-            }
+        }
 
         billing_address = BillingAddressForm(form_data['billing_address_form'])
         billing_address.is_bound = True
@@ -337,7 +337,7 @@ class ReviewCheckoutViewTests(TestCase):
         payment_info.is_valid()
 
         session = self.client.session
-        session['billing_address_form'] = billing_address.cleaned_data
+        session['billing_address_form'] = { f'billing-{key}': value for key, value in billing_address.cleaned_data.items() }
         session['credit_card_form'] = payment_info.cleaned_data
         session.save()
 
