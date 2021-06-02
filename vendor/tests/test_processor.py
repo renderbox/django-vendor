@@ -156,10 +156,10 @@ class BaseProcessorTests(TestCase):
             self.base_processor.set_billing_address_form_data(self.form_data)
 
     def test_set_billing_address_form_data_success(self):
-        self.base_processor.set_billing_address_form_data(self.form_data['billing-address_form'], BillingAddressForm)
+        self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
 
         self.assertIsNotNone(self.base_processor.billing_address)
-        self.assertIn(self.form_data['billing_address_form']['billing-address_1'], self.base_processor.billing_address.data['address_1'])
+        self.assertIn(self.form_data['billing_address_form']['billing-address_1'], self.base_processor.billing_address.data['billing-address_1'])
 
     def test_set_payment_info_form_data_fail(self):
         with self.assertRaises(TypeError):
