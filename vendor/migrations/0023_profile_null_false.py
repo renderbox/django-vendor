@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='customerprofile',
             name='user',
-            field=models.ForeignKey(default=set_default_user, on_delete=django.db.models.deletion.CASCADE, related_name='customer_profile', to='auth.user', verbose_name='User'),
+            field=models.ForeignKey(default=set_default_user, on_delete=django.db.models.deletion.CASCADE, related_name='customer_profile', to=settings.AUTH_USER_MODEL, verbose_name='User'),
             preserve_default=False,
         ),
         migrations.AlterField(
