@@ -410,5 +410,22 @@
         "status": 20,
         "meta": {}
     }
+},
+{
+    "model": "vendor.receipt",
+    "pk": 2,
+    "fields": {
+        "created": "2020-10-02T16:53:37.438Z",
+        "updated": "2020-10-02T16:53:37.438Z",
+        "profile": 1,
+        "order_item": 2,
+        "start_date": "2020-10-02T16:53:37.437Z",
+        "end_date": null,
+        "auto_renew": false,
+        "vendor_notes": {},
+        "transaction": "1-1-1",
+        "status": 20,
+        "meta": {}
+    }
 }
 ]

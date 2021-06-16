@@ -112,7 +112,7 @@ class BaseProcessorTests(TestCase):
         self.base_processor.payment = Payment.objects.get(pk=1)
         self.base_processor.create_receipts(self.base_processor.invoice.order_items.all())
 
-        self.assertEquals(4, sum([ order_item.receipts.all().count() for order_item in self.base_processor.invoice.order_items.all() ]))
+        self.assertEquals(5, sum([ order_item.receipts.all().count() for order_item in self.base_processor.invoice.order_items.all() ]))
 
     # def test_update_subscription_receipt_success(self):
     #     subscription_id = 123456789
