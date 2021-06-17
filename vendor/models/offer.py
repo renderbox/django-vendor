@@ -84,6 +84,14 @@ class Offer(CreateUpdateModelBase):
     def __str__(self):
         return self.name
 
+    def get_status_display(self):
+        if self.end_date is not None and timezone.now() > self.end_date:
+            return _("Expired")
+        elif timezone.now() < self.start_date:
+            return _("Scheduled")
+        elif timezone.now() >= self.start_date:
+            return _("Active")
+
     def get_msrp(self, currency=DEFAULT_CURRENCY):
         """
         Gets the sum of the products msrp cost for products.

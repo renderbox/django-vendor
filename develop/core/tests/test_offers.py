@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.test import TestCase, Client
@@ -143,6 +144,27 @@ class ModelOfferTests(TestCase):
         offer = Offer.objects.get(pk=4)
 
         self.assertEquals(offer.get_best_currency('jpy'), 'usd')
+
+    def test_get_status_display_active(self):
+        offer = Offer.objects.get(pk=1)
+        offer.start_date = (timezone.now() - timedelta(days=1))
+        offer.end_date = (timezone.now() + timedelta(days=4))
+        offer.save()
+        self.assertEqual(offer.get_status_display(), "Active")
+
+    def test_get_status_display_scheduled(self):
+        offer = Offer.objects.get(pk=1)
+        offer.start_date = (timezone.now() + timedelta(days=2))
+        offer.end_date = None
+        offer.save()
+        self.assertEqual(offer.get_status_display(), "Scheduled")
+
+    def test_get_status_display_expired(self):
+        offer = Offer.objects.get(pk=1)
+        offer.start_date = (timezone.now() - timedelta(days=5))
+        offer.end_date = (timezone.now() - timedelta(days=1))
+        offer.save()
+        self.assertEqual(offer.get_status_display(), "Expired")
 
 
 class ViewOfferTests(TestCase):
