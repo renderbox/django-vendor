@@ -276,6 +276,8 @@ class PaymentProcessorBase(object):
         """
         # TODO: Should this validation be outside the call to authorize the payment the call?
         # Why bother to call the processor is the forms are wrong
+        self.invoice.ordered_date = timezone.now()
+        self.invoice.save()
         if not self.invoice.total:
             self.free_payment()
             return None
