@@ -43,11 +43,14 @@ class WishlistItemInline(admin.TabularInline):
 class AddressAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid',)
     list_display = ('name', 'profile', 'postal_code')
+    search_fields = ('postal_code', )
 
 
 class CustomerProfileAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid',)
     list_display = ('user', 'site', 'currency')
+    search_fields = ('profile__user__username', )
+    list_filter = ('site__domain', )
     inlines = [
         ReceiptInline,
         InvoiceInline
@@ -57,6 +60,8 @@ class CustomerProfileAdmin(admin.ModelAdmin):
 class InvoiceAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid', 'profile', 'shipping_address')
     list_display = ('__str__', 'profile', 'site', 'status', 'created')
+    search_fields = ('profile__user__username', )
+    list_filter = ('site__domain', )
     inlines = [
         OrderItemInline,
     ]
@@ -66,6 +71,7 @@ class OfferAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid',)
     list_display = ('name', 'slug', 'site', 'terms', 'available')
     search_fields = ('name', 'site', )
+    list_filter = ('site__domain', )
     inlines = [
         PriceInline,
     ]
@@ -73,16 +79,18 @@ class OfferAdmin(admin.ModelAdmin):
 
 class PaymentAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid', 'invoice', 'created', 'transaction', 'amount', 'profile', )
-    list_display = ('created', 'transaction', 'invoice', 'profile', 'amount')
-    search_fields = ('transaction', 'profile__user__username', )
+    list_display = ('pk', 'created', 'transaction', 'invoice', 'profile', 'amount')
+    search_fields = ('pk', 'transaction', 'profile__user__username', )
+    list_filter = ('profile__site__domain', 'success')
     exclude = ('billing_address', )
 
 
 class ReceiptAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', 'profile', 'order_item', 'created')
+    readonly_fields = ('uuid', 'profile', 'order_item', 'created',)
     exclude = ('updated', )
-    list_display = ('transaction', 'created', 'profile', 'order_item', 'status', )
-    search_fields = ('transaction', 'profile__user__username', )
+    list_display = ('pk', 'transaction', 'created', 'profile', 'order_item', 'status' )
+    list_filter = ('profile__site__domain', 'status', 'products')
+    search_fields = ('pk', 'transaction', 'profile__user__username', )
 
 
 class TaxClassifierAdmin(admin.ModelAdmin):

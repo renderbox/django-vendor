@@ -362,7 +362,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def to_valid_decimal(self, number):
         # TODO: Need to check currency to determin decimal places.
-        return Decimal(number).quantize(Decimal('.00'), rounding=ROUND_DOWN)
+        return Decimal(number).quantize(Decimal('.00'))
 
     ##########
     # Base Processor Transaction Implementations

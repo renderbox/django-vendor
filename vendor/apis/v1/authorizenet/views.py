@@ -8,6 +8,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
 
 from vendor.models import Receipt, Invoice
 from vendor.processors import PaymentProcessor
@@ -49,7 +50,9 @@ def renew_subscription_task(json_data):
     transaction_detail = processor.get_transaction_detail(transaction_id)
 
     if not hasattr(transaction_detail, 'subscription'):
-        return JsonResponse({})
+        return None
+    if transaction_detail.subscription.payNum.pyVal == 1:
+        return None
 
     past_receipt = Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created').first()
 
@@ -57,11 +60,27 @@ def renew_subscription_task(json_data):
         'account_number': transaction_detail.payment.creditCard.cardNumber.text[-4:],
         'account_type': transaction_detail.payment.creditCard.cardType.text,
         'full_name': " ".join([transaction_detail.billTo.firstName.text, transaction_detail.billTo.lastName.text]),
-        'raw': str(json_data)
+        'raw': str(json_data),
+        'transaction_id': transaction_id,
+        'subscription_id': transaction_detail.subscription.id.text,
+        'payment_number': transaction_detail.subscription.payNum.text
     }
+
+    invoice_history = []
+
+    for receipt in Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created').first():
+        past_invoice = receipt.order_item.invoice
+        invoice_info = {
+            "invoice_id": past_invoice.pk,
+            "receipt_id": receipt.pk,
+            "payments": [payment.pk for payment in past_invoice.payments.all()] 
+        }
+        invoice_history.append(invoice_info)
 
     invoice = Invoice(status=Invoice.InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
     invoice.profile = past_receipt.profile
+    invoice.ordered_date = timezone.now()
+    invoice.vendor_notes = invoice_history
     invoice.save()
     invoice.add_offer(past_receipt.order_item.offer)
     
