@@ -2,6 +2,7 @@ import json
 import hashlib
 import hmac
 import urllib.parse
+import logging
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
@@ -12,6 +13,8 @@ from django.utils import timezone
 
 from vendor.models import Receipt, Invoice
 from vendor.processors import PaymentProcessor
+
+logger = logging.getLogger(__name__)
 
 payment_processor = PaymentProcessor
 
@@ -30,14 +33,15 @@ class AuthorizeNetBaseAPI(View):
         Reference: https://developer.authorize.net/api/reference/features/webhooks.html
         """
         return super().dispatch(*args, **kwargs)
-    
+
     def is_valid_post(self):
         hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNITURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
-        
+        logger.warning(f"Checking hashs, calculated: {hash_value}, request value: {self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]}")
         if hash_value == self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]:
             return True
 
         return False
+
 
 def renew_subscription_task(json_data):
     """
@@ -83,20 +87,24 @@ def renew_subscription_task(json_data):
     invoice.vendor_notes = invoice_history
     invoice.save()
     invoice.add_offer(past_receipt.order_item.offer)
-    
+
     processor = PaymentProcessor(invoice)
     processor.renew_subscription(past_receipt, payment_info)
+
 
 class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
     """
     API endpoint to get event notifications from authorizenet when a authcaputre is created.
     If there is a subscription tied to the transaction, it will renew such subscription
     """
-    
+
     def post(self, request, *args, **kwargs):
-        if self.is_valid_post():
+        logger.warning(f"AuthorizeNet AuthCapture Event webhook: {request}")
+        if not self.is_valid_post():
+            logger.error(f"Request was denied: {request}")
             raise PermissionDenied()
 
+        logger.warning(f"Renewing subscription request: {request.body}")
         renew_subscription_task(json.loads(request.body))
 
         return JsonResponse({})
