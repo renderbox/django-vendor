@@ -100,7 +100,7 @@ class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
 
     def post(self, request, *args, **kwargs):
         logger.warning(f"AuthorizeNet AuthCapture Event webhook: {request}")
-        if self.is_valid_post():
+        if not self.is_valid_post():
             logger.error(f"Request was denied: {request}")
             raise PermissionDenied()
 
