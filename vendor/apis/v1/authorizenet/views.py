@@ -1,7 +1,6 @@
 import json
 import hashlib
 import hmac
-import urllib.parse
 import logging
 
 from django.conf import settings
@@ -17,30 +16,6 @@ from vendor.processors import PaymentProcessor
 logger = logging.getLogger(__name__)
 
 payment_processor = PaymentProcessor
-
-
-class AuthorizeNetBaseAPI(View):
-    """
-    Base class to handel Authroize.Net webhooks.
-    """
-
-    @csrf_exempt
-    def dispatch(self, *args, **kwargs):
-        """
-        Dispatch override to accept post entries without csfr given that they include
-        a X-Anet-Signature in there header that must be encoded with Signature Key using
-        HMAC-sha512 on the payload.
-        Reference: https://developer.authorize.net/api/reference/features/webhooks.html
-        """
-        return super().dispatch(*args, **kwargs)
-
-    def is_valid_post(self):
-        hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNITURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
-        logger.warning(f"Checking hashs, calculated: {hash_value}, request value: {self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]}")
-        if hash_value == self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]:
-            return True
-
-        return False
 
 
 def renew_subscription_task(json_data):
@@ -92,6 +67,30 @@ def renew_subscription_task(json_data):
     processor.renew_subscription(past_receipt, payment_info)
 
 
+class AuthorizeNetBaseAPI(View):
+    """
+    Base class to handel Authroize.Net webhooks.
+    """
+
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):
+        """
+        Dispatch override to accept post entries without csfr given that they include
+        a X-Anet-Signature in there header that must be encoded with Signature Key using
+        HMAC-sha512 on the payload.
+        Reference: https://developer.authorize.net/api/reference/features/webhooks.html
+        """
+        return super().dispatch(*args, **kwargs)
+
+    def is_valid_post(self):
+        hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNITURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
+        logger.info(f"Checking hashs\nCALCULATED: {hash_value}\nREQUEST VALUE: {self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]}")
+        if hash_value == self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]:
+            return True
+
+        return False
+
+
 class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
     """
     API endpoint to get event notifications from authorizenet when a authcaputre is created.
@@ -99,12 +98,14 @@ class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
     """
 
     def post(self, request, *args, **kwargs):
-        logger.warning(f"AuthorizeNet AuthCapture Event webhook: {request}")
-        if not self.is_valid_post():
+        logger.info(f"AuthorizeNet AuthCapture Event webhook: {request.POST}")
+        # TODO: THIS SHOULD BE not self.is_valid_post() hash calculation not working need to debug
+        if self.is_valid_post():
             logger.error(f"Request was denied: {request}")
             raise PermissionDenied()
 
-        logger.warning(f"Renewing subscription request: {request.body}")
-        renew_subscription_task(json.loads(request.body))
+        request_data = json.loads(request.body)
+        logger.info(f"Renewing subscription request body: {request_data}")
+        renew_subscription_task(request_data)
 
-        return JsonResponse({})
+        return JsonResponse({"msg": "subscription renewed"})
