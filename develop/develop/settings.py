@@ -196,3 +196,31 @@ VENDOR_COUNTRY_DEFAULT = 'US'
 # Invoice, Receipts, CustomerProfile, and Payments you
 # can change the value on MIGRATION_0023_DEFAULT_USER
 MIGRATION_0023_DEFAULT_USER = None
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'debug.log',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler'
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'vendor.apis.v1.authorizenet.views': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}

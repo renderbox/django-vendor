@@ -7,5 +7,5 @@ app_name = "vendor_api"
 
 urlpatterns = [
     path('', api_views.VendorIndexAPI.as_view(), name='api-index'),
-    path('authorizenet/authcapture/', authorizenet_views.AuthroizeCaptureAPI.as_view(), name='api-authorizenet-authcapture-get')
+    path('authorizenet/authcapture', authorizenet_views.AuthroizeCaptureAPI.as_view(), name='api-authorizenet-authcapture-get')
 ]
