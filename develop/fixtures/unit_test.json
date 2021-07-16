@@ -273,7 +273,10 @@
         "terms": 100,
         "term_details": {
             "period_length": 1,
-            "payment_occurrences": 3
+            "payment_occurrences": 12,
+            "term_units": 20,
+            "trial_occurrences": 1,
+            "trial_amount": 13.00
         },
         "term_start_date": null,
         "available": true,
@@ -296,7 +299,10 @@
         "terms": 100,
         "term_details": {
             "period_length": 1,
-            "payment_occurrences": 3
+            "payment_occurrences": 3,
+            "term_units": 20,
+            "trial_occurrences": 1,
+            "trial_amount": 66
         },
         "term_start_date": null,
         "available": true,

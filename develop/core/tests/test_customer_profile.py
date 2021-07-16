@@ -209,7 +209,7 @@ class AddOfferToProfileView(TestCase):
                                                start_date=timezone.now(),
                                                terms=TermType.MONTHLY_SUBSCRIPTION,
                                                term_details={ "term_units": 20,
-                                                              "trail_occurrences": 1})
+                                                              "trial_occurrences": 1})
         price = Price.objects.create(offer=self.free_offer, cost=0, start_date=timezone.now())
         self.free_offer.products.add(Product.objects.get(pk=4))
 

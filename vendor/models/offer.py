@@ -29,7 +29,8 @@ def offer_term_details_default():
         'period_length': 1,
         'payment_occurrences': 12,
         "term_units": TermDetailUnits.MONTH,
-        "trial_occurrences": 0
+        "trial_occurrences": 0,
+        "trial_amount": 0
     }
 
 

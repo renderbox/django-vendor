@@ -260,8 +260,11 @@
         "end_date": null,
         "terms": 101,
         "term_details": {
+            "period_length": 1,
+            "payment_occurrences": 12,
             "term_units": 10,
-            "trail_occurrences": 7
+            "trial_occurrences": 7,
+            "trial_amount": 0
         },
         "term_start_date": null,
         "available": true,
@@ -282,8 +285,11 @@
         "end_date": null,
         "terms": 112,
         "term_details": {
+            "period_length": 1,
+            "payment_occurrences": 12,
             "term_units": 20,
-            "trail_occurrences": 1
+            "trial_occurrences": 1,
+            "trial_amount": 0
         },
         "term_start_date": null,
         "available": true,
