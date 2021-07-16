@@ -83,6 +83,13 @@ class AuthorizeNetBaseAPI(View):
         return super().dispatch(*args, **kwargs)
 
     def is_valid_post(self):
+        logger.info(f"Request body: {self.request.body}")
+        logger.info(f"X ANET SIGNATURE: {self.request.META.get('HTTP_X_ANET_SIGNATURE')}")
+
+        if 'HTTP_X_ANET_SIGNATURE' not in self.request.META:
+            logger.warning("Webhook warning SIGNITURE KEY")
+            return False
+
         hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNITURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
         logger.info(f"Checking hashs\nCALCULATED: {hash_value}\nREQUEST VALUE: {self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]}")
         if hash_value == self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]:
@@ -99,6 +106,11 @@ class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
 
     def post(self, request, *args, **kwargs):
         logger.info(f"AuthorizeNet AuthCapture Event webhook: {request.POST}")
+
+        if not request.body:
+            logger.warning("Webhook event has no body")
+            return JsonResponse({"msg": "Invalid request body."})
+
         # TODO: THIS SHOULD BE not self.is_valid_post() hash calculation not working need to debug
         if self.is_valid_post():
             logger.error(f"Request was denied: {request}")

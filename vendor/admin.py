@@ -78,7 +78,7 @@ class OfferAdmin(admin.ModelAdmin):
 
 
 class PaymentAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', 'invoice', 'created', 'transaction', 'amount', 'profile', )
+    readonly_fields = ('uuid', 'invoice', 'created', 'profile', )
     list_display = ('pk', 'created', 'transaction', 'invoice', 'profile', 'amount')
     search_fields = ('pk', 'transaction', 'profile__user__username', )
     list_filter = ('profile__site__domain', 'success')
