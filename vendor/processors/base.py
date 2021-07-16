@@ -76,11 +76,11 @@ class PaymentProcessorBase(object):
         Create payment instance with base information to track payment submissions
         """
         self.payment = Payment(profile=self.invoice.profile,
-                               amount=self.invoice.total,
-                               provider=self.provider,
-                               invoice=self.invoice,
-                               created=timezone.now()
-                               )
+                                                amount=self.invoice.total,
+                                                provider=self.provider,
+                                                invoice=self.invoice,
+                                                created=timezone.now()
+                                                )
         self.payment.result['account_number'] = self.payment_info.cleaned_data.get('card_number')[-4:]
         self.payment.result['first'] = True
         self.payment.payee_full_name = self.payment_info.cleaned_data.get('full_name')
@@ -144,8 +144,24 @@ class PaymentProcessorBase(object):
         """
         return today + timedelta(days=add_days)
 
+    def get_period_length(self, subscription, subscription_type):
+        if subscription_type == TermType.SUBSCRIPTION:
+            return subscription.offer.term_details['period_length']
+        else:
+            return subscription_type - 100   # You subtract 100 because enum are numbered according to their period length. eg Month = 101 and Year = 112
+
+    def get_payment_occurrences(self, subscription):
+        """
+        Gets the defined payment ocurrences for a Subscription. It defaults to
+        9999 which means it will charge that amount until the customer cancels the subscription.
+        """
+        return subscription.offer.term_details.get('payment_occurrences', 9999)
+
     def get_trial_occurrences(self, subscription):
         return subscription.offer.term_details.get('trial_occurrences', 0)
+
+    def get_trial_amount(self, subscription):
+        return subscription.offer.term_details.get('trial_amount', 0)
 
     def get_payment_schedule_start_date(self, subscription):
         """
@@ -168,19 +184,19 @@ class PaymentProcessorBase(object):
         receipt.order_item = order_item
         receipt.transaction = self.payment.transaction
         receipt.meta.update(self.payment.result)
+        receipt.meta['payment_amount'] = self.payment.amount
         receipt.status = PurchaseStatus.COMPLETE
         receipt.start_date = today
         if term_type == TermType.PERPETUAL or term_type == TermType.ONE_TIME_USE:
             receipt.auto_renew = False
-        elif term_type == TermType.SUBSCRIPTION:
-            total_months = int(order_item.offer.term_details['period_length']) * int(order_item.offer.term_details['payment_occurrences'])
-        else:
-            total_months = term_type - 100
-        # Get if it is monthy, bi-monthly, quartarly of annually
+
         if term_type < TermType.PERPETUAL:
-            trial_offset = self.get_payment_schedule_start_date(order_item)      # If there are any trial days or months you need to offset it on the end date.
-            receipt.end_date = self.get_future_date_months(trial_offset, total_months)
+            if order_item.offer.term_details['term_units'] == TermDetailUnits.DAY:
+                receipt.end_date = self.get_future_date_days(today, self.get_period_length(order_item, order_item.offer.terms))
+            else:
+                receipt.end_date = self.get_future_date_months(today, self.get_period_length(order_item, order_item.offer.terms))
             receipt.auto_renew = True
+
         return receipt
 
     def create_order_item_receipt(self, order_item):
