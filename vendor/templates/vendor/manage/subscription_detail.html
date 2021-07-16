@@ -36,7 +36,7 @@
             <div class='font-weight-bold'>
               {% trans 'Trial Period' %}
             </div>
-            {{object.order_item.offer.term_details.trail_occurrences|default:'0'}}
+            {{object.order_item.offer.term_details.trial_occurrences|default:'0'}}
             {% if object.order_item.offer.term_details.term_units == 10 %}
             {% trans 'Days' %}
             {% else %}
