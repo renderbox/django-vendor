@@ -109,6 +109,29 @@
     }
 },
 {
+    "model": "core.product",
+    "pk": 5,
+    "fields": {
+        "created": "2020-06-30T02:33:35.109Z",
+        "updated": "2020-06-30T02:33:35.109Z",
+        "sku": null,
+        "uuid": "defdd4f5-fd8f-4aa4-b25a-c043a846a714",
+        "name": "Vendor License",
+        "site": 1,
+        "slug": "vendor-license",
+        "available": false,
+        "description": "",
+        "meta": {"msrp": {"default": "usd", "usd": 0}},
+        "classification": [],
+        "offers": [
+            6,
+            7,
+            8
+        ],
+        "receipts": []
+    }
+},
+{
     "model": "vendor.invoice",
     "pk": 1,
     "fields": {
@@ -311,6 +334,84 @@
     }
 },
 {
+    "model": "vendor.offer",
+    "pk": 6,
+    "fields": {
+        "created": "2020-06-30T02:38:17.762Z",
+        "updated": "2020-06-30T02:38:35.045Z",
+        "uuid": "ccda0d8a-0ddf-440b-8804-eddc2100493b",
+        "slug": "month-license",
+        "site": 1,
+        "name": "Monthly License",
+        "start_date": "2020-06-30T02:38:16Z",
+        "end_date": null,
+        "terms": 101,
+        "term_details": {
+            "period_length": 1,
+            "payment_occurrences": 12,
+            "term_units": 20,
+            "trial_occurrences": 0,
+            "trial_amount": 0
+        },
+        "term_start_date": null,
+        "available": true,
+        "bundle": false,
+        "offer_description": "Base Monthly Subscription"
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 7,
+    "fields": {
+        "created": "2020-06-30T02:38:17.762Z",
+        "updated": "2020-06-30T02:38:35.045Z",
+        "uuid": "ccda0d8a-0ddf-440b-8804-eddc4800493b",
+        "slug": "month-license-free-month",
+        "site": 1,
+        "name": "Monthly License Free Month",
+        "start_date": "2020-06-30T02:38:16Z",
+        "end_date": null,
+        "terms": 101,
+        "term_details": {
+            "period_length": 1,
+            "payment_occurrences": 12,
+            "term_units": 20,
+            "trial_occurrences": 1,
+            "trial_amount": 0
+        },
+        "term_start_date": null,
+        "available": true,
+        "bundle": false,
+        "offer_description": "Base Monthly Subscription Free Month"
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 8,
+    "fields": {
+        "created": "2020-06-30T02:38:17.762Z",
+        "updated": "2020-06-30T02:38:35.045Z",
+        "uuid": "ccda0d8a-0ddf-440b-8804-eddc4800493c",
+        "slug": "free-license",
+        "site": 1,
+        "name": "Free License",
+        "start_date": "2020-06-30T02:38:16Z",
+        "end_date": null,
+        "terms": 200,
+        "term_details": {
+            "period_length": 1,
+            "payment_occurrences": 12,
+            "term_units": 20,
+            "trial_occurrences": 0,
+            "trial_amount": 0
+        },
+        "term_start_date": null,
+        "available": true,
+        "bundle": false,
+        "offer_description": "Base Monthly Subscription Free Month"
+    }
+},
+{
     "model": "vendor.payment",
     "pk": 1,
     "fields": {
@@ -393,6 +494,42 @@
     "pk": 6,
     "fields": {
         "offer": 5,
+        "cost": 0,
+        "currency": "usd",
+        "start_date": "2000-06-30T02:38:30Z",
+        "end_date": "2120-06-30T02:38:30Z",
+        "priority": 2
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 7,
+    "fields": {
+        "offer": 6,
+        "cost": 10,
+        "currency": "usd",
+        "start_date": "2000-06-30T02:38:30Z",
+        "end_date": "2120-06-30T02:38:30Z",
+        "priority": 2
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 8,
+    "fields": {
+        "offer": 7,
+        "cost": 10,
+        "currency": "usd",
+        "start_date": "2000-06-30T02:38:30Z",
+        "end_date": "2120-06-30T02:38:30Z",
+        "priority": 2
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 9,
+    "fields": {
+        "offer": 8,
         "cost": 0,
         "currency": "usd",
         "start_date": "2000-06-30T02:38:30Z",

@@ -211,7 +211,7 @@ class AddOfferToProfileView(TestCase):
                                                term_details={ "term_units": 20,
                                                               "trial_occurrences": 1})
         price = Price.objects.create(offer=self.free_offer, cost=0, start_date=timezone.now())
-        self.free_offer.products.add(Product.objects.get(pk=4))
+        self.free_offer.products.add(Product.objects.get(pk=5))
 
     def test_view_cart_status_code(self):
         url = reverse('vendor_admin:manager-profile-add-offer', kwargs={'uuid_profile': self.customer_profile.uuid, 'uuid_offer': self.free_offer.uuid})

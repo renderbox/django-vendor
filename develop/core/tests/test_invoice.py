@@ -59,9 +59,9 @@ class ModelInvoiceTests(TestCase):
         self.existing_invoice.update_totals()
         remove_shirt_total = self.existing_invoice.total
 
-        self.assertEquals(get_display_decimal(start_total), get_display_decimal(325.2))
-        self.assertEquals(get_display_decimal(add_mug_total), Decimal("300.10"))
-        self.assertEquals(get_display_decimal(remove_shirt_total), get_display_decimal(225.1))
+        self.assertEquals(get_display_decimal(start_total), get_display_decimal(325))
+        self.assertEquals(get_display_decimal(add_mug_total), Decimal("350.11"))
+        self.assertEquals(get_display_decimal(remove_shirt_total), get_display_decimal(275.1))
 
     def test_add_quantity(self):
         self.shirt_offer.allow_multiple = True
@@ -87,13 +87,13 @@ class ModelInvoiceTests(TestCase):
         self.assertNotEquals(start_quantity, end_quantity)
 
     def test_get_recurring_total(self):
-        recurring_offer = Offer.objects.get(pk=5)
+        recurring_offer = Offer.objects.get(pk=6)
         self.existing_invoice.add_offer(recurring_offer)
         
         self.assertEquals(self.existing_invoice.get_recurring_total(), recurring_offer.current_price())
 
     def test_get_recurring_total_only_recurring_order_items(self):
-        recurring_offer = Offer.objects.get(pk=5)
+        recurring_offer = Offer.objects.get(pk=6)
         self.new_invoice.add_offer(recurring_offer)
         
         self.assertEquals(self.new_invoice.get_recurring_total(), recurring_offer.current_price())
@@ -105,8 +105,8 @@ class ModelInvoiceTests(TestCase):
         self.existing_invoice.save()
         self.existing_invoice.add_offer(recurring_offer)
         
-        self.assertEquals(get_display_decimal(self.existing_invoice.get_one_time_transaction_total()), get_display_decimal(325.2))
-        self.assertEquals(self.existing_invoice.total, 300)
+        self.assertEquals(get_display_decimal(self.existing_invoice.get_one_time_transaction_total()), get_display_decimal(344.98))
+        self.assertEquals(self.existing_invoice.total, 325)
 
     def test_get_one_time_transaction_total_no_recurring_order_items(self):
         self.existing_invoice.update_totals()
@@ -178,7 +178,7 @@ class CartViewTests(TestCase):
     def test_view_cart_content_loads(self):
         response = self.client.get(self.cart_url)
 
-        self.assertContains(response, f'<span>${self.invoice.subtotal:.2f}</span>')
+        self.assertContains(response, f'<span>${self.invoice.calculate_subtotal():.2f}</span>')
         self.assertContains(response, f'<span>${self.invoice.tax:.2f}</span>')
         self.assertContains(response, f'<span>${self.invoice.shipping:.2f}</span>')
         self.assertContains(response, f'<span class="text-primary">${self.invoice.total:.2f}</span>')
