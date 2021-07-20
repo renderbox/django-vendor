@@ -33,7 +33,7 @@ def renew_subscription_task(json_data):
     if transaction_detail.subscription.payNum.pyVal == 1:
         return None
 
-    past_receipt = Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created').first()
+    past_receipt = Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created').last()
 
     payment_info = {
         'account_number': transaction_detail.payment.creditCard.cardNumber.text[-4:],
@@ -47,7 +47,7 @@ def renew_subscription_task(json_data):
 
     invoice_history = []
 
-    for receipt in Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created').first():
+    for receipt in Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created'):
         past_invoice = receipt.order_item.invoice
         invoice_info = {
             "invoice_id": past_invoice.pk,
@@ -62,6 +62,8 @@ def renew_subscription_task(json_data):
     invoice.vendor_notes = invoice_history
     invoice.save()
     invoice.add_offer(past_receipt.order_item.offer)
+    invoice.total = transaction_detail.authAmount.pyval
+    invoice.save()
 
     processor = PaymentProcessor(invoice)
     processor.renew_subscription(past_receipt, payment_info)
