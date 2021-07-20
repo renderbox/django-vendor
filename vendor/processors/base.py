@@ -3,13 +3,12 @@ Base Payment processor used by all derived processors.
 """
 import django.dispatch
 
-from datetime import timedelta, date
-from calendar import mdays
 from django.conf import settings
 from django.utils import timezone
 from vendor import config
 from vendor.models import Payment, Invoice, Receipt
-from vendor.models.choice import PurchaseStatus, TermType, TermDetailUnits
+from vendor.models.choice import PurchaseStatus, TermType
+from vendor.utils import get_payment_schedule_end_date
 ##########
 # SIGNALS
 
@@ -75,6 +74,7 @@ class PaymentProcessorBase(object):
         """
         Create payment instance with base information to track payment submissions
         """
+
         self.payment = Payment(profile=self.invoice.profile,
                                                 amount=self.invoice.total,
                                                 provider=self.provider,
@@ -125,58 +125,6 @@ class PaymentProcessorBase(object):
             return True
         return False
 
-    def get_future_date_months(self, today, add_months):
-        """
-        Returns a datetime object with the a new added months
-        """
-        newday = today.day
-        newmonth = (((today.month - 1) + add_months) % 12) + 1
-        newyear = today.year + (((today.month - 1) + add_months) // 12)
-        if newday > mdays[newmonth]:
-            newday = mdays[newmonth]
-        if newyear % 4 == 0 and newmonth == 2:
-            newday += 1
-        return date(newyear, newmonth, newday)
-
-    def get_future_date_days(self, today, add_days):
-        """
-        Returns a datetime object with the a new added days
-        """
-        return today + timedelta(days=add_days)
-
-    def get_period_length(self, subscription, subscription_type):
-        if subscription_type == TermType.SUBSCRIPTION:
-            return subscription.offer.term_details['period_length']
-        else:
-            return subscription_type - 100   # You subtract 100 because enum are numbered according to their period length. eg Month = 101 and Year = 112
-
-    def get_payment_occurrences(self, subscription):
-        """
-        Gets the defined payment ocurrences for a Subscription. It defaults to
-        9999 which means it will charge that amount until the customer cancels the subscription.
-        """
-        return subscription.offer.term_details.get('payment_occurrences', 9999)
-
-    def get_trial_occurrences(self, subscription):
-        return subscription.offer.term_details.get('trial_occurrences', 0)
-
-    def get_trial_amount(self, subscription):
-        return subscription.offer.term_details.get('trial_amount', 0)
-
-    def get_payment_schedule_start_date(self, subscription):
-        """
-        Determines the start date offset so the payment gateway starts charging the monthly subscriptions
-        If the customer has already purchased the subscription it will return timezone.now()
-        """
-        if self.invoice.profile.has_previously_owned_products(subscription.offer.products.all()):
-            return timezone.now()
-
-        units = subscription.offer.term_details.get('term_units', TermDetailUnits.MONTH)
-        if units == TermDetailUnits.MONTH:
-            return self.get_future_date_months(timezone.now(), self.get_trial_occurrences(subscription))
-        elif units == TermDetailUnits.DAY:
-            return self.get_future_date_days(timezone.now(), self.get_trial_occurrences(subscription))
-
     def create_receipt_by_term_type(self, product, order_item, term_type):
         today = timezone.now()
         receipt = Receipt()
@@ -187,14 +135,12 @@ class PaymentProcessorBase(object):
         receipt.meta['payment_amount'] = self.payment.amount
         receipt.status = PurchaseStatus.COMPLETE
         receipt.start_date = today
+
         if term_type == TermType.PERPETUAL or term_type == TermType.ONE_TIME_USE:
             receipt.auto_renew = False
 
         if term_type < TermType.PERPETUAL:
-            if order_item.offer.term_details['term_units'] == TermDetailUnits.DAY:
-                receipt.end_date = self.get_future_date_days(today, self.get_period_length(order_item, order_item.offer.terms))
-            else:
-                receipt.end_date = self.get_future_date_months(today, self.get_period_length(order_item, order_item.offer.terms))
+            receipt.end_date = get_payment_schedule_end_date(order_item.offer)
             receipt.auto_renew = True
 
         return receipt
@@ -290,13 +236,12 @@ class PaymentProcessorBase(object):
         This runs the chain of events in a transaction.
         This should not be overriden.  Override one of the methods it calls if you need to.
         """
-        # TODO: Should this validation be outside the call to authorize the payment the call?
-        # Why bother to call the processor is the forms are wrong
         self.invoice.ordered_date = timezone.now()
         self.invoice.save()
-        if not self.invoice.total:
+        if not self.invoice.calculate_subtotal():
             self.free_payment()
             return None
+
         if not self.is_data_valid():
             return None
 
@@ -314,6 +259,7 @@ class PaymentProcessorBase(object):
             self.save_payment_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
             self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
             if self.is_payment_and_invoice_complete():
+                self.invoice.save_discounts_vendor_notes()
                 self.create_receipts(self.invoice.get_one_time_transaction_order_items())
 
         if self.invoice.get_recurring_order_items():
@@ -321,6 +267,7 @@ class PaymentProcessorBase(object):
 
         vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()
+
 
         #TODO: Set the status based on the result from the process_payment()
 
@@ -394,6 +341,7 @@ class PaymentProcessorBase(object):
             self.save_payment_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
             self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
             if self.is_payment_and_invoice_complete():
+                self.invoice.save_discounts_vendor_notes()
                 self.create_order_item_receipt(subscription)
 
     def subscription_payment(self, subscription):
