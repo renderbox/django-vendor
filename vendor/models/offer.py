@@ -1,7 +1,6 @@
 import uuid
 
 from autoslug import AutoSlugField
-from decimal import Decimal, ROUND_UP
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
@@ -151,10 +150,10 @@ class Offer(CreateUpdateModelBase):
         """
         Gets the savings between the difference between the product's msrp and the currenct price
         """
-        savings = self.get_msrp(currency) - self.current_price(currency)
-        if savings < 0:
+        discount = self.get_msrp(currency) - self.current_price(currency)
+        if discount <= 0:
             return 0
-        return self.current_price(currency)
+        return discount
 
     def get_best_currency(self, currency=DEFAULT_CURRENCY):
         """
