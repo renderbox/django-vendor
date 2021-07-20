@@ -91,7 +91,7 @@
         "slug": "vendor-licence",
         "available": true,
         "description": "",
-        "meta": { "msrp": { "default": "usd", "usd":112.99 }},
+        "meta": { "msrp": { "default": "usd", "usd":12.99 }},
         "classification": [],
         "offers": [
             4
@@ -112,7 +112,7 @@
         "slug": "python-licence",
         "available": true,
         "description": "",
-        "meta": { "msrp": { "default": "usd", "usd":1.99 }},
+        "meta": { "msrp": { "default": "usd", "usd":112.99 }},
         "classification": [],
         "offers": [
             5
@@ -133,10 +133,10 @@
         "customer_notes": "",
         "vendor_notes": "",
         "ordered_date": null,
-        "subtotal": 309.97,
+        "subtotal": 144.94,
         "tax": 0.0,
         "shipping": 0.0,
-        "total": 309.97,
+        "total": 144.94,
         "currency": "usd",
         "shipping_address": null
     }
@@ -255,7 +255,7 @@
         "uuid": "ceda0d8a-0ddf-440b-8804-eddc2800479b",
         "slug": "vendor-month",
         "site": 1,
-        "name": "Vendor Month Subscription",
+        "name": "Vendor Month Subscription 1 Month Free",
         "start_date": "2020-06-30T02:38:16Z",
         "end_date": null,
         "terms": 101,
@@ -285,10 +285,10 @@
         "end_date": null,
         "terms": 112,
         "term_details": {
-            "period_length": 1,
-            "payment_occurrences": 12,
+            "period_length": 12,
+            "payment_occurrences": 9999,
             "term_units": 20,
-            "trial_occurrences": 1,
+            "trial_occurrences": 0,
             "trial_amount": 0
         },
         "term_start_date": null,
@@ -326,6 +326,30 @@
     "fields": {
         "offer": 3,
         "cost": 25.0,
+        "currency": "usd",
+        "start_date": "2020-06-30T02:38:30Z",
+        "end_date": null,
+        "priority": 0
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 4,
+    "fields": {
+        "offer": 4,
+        "cost": 12.99,
+        "currency": "usd",
+        "start_date": "2020-06-30T02:38:30Z",
+        "end_date": null,
+        "priority": 0
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 5,
+    "fields": {
+        "offer": 5,
+        "cost": 112.99,
         "currency": "usd",
         "start_date": "2020-06-30T02:38:30Z",
         "end_date": null,

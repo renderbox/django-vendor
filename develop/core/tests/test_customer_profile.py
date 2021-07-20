@@ -224,7 +224,7 @@ class AddOfferToProfileView(TestCase):
         self.assertTrue(self.customer_profile.receipts.count())
 
     def test_adds_free_product_to_profile_fail(self):
-        url = reverse('vendor_admin:manager-profile-add-offer', kwargs={'uuid_profile': self.customer_profile.uuid, 'uuid_offer': Offer.objects.get(pk=1).uuid})
+        url = reverse('vendor_admin:manager-profile-add-offer', kwargs={'uuid_profile': self.customer_profile.uuid, 'uuid_offer': Offer.objects.get(pk=2).uuid})
         response = self.client.get(url)
         self.assertFalse(self.customer_profile.receipts.count())
 

@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from vendor.models import Offer, Invoice, OrderItem, CustomerProfile, Payment
 from vendor.forms import BillingAddressForm, CreditCardForm
+from vendor.utils import get_display_decimal
 
 User = get_user_model()
 
@@ -53,13 +54,13 @@ class ModelInvoiceTests(TestCase):
         self.existing_invoice.update_totals()
         add_mug_total = self.existing_invoice.total
 
-        self.existing_invoice.remove_offer(Offer.objects.get(pk=1))
+        self.existing_invoice.remove_offer(Offer.objects.get(pk=2))
         self.existing_invoice.update_totals()
         remove_shirt_total = self.existing_invoice.total
 
-        self.assertEquals(start_total, 345.18)
-        self.assertEquals(add_mug_total, 355.18)
-        self.assertEquals(remove_shirt_total, 345.19)
+        self.assertEquals(get_display_decimal(start_total), get_display_decimal(305.219))
+        self.assertEquals(get_display_decimal(add_mug_total), get_display_decimal(330.32))
+        self.assertEquals(get_display_decimal(remove_shirt_total), get_display_decimal(255.32))
 
     def test_add_quantity(self):
         self.shirt_offer.allow_multiple = True
@@ -99,15 +100,17 @@ class ModelInvoiceTests(TestCase):
 
     def test_get_one_time_transaction_total_with_recurring_offer(self):
         recurring_offer = Offer.objects.get(pk=5)
+        self.existing_invoice.update_totals()
+        self.existing_invoice.save()
         self.existing_invoice.add_offer(recurring_offer)
         
-        self.assertEquals(self.existing_invoice.get_one_time_transaction_total(), self.existing_invoice.total - self.existing_invoice.get_recurring_total())
+        self.assertEquals(get_display_decimal(self.existing_invoice.get_one_time_transaction_total()), get_display_decimal(325.2))
+        self.assertEquals(self.existing_invoice.total, 280.02)
 
     def test_get_one_time_transaction_total_no_recurring_order_items(self):
-        recurring_offer = Offer.objects.get(pk=5)
-        self.existing_invoice.add_offer(recurring_offer)
+        self.existing_invoice.update_totals()
         
-        self.assertEquals(self.existing_invoice.get_one_time_transaction_total(), self.existing_invoice.total - self.existing_invoice.get_recurring_total())
+        self.assertEquals(self.existing_invoice.get_one_time_transaction_total() - self.existing_invoice.get_savings(), self.existing_invoice.total - self.existing_invoice.get_recurring_total())
         self.assertEquals(self.existing_invoice.get_recurring_total(), 0)
 
     def test_get_recurring_order_items(self):

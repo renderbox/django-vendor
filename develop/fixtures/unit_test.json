@@ -36,7 +36,7 @@
         "slug": "mouse-t-shirt",
         "available": false,
         "description": "Powerful T-Shirt",
-        "meta": { "msrp": { "default": "usd", "usd":19.99 }},
+        "meta": { "msrp": { "default": "usd", "usd": 9.99 }},
         "classification": [],
         "offers": [
             1
@@ -99,7 +99,7 @@
         "slug": "hulk-mug",
         "available": false,
         "description": "",
-        "meta": {"msrp": {"default": "mxn", "usd": 10.00, "mxn": 21.12}},
+        "meta": {"msrp": {"default": "mxn", "usd": 25.2, "mxn": 21.12}},
         "classification": [],
         "offers": [
             4,
@@ -119,13 +119,13 @@
         "site": 1,
         "status": 0,
         "customer_notes": "",
-        "vendor_notes": "",
+        "vendor_notes": {},
         "ordered_date": null,
-        "subtotal": 364.98,
-        "tax": 36.5,
-        "shipping": 6.95,
-        "total": 408.43,
-        "currency": "jpy",
+        "subtotal": 345.18,
+        "tax": 0,
+        "shipping": 0,
+        "total": 332.18,
+        "currency": "usd",
         "shipping_address": null
     }
 },
@@ -211,7 +211,7 @@
         "start_date": "2020-06-30T00:53:23Z",
         "end_date": null,
         "terms": 200,
-        "term_details": null,
+        "term_details": {},
         "term_start_date": "2020-06-30T00:53:31Z",
         "available": true,
         "bundle": false,
@@ -231,7 +231,7 @@
         "start_date": "2020-06-30T02:34:32Z",
         "end_date": null,
         "terms": 200,
-        "term_details": "{}",
+        "term_details": {},
         "term_start_date": null,
         "available": true,
         "bundle": false,
@@ -251,7 +251,7 @@
         "start_date": "2020-06-30T02:38:16Z",
         "end_date": null,
         "terms": 200,
-        "term_details": "{}",
+        "term_details": {},
         "term_start_date": null,
         "available": true,
         "bundle": false,
@@ -276,7 +276,7 @@
             "payment_occurrences": 12,
             "term_units": 20,
             "trial_occurrences": 1,
-            "trial_amount": 13.00
+            "trial_amount": 25.1
         },
         "term_start_date": null,
         "available": true,
@@ -302,7 +302,7 @@
             "payment_occurrences": 3,
             "term_units": 20,
             "trial_occurrences": 1,
-            "trial_amount": 66
+            "trial_amount": 25.2
         },
         "term_start_date": null,
         "available": true,
@@ -333,7 +333,7 @@
     "pk": 1,
     "fields": {
         "offer": 1,
-        "cost": 9.99,
+        "cost": 0,
         "currency": "usd",
         "start_date": "2020-06-30T00:55:21Z",
         "end_date": null,
