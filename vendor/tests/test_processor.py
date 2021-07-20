@@ -326,6 +326,7 @@ class AuthorizeNetProcessorTests(TestCase):
         price.priority = 10
         subscription_price.priority = 10
         subscription_price.save()
+        self.existing_invoice.update_totals()
 
 
     ##########

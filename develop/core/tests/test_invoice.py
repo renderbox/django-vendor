@@ -105,13 +105,13 @@ class ModelInvoiceTests(TestCase):
         self.existing_invoice.save()
         self.existing_invoice.add_offer(recurring_offer)
         
-        self.assertEquals(get_display_decimal(self.existing_invoice.get_one_time_transaction_total()), get_display_decimal(344.98))
+        self.assertEquals(get_display_decimal(self.existing_invoice.get_one_time_transaction_total()), get_display_decimal(325.00))
         self.assertEquals(self.existing_invoice.total, 325)
 
     def test_get_one_time_transaction_total_no_recurring_order_items(self):
         self.existing_invoice.update_totals()
         
-        self.assertEquals(self.existing_invoice.get_one_time_transaction_total() - self.existing_invoice.get_discounts(), self.existing_invoice.total - self.existing_invoice.get_recurring_total())
+        self.assertEquals(self.existing_invoice.get_one_time_transaction_total(), self.existing_invoice.total - self.existing_invoice.get_recurring_total())
         self.assertEquals(self.existing_invoice.get_recurring_total(), 0)
 
     def test_get_recurring_order_items(self):
