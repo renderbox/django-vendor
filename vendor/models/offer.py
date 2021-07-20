@@ -137,15 +137,6 @@ class Offer(CreateUpdateModelBase):
         else:
             return self.products.all().first().description
 
-    def savings(self, currency=DEFAULT_CURRENCY):
-        """
-        Gets the savings between the difference between the product's msrp and the currenct price
-        """
-        savings = self.get_msrp(currency) - self.current_price(currency)
-        if savings < 0:
-            return 0
-        return savings
-
     def discount(self, currency=DEFAULT_CURRENCY):
         """
         Gets the savings between the difference between the product's msrp and the currenct price
