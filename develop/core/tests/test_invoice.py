@@ -153,6 +153,29 @@ class ModelInvoiceTests(TestCase):
         self.new_invoice.swap_offer(hulk_offer, cheese_offer)
         self.assertFalse(self.new_invoice.order_items.filter(offer=cheese_offer).exists())
         self.assertTrue(self.new_invoice.order_items.filter(offer=hulk_offer).exists())
+    
+    def test_get_discounts(self):
+        pass
+
+    def test_save_discounts_vendor_notes(self):
+        pass
+
+    def test_order_item_price(self):
+        pass
+
+    def test_order_item_savings(self):
+        pass
+
+    def test_order_item_discounts(self):
+        pass
+
+    def test_get_next_billing_date(self):
+        pass
+
+    def test_get_next_billing_price(self):
+        pass
+
+
 
 
 class CartViewTests(TestCase):

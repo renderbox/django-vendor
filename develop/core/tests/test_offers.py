@@ -79,13 +79,13 @@ class ModelOfferTests(TestCase):
         offer = Offer.objects.get(pk=3)
         self.assertEquals(offer.current_price(), 25.2)
 
-    def test_offer_negative_savings(self):
+    def test_offer_negative_discounts(self):
         offer = Offer.objects.get(pk=3)
-        self.assertEquals(get_display_decimal(offer.savings()), 0.00)
+        self.assertEquals(get_display_decimal(offer.discounts()), 0.00)
 
-    def test_offer_savings(self):
+    def test_offer_discounts(self):
         offer = Offer.objects.get(pk=1)
-        self.assertEquals(get_display_decimal(offer.savings()), 10.00)
+        self.assertEquals(get_display_decimal(offer.discounts()), 10.00)
 
     def test_offer_description_from_product(self):
         offer = Offer.objects.get(pk=3)
