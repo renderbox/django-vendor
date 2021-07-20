@@ -255,10 +255,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         payment_schedule.interval = apicontractsv1.paymentScheduleTypeInterval()
         payment_schedule.interval.unit = self.get_interval_units(subscription)
 
-        payment_schedule.interval.length = self.get_period_length(subscription, subscription_type)
-        payment_schedule.totalOccurrences = self.get_payment_occurrences(subscription)
+        payment_schedule.interval.length = subscription.offer.get_period_length()
+        payment_schedule.totalOccurrences = subscription.offer.get_payment_occurrences()
         payment_schedule.startDate = timezone.now()
-        payment_schedule.trialOccurrences = self.get_trial_occurrences(subscription)
+        payment_schedule.trialOccurrences = subscription.offer.get_trial_occurrences()
         return payment_schedule
 
     ##########
@@ -390,8 +390,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.name = subscription.offer.name
         self.transaction_type.paymentSchedule = self.create_payment_scheduale_interval_type(subscription, subscription.offer.terms)
-        self.transaction_type.amount = self.to_valid_decimal(subscription.total)
-        self.transaction_type.trialAmount = self.to_valid_decimal(self.get_trial_amount(subscription))
+        self.transaction_type.amount = self.to_valid_decimal(subscription.total - subscription.discounts)
+        self.transaction_type.trialAmount = self.to_valid_decimal(subscription.offer.get_trial_amount())
         self.transaction_type.billTo = self.create_billing_address(apicontractsv1.nameAndAddressType())
         self.transaction_type.payment = self.create_authorize_payment()
 
@@ -543,6 +543,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.create_payment_model()
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(self.transaction_types[TransactionTypes.AUTHORIZE])
+        # TODO: This should probably be a settings env var to set a desired amount to validate that the card is real.
         self.transaction_type.amount = self.to_valid_decimal(self.invoice.get_recurring_total())
         self.transaction_type.payment = self.create_authorize_payment()
         self.transaction_type.billTo = self.create_billing_address(apicontractsv1.customerAddressType())
