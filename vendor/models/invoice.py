@@ -171,8 +171,8 @@ class Invoice(CreateUpdateModelBase):
         """
         Gets the total price for all recurring order items in the invoice
         """
-        one_time_order_items = self.get_recurring_order_items()
-        return sum([ order_item.total for order_item in one_time_order_items.all()])
+        recurring_time_order_items = self.get_recurring_order_items()
+        return sum([ (order_item.total - order_item.discounts) for order_item in recurring_time_order_items.all()])
 
     def get_one_time_transaction_order_items(self):
         """
@@ -185,7 +185,7 @@ class Invoice(CreateUpdateModelBase):
         Gets the total price for order items that will be purchased on a single transation.
         """
         one_time_order_items = self.get_one_time_transaction_order_items()
-        return sum([ order_item.total for order_item in one_time_order_items.all()])
+        return sum([ (order_item.total - order_item.discounts) for order_item in one_time_order_items.all()])
 
     def empty_cart(self):
         """
@@ -248,18 +248,20 @@ class Invoice(CreateUpdateModelBase):
         if 'discounts' in self.vendor_notes:
             return self.vendor_notes['discounts']
 
-        savings = 0
+        discounts = 0
 
-        savings = sum([order_item.discounts for order_item in self.order_items.all() if not self.profile.has_owned_product(order_item.offer.products.all())])
+        discounts = sum([order_item.discounts for order_item in self.order_items.all() if not self.profile.has_owned_product(order_item.offer.products.all())])
 
-        return savings
+        trial_discounts = sum([order_item.price - order_item.trial_amount for order_item in self.order_items.all() if order_item.offer.has_trial_occurrences()])
+
+        return discounts + trial_discounts
 
     def save_discounts_vendor_notes(self):
         if not isinstance(self.vendor_notes, dict):
             self.vendor_notes = dict()
             self.save()
 
-        self.vendor_notes["discounts"] = self.get_savings()
+        self.vendor_notes["discounts"] = self.get_discounts()
         self.save()
 
 
@@ -284,6 +286,8 @@ class OrderItem(CreateUpdateModelBase):
 
     @property
     def price(self):
+        if self.offer.get_msrp():
+            return self.offer.get_msrp()
         return self.offer.current_price()
 
     @property
@@ -292,11 +296,21 @@ class OrderItem(CreateUpdateModelBase):
 
     @property
     def savings(self):
-        return (self.offer.savings() + self.offer.get_trial_savings()) * self.quantity
+        return self.offer.savings() * self.quantity
 
     @property
     def discounts(self):
-        return (self.offer.discount() + self.offer.get_trial_discount()) * self.quantity
+        return self.offer.discount() * self.quantity
+
+    @property
+    def trial_amount(self):
+        if self.receipts.count():
+            if 'first' in self.receipts.first().meta:
+                return self.offer.get_trial_amount()
+        else:
+            if self.offer.has_trial_occurrences():
+                return self.offer.get_trial_amount()
+        return self.offer.current_price()
 
     def get_total_display(self):
         if not self.total:
