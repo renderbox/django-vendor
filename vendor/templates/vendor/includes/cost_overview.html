@@ -5,10 +5,10 @@
     <span>${{ invoice.subtotal|default_if_none:"0.00"|floatformat:2 }}</span>
   </li>
   
-{% if invoice.get_savings %}
+{% if invoice.get_discounts %}
   <li class="px-0 border-0 d-flex justify-content-between">
       <span>{% trans 'Discount Applied' %}</span>
-      <span>-${{ invoice.get_savings|default_if_none:"0.00"|floatformat:2 }}</span>
+      <span>-${{ invoice.get_discouts|default_if_none:"0.00"|floatformat:2 }}</span>
     </li>
 {% endif %}
 

@@ -13,7 +13,6 @@ from allauth.account.signals import user_logged_in
 from vendor.models.utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
 from vendor.utils import get_site_from_request
-
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES, TermType
 from .offer import Offer
@@ -133,12 +132,17 @@ class Invoice(CreateUpdateModelBase):
         '''
         self.tax = 0
 
-    def update_totals(self):
-        self.subtotal = sum([item.total for item in self.order_items.all() ])
+    def calculate_subtotal(self):
+        return sum([item.total for item in self.order_items.all() ])
 
+    def update_totals(self):
+        self.subtotal = self.calculate_subtotal()
+        discounts = self.get_discounts()
         self.calculate_shipping()
         self.calculate_tax()
-        self.total = self.subtotal + self.tax + self.shipping
+        self.total = (self.subtotal - discounts) + self.tax + self.shipping
+        if self.total < 0:
+            self.total = 0
 
     def get_payment_billing_address(self):
         if not self.payments.filter(success=True).first().billing_address:
@@ -167,7 +171,8 @@ class Invoice(CreateUpdateModelBase):
         """
         Gets the total price for all recurring order items in the invoice
         """
-        return sum([ order_item.total for order_item in self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)])
+        one_time_order_items = self.get_recurring_order_items()
+        return sum([ order_item.total for order_item in one_time_order_items.all()])
 
     def get_one_time_transaction_order_items(self):
         """
@@ -179,7 +184,8 @@ class Invoice(CreateUpdateModelBase):
         """
         Gets the total price for order items that will be purchased on a single transation.
         """
-        return sum([ order_item.total for order_item in self.order_items.filter(offer__terms__gte=TermType.PERPETUAL)])
+        one_time_order_items = self.get_one_time_transaction_order_items()
+        return sum([ order_item.total for order_item in one_time_order_items.all()])
 
     def empty_cart(self):
         """
@@ -189,6 +195,72 @@ class Invoice(CreateUpdateModelBase):
         offers = list(itertools.chain.from_iterable([ [order_item.offer] * order_item.quantity for order_item in self.order_items.all()]))
         for offer in offers:
             self.remove_offer(offer)
+
+    def get_next_billing_date(self):
+        recurring_offers = self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)
+        if not recurring_offers.count():
+            return None
+        next_billing_dates = [order_item.offer.get_next_billing_date() for order_item in recurring_offers]
+
+        next_billing_dates.sort()
+
+        return next_billing_dates[0]
+
+    def get_next_billing_price(self):
+        recurring_offers = self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)
+        if not recurring_offers.count():
+            return None
+
+        if recurring_offers.count() == 1:
+            return recurring_offers.first().total
+
+        next_billing_date = recurring_offers.first().offer.get_next_billing_date()
+        next_billing_date_price = recurring_offers.first().total
+
+        for order_item in recurring_offers:
+            if order_item.offer.get_next_billing_date() < next_billing_date:
+                next_billing_date = order_item.offer.get_next_billing_date()
+                next_billing_date_price = order_item.total
+
+        return next_billing_date_price
+
+    def get_savings(self):
+        """
+        Savings are calculated according to the msrp price of each offer and corresponding products, while trail savings
+        is obtained in the offer.meta, trial_amount key. If the customer_profile has owned that product in the past no savings
+        will be applied. Only for first time purchases.
+        """
+        if 'savings' in self.vendor_notes:
+            return self.vendor_notes['savings']
+
+        savings = 0
+
+        savings = sum([order_item.savings for order_item in self.order_items.all() if not self.profile.has_owned_product(order_item.offer.products.all())])
+
+        return savings
+
+    def get_discounts(self):
+        """
+        Savings are calculated according to the msrp price of each offer and corresponding products, while trail savings
+        is obtained in the offer.meta, trial_amount key. If the customer_profile has owned that product in the past no savings
+        will be applied. Only for first time purchases.
+        """
+        if 'discounts' in self.vendor_notes:
+            return self.vendor_notes['discounts']
+
+        savings = 0
+
+        savings = sum([order_item.discounts for order_item in self.order_items.all() if not self.profile.has_owned_product(order_item.offer.products.all())])
+
+        return savings
+
+    def save_discounts_vendor_notes(self):
+        if not isinstance(self.vendor_notes, dict):
+            self.vendor_notes = dict()
+            self.save()
+
+        self.vendor_notes["discounts"] = self.get_savings()
+        self.save()
 
 
 class OrderItem(CreateUpdateModelBase):
@@ -217,6 +289,14 @@ class OrderItem(CreateUpdateModelBase):
     @property
     def name(self):
         return self.offer.name
+
+    @property
+    def savings(self):
+        return (self.offer.savings() + self.offer.get_trial_savings()) * self.quantity
+
+    @property
+    def discounts(self):
+        return (self.offer.discount() + self.offer.get_trial_discount()) * self.quantity
 
     def get_total_display(self):
         if not self.total:

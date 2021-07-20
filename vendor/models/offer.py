@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from vendor.config import DEFAULT_CURRENCY
+from vendor.utils import get_payment_schedule_end_date
 
 from .base import CreateUpdateModelBase
 from .choice import TermType, TermDetailUnits
@@ -23,7 +24,7 @@ from .utils import set_default_site_id, is_currency_available
 def offer_term_details_default():
     """
     Sets the default term values as a monthly subscription for a
-    period of 12 months, with 0 trail months
+    period of 12 months, with 0 trial months
     """
     return {
         'period_length': 1,
@@ -143,8 +144,17 @@ class Offer(CreateUpdateModelBase):
         """
         savings = self.get_msrp(currency) - self.current_price(currency)
         if savings < 0:
-            return Decimal(0).quantize(Decimal('.00'), rounding=ROUND_UP)
-        return Decimal(savings).quantize(Decimal('.00'), rounding=ROUND_UP)
+            return 0
+        return savings
+
+    def discount(self, currency=DEFAULT_CURRENCY):
+        """
+        Gets the savings between the difference between the product's msrp and the currenct price
+        """
+        savings = self.get_msrp(currency) - self.current_price(currency)
+        if savings < 0:
+            return 0
+        return self.current_price(currency)
 
     def get_best_currency(self, currency=DEFAULT_CURRENCY):
         """
@@ -156,3 +166,56 @@ class Offer(CreateUpdateModelBase):
             return currency
 
         return DEFAULT_CURRENCY
+
+    def get_trial_amount(self):
+        return self.term_details.get('trial_amount', 0)
+
+    def get_trial_savings(self):
+        """
+        Returns the trial_amount savings if the offer has any trial occurrences.
+        """
+        if not self.has_trial_occurrences():
+            return 0
+
+        trial_savings = self.current_price() - self.term_details.get('trial_amount', 0)
+
+        if trial_savings < 0:
+            return 0
+
+        return trial_savings
+
+    def get_trial_discount(self):
+        """
+        Returns the trial_amount savings if the offer has any trial occurrences.
+        """
+        if not self.has_trial_occurrences():
+            return 0
+
+        return self.term_details.get('trial_amount', 0)
+
+    def has_trial_occurrences(self):
+        if self.term_details.get('trial_occurrences', 0) > 0:
+            return True
+        return False
+
+    def get_next_billing_date(self):
+        return get_payment_schedule_end_date(self)
+
+    def get_period_length(self):
+        if self.terms == TermType.SUBSCRIPTION:
+            return self.term_details['period_length']
+        else:
+            return self.terms - 100   # You subtract 100 because enum are numbered according to their period length. eg Month = 101 and Year = 112
+
+    def get_payment_occurrences(self):
+        """
+        Gets the defined payment ocurrences for a Subscription. It defaults to
+        9999 which means it will charge that amount until the customer cancels the subscription.
+        """
+        return self.term_details.get('payment_occurrences', 9999)
+
+    def get_trial_occurrences(self):
+        return self.term_details.get('trial_occurrences', 0)
+
+    def get_trial_amount(self):
+        return self.term_details.get('trial_amount', 0)
