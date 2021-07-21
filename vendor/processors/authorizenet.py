@@ -544,7 +544,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(self.transaction_types[TransactionTypes.AUTHORIZE])
         # TODO: This should probably be a settings env var to set a desired amount to validate that the card is real.
-        self.transaction_type.amount = self.to_valid_decimal(self.invoice.get_recurring_total())
+        self.transaction_type.amount = self.to_valid_decimal(settings.VENDOR_CHARGE_VALIDATION_PRICE)
         self.transaction_type.payment = self.create_authorize_payment()
         self.transaction_type.billTo = self.create_billing_address(apicontractsv1.customerAddressType())
 
