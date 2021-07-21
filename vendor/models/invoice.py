@@ -263,7 +263,6 @@ class Invoice(CreateUpdateModelBase):
         """
         if not isinstance(self.vendor_notes, dict):
             self.vendor_notes = dict()
-            self.save()
 
         self.vendor_notes["discounts"] = self.get_discounts()
         self.save()
