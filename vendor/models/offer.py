@@ -162,7 +162,7 @@ class Offer(CreateUpdateModelBase):
 
     def get_trial_savings(self):
         """
-        Returns the trial_amount savings if the offer has any trial occurrences.
+        Returns the savings compared to the current_price of the offer.
         """
         if not self.has_trial_occurrences():
             return 0
@@ -176,7 +176,7 @@ class Offer(CreateUpdateModelBase):
 
     def get_trial_discount(self):
         """
-        Returns the trial_amount savings if the offer has any trial occurrences.
+        Returns the trial_amount if the offer has any trial occurrences.
         """
         if not self.has_trial_occurrences():
             return 0
