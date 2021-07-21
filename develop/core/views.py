@@ -19,8 +19,8 @@ class VendorIndexView(ListView):
 
     def get_queryset(self):
         if hasattr(self.request, 'site'):
-            return self.model.objects.filter(site=get_site_from_request(self.request))
-        return self.model.on_site.all()
+            return self.model.objects.filter(site=get_site_from_request(self.request), available=True)
+        return self.model.on_site.filter(available=True)
 
 
 class ProductAccessView(ProductRequiredMixin, TemplateView):
@@ -55,8 +55,7 @@ class AccountView(LoginRequiredMixin, TemplateView):
             context['subscription'] = subscriptions.first()
             context['payment'] = subscriptions.first().order_item.invoice.payments.filter(success=True).first()
             context['payment_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
-            
-        
+
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):

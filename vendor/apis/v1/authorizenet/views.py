@@ -33,7 +33,7 @@ def renew_subscription_task(json_data):
     if transaction_detail.subscription.payNum.pyVal == 1:
         return None
 
-    past_receipt = Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created').first()
+    past_receipt = Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created').last()
 
     payment_info = {
         'account_number': transaction_detail.payment.creditCard.cardNumber.text[-4:],
@@ -47,7 +47,7 @@ def renew_subscription_task(json_data):
 
     invoice_history = []
 
-    for receipt in Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created').first():
+    for receipt in Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created'):
         past_invoice = receipt.order_item.invoice
         invoice_info = {
             "invoice_id": past_invoice.pk,
@@ -62,6 +62,8 @@ def renew_subscription_task(json_data):
     invoice.vendor_notes = invoice_history
     invoice.save()
     invoice.add_offer(past_receipt.order_item.offer)
+    invoice.total = transaction_detail.authAmount.pyval
+    invoice.save()
 
     processor = PaymentProcessor(invoice)
     processor.renew_subscription(past_receipt, payment_info)
@@ -83,6 +85,13 @@ class AuthorizeNetBaseAPI(View):
         return super().dispatch(*args, **kwargs)
 
     def is_valid_post(self):
+        logger.info(f"Request body: {self.request.body}")
+        logger.info(f"X ANET SIGNATURE: {self.request.META.get('HTTP_X_ANET_SIGNATURE')}")
+
+        if 'HTTP_X_ANET_SIGNATURE' not in self.request.META:
+            logger.warning("Webhook warning SIGNITURE KEY")
+            return False
+
         hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNITURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
         logger.info(f"Checking hashs\nCALCULATED: {hash_value}\nREQUEST VALUE: {self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]}")
         if hash_value == self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]:
@@ -99,6 +108,11 @@ class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
 
     def post(self, request, *args, **kwargs):
         logger.info(f"AuthorizeNet AuthCapture Event webhook: {request.POST}")
+
+        if not request.body:
+            logger.warning("Webhook event has no body")
+            return JsonResponse({"msg": "Invalid request body."})
+
         # TODO: THIS SHOULD BE not self.is_valid_post() hash calculation not working need to debug
         if self.is_valid_post():
             logger.error(f"Request was denied: {request}")

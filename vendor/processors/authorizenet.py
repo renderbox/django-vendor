@@ -20,7 +20,7 @@ except ModuleNotFoundError:
     pass
 
 from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models.choice import TransactionTypes, PaymentTypes, TermType
+from vendor.models.choice import TransactionTypes, PaymentTypes, TermType, TermDetailUnits
 from vendor.models.invoice import Invoice
 from vendor.models.address import Country
 from vendor.models.payment import Payment
@@ -233,42 +233,32 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         order.description = self.get_transaction_id()
 
         return order
-
-    def get_payment_occurrences(self, subscription, subscription_type):
-        """
-        Gets the defined payment ocurrences for a Subscription. It defaults to
-        9999 which means it will charge that amount until the customer cancels the subscription.
-        """
-        return subscription.offer.term_details.get('payment_occurrences', 9999)
-
-    def get_period_length(self, subscription, subscription_type):
-        if subscription_type == TermType.SUBSCRIPTION:
-            return subscription.offer.term_details['period_length']
-        else:
-            return subscription_type - 100
+    
+    def get_interval_units(self, subscription):
+        if subscription.offer.term_details.get('term_units', TermDetailUnits.MONTH) == TermDetailUnits.DAY:
+            return apicontractsv1.ARBSubscriptionUnitEnum.days
+        return apicontractsv1.ARBSubscriptionUnitEnum.months
 
     def create_payment_scheduale_interval_type(self, subscription, subscription_type):
         """
-        Create an interval schedule with fixed months as units for period lenght.
-        It calculates that start date depending on the term_units and trail_occurrences defined in the term_details.
+        Create an interval schedule with fixed months as units for period length.
+        It calculates that start date depending on the term_units and trial_occurrences defined in the term_details.
         term_units can either be by day or by month. Start date is the first billing date of the subscriptions.
         Eg. for a 1 year 1 month free subscription:
-            term_unit=20 (Month), trail_occurrences=1
+            term_unit=20 (Month), trial_occurrences=1
             start_date = now + 1 month
         Eg. for a 7 day free 1 Month subscription:
-            term_units=10 (Day), trail_occurrences=7
+            term_units=10 (Day), trial_occurrences=7
             start_date = now + 7 days
         """
         payment_schedule = apicontractsv1.paymentScheduleType()
         payment_schedule.interval = apicontractsv1.paymentScheduleTypeInterval()
-        payment_schedule.interval.unit = apicontractsv1.ARBSubscriptionUnitEnum.months
+        payment_schedule.interval.unit = self.get_interval_units(subscription)
 
-        payment_schedule.interval.length = self.get_period_length(subscription, subscription_type)
-        payment_schedule.totalOccurrences = self.get_payment_occurrences(subscription, subscription_type)
-        payment_schedule.startDate = self.get_payment_schedule_start_date(subscription)
-        # Authorize.Net does not have a way to differenciate trail occurrences term_units for period length.
-        # Set to zero as the start date takes into account the trail occurrences.
-        payment_schedule.trialOccurrences = 0
+        payment_schedule.interval.length = subscription.offer.get_period_length()
+        payment_schedule.totalOccurrences = subscription.offer.get_payment_occurrences()
+        payment_schedule.startDate = timezone.now()
+        payment_schedule.trialOccurrences = subscription.offer.get_trial_occurrences()
         return payment_schedule
 
     ##########
@@ -400,8 +390,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.name = subscription.offer.name
         self.transaction_type.paymentSchedule = self.create_payment_scheduale_interval_type(subscription, subscription.offer.terms)
-        self.transaction_type.amount = self.to_valid_decimal(subscription.total)
-        self.transaction_type.trialAmount = Decimal('0.00')
+        self.transaction_type.amount = self.to_valid_decimal(subscription.total - subscription.discounts)
+        self.transaction_type.trialAmount = self.to_valid_decimal(subscription.offer.get_trial_amount())
         self.transaction_type.billTo = self.create_billing_address(apicontractsv1.nameAndAddressType())
         self.transaction_type.payment = self.create_authorize_payment()
 
@@ -553,6 +543,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.create_payment_model()
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(self.transaction_types[TransactionTypes.AUTHORIZE])
+        # TODO: This should probably be a settings env var to set a desired amount to validate that the card is real.
         self.transaction_type.amount = self.to_valid_decimal(self.invoice.get_recurring_total())
         self.transaction_type.payment = self.create_authorize_payment()
         self.transaction_type.billTo = self.create_billing_address(apicontractsv1.customerAddressType())

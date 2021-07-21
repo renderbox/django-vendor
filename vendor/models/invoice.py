@@ -13,7 +13,6 @@ from allauth.account.signals import user_logged_in
 from vendor.models.utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
 from vendor.utils import get_site_from_request
-
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES, TermType
 from .offer import Offer
@@ -133,23 +132,29 @@ class Invoice(CreateUpdateModelBase):
         '''
         self.tax = 0
 
-    def update_totals(self):
-        self.subtotal = sum([item.total for item in self.order_items.all() ])
+    def calculate_subtotal(self):
+        """
+        Get the total amount of the offer, which could be a set price or the products MSRP
+        """
+        return sum([item.total for item in self.order_items.all() ])
 
+    def update_totals(self):
+        """
+        Sets the invoice total field by calculating its subtotal, any discounts, its shipping and tax.
+        If by any reason the total is a negative value it will return 0 as vendor cannot credit any acount
+        """
+        self.subtotal = self.calculate_subtotal()
+        discounts = self.get_discounts()
         self.calculate_shipping()
         self.calculate_tax()
-        self.total = self.subtotal + self.tax + self.shipping
+        self.total = (self.subtotal - discounts) + self.tax + self.shipping
+        if self.total < 0:
+            self.total = 0
 
     def get_payment_billing_address(self):
         if not self.payments.filter(success=True).first().billing_address:
             return ""
         return self.payments.filter(success=True).first().billing_address.get_address_display()
-
-    # def get_absolute_url(self):       # TODO: [GK-3031] add and user view for invoice detail
-    #     """
-    #     This is the url to the detail page for the Invoice
-    #     """
-    #     return reverse('vendor:invoice-detail', kwargs={'uuid': self.uuid})
 
     def get_absolute_management_url(self):
         """
@@ -165,9 +170,10 @@ class Invoice(CreateUpdateModelBase):
 
     def get_recurring_total(self):
         """
-        Gets the total price for all recurring order items in the invoice
+        Gets the total price for all recurring order items in the invoice and subtracting any discounts.
         """
-        return sum([ order_item.total for order_item in self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)])
+        recurring_time_order_items = self.get_recurring_order_items()
+        return sum([ (order_item.total - order_item.discounts) for order_item in recurring_time_order_items.all()])
 
     def get_one_time_transaction_order_items(self):
         """
@@ -177,9 +183,10 @@ class Invoice(CreateUpdateModelBase):
 
     def get_one_time_transaction_total(self):
         """
-        Gets the total price for order items that will be purchased on a single transation.
+        Gets the total price for order items that will be purchased on a single transation. It also subtracts any discounts
         """
-        return sum([ order_item.total for order_item in self.order_items.filter(offer__terms__gte=TermType.PERPETUAL)])
+        one_time_order_items = self.get_one_time_transaction_order_items()
+        return sum([ (order_item.total - order_item.discounts) for order_item in one_time_order_items.all()])
 
     def empty_cart(self):
         """
@@ -189,6 +196,76 @@ class Invoice(CreateUpdateModelBase):
         offers = list(itertools.chain.from_iterable([ [order_item.offer] * order_item.quantity for order_item in self.order_items.all()]))
         for offer in offers:
             self.remove_offer(offer)
+
+    def get_next_billing_date(self):
+        """
+        Return the next billing date, if an invoice has two different billing dates it will return
+        the upcoming one.
+        """
+        recurring_offers = self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)
+        if not recurring_offers.count():
+            return None
+        next_billing_dates = [order_item.offer.get_next_billing_date() for order_item in recurring_offers]
+
+        next_billing_dates.sort()
+
+        return next_billing_dates[0]
+
+    def get_next_billing_price(self):
+        """
+        Returns the price corresponding to the upcoming billing date.
+        """
+        recurring_offers = self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)
+        if not recurring_offers.count():
+            return None
+
+        if recurring_offers.count() == 1:
+            return recurring_offers.first().total
+
+        next_billing_date = recurring_offers.first().offer.get_next_billing_date()
+        next_billing_date_price = recurring_offers.first().total
+
+        for order_item in recurring_offers:
+            if order_item.offer.get_next_billing_date() < next_billing_date:
+                next_billing_date = order_item.offer.get_next_billing_date()
+                next_billing_date_price = order_item.total
+
+        return next_billing_date_price
+
+    def get_savings(self):
+        savings = 0
+
+        savings = self.calculate_subtotal() - self.get_discounts()
+
+        return savings
+
+    def get_discounts(self):
+        """
+        Returns the sum of discounts and trial_discounts. Discounts are related to the offer.price and the offer.product.msrp,
+        while trial discounts are related to the set offer.meta.trial_amount if it has a trial_occurrence.
+        """
+        if 'discounts' in self.vendor_notes:
+            return self.vendor_notes['discounts']
+
+        discounts = 0
+
+        discounts = sum([order_item.discounts for order_item in self.order_items.all() if not self.profile.has_owned_product(order_item.offer.products.all())])
+
+        trial_discounts = sum([order_item.price - order_item.trial_amount for order_item in self.order_items.all() if order_item.offer.has_trial_occurrences()])
+
+        return discounts + trial_discounts
+
+    def save_discounts_vendor_notes(self):
+        """
+        Once an invoice has been completed, this method saves the discounts applied to the invoice
+        in the vendor_notes field. This makes it for faster lookup on get_discounts for future invoice
+        views.
+        """
+        if not isinstance(self.vendor_notes, dict):
+            self.vendor_notes = dict()
+
+        self.vendor_notes["discounts"] = self.get_discounts()
+        self.save()
 
 
 class OrderItem(CreateUpdateModelBase):
@@ -212,11 +289,31 @@ class OrderItem(CreateUpdateModelBase):
 
     @property
     def price(self):
+        """
+        Price property is calculated if a offer.product has an MSRP different from zero.
+        if product MSRP is zero it will return the corresponding offer.price.cost
+        """
+        if self.offer.get_msrp():
+            return self.offer.get_msrp()
         return self.offer.current_price()
 
     @property
     def name(self):
         return self.offer.name
+
+    @property
+    def discounts(self):
+        return self.offer.discount() * self.quantity
+
+    @property
+    def trial_amount(self):
+        if self.receipts.count():
+            if 'first' in self.receipts.first().meta:
+                return self.offer.get_trial_amount()
+        else:
+            if self.offer.has_trial_occurrences():
+                return self.offer.get_trial_amount()
+        return self.offer.current_price()
 
     def get_total_display(self):
         if not self.total:

@@ -95,6 +95,14 @@ class CustomerProfile(CreateUpdateModelBase):
         """
         return bool(self.filter_products(products).count())
 
+    def has_owned_product(self, products):
+        # Queryset or List of model records
+        if isinstance(products, QuerySet) or isinstance(products, list):
+            return bool(self.receipts.filter(products__in=products).count())
+
+        # Single model record
+        return bool(self.receipts.filter(products=products).count())
+
     def get_recurring_receipts(self):
         """
         Gets the recurring receipts the customer profile might have

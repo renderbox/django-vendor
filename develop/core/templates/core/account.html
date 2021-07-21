@@ -111,8 +111,8 @@
                             USD/{{ offer.get_terms_display }}
                         </div>
                         <p>
-                            {% if offer.savings > 0 %}
-                            <small class="font-weight-bolder">{% trans 'Savings of ' %}{{ offer.savings }}</small>
+                            {% if offer.discounts > 0 %}
+                            <small class="font-weight-bolder">{% trans 'Discounts of ' %}{{ offer.discounts }}</small>
                             {% endif %}
                         </p>
                         <div>{{ offer.description }}</div>
