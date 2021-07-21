@@ -924,23 +924,6 @@ class AuthorizeNetProcessorTests(TestCase):
         else:
             print("No active Subscriptions, Skipping Test")
 
-    def test_is_card_valid_success(self):
-        self.existing_invoice.add_offer(self.subscription_offer)
-        price = Price()
-        price.offer = self.subscription_offer
-        price.cost = randrange(11, 1000)
-        price.start_date = timezone.now() - timedelta(days=1)
-        price.priority = 10
-        price.save()
-        self.existing_invoice.update_totals()
-        self.existing_invoice.save()
-        self.processor = AuthorizeNetProcessor(self.existing_invoice)
-        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
-        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
-        self.processor.is_data_valid()
-        self.processor.create_payment_model()
-        self.assertTrue(self.processor.is_card_valid())
-
     def test_is_card_valid_fail(self):
         self.form_data['credit_card_form']['cvv_number'] = '901'
         self.existing_invoice.add_offer(self.subscription_offer)
@@ -952,11 +935,30 @@ class AuthorizeNetProcessorTests(TestCase):
         price.save()
         self.existing_invoice.save()
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
+        self.form_data["credit_card_form"]['card_number'] = self.VALID_CARD_NUMBERS[randrange(0, len(self.VALID_CARD_NUMBERS) - 1)]
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         self.processor.is_data_valid()
         self.processor.create_payment_model()
         self.assertFalse(self.processor.is_card_valid())
+
+    def test_is_card_valid_success(self):
+        self.existing_invoice.add_offer(self.subscription_offer)
+        price = Price()
+        price.offer = self.subscription_offer
+        price.cost = randrange(11, 1000)
+        price.start_date = timezone.now() - timedelta(days=1)
+        price.priority = 10
+        price.save()
+        self.existing_invoice.update_totals()
+        self.existing_invoice.save()
+        self.processor = AuthorizeNetProcessor(self.existing_invoice)
+        self.form_data["credit_card_form"]['card_number'] = self.VALID_CARD_NUMBERS[randrange(0, len(self.VALID_CARD_NUMBERS) - 1)]
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.is_data_valid()
+        self.processor.create_payment_model()
+        self.assertTrue(self.processor.is_card_valid())
 
     ##########
     # Report details
