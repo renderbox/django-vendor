@@ -241,7 +241,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def create_payment_scheduale_interval_type(self, subscription, subscription_type):
         """
-        Create an interval schedule with fixed months as units for period lenght.
+        Create an interval schedule with fixed months as units for period length.
         It calculates that start date depending on the term_units and trial_occurrences defined in the term_details.
         term_units can either be by day or by month. Start date is the first billing date of the subscriptions.
         Eg. for a 1 year 1 month free subscription:
