@@ -165,6 +165,7 @@ STATICFILES_DIRS = [
 VENDOR_PRODUCT_MODEL = 'core.Product'
 VENDOR_PAYMENT_PROCESSOR = os.getenv("VENDOR_PAYMENT_PROCESSOR", "base.PaymentProcessorBase")
 VENDOR_STATE = os.getenv("VENDOR_STATE", "DEBUG")
+VENDOR_CHARGE_VALIDATION_PRICE = os.getenv("VENDOR_CHARGE_VALIDATION_PRICE", 1)
 DEFAULT_CURRENCY = Currency.usd.name
 AVAILABLE_CURRENCIES = {'usd': _('USD Dollars'), 'mxn': _('Mexican peso'), 'jpy': _('Japanese yen')}
 
