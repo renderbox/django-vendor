@@ -864,7 +864,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.processor.authorize_payment()
 
-        print(self.processor.transaction_message)
+        # print(self.processor.transaction_message)
         self.assertTrue(self.processor.transaction_submitted)
         self.assertIn('subscriptionId', self.processor.transaction_response['raw'])
 
