@@ -234,8 +234,9 @@ class ModelInvoiceTests(TestCase):
         self.assertEqual(self.new_invoice.get_discounts(), 0)
         self.assertEqual(self.new_invoice.order_items.first().trial_amount, month_offer.current_price())
 
-    def test_get_next_billing_date(self):
+    def test_get_next_billing_date_month(self):
         pass
+
 
     def test_get_next_billing_price(self):
         pass
