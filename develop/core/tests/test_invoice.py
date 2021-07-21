@@ -4,7 +4,7 @@ from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from vendor.models import Offer, Invoice, OrderItem, CustomerProfile, Payment
+from vendor.models import Offer, Invoice, OrderItem, CustomerProfile, Payment, Price
 from vendor.forms import BillingAddressForm, CreditCardForm
 from vendor.utils import get_display_decimal
 
@@ -17,14 +17,14 @@ class ModelInvoiceTests(TestCase):
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
-        
+
         self.new_invoice = Invoice(profile=CustomerProfile.objects.get(pk=1))
         self.new_invoice.save()
 
         self.shirt_offer = Offer.objects.get(pk=1)
         self.hamster = Offer.objects.get(pk=3)
         self.mug_offer = Offer.objects.get(pk=4)
- 
+
     def test_default_site_id_saved(self):
         invoice = Invoice()
         invoice.profile = CustomerProfile.objects.get(pk=1)
@@ -153,21 +153,86 @@ class ModelInvoiceTests(TestCase):
         self.new_invoice.swap_offer(hulk_offer, cheese_offer)
         self.assertFalse(self.new_invoice.order_items.filter(offer=cheese_offer).exists())
         self.assertTrue(self.new_invoice.order_items.filter(offer=hulk_offer).exists())
-    
-    def test_get_discounts(self):
-        pass
+
+    def test_invoice_no_discounts(self):
+        self.new_invoice.add_offer(Offer.objects.get(pk=3))
+        self.assertEqual(self.new_invoice.get_discounts(), 0)
+        self.assertGreater(self.new_invoice.total, 0)
+
+    def test_invoice_with_discounts_ten_off(self):
+        discount = 10
+        wheel_offer = Offer.objects.get(pk=3)
+        wheel_price = Price.objects.get(pk=5)
+        wheel_price.cost = wheel_offer.get_msrp() - discount
+        wheel_price.save()
+        self.new_invoice.add_offer(wheel_offer)
+        self.assertGreater(wheel_offer.get_msrp(), self.new_invoice.total)
+        self.assertEqual(self.new_invoice.get_discounts(), discount)
+
+    def test_invoice_with_trial_discounts(self):
+        free_month_offer = Offer.objects.get(pk=7)
+        discount = free_month_offer.current_price()
+        self.new_invoice.add_offer(free_month_offer)
+        self.assertEqual(self.new_invoice.get_discounts(), discount)
+        self.assertEqual(self.new_invoice.total, 0)
+
+    def test_invoice_with_discount_and_trial_discounts(self):
+        discount = 10
+        wheel_offer = Offer.objects.get(pk=3)
+        wheel_price = Price.objects.get(pk=5)
+        wheel_price.cost = wheel_offer.get_msrp() - discount
+        wheel_price.save()
+        free_month_offer = Offer.objects.get(pk=7)
+        trial_discount = free_month_offer.current_price()
+        self.new_invoice.add_offer(free_month_offer)
+        self.new_invoice.add_offer(wheel_offer)
+        self.assertEqual(self.new_invoice.get_discounts(), discount + trial_discount)
 
     def test_save_discounts_vendor_notes(self):
-        pass
+        free_month_offer = Offer.objects.get(pk=7)
+        discount = free_month_offer.current_price()
+        self.new_invoice.add_offer(free_month_offer)
+        self.new_invoice.save_discounts_vendor_notes()
+        self.assertEqual(self.new_invoice.vendor_notes['discounts'], discount)
 
-    def test_order_item_price(self):
-        pass
+    def test_order_item_price_msrp(self):
+        wheel_offer = Offer.objects.get(pk=3)
+        self.new_invoice.add_offer(wheel_offer)
+        self.assertEqual(self.new_invoice.order_items.first().price, wheel_offer.get_msrp())
+        self.assertNotEqual(self.new_invoice.order_items.first().price, wheel_offer.current_price())
 
-    def test_order_item_savings(self):
-        pass
+    def test_order_item_price_current_price(self):
+        free_month = Offer.objects.get(pk=7)
+        self.new_invoice.add_offer(free_month)
+        self.assertNotEqual(self.new_invoice.order_items.first().price, free_month.get_msrp())
+        self.assertEqual(self.new_invoice.order_items.first().price, free_month.current_price())
 
-    def test_order_item_discounts(self):
-        pass
+    def test_order_item_with_discounts(self):
+        discount = 10
+        wheel_offer = Offer.objects.get(pk=3)
+        wheel_price = Price.objects.get(pk=5)
+        wheel_price.cost = wheel_offer.get_msrp() - discount
+        wheel_price.save()
+        self.new_invoice.add_offer(wheel_offer)
+        self.assertEqual(self.new_invoice.order_items.first().discounts, discount)
+
+    def test_order_item_no_discounts(self):
+        wheel_offer = Offer.objects.get(pk=3)
+        self.new_invoice.add_offer(wheel_offer)
+        self.assertEqual(self.new_invoice.order_items.first().discounts, 0)
+
+    def test_order_item_with_trial_amount(self):
+        free_month = Offer.objects.get(pk=7)
+        discount = free_month.current_price()
+        self.new_invoice.add_offer(free_month)
+        self.assertEqual(self.new_invoice.order_items.first().trial_amount, free_month.current_price() - discount)
+
+    def test_order_item_no_trial_amount(self):
+        month_offer = Offer.objects.get(pk=6)
+        self.new_invoice.add_offer(month_offer)
+        self.assertEqual(self.new_invoice.get_recurring_total(), month_offer.current_price())
+        self.assertEqual(self.new_invoice.get_discounts(), 0)
+        self.assertEqual(self.new_invoice.order_items.first().trial_amount, month_offer.current_price())
 
     def test_get_next_billing_date(self):
         pass
@@ -181,14 +246,14 @@ class ModelInvoiceTests(TestCase):
 class CartViewTests(TestCase):
 
     fixtures = ['user', 'unit_test']
-    
+
     def setUp(self):
         self.client = Client()
         self.user = User.objects.get(pk=1)
         self.client.force_login(self.user)
 
         self.invoice = Invoice.objects.get(pk=1)
-        
+
         self.mug_offer = Offer.objects.get(pk=4)
         self.shirt_offer = Offer.objects.get(pk=1)
 
@@ -213,7 +278,7 @@ class CartViewTests(TestCase):
 
         self.assertContains(response, 'Your shopping cart is empty.')
         self.assertNotContains(response, 'Check Out')
-    
+
     def test_view_cart_updates_on_adding_items(self):
         response = self.client.get(self.cart_url)
         self.assertContains(response, f'<span class="text-primary">${self.invoice.total}</span>')
@@ -224,15 +289,15 @@ class CartViewTests(TestCase):
 
         remove_shirt_url = reverse("vendor:remove-from-cart", kwargs={'slug': self.shirt_offer.slug})
         self.assertContains(response, f'<span class="text-primary">${self.invoice.total}</span>')
-    
+
     # def test_view_displays_login_instead_checkout(self):
         # raise NotImplementedError()
-    
-    
+
+
 class AccountInformationViewTests(TestCase):
 
     fixtures = ['user', 'unit_test']
-    
+
     def setUp(self):
         self.client = Client()
         self.user = User.objects.get(pk=1)
@@ -282,8 +347,14 @@ class PaymentViewTests(TestCase):
         self.client.logout()
         response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
-    
+        self.assertRedirects(response, reverse('account_login') + '?next=' + self.view_url )
+
+    def test_cost_overview_discounts(sefl):
+        pass
+
+    def test_cost_overview_no_discounts(self):
+        pass
+
     # def test_view_cart_no_shipping_address(self):
         # raise NotImplementedError()
 
@@ -312,14 +383,11 @@ class ReviewCheckoutViewTests(TestCase):
         response = self.client.get(self.view_url)
         self.assertEquals(response.status_code, 200)
 
-    # def test_view_cart_no_shipping_address(self):
-    #     raise NotImplementedError()
-
     def test_view_redirect_login(self):
         self.client.logout()
         response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
+        self.assertRedirects(response, reverse('account_login') + '?next=' + self.view_url )
 
     def test_view_missing_data(self):
         session = self.client.session
@@ -404,4 +472,10 @@ class PaymentSummaryViewTests(TestCase):
         self.client.logout()
         response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('account_login')+ '?next=' + self.view_url )
+        self.assertRedirects(response, reverse('account_login') + '?next=' + self.view_url)
+
+    def test_cost_overview_discounts(self):
+        pass
+
+    def test_cost_overview_no_discounts(self):
+        pass
