@@ -261,6 +261,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         payment_schedule.trialOccurrences = subscription.offer.get_trial_occurrences()
         return payment_schedule
 
+    def create_transaction_order_information(self, invoice_number, description):
+        order = apicontractsv1.orderType()
+        order.invoiceNumber = invoice_number
+        order.description = description
+        return order
+
     ##########
     # Django-Vendor to Authoriaze.net data exchange functions
     ##########
@@ -540,14 +546,16 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         Handles an Authorize Only transaction to ensure that the funds are in the customers bank account
         """
+        invoice_number = str(self.invoice.pk) + " - Card Validaton"
+        description = "This amount is only to check for valid cards and will not be charged. Depending on your bank the charge can take 3 to 5 days to be removed."
         self.create_payment_model()
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(self.transaction_types[TransactionTypes.AUTHORIZE])
-        # TODO: This should probably be a settings env var to set a desired amount to validate that the card is real.
-        self.transaction_type.amount = self.to_valid_decimal(self.invoice.get_recurring_total())
+        self.transaction_type.amount = self.to_valid_decimal(settings.VENDOR_CHARGE_VALIDATION_PRICE)
         self.transaction_type.payment = self.create_authorize_payment()
         self.transaction_type.billTo = self.create_billing_address(apicontractsv1.customerAddressType())
-
+        self.transaction_type.order = self.create_transaction_order_information(invoice_number, description)
+        
         self.transaction.transactionRequest = self.transaction_type
         self.controller = createTransactionController(self.transaction)
         self.set_controller_api_endpoint()
