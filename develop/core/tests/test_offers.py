@@ -1,12 +1,15 @@
+from core.models import Product
+
 from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
-from vendor.models import Offer
 
-from core.models import Product
+from vendor.models import Offer
+from vendor.utils import get_display_decimal
+
 
 User = get_user_model()
 
@@ -62,7 +65,7 @@ class ModelOfferTests(TestCase):
     def test_get_current_price_is_msrp_default(self):
         offer = Offer.objects.get(pk=4)
         price = offer.current_price()
-        self.assertEquals(price, 10.00)
+        self.assertEquals(price, 25.2)
 
     def test_get_current_price_has_only_start_date(self):
         offer = Offer.objects.get(pk=2)
@@ -76,13 +79,13 @@ class ModelOfferTests(TestCase):
         offer = Offer.objects.get(pk=3)
         self.assertEquals(offer.current_price(), 25.2)
 
-    def test_offer_negative_savings(self):
+    def test_offer_negative_discount(self):
         offer = Offer.objects.get(pk=3)
-        self.assertEquals(offer.savings(), 0.00)
+        self.assertEquals(get_display_decimal(offer.discount()), 0.00)
 
-    def test_offer_savings(self):
+    def test_offer_discount(self):
         offer = Offer.objects.get(pk=1)
-        self.assertEquals(offer.savings(), 10.00)
+        self.assertEquals(get_display_decimal(offer.discount()), 10.00)
 
     def test_offer_description_from_product(self):
         offer = Offer.objects.get(pk=3)

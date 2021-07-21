@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
@@ -15,6 +17,8 @@ from vendor.models import Offer, Invoice, Address, OrderItem, Receipt
 from vendor.models.choice import TermType, PurchaseStatus
 from vendor.processors import PaymentProcessor
 from vendor.utils import get_site_from_request
+
+logger = logging.getLogger(__name__)
 
 # The Payment Processor configured in settings.py
 payment_processor = PaymentProcessor
@@ -302,6 +306,7 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         if processor.transaction_submitted:
             return redirect('vendor:purchase-summary', uuid=invoice.uuid)
         else:
+            logger.warning(f"Payment gateway did not authorize payment {processor.transaction_message}")
             # TODO: Make message configurable for the site in the settings
             messages.info(self.request, _("The payment gateway did not authorize payment."))
             return redirect('vendor:checkout-account')

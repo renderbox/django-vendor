@@ -179,7 +179,7 @@ class BaseProcessorTests(TestCase):
         customer = CustomerProfile.objects.get(pk=2)
         invoice = Invoice(profile=customer)
         invoice.save()
-        invoice.add_offer(Offer.objects.get(pk=5))
+        invoice.add_offer(Offer.objects.get(pk=8))
 
         base_processor = PaymentProcessorBase(invoice)
 
@@ -313,13 +313,21 @@ class AuthorizeNetProcessorTests(TestCase):
                 'cvv_number': '900',
                 'payment_type': '10'}
         }
-        self.subscription_offer = Offer.objects.get(pk=4)
+        self.subscription_offer = Offer.objects.get(pk=6)
         self.client = Client()
         self.user = User.objects.get(pk=1)
         self.client.force_login(self.user)
         price = Price.objects.get(pk=1)
         price.cost = randrange(1, 1000)
+        price.priority = 10
         price.save()
+        subscription_price = Price.objects.get(pk=9)
+        subscription_price.cost = randrange(1, 1000)
+        price.priority = 10
+        subscription_price.priority = 10
+        subscription_price.save()
+        self.existing_invoice.update_totals()
+
 
     ##########
     # Processor Initialization Tests
@@ -843,8 +851,10 @@ class AuthorizeNetProcessorTests(TestCase):
         price = Price()
         price.offer = self.subscription_offer
         price.cost = randrange(1, 1000)
+        price.priority = 10
         price.start_date = timezone.now() - timedelta(days=1)
         price.save()
+        self.existing_invoice.update_totals()
         self.existing_invoice.save()
 
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
@@ -913,9 +923,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.existing_invoice.add_offer(self.subscription_offer)
         price = Price()
         price.offer = self.subscription_offer
-        price.cost = randrange(1, 1000)
+        price.cost = randrange(11, 1000)
         price.start_date = timezone.now() - timedelta(days=1)
+        price.priority = 10
         price.save()
+        self.existing_invoice.update_totals()
         self.existing_invoice.save()
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
@@ -930,6 +942,7 @@ class AuthorizeNetProcessorTests(TestCase):
         price = Price()
         price.offer = self.subscription_offer
         price.cost = randrange(1, 1000)
+        price.priority = 10
         price.start_date = timezone.now() - timedelta(days=1)
         price.save()
         self.existing_invoice.save()

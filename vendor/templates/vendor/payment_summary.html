@@ -13,7 +13,7 @@
         <span>{% trans 'The order number is' %}: {{ object.pk }}</span>
     </div>
     <div class='col-md-12 mb-4'>
-        <span>{% trans 'Ordered on' %} {{ object.created|date }}</span>
+        <span>{% trans 'Ordered on' %} {{ object.ordered_date|date }}</span>
     </div>
     <div class='col-md-12'>
         {% for order_item in object.order_items.all %}
