@@ -1,3 +1,5 @@
+
+from core.models import Product
 from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -294,7 +296,9 @@ class AuthorizeNetProcessorTests(TestCase):
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
-        self.processor = AuthorizeNetProcessor(self.existing_invoice)
+        t_shirt = Product.objects.get(pk=1)
+        t_shirt.meta['msrp']['usd'] = randrange(1, 1000)
+        t_shirt.save()
         self.form_data = {
             'billing_address_form': {
                 'billing-name': 'Home',
@@ -327,6 +331,7 @@ class AuthorizeNetProcessorTests(TestCase):
         subscription_price.priority = 10
         subscription_price.save()
         self.existing_invoice.update_totals()
+        self.processor = AuthorizeNetProcessor(self.existing_invoice)
 
 
     ##########

@@ -226,7 +226,7 @@ class AdminOfferCreateView(LoginRequiredMixin, PassRequestToFormKwargsMixin, Cre
         return redirect('vendor_admin:manager-offer-list')
 
 
-class AdminSubscriptionListView(LoginRequiredMixin, SiteOnRequestFilterMixin, ListView):
+class AdminSubscriptionListView(LoginRequiredMixin, ListView):
     '''
     List of all the invoices generated on the current site.
     '''
