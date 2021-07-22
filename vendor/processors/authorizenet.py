@@ -546,7 +546,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         Handles an Authorize Only transaction to ensure that the funds are in the customers bank account
         """
-        invoice_number = str(self.invoice.pk) + " - Card Validaton"
+        invoice_number = str(self.invoice.pk)[:19]
         description = "This amount is only to check for valid cards and will not be charged. Depending on your bank the charge can take 3 to 5 days to be removed."
         self.create_payment_model()
         self.transaction = self.create_transaction()
