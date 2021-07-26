@@ -114,9 +114,9 @@ class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
             return JsonResponse({"msg": "Invalid request body."})
 
         # TODO: THIS SHOULD BE not self.is_valid_post() hash calculation not working need to debug
-        if self.is_valid_post():
+        if not self.is_valid_post():
             logger.error(f"Request was denied: {request}")
-            raise PermissionDenied()
+            # raise PermissionDenied() # This will be uncommented out until we know that a valid call is being properly validated. 
 
         request_data = json.loads(request.body)
         logger.info(f"Renewing subscription request body: {request_data}")
