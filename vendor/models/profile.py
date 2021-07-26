@@ -65,7 +65,7 @@ class CustomerProfile(CreateUpdateModelBase):
         if Invoice.InvoiceStatus.CHECKOUT in carts_status:
             return self.invoices.get(status=Invoice.InvoiceStatus.CHECKOUT)
         else:
-            cart, created = self.invoices.get_or_create(status=Invoice.InvoiceStatus.CART)
+            cart, created = self.invoices.get_or_create(site=self.site, status=Invoice.InvoiceStatus.CART)
             return cart
 
     def has_invoice_in_checkout(self):
