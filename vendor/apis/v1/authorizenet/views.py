@@ -30,7 +30,7 @@ def renew_subscription_task(json_data):
 
     if not hasattr(transaction_detail, 'subscription'):
         return None
-    if transaction_detail.subscription.payNum.pyVal == 1:
+    if transaction_detail.subscription.payNum.pyval == 1:
         return None
 
     past_receipt = Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created').last()
