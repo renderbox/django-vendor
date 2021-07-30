@@ -30,7 +30,7 @@ def renew_subscription_task(json_data):
 
     if not hasattr(transaction_detail, 'subscription'):
         return None
-    if transaction_detail.subscription.payNum.pyVal == 1:
+    if transaction_detail.subscription.payNum.pyval == 1:
         return None
 
     past_receipt = Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created').last()
@@ -94,7 +94,7 @@ class AuthorizeNetBaseAPI(View):
 
         hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNITURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
         logger.info(f"Checking hashs\nCALCULATED: {hash_value}\nREQUEST VALUE: {self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]}")
-        if hash_value == self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]:
+        if hash_value.upper() == self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]:
             return True
 
         return False
