@@ -45,5 +45,6 @@ def get_payment_schedule_end_date(offer, start_date=timezone.now()):
     elif units == TermDetailUnits.DAY:
         return get_future_date_days(start_date, offer.get_period_length())
 
+
 def get_display_decimal(amount):
     return Decimal(amount).quantize(Decimal('.00'), rounding=ROUND_UP)
