@@ -935,7 +935,6 @@ class AuthorizeNetProcessorTests(TestCase):
         price.save()
         self.existing_invoice.save()
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
-        self.form_data["credit_card_form"]['card_number'] = self.VALID_CARD_NUMBERS[randrange(0, len(self.VALID_CARD_NUMBERS) - 1)]
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         self.processor.is_data_valid()
@@ -952,8 +951,8 @@ class AuthorizeNetProcessorTests(TestCase):
         price.save()
         self.existing_invoice.update_totals()
         self.existing_invoice.save()
+        self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         self.processor = AuthorizeNetProcessor(self.existing_invoice)
-        self.form_data["credit_card_form"]['card_number'] = self.VALID_CARD_NUMBERS[randrange(0, len(self.VALID_CARD_NUMBERS) - 1)]
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         self.processor.is_data_valid()
