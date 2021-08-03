@@ -34,17 +34,16 @@ def get_future_date_days(today, add_days):
     return today + timedelta(days=add_days)
 
 
-def get_payment_schedule_end_date(offer):
+def get_payment_schedule_end_date(offer, start_date=timezone.now()):
     """
     Determines the start date offset so the payment gateway starts charging the monthly offer
     """
     units = offer.term_details.get('term_units', TermDetailUnits.MONTH)
 
     if units == TermDetailUnits.MONTH:
-        return get_future_date_months(timezone.now(), offer.get_period_length())
+        return get_future_date_months(start_date, offer.get_period_length())
     elif units == TermDetailUnits.DAY:
-        return get_future_date_days(timezone.now(), offer.get_period_length())
-
+        return get_future_date_days(start_date, offer.get_period_length())
 
 def get_display_decimal(amount):
     return Decimal(amount).quantize(Decimal('.00'), rounding=ROUND_UP)
