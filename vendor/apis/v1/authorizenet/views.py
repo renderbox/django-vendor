@@ -26,6 +26,7 @@ def renew_subscription_task(json_data):
     dummy_invoice = Invoice()
 
     processor = payment_processor(dummy_invoice)
+    logger.info(f"Getting transaction detail for id: {transaction_id}")
     transaction_detail = processor.get_transaction_detail(transaction_id)
 
     if not hasattr(transaction_detail, 'subscription'):
@@ -52,7 +53,7 @@ def renew_subscription_task(json_data):
         invoice_info = {
             "invoice_id": past_invoice.pk,
             "receipt_id": receipt.pk,
-            "payments": [payment.pk for payment in past_invoice.payments.all()] 
+            "payments": [payment.pk for payment in past_invoice.payments.all()]
         }
         invoice_history.append(invoice_info)
 
@@ -113,13 +114,13 @@ class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
             logger.warning("Webhook event has no body")
             return JsonResponse({"msg": "Invalid request body."})
 
-        # TODO: THIS SHOULD BE not self.is_valid_post() hash calculation not working need to debug
         if not self.is_valid_post():
-            logger.error(f"Request was denied: {request}")
+            logger.error(f"authcapture: Request was denied: {request}")
             # raise PermissionDenied() # This will be uncommented out until we know that a valid call is being properly validated. 
 
         request_data = json.loads(request.body)
         logger.info(f"Renewing subscription request body: {request_data}")
         renew_subscription_task(request_data)
+        logger.info("authcapture subscription renewed")
 
         return JsonResponse({"msg": "subscription renewed"})

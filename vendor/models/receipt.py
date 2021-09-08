@@ -1,4 +1,5 @@
 import uuid
+from django.core.exceptions import ObjectDoesNotExist
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -7,6 +8,7 @@ from django.utils import timezone, dateformat
 
 from vendor.models.base import CreateUpdateModelBase
 from vendor.models.choice import PurchaseStatus
+from vendor.utils import get_payment_schedule_end_date
 
 
 class Receipt(CreateUpdateModelBase):
@@ -51,3 +53,9 @@ class Receipt(CreateUpdateModelBase):
     def cancel(self):
         self.status = PurchaseStatus.CANCELED
         self.auto_renew = False
+
+    def is_on_trial(self):
+        first_payment = Receipt.objects.filter(transaction=self.transaction, order_item__offer__site=self.order_item.offer.site).order_by('start_date').first()
+        if self.end_date <= get_payment_schedule_end_date(first_payment.order_item.offer, first_payment.start_date):
+            return True
+        return False
