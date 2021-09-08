@@ -56,6 +56,6 @@ class Receipt(CreateUpdateModelBase):
 
     def is_on_trial(self):
         first_payment = Receipt.objects.filter(transaction=self.transaction, order_item__offer__site=self.order_item.offer.site).order_by('start_date').first()
-        if self.start_date <= get_payment_schedule_end_date(first_payment.order_item.offer, first_payment.start_date):
+        if self.end_date <= get_payment_schedule_end_date(first_payment.order_item.offer, first_payment.start_date):
             return True
         return False

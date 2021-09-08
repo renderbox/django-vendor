@@ -1,31 +1,39 @@
-from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
-from django.test import TestCase, Client
-from django.urls import reverse
+from django.test import TestCase
+from django.utils import timezone
 
-from core.models import Product
-from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerProfile
+from vendor.models import Receipt, Offer, Invoice, CustomerProfile
+from vendor.utils import get_payment_schedule_end_date
 
 
 class ReceiptModelTests(TestCase):
 
-    fixtures = []
+    fixtures = ['user', 'unit_test']
 
     def setUp(self):
-        pass
+        self.first_receipt = Receipt.objects.get(pk=3)
+        self.new_invoice = Invoice.objects.create(
+            profile=CustomerProfile.objects.get(pk=1),
+            site=Site.objects.get(pk=1),
+        )
+        self.new_invoice.add_offer(Offer.objects.get(pk=4))
+        self.new_receipt = Receipt.objects.create(
+            start_date=timezone.now(),
+            end_date=get_payment_schedule_end_date(self.new_invoice.order_items.first().offer),
+            profile=CustomerProfile.objects.get(pk=1),
+            order_item=self.new_invoice.order_items.first(),
+            transaction=self.first_receipt.transaction
+        )
 
-    def test_receipt_save_subscription(self):
-        # TODO: Implement Test
-        pass
+    def test_receipt_is_on_trial_true(self):
+        self.first_receipt.start_date = timezone.now()
+        self.first_receipt.end_date = get_payment_schedule_end_date(self.first_receipt.order_item.offer)
+        self.first_receipt.save()
+        self.assertTrue(self.new_receipt.is_on_trial())
 
-    def test_receipt_save_perpertual(self):
-        # TODO: Implement Test
-        pass
+    def test_receipt_is_on_trial_false(self):
+        self.assertFalse(self.new_receipt.is_on_trial())
 
-    def test_receipt_save_one_time_use(self):
-        # TODO: Implement Test
-        pass
-    
 
 class ReceiptViewTests(TestCase):
 
