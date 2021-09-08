@@ -70,7 +70,7 @@ class ModelCustomerProfileTests(TestCase):
 
         count = customer_profile.get_cart_items_count()
 
-        self.assertEquals(count, 3)
+        self.assertEquals(count, customer_profile.invoices.first().order_items.count())
 
     def test_owns_product_true(self):
         product = Product.objects.get(pk=2)

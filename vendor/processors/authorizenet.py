@@ -169,6 +169,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         customerData.email = self.invoice.profile.user.email
         return customerData
 
+    def create_customer_data_recurring(self):
+        customerData = apicontractsv1.customerType()
+        customerData.type = "individual"
+        customerData.id = str(self.invoice.profile.user.pk)
+        customerData.email = self.invoice.profile.user.email
+        return customerData
+
     def set_transaction_request_settings(self, settings):
         raise NotImplementedError
 
@@ -369,6 +376,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_type = self.create_transaction_type(settings.AUTHORIZE_NET_TRANSACTION_TYPE_DEFAULT)
         self.transaction_type.amount = self.to_valid_decimal(self.invoice.get_one_time_transaction_total())
         self.transaction_type.payment = self.create_authorize_payment()
+        self.transaction_type.customer = self.create_customer_data()
         self.transaction_type.billTo = self.create_billing_address(apicontractsv1.customerAddressType())
 
         # Optional items for make it easier to read and use on the Authorize.net portal.
@@ -400,6 +408,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_type.trialAmount = self.to_valid_decimal(subscription.offer.get_trial_amount())
         self.transaction_type.billTo = self.create_billing_address(apicontractsv1.nameAndAddressType())
         self.transaction_type.payment = self.create_authorize_payment()
+        self.transaction_type.customer = self.create_customer_data_recurring()
 
         # Optional to add Order information.
         self.transaction_type.order = self.create_order_type()

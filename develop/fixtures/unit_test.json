@@ -176,6 +176,17 @@
 },
 {
     "model": "vendor.orderitem",
+    "pk": 4,
+    "fields": {
+        "created": "2020-06-30T03:01:12.555Z",
+        "updated": "2020-07-02T01:14:47.468Z",
+        "invoice": 1,
+        "offer": 4,
+        "quantity": 1
+    }
+},
+{
+    "model": "vendor.orderitem",
     "pk": 5,
     "fields": {
         "created": "2020-07-01T05:32:28.668Z",
@@ -430,6 +441,24 @@
     }
 },
 {
+    "model": "vendor.payment",
+    "pk": 2,
+    "fields": {
+        "invoice": 1,
+        "uuid": "ccda0d8a-0ddf-440b-8804-eddc28014931",
+        "created": "2020-06-30T01:20:01.616Z",
+        "transaction": "1-1-2",
+        "provider": "AuthorizeNetProcessor",
+        "amount": 408.43,
+        "profile": 1,
+        "billing_address": 1,
+        "result": {"msg": "Payment Complete", "trans_id": 40053987215, "response_code": 1, "code": 1, "message": "This transaction has been approved.", "responseCode": 1, "authCode": "A3YXNW", "avsResultCode": "Y", "cvvResultCode": "P", "cavvResultCode": 2, "transId": 40053987215, "refTransID": "1234567890", "transHash": "", "testRequest": 0, "accountNumber": "XXXX0015", "accountType": "MasterCard", "transHashSha2": "", "networkTransId": "LAHTAFS7B44MPV2SMDCBB85"},
+        "success": true,
+        "payee_full_name": "Bob Ross",
+        "payee_company": "Whitemoon Dreams"
+    }
+},
+{
     "model": "vendor.price",
     "pk": 1,
     "fields": {
@@ -567,6 +596,23 @@
         "auto_renew": false,
         "vendor_notes": {},
         "transaction": "1-1-1",
+        "status": 20,
+        "meta": {}
+    }
+},
+{
+    "model": "vendor.receipt",
+    "pk": 3,
+    "fields": {
+        "created": "2020-10-02T16:53:37.438Z",
+        "updated": "2020-10-02T16:53:37.438Z",
+        "profile": 1,
+        "order_item": 4,
+        "start_date": "2020-10-02T16:53:37.437Z",
+        "end_date": "2020-11-02T16:53:37.437Z",
+        "auto_renew": true,
+        "vendor_notes": {},
+        "transaction": "1-1-2",
         "status": 20,
         "meta": {}
     }
