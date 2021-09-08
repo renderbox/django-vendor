@@ -367,7 +367,8 @@ class AuthorizeNetProcessorTests(TestCase):
         """
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
-
+        
+        self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
 
         print(self.processor.transaction_message)
@@ -432,7 +433,7 @@ class AuthorizeNetProcessorTests(TestCase):
         elif 'cvvResultCode' in self.processor.transaction_response:
             self.assertEquals("N", self.processor.transaction_response.cvvResultCode.text)
         else:
-            print(f'\ntest_process_payment_fail_cvv_no_match:\n Response: {self.processor.payment.result["raw"]}\n')
+            print(f'\ntest_process_payment_fail_cvv_no_match:\n Response: {Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", "")}\n')
 
     def test_process_payment_fail_cvv_should_not_be_on_card(self):
         """
@@ -453,7 +454,7 @@ class AuthorizeNetProcessorTests(TestCase):
         elif 'cvvResultCode' in self.processor.transaction_response:
             self.assertEquals("S", self.processor.transaction_response.cvvResultCode.text)
         else:
-            print(f'\ntest_process_payment_fail_cvv_should_not_be_on_card:\n Response: {self.processor.payment.result["raw"]}\n')
+            print(f'\ntest_process_payment_fail_cvv_should_not_be_on_card:\n Response: {Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", "")}\n')
 
     def test_process_payment_fail_cvv_not_certified(self):
         """
@@ -475,7 +476,7 @@ class AuthorizeNetProcessorTests(TestCase):
         elif 'cvvResultCode' in self.processor.transaction_response:
             self.assertEquals("U", self.processor.transaction_response.cvvResultCode.text)
         else:
-            print(f'\ntest_process_payment_fail_cvv_not_certified:\n Response: {self.processor.payment.result["raw"]}\n')
+            print(f'\ntest_process_payment_fail_cvv_not_certified:\n Response: {Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", "")}\n')
 
     def test_process_payment_fail_cvv_not_processed(self):
         """
@@ -496,7 +497,7 @@ class AuthorizeNetProcessorTests(TestCase):
         elif 'cvvResultCode' in self.processor.transaction_response:
             self.assertEquals("P", self.processor.transaction_response.cvvResultCode.text)
         else:
-            print(f'\ntest_process_payment_fail_cvv_not_processed\nResponse: {self.processor.payment.result["raw"]}\n')
+            print(f'\ntest_process_payment_fail_cvv_not_processed\nResponse: {Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", "")}\n')
 
     ##########
     # AVS Tests
@@ -517,7 +518,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        self.assertIn("'avsResultCode': 'A'", self.processor.payment.result["raw"])
+        self.assertIn("'avsResultCode': 'A'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
 
     def test_process_payment_avs_service_error(self):
         """
@@ -534,10 +535,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'A duplicate transaction has been submitted' in self.processor.payment.result["raw"]:
+        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'E'", self.processor.payment.result["raw"])
+            self.assertIn("'avsResultCode': 'E'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
 
     def test_process_payment_avs_non_us_card(self):
         """
@@ -554,10 +555,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'A duplicate transaction has been submitted' in self.processor.payment.result["raw"]:
+        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'G'", self.processor.payment.result["raw"])
+            self.assertIn("'avsResultCode': 'G'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
 
     def test_process_payment_avs_addr_no_match_zipcode_no_match(self):
         """
@@ -574,10 +575,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'A duplicate transaction has been submitted' in self.processor.payment.result["raw"]:
+        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'N'", self.processor.payment.result["raw"])
+            self.assertIn("'avsResultCode': 'N'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
 
     def test_process_payment_avs_retry_service_unavailable(self):
         """
@@ -594,10 +595,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'A duplicate transaction has been submitted' in self.processor.payment.result["raw"]:
+        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'R'", self.processor.payment.result["raw"])
+            self.assertIn("'avsResultCode': 'R'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
             self.assertFalse(self.processor.payment.success)
             self.assertEquals(Invoice.InvoiceStatus.CART, self.processor.invoice.status)
 
@@ -614,10 +615,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'A duplicate transaction has been submitted' in self.processor.payment.result["raw"]:
+        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'S'", self.processor.payment.result["raw"])
+            self.assertIn("'avsResultCode': 'S'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
 
     def test_process_payment_avs_addrs_info_unavailable(self):
         """
@@ -634,10 +635,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'A duplicate transaction has been submitted' in self.processor.payment.result["raw"]:
+        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'U'", self.processor.payment.result["raw"])
+            self.assertIn("'avsResultCode': 'U'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
 
     def test_process_payment_avs_addr_no_match_zipcode_match_9_digits(self):
         """
@@ -654,10 +655,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'A duplicate transaction has been submitted' in self.processor.payment.result["raw"]:
+        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'W'", self.processor.payment.result["raw"])
+            self.assertIn("'avsResultCode': 'W'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
 
     def test_process_payment_avs_addr_match_zipcode_match(self):
         """
@@ -674,10 +675,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'A duplicate transaction has been submitted' in self.processor.payment.result["raw"]:
+        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'X'", self.processor.payment.result["raw"])
+            self.assertIn("'avsResultCode': 'X'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
 
     def test_process_payment_avs_addr_no_match_zipcode_match_5_digits(self):
         """
@@ -694,10 +695,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'A duplicate transaction has been submitted' in self.processor.payment.result["raw"]:
+        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'Z'", self.processor.payment.result["raw"])
+            self.assertIn("'avsResultCode': 'Z'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
 
     ##########
     # Refund Transactin Tests
