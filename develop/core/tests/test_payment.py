@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from vendor.models import Invoice, Receipt, Payment
+from vendor.models import Invoice, Receipt, Payment, receipt
 
 User = get_user_model()
 
@@ -27,6 +27,12 @@ class PaymentModelTests(TestCase):
         payment.save()
         receipts = payment.get_related_receipts()
         self.assertFalse(receipts.count())
+
+    def test_get_receipt(self):
+        receipt = Receipt.objects.get(pk=3)
+        payment = Payment.objects.get(pk=2)
+
+        self.assertEqual(receipt.pk, payment.get_receipt().pk)
 
 
 class PaymentViewTests(TestCase):
