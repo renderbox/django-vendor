@@ -267,6 +267,11 @@ class Invoice(CreateUpdateModelBase):
         self.vendor_notes["discounts"] = self.get_discounts()
         self.save()
 
+    def get_promos(self):
+        if 'promos' not in self.vendor_notes or len(self.vendor_notes.get('promos', 0)):
+            return ""
+        return self.vendor_notes['promos']
+
 
 class OrderItem(CreateUpdateModelBase):
     '''
