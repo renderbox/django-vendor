@@ -1,0 +1,48 @@
+{% extends "vendor/manage/base.html" %}
+{% load i18n %}
+
+{% block vendor_content %}
+<div class="container-fluid">
+
+  <nav aria-label="breadcrumb">
+    <h1>{{ title }}</h1>
+  </nav>
+  <div class="row">
+    <div class="col">
+      <table class="table table-striped">
+
+        <thead>
+          <tr>
+            <th scope="col">{% trans 'Payment ID' %}</th>
+            <th scope="col">{% trans 'Invoice ID' %}</th>
+            <th scope="col">{% trans 'Transaction' %}</th>
+            <th scope="col">{% trans 'Amount' %}</th>
+            <th scope="col">{% trans 'Profile' %}</th>
+            <th scope="col">{% trans 'Site' %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in object_list %}
+          <tr>
+            <td>{{ item.pk }}</td>
+            <td>{{ item.invoice.pk }}</td>
+            <td>{{ item.transaction }}</td>
+            <td>{{ item.amount }}</td>
+            <td>{{ item.profile.user.username }}</td>
+            <td>{{ item.invoice.site }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td>
+              {% trans 'No Payments' %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

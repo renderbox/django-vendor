@@ -5,13 +5,14 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from vendor.models.receipt import Receipt
+from vendor.models.base import SoftDeleteModelBase
 from vendor.utils import get_display_decimal
 
 
 ##########
 # PAYMENT
 ##########
-class Payment(models.Model):
+class Payment(SoftDeleteModelBase):
     '''
     Payments
     - Payments are typically from a Credit Card, PayPal or ACH
@@ -37,11 +38,11 @@ class Payment(models.Model):
 
     def get_receipt(self):
         try:
-            return Receipt.objects.get(transaction=self.transaction, start_date__year=self.created.year, start_date__month=self.created.month, start_date__day=self.created.day)
+            return Receipt.objects.get(transaction=self.transaction, created__year=self.created.year, created__month=self.created.month, created__day=self.created.day)
         except ObjectDoesNotExist:
             return None
         except MultipleObjectsReturned:
-            return Receipt.objects.filter(transaction=self.transaction, start_date__year=self.created.year, start_date__month=self.created.month, start_date__day=self.created.day).first()
+            return Receipt.objects.filter(transaction=self.transaction, created__year=self.created.year, created__month=self.created.month, created__day=self.created.day).first()
 
     def get_amount_display(self):
         return get_display_decimal(self.amount)
