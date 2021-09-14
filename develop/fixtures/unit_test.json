@@ -142,7 +142,12 @@
         "site": 1,
         "status": 0,
         "customer_notes": "",
-        "vendor_notes": {},
+        "vendor_notes": {
+            "promos": {
+                "helloworld": true,
+                "goodbyeworld": false
+            }
+        },
         "ordered_date": null,
         "subtotal": 345.18,
         "tax": 0,
