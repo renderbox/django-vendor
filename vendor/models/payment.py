@@ -1,6 +1,6 @@
 import uuid
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -40,6 +40,8 @@ class Payment(models.Model):
             return Receipt.objects.get(transaction=self.transaction, start_date__year=self.created.year, start_date__month=self.created.month, start_date__day=self.created.day)
         except ObjectDoesNotExist:
             return None
+        except MultipleObjectsReturned:
+            return Receipt.objects.filter(transaction=self.transaction, start_date__year=self.created.year, start_date__month=self.created.month, start_date__day=self.created.day).first()
 
     def get_amount_display(self):
         return get_display_decimal(self.amount)
