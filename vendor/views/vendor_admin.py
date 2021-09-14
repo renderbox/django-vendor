@@ -366,8 +366,6 @@ class PaymentWithNoReceiptListView(LoginRequiredMixin, ListView):
     model = Payment
 
     def get_queryset(self):
-        if hasattr(self.request, 'site'):
-            site = self.request.site
         site = get_site_from_request(self.request)
         return [payment for payment in Payment.objects.filter(invoice__site=site, success=True) if payment.get_receipt() is None]
 
@@ -382,8 +380,6 @@ class PaymentWithNoOrderItemsListView(LoginRequiredMixin, ListView):
     model = Payment
 
     def get_queryset(self):
-        if hasattr(self.request, 'site'):
-            site = self.request.site
         site = get_site_from_request(self.request)
         return Payment.objects.filter(invoice__site=site, success=True).annotate(order_item_count=Count('invoice__order_items')).filter(order_item_count=0)
 
