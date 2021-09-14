@@ -115,13 +115,11 @@ class ModelProductTests(TestCase):
         receipt.end_date = None
         receipt.save()
         product = Product.objects.get(pk=2)
-        self.assertEqual(1, len(product.active_receipts()))
-        pass
+        self.assertEqual(1, len(product.active_profile_receipts()))
 
     def test_inactive_profile_receipts(self):
         product = Product.objects.get(pk=2)
-        self.assertEqual(0, len(product.inactive_receipts()))
-        pass
+        self.assertEqual(0, len(product.inactive_profile_receipts()))
 
 
 class TransactionProductTests(TestCase):
