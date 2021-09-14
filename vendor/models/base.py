@@ -1,4 +1,5 @@
 import uuid
+from vendor.models.receipt import Receipt
 
 from autoslug import AutoSlugField
 
@@ -114,3 +115,9 @@ class ProductModelBase(CreateUpdateModelBase):
             return currency
         else:
             return self.meta['msrp']['default']
+
+    def active_profile_receipts(self):
+        return [receipt for receipt in self.receipts.all() if receipt.profile.has_product(self)]
+
+    def inactive_profile_receipts(self):
+        return [receipt for receipt in self.receipts.all() if not receipt.profile.hat_product(self)]

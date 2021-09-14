@@ -6,9 +6,10 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.utils import timezone
 
 from vendor.models import generate_sku, validate_msrp_format, validate_msrp
-from vendor.models import Offer
+from vendor.models import Offer, Receipt
 
 User = get_user_model()
 
@@ -107,6 +108,20 @@ class ModelProductTests(TestCase):
     def test_create_product_in_valid_msrp(self):
         with self.assertRaises(ValidationError):
             validate_msrp({'msrp': {'default': 'usd', 'usd': 21, 'rub': 20 }})
+
+    def test_active_profile_receipts(self):
+        receipt = Receipt.objects.get(pk=1)
+        receipt.start_date = timezone.now()
+        receipt.end_date = None
+        receipt.save()
+        product = Product.objects.get(pk=2)
+        self.assertEqual(1, len(product.active_receipts()))
+        pass
+
+    def test_inactive_profile_receipts(self):
+        product = Product.objects.get(pk=2)
+        self.assertEqual(0, len(product.inactive_receipts()))
+        pass
 
 
 class TransactionProductTests(TestCase):
