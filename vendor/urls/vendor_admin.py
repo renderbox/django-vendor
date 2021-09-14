@@ -23,6 +23,7 @@ urlpatterns = [
     path('product/<uuid:uuid>/remove', admin_views.VoidProductView.as_view(), name="manager-profile-remove-product"),
     path('product/<uuid:uuid>/availability', admin_views.ProductAvailabilityToggleView.as_view(), name="manager-product-availablility"),
     path('product/<uuid:uuid>/renew', admin_views.AdminManualSubscriptionRenewal.as_view(), name="manager-product-renew"),
+    path('payments/no/receipt/', admin_views.PaymentWithNoReceiptListView.as_view(), name="manager-payment-no-receipt"),
 
     # reports
     path('reports/receipts/download/', report_views.ReceiptListCSV.as_view(), name="manager-receipt-download"),
