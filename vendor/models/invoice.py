@@ -272,7 +272,7 @@ class Invoice(CreateUpdateModelBase):
         pass
 
     def get_promos(self):
-        if 'promos' not in self.vendor_notes or not len(self.vendor_notes.get('promos', 0)):
+        if 'promos' not in self.vendor_notes or not len(self.vendor_notes.get('promos', [])):
             return ""
         return self.vendor_notes['promos'].keys()
 
