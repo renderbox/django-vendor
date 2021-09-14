@@ -5,6 +5,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from vendor.models.receipt import Receipt
+from vendor.models.modelmanagers import SoftDeleteManager
 from vendor.utils import get_display_decimal
 
 
@@ -31,17 +32,24 @@ class Payment(models.Model):
     success = models.BooleanField(_("Successful"), default=False)
     payee_full_name = models.CharField(_("Name on Card"), max_length=50)
     payee_company = models.CharField(_("Company"), max_length=50, blank=True, null=True)
+    deleted = models.BooleanField(_("Deleted"), default=False)
+
+    not_deleted = SoftDeleteManager()
 
     def get_related_receipts(self):
         return Receipt.objects.filter(transaction=self.transaction)
 
     def get_receipt(self):
         try:
-            return Receipt.objects.get(transaction=self.transaction, start_date__year=self.created.year, start_date__month=self.created.month, start_date__day=self.created.day)
+            return Receipt.objects.get(transaction=self.transaction, created__year=self.created.year, created__month=self.created.month, created__day=self.created.day)
         except ObjectDoesNotExist:
             return None
         except MultipleObjectsReturned:
-            return Receipt.objects.filter(transaction=self.transaction, start_date__year=self.created.year, start_date__month=self.created.month, start_date__day=self.created.day).first()
+            return Receipt.objects.filter(transaction=self.transaction, created__year=self.created.year, created__month=self.created.month, created__day=self.created.day).first()
 
     def get_amount_display(self):
         return get_display_decimal(self.amount)
+
+    def delete(self, using=None, keep_parents=False):
+        self.deleted = True
+        return self.save()

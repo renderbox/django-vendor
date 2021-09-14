@@ -4,6 +4,20 @@ from vendor.models import TaxClassifier, Offer, Price, CustomerProfile, \
     Invoice, OrderItem, Receipt, Wishlist, WishlistItem, Address, Payment
 
 
+################
+# ADMIN ACTIONS
+################
+def sof_delete_payments_with_no_receipt(modeladmin, request, queryset):
+    '''
+    This uses the save() instead of update() since the AutoSlugField is only generated on save().
+    '''
+    for item in queryset.all():
+        item.slug = ""
+        item.save()
+
+
+sof_delete_payments_with_no_receipt.short_description = "Regenerate the Slug Field"
+
 ###############
 # INLINES
 ###############
@@ -60,7 +74,7 @@ class CustomerProfileAdmin(admin.ModelAdmin):
 class InvoiceAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid', 'profile', 'shipping_address')
     list_display = ('__str__', 'profile', 'site', 'status', 'total', 'created')
-    search_fields = ('profile__user__username', )
+    search_fields = ('uuid', 'profile__user__username', )
     list_filter = ('site__domain', )
     inlines = [
         OrderItemInline,

@@ -16,7 +16,7 @@ from vendor.utils import get_site_from_request
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES, TermType
 from .offer import Offer
-
+from .modelmanagers import SoftDeleteManager
 
 #####################
 # INVOICE
@@ -47,11 +47,11 @@ class Invoice(CreateUpdateModelBase):
     total = models.FloatField(blank=True, null=True)                            # Set on purchase
     currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY)      # User's default currency
     shipping_address = models.ForeignKey("vendor.Address", verbose_name=_("Shipping Address"), on_delete=models.CASCADE, blank=True, null=True)
-    # paid = models.BooleanField(_("Paid"))                 # May be Useful for quick filtering on invoices that are outstanding
-    # settle_date = models.DateTimeField(_("Settle Date"))
+    deleted = models.BooleanField(_("Deleted"), default=False)
 
     objects = models.Manager()
     on_site = CurrentSiteManager()
+    not_deleted = SoftDeleteManager()
 
     class Meta:
         verbose_name = "Invoice"
