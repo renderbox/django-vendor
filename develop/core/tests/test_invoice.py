@@ -238,9 +238,21 @@ class ModelInvoiceTests(TestCase):
         self.assertEqual(self.new_invoice.get_discounts(), 0)
         self.assertEqual(self.new_invoice.order_items.first().trial_amount, month_offer.current_price())
 
+    def test_get_promos(self):
+        invoice = Invoice.objects.get(pk=1)
+
+        self.assertNotEquals(invoice.get_promos(), "")
+
+    def test_get_promos_none(self):
+        self.assertEquals(self.new_invoice.get_promos(), "")
+
+    def test_get_promos_empty(self):
+        self.new_invoice.vendor_notes['promos'] = {}
+        self.new_invoice.save()
+        self.assertEquals(self.new_invoice.get_promos(), "")
+
     def test_get_next_billing_date_month(self):
         pass
-
 
     def test_get_next_billing_price(self):
         pass

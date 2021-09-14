@@ -142,7 +142,12 @@
         "site": 1,
         "status": 0,
         "customer_notes": "",
-        "vendor_notes": {},
+        "vendor_notes": {
+            "promos": {
+                "helloworld": true,
+                "goodbyeworld": false
+            }
+        },
         "ordered_date": null,
         "subtotal": 345.18,
         "tax": 0,
@@ -446,7 +451,7 @@
     "fields": {
         "invoice": 1,
         "uuid": "ccda0d8a-0ddf-440b-8804-eddc28014931",
-        "created": "2020-06-30T01:20:01.616Z",
+        "created": "2020-10-02T16:53:37.438Z",
         "transaction": "1-1-2",
         "provider": "AuthorizeNetProcessor",
         "amount": 408.43,

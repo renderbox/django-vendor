@@ -38,15 +38,6 @@ class ModelOfferTests(TestCase):
 
         self.assertEquals(Site.objects.get_current(), offer.site)
 
-    # def test_change_offer_to_unavailable_product_change_to_unavailable(self):
-    #     raise NotImplementedError()
-
-    # def test_save_fail_product_not_available(self):
-    #     raise NotImplementedError()
-
-    # def test_save_fail_no_price_set(self):
-    #     raise NotImplementedError()
-
     def test_add_offer_to_cart_slug(self):
         mug_offer = Offer.objects.get(pk=4)
         slug = mug_offer.add_to_cart_link()
@@ -168,6 +159,13 @@ class ModelOfferTests(TestCase):
         offer.end_date = (timezone.now() - timedelta(days=1))
         offer.save()
         self.assertEqual(offer.get_status_display(), "Expired")
+
+    def test_soft_delete_success(self):
+        offer = Offer.objects.all().first()
+        offer.delete()
+
+        self.assertEqual(Offer.objects.all().count() - 1, Offer.not_deleted.count())
+
 
 
 class ViewOfferTests(TestCase):
