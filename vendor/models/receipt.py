@@ -1,5 +1,4 @@
 import uuid
-from django.core.exceptions import ObjectDoesNotExist
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _

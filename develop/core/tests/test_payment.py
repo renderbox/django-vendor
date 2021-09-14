@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from vendor.models import Invoice, Receipt, Payment, receipt
+from vendor.models import Invoice, Receipt, Payment
 
 User = get_user_model()
 
