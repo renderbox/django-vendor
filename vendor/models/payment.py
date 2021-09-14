@@ -5,14 +5,14 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from vendor.models.receipt import Receipt
-from vendor.models.modelmanagers import SoftDeleteManager
+from vendor.models.base import SoftDeleteModelBase
 from vendor.utils import get_display_decimal
 
 
 ##########
 # PAYMENT
 ##########
-class Payment(models.Model):
+class Payment(SoftDeleteModelBase):
     '''
     Payments
     - Payments are typically from a Credit Card, PayPal or ACH
@@ -32,9 +32,6 @@ class Payment(models.Model):
     success = models.BooleanField(_("Successful"), default=False)
     payee_full_name = models.CharField(_("Name on Card"), max_length=50)
     payee_company = models.CharField(_("Company"), max_length=50, blank=True, null=True)
-    deleted = models.BooleanField(_("Deleted"), default=False)
-
-    not_deleted = SoftDeleteManager()
 
     def get_related_receipts(self):
         return Receipt.objects.filter(transaction=self.transaction)
@@ -49,7 +46,3 @@ class Payment(models.Model):
 
     def get_amount_display(self):
         return get_display_decimal(self.amount)
-
-    def delete(self, using=None, keep_parents=False):
-        self.deleted = True
-        return self.save()

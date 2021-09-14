@@ -13,6 +13,7 @@ from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
 
 from .validator import validate_msrp
 from .utils import is_currency_available
+from .modelmanagers import SoftDeleteManager
 
 
 def get_product_model():
@@ -47,6 +48,24 @@ class CreateUpdateModelBase(models.Model):
 
     class Meta:
         abstract = True
+
+
+class SoftDeleteModelBase(models.Model):
+    '''
+    Adds "Soft Delete" functionality to models
+    '''
+    deleted = models.BooleanField(_("Deleted"), default=False)
+
+    # Managers
+    objects = models.Manager()                  # Standard Model manager
+    not_deleted = SoftDeleteManager()                # Records filtered with deleted=False
+
+    class Meta:
+        abstract = True
+
+    def delete(self, using=None, keep_parents=False):
+        self.deleted = True
+        return self.save()
 
 
 class ProductModelBase(CreateUpdateModelBase):

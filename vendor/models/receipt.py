@@ -5,13 +5,12 @@ from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 from django.utils import timezone, dateformat
 
-from vendor.models.base import CreateUpdateModelBase
+from vendor.models.base import CreateUpdateModelBase, SoftDeleteModelBase
 from vendor.models.choice import PurchaseStatus
-from vendor.models.modelmanagers import SoftDeleteManager
 from vendor.utils import get_payment_schedule_end_date
 
 
-class Receipt(CreateUpdateModelBase):
+class Receipt(SoftDeleteModelBase, CreateUpdateModelBase):
     '''
     A link for all the purchases a user has made. Contains subscription start and end date.
     This is generated for each item a user purchases so it can be checked in other code.
@@ -26,9 +25,6 @@ class Receipt(CreateUpdateModelBase):
     transaction = models.CharField(_("Transaction"), max_length=80)
     status = models.IntegerField(_("Status"), choices=PurchaseStatus.choices, default=0)       # Fulfilled, Refund
     meta = models.JSONField(_("Meta"), default=dict)
-    deleted = models.BooleanField(_("Deleted"), default=False)
-
-    not_deleted = SoftDeleteManager()
 
     class Meta:
         verbose_name = "Receipt"
