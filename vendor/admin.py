@@ -69,7 +69,7 @@ class InvoiceAdmin(admin.ModelAdmin):
 
 class OfferAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid',)
-    list_display = ('name', 'slug', 'site', 'terms', 'available')
+    list_display = ('name', 'slug', 'site', 'terms', 'available', 'deleted')
     search_fields = ('name', 'site', )
     list_filter = ('site__domain', )
     inlines = [

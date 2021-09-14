@@ -267,6 +267,15 @@ class Invoice(CreateUpdateModelBase):
         self.vendor_notes["discounts"] = self.get_discounts()
         self.save()
 
+    def save_promo_codes(self, codes):
+        # TODO: Need to implement a consistant way on how to save promo codes in invoice.vendor_notes
+        pass
+
+    def get_promos(self):
+        if 'promos' not in self.vendor_notes or not len(self.vendor_notes.get('promos', [])):
+            return ""
+        return self.vendor_notes['promos'].keys()
+
 
 class OrderItem(CreateUpdateModelBase):
     '''

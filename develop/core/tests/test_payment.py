@@ -28,6 +28,12 @@ class PaymentModelTests(TestCase):
         receipts = payment.get_related_receipts()
         self.assertFalse(receipts.count())
 
+    def test_get_receipt(self):
+        receipt = Receipt.objects.get(pk=3)
+        payment = Payment.objects.get(pk=2)
+
+        self.assertEqual(receipt.pk, payment.get_receipt().pk)
+
 
 class PaymentViewTests(TestCase):
 
