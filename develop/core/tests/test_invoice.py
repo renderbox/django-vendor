@@ -259,7 +259,7 @@ class ModelInvoiceTests(TestCase):
         deleted_invoice_difference = Invoice.objects.all().count() - Invoice.not_deleted.count()
 
         self.assertEqual(Invoice.objects.all().count() - deleted_invoice_difference, Invoice.not_deleted.count())
-        self.assertEquals(invoice_count_before_deletion, Invoice.objects.all().count()
+        self.assertEquals(invoice_count_before_deletion, Invoice.objects.all().count())
 
     def test_get_next_billing_date_month(self):
         pass

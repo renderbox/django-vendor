@@ -42,7 +42,7 @@ class PaymentModelTests(TestCase):
         deleted_payment_difference = Payment.objects.all().count() - Payment.not_deleted.count()
 
         self.assertEqual(Payment.objects.all().count() - deleted_payment_difference, Payment.not_deleted.count())
-        self.assertEquals(payment_count_before_deletion, Payment.objects.all().count()
+        self.assertEquals(payment_count_before_deletion, Payment.objects.all().count())
 
 
 class PaymentViewTests(TestCase):

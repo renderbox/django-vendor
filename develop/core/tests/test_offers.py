@@ -171,7 +171,6 @@ class ModelOfferTests(TestCase):
         self.assertEquals(offer_count_before_deletion, Offer.objects.all().count())
 
 
-
 class ViewOfferTests(TestCase):
 
     fixtures = ['user', 'unit_test']
