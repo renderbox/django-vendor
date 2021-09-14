@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def soft_delete_payments_with_no_receipt(modeladmin, request, queryset):
     '''
     This action finds any successfull payment that has not a receipt that matches its transaction and created fields, and soft deletes them.
-    Every successfull payment have a receipt that has the same transaction value.
+    Every successfull payment has a receipt that has the same transaction value.
     '''
     invalid_payments = [payment for payment in Payment.objects.filter(success=True) if payment.get_receipt() is None]
 
@@ -28,7 +28,7 @@ def soft_delete_payments_with_no_receipt(modeladmin, request, queryset):
 def soft_delete_payments_without_order_items_invoice(modeladmin, request, queryset):
     '''
     This action finds any successfull payment that with an invoice that has no order_items.
-    Meaning it is useless payment as it did not pay for anything
+    Meaning it is a useless payment as it did not pay for any item
     '''
     invalid_payments = Payment.objects.filter(success=True).annotate(order_item_count=Count('invoice__order_items')).filter(order_item_count=0)
     for payment in invalid_payments:
@@ -41,7 +41,6 @@ def soft_delete_invoices_with_deleted_payments(modeladmin, request, queryset):
     '''
     This action finds any invoice that has a status greater then Checkout and has a soft deleted payment.
     If an invoice has two payments, both need to be deleted to delete the invoice.
-    Meaning it is useless payment as it did not pay for anything
     '''
     for invoice in Invoice.objects.filter(status__gt=Invoice.InvoiceStatus.CHECKOUT):
         soft_delete = True
