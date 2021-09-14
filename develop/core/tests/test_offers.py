@@ -162,9 +162,13 @@ class ModelOfferTests(TestCase):
 
     def test_soft_delete_success(self):
         offer = Offer.objects.all().first()
+        offer_count_before_deletion = Offer.objects.all().count()
         offer.delete()
 
-        self.assertEqual(Offer.objects.all().count() - 1, Offer.not_deleted.count())
+        deleted_offer_difference = Offer.objects.all().count() - Offer.not_deleted.count()
+
+        self.assertEqual(Offer.objects.all().count() - deleted_offer_difference, Offer.not_deleted.count())
+        self.assertEquals(offer_count_before_deletion, Offer.objects.all().count())
 
 
 
