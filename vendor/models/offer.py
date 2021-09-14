@@ -12,9 +12,10 @@ from django.utils.translation import ugettext_lazy as _
 from vendor.config import DEFAULT_CURRENCY
 from vendor.utils import get_payment_schedule_end_date
 
-from .base import CreateUpdateModelBase
+from .base import CreateUpdateModelBase, SoftDeleteModelBase
 from .choice import TermType, TermDetailUnits
 from .utils import set_default_site_id, is_currency_available
+from .modelmanagers import ActiveManager, ActiveCurrentSiteManager, CurrentSiteSoftDeleteManager
 
 
 #########
@@ -34,35 +35,7 @@ def offer_term_details_default():
     }
 
 
-class ActiveManager(models.Manager):
-    """
-    This Model Manger returns offers that are available
-    """
-    def get_queryset(self):
-        return super().get_queryset().filter(available=True)
-
-
-class ActiveCurrentSiteManager(CurrentSiteManager):
-    """
-    This Model Manager return offers per site that are available
-    """
-    def get_queryset(self):
-        return super().get_queryset().filter(available=True)
-
-
-class SoftDeleteManager(models.Manager):
-
-    def get_queryset(self):
-        return super().get_queryset().filter(deleted=False)
-
-
-class CurrentSiteSoftDeleteManager(CurrentSiteManager):
-
-    def get_queryset(self):
-        return super().get_queryset().filter(deleted=False)
-
-
-class Offer(CreateUpdateModelBase):
+class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
     '''
     Offer attaches to a record from the designated VENDOR_PRODUCT_MODEL.
     This is so more than one offer can be made per product, with different
@@ -84,12 +57,10 @@ class Offer(CreateUpdateModelBase):
     list_bundle_items = models.BooleanField(_("List Bundled Items"), default=False, help_text=_("When showing to customers, display the included items in a list?"))
     allow_multiple = models.BooleanField(_("Allow Multiple Purchase"), default=False, help_text=_("Confirm the user wants to buy multiples of the product where typically there is just one purchased at a time."))
     meta = models.JSONField(_("Meta"), default=dict)
-    deleted = models.BooleanField(_("Deleted"), default=False)
 
     objects = models.Manager()
     on_site = CurrentSiteManager()
     active = ActiveManager()
-    not_deleted = SoftDeleteManager()
     on_site_active = ActiveCurrentSiteManager()
     on_site_not_deleted = CurrentSiteSoftDeleteManager()
 
@@ -224,7 +195,3 @@ class Offer(CreateUpdateModelBase):
 
     def get_trial_amount(self):
         return self.term_details.get('trial_amount', 0)
-
-    def delete(self, using=None, keep_parents=False):
-        self.deleted = True
-        return self.save()

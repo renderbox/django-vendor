@@ -1,6 +1,7 @@
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import View
@@ -13,7 +14,7 @@ from vendor.config import VENDOR_PRODUCT_MODEL
 from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType, PaymentTypes
-from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin
+from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
 from vendor.processors import PaymentProcessor
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
@@ -358,3 +359,31 @@ class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
 
         messages.info(request, _("Subscription Renewed"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
+
+
+class PaymentWithNoReceiptListView(LoginRequiredMixin, ListView):
+    template_name = "vendor/manage/payment_list.html"
+    model = Payment
+
+    def get_queryset(self):
+        site = get_site_from_request(self.request)
+        return [payment for payment in Payment.objects.filter(invoice__site=site, success=True) if payment.get_receipt() is None]
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _("Payments with no Receipts")
+        return context
+
+
+class PaymentWithNoOrderItemsListView(LoginRequiredMixin, ListView):
+    template_name = "vendor/manage/payment_list.html"
+    model = Payment
+
+    def get_queryset(self):
+        site = get_site_from_request(self.request)
+        return Payment.objects.filter(invoice__site=site, success=True).annotate(order_item_count=Count('invoice__order_items')).filter(order_item_count=0)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _("Payments with no Order Items")
+        return context

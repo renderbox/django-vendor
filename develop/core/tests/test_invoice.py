@@ -251,6 +251,16 @@ class ModelInvoiceTests(TestCase):
         self.new_invoice.save()
         self.assertEquals(self.new_invoice.get_promos(), "")
 
+    def test_soft_delete(self):
+        invoice = Invoice.objects.all().first()
+        invoice_count_before_deletion = Invoice.objects.all().count()
+        invoice.delete()
+
+        deleted_invoice_difference = Invoice.objects.all().count() - Invoice.not_deleted.count()
+
+        self.assertEqual(Invoice.objects.all().count() - deleted_invoice_difference, Invoice.not_deleted.count())
+        self.assertEquals(invoice_count_before_deletion, Invoice.objects.all().count())
+
     def test_get_next_billing_date_month(self):
         pass
 

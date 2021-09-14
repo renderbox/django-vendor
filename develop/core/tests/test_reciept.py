@@ -34,6 +34,16 @@ class ReceiptModelTests(TestCase):
     def test_receipt_is_on_trial_false(self):
         self.assertFalse(self.new_receipt.is_on_trial())
 
+    def test_soft_delete(self):
+        receipt = Receipt.objects.all().first()
+        receipt_count_before_deletion = Receipt.objects.all().count()
+        receipt.delete()
+
+        deleted_receipt_difference = Receipt.objects.all().count() - Receipt.not_deleted.count()
+
+        self.assertEqual(Receipt.objects.all().count() - deleted_receipt_difference, Receipt.not_deleted.count())
+        self.assertEquals(receipt_count_before_deletion, Receipt.objects.all().count())
+
 
 class ReceiptViewTests(TestCase):
 
