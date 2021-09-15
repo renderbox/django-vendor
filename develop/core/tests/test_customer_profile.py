@@ -73,6 +73,9 @@ class ModelCustomerProfileTests(TestCase):
         self.assertEquals(count, customer_profile.invoices.first().order_items.count())
 
     def test_owns_product_true(self):
+        receipt = Receipt.objects.get(pk=1)
+        receipt.end_date = None
+        receipt.save()
         product = Product.objects.get(pk=2)
         self.assertTrue(self.customer_profile_existing.has_product(product))
 
