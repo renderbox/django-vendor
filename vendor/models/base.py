@@ -114,3 +114,30 @@ class ProductModelBase(CreateUpdateModelBase):
             return currency
         else:
             return self.meta['msrp']['default']
+
+    def active_profile_receipts(self):
+        """
+        Gets currently active reciepts by checking if the customer owns the product
+        """
+        return [receipt for receipt in self.receipts.all() if receipt.profile.has_product(self)]
+    
+    def owners(self):
+        """
+        Gets a set list of profiles that own the product
+        """
+        active_receipts = self.active_profile_receipts()
+        return set([receipt.profile for receipt in active_receipts])
+
+    def inactive_profile_receipts(self):
+        """
+        Gets a list of reciepts for customers that no longer own the product.
+        """
+        return [receipt for receipt in self.receipts.all() if not receipt.profile.has_product(self)]
+
+    def expired_owners(self):
+        """
+        Gets a set list of profiles that no longer own the product
+        """
+        owners = self.owners()
+        inactive_receipts = self.inactive_profile_receipts()
+        return set([receipt.profile for receipt in inactive_receipts if receipt.profile not in owners])
