@@ -6,11 +6,13 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.utils import timezone
 
 from vendor.models import generate_sku, validate_msrp_format, validate_msrp
-from vendor.models import Offer
+from vendor.models import Offer, Receipt, CustomerProfile
 
 User = get_user_model()
+
 
 class ModelProductTests(TestCase):
 
@@ -27,7 +29,7 @@ class ModelProductTests(TestCase):
         self.new_product.save()
 
         self.assertTrue(self.new_product.pk)
-        
+
     def test_unique_sku(self):
         product_a = Product()
         product_a.name = 'a'
@@ -59,11 +61,10 @@ class ModelProductTests(TestCase):
         self.assertEqual(product_a.slug, product_b.slug)
 
     def test_valid_msrp(self):
-        msrp =  "JPY,10.99"
-        
+        msrp = "JPY,10.99"
+
         self.assertIsNone(validate_msrp_format(msrp))
-        
-    
+
     def test_raise_error_invalid_country_code_msrp(self):
         msrp = "JP,10.00"
         with self.assertRaises(ValidationError):
@@ -78,20 +79,20 @@ class ModelProductTests(TestCase):
         msrp = ",10.00"
         with self.assertRaises(ValidationError):
             validate_msrp_format(msrp)
-    
+
     def test_raise_error_only_comma_msrp(self):
         msrp = ","
         with self.assertRaises(ValidationError):
             validate_msrp_format(msrp)
-    
+
     def test_get_best_currency_success(self):
         product = Product.objects.get(pk=1)
-        
+
         self.assertEquals(product.get_best_currency(), 'usd')
 
     def test_get_best_currency_fail(self):
         product = Product.objects.get(pk=1)
-        
+
         self.assertEquals(product.get_best_currency('mxn'), 'usd')
 
     def test_create_product_valid_msrp(self):
@@ -107,6 +108,30 @@ class ModelProductTests(TestCase):
     def test_create_product_in_valid_msrp(self):
         with self.assertRaises(ValidationError):
             validate_msrp({'msrp': {'default': 'usd', 'usd': 21, 'rub': 20 }})
+
+    def test_active_profile_receipts(self):
+        receipt = Receipt.objects.get(pk=1)
+        receipt.start_date = timezone.now()
+        receipt.end_date = None
+        receipt.save()
+        product = Product.objects.get(pk=2)
+        self.assertIn(receipt, product.active_profile_receipts())
+
+    def test_inactive_profile_receipts(self):
+        product = Product.objects.get(pk=2)
+        self.assertIn(Receipt.objects.get(pk=1), product.inactive_profile_receipts())
+
+    def test_product_owners(self):
+        receipt = Receipt.objects.get(pk=1)
+        receipt.start_date = timezone.now()
+        receipt.end_date = None
+        receipt.save()
+        product = Product.objects.get(pk=2)
+        self.assertIn(receipt.profile, product.owners())
+
+    def test_expired_owners(self):
+        product = Product.objects.get(pk=2)
+        self.assertIn(CustomerProfile.objects.get(pk=1), product.expired_owners())
 
 
 class TransactionProductTests(TestCase):
