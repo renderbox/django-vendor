@@ -16,13 +16,11 @@ from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType, PaymentTypes
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
-from vendor.processors import PaymentProcessor
+from vendor.processors import get_site_payment_processor
 
 from siteconfigs.models import SiteConfigModel
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
-
-payment_processor = PaymentProcessor
 #############
 # Admin Views
 
@@ -315,7 +313,7 @@ class AddOfferToProfileView(LoginRequiredMixin, View):
             cart.remove_offer(offer)
             return redirect(reverse('vendor_admin:manager-profile', kwargs={'uuid': customer_profile.uuid}))
 
-        processor = payment_processor(cart)
+        processor = get_site_payment_processor(cart.site)(cart)
         processor.authorize_payment()
 
         messages.info(request, _("Offer Added To Customer Profile"))
@@ -357,7 +355,7 @@ class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
         invoice.save()
         invoice.add_offer(past_receipt.order_item.offer)
 
-        processor = PaymentProcessor(invoice)
+        processor = get_site_payment_processor(invoice.site)(invoice)
         processor.renew_subscription(past_receipt, payment_info)
 
         messages.info(request, _("Subscription Renewed"))

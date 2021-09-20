@@ -15,13 +15,10 @@ from django.views.generic.list import ListView
 from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm, AddressForm
 from vendor.models import Offer, Invoice, Address, OrderItem, Receipt
 from vendor.models.choice import TermType, PurchaseStatus
-from vendor.processors import PaymentProcessor
+from vendor.processors import get_site_payment_processor
 from vendor.utils import get_site_from_request
 
 logger = logging.getLogger(__name__)
-
-# The Payment Processor configured in settings.py
-payment_processor = PaymentProcessor
 
 
 # TODO: Need to remove the login required
@@ -231,7 +228,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
 
         context = super().get_context_data()
 
-        processor = payment_processor(invoice)
+        processor = get_site_payment_processor(invoice.site)(invoice)
 
         context = processor.get_checkout_context(context=context)
 
@@ -254,7 +251,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
             billing_address_form = BillingAddressForm(request.POST)
 
         if not (billing_address_form.is_valid() and credit_card_form.is_valid()):
-            processor = payment_processor(invoice)
+            processor = get_site_payment_processor(invoice.site)(invoice)
             context['billing_address_form'] = billing_address_form
             context['credit_card_form'] = credit_card_form
             return render(request, self.template_name, processor.get_checkout_context(context=context))
@@ -276,7 +273,7 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 
         context = super().get_context_data()
 
-        processor = payment_processor(invoice)
+        processor = get_site_payment_processor(invoice.site)(invoice)
         if 'billing_address_form' in request.session:
             billing_address_form = BillingAddressForm(request.session['billing_address_form'])
             billing_address_form.is_valid()
@@ -296,7 +293,7 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
             messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
 
-        processor = payment_processor(invoice)
+        processor = get_site_payment_processor(invoice.site)(invoice)
 
         processor.set_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
         processor.set_payment_info_form_data(request.session.get('credit_card_form'), CreditCardForm)
@@ -390,7 +387,7 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
 
-        processor = PaymentProcessor(receipt.order_item.invoice)
+        processor = get_site_payment_processor(receipt.order_item.invoice.site)(receipt.order_item.invoice)
         processor.subscription_cancel(receipt)
 
         messages.info(self.request, _("Subscription Cancelled"))
@@ -410,7 +407,7 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
             messages.info(request, _("Invalid Card"))
             return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
-        processor = PaymentProcessor(receipt.order_item.invoice)
+        processor = get_site_payment_processor(receipt.order_item.invoice.site)(receipt.order_item.invoice)
         processor.set_payment_info_form_data(request.POST, CreditCardForm)
         processor.subscription_update_payment(receipt)
 
