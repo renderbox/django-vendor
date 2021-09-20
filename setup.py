@@ -55,6 +55,7 @@ setup(
             'dj-database-url',
             'psycopg2-binary',
             'django-crispy-forms',
+            "django-site-configs",
             'django-allauth',
             ],
         'stripe': [             # Packages needed for Stripe
