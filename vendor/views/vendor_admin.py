@@ -1,12 +1,13 @@
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.sites.models import Site
 from django.db.models import Count
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import View
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import CreateView, UpdateView, FormView
 from django.views.generic.list import ListView
 from django.utils.translation import ugettext as _
 
@@ -16,6 +17,8 @@ from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType, PaymentTypes
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
 from vendor.processors import PaymentProcessor
+
+from siteconfigs.models import SiteConfigModel
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
@@ -387,3 +390,50 @@ class PaymentWithNoOrderItemsListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['title'] = _("Payments with no Order Items")
         return context
+
+
+
+class PaymentSiteConfigsListView(ListView):
+    template_name = 'vendorpromo/processor_site_config_list.html'
+    model = SiteConfigModel
+    queryset = SiteConfigModel.objects.all()
+
+
+class PaymentProcessorFormView(FormView):
+    template_name = 'vendorpromo/processor_site_config.html'
+    form_class = PaymentProcessorForm
+
+    def get_success_url(self):
+        return reverse('vendorpromo-processor')
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        processor_config = PaymentProcessorSiteConfig()
+        context['form'] = processor_config.get_form()
+        return context
+
+    def form_valid(self, form):
+        processor_config = PaymentProcessorSiteConfig()
+        processor_config.save(form)
+        return redirect('vendorpromo-processor-lists')
+
+
+class PaymentProcessorSiteSelectFormView(FormView):
+    template_name = 'vendorpromo/processor_site_config.html'
+    form_class = PaymentProcessorSiteSelectForm
+
+    def get_success_url(self):
+        return reverse('vendorpromo-processor')
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        processor_config = PaymentProcessorSiteSelectSiteConfig(Site.objects.get(pk=self.kwargs.get('pk')))
+        context['form'] = processor_config.get_form()
+        return context
+
+    def form_valid(self, form):
+        site = Site.objects.get(pk=form.cleaned_data['site'])
+        processor_config = PaymentProcessorSiteSelectSiteConfig(site)
+        processor_config.save(form)
+        return redirect('vendorpromo-processor-lists')
+

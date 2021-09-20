@@ -3,6 +3,8 @@ from datetime import datetime
 from django import forms
 from django.apps import apps
 from django.conf import settings
+from django.contrib.sites.models import Site
+from django.db.models import TextChoices
 from django.forms import inlineformset_factory
 from django.forms.widgets import SelectDateWidget, TextInput
 from django.utils.translation import ugettext_lazy as _
@@ -22,6 +24,25 @@ def get_available_country_choices():
     if isinstance(COUNTRY_CHOICE, list):
         return [(country.value, country.label) for country in Country if country.name in COUNTRY_CHOICE]
     return Country.choices
+
+
+class SupportedProcessor(TextChoices):
+    PROMO_CODE_BASE = ("base.PaymentProcessorBase", _("Default Processor"))
+    AUTHORIZE_NET = ("authorizenet.AuthorizeNetProcessor", _("Authorize.Net"))
+
+
+class PaymentProcessorForm(forms.Form):
+    processor = forms.CharField(label=_("Processor"), widget=forms.Select(choices=SupportedProcessor.choices))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['processor'].widget = forms.Select(choices=SupportedProcessor.choices)
+        self.fields['processor'].label = _("Payment Processor")
+
+
+class PaymentProcessorSiteSelectForm(PaymentProcessorForm):
+    site = forms.CharField(label=_("Site"), widget=forms.Select(choices=[(site.pk, site.domain) for site in Site.objects.all()]))
 
 
 class PriceForm(forms.ModelForm):
