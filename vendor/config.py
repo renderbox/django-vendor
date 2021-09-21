@@ -15,13 +15,13 @@ class SupportedPaymentProcessor(TextChoices):
 
 
 class PaymentProcessorForm(forms.Form):
-    processor = forms.CharField(label=_("Payment Processor"), widget=forms.Select(choices=SupportedPaymentProcessor.choices))
+    payment_processor = forms.CharField(label=_("Payment Processor"), widget=forms.Select(choices=SupportedPaymentProcessor.choices))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['processor'].widget = forms.Select(choices=SupportedPaymentProcessor.choices)
-        self.fields['processor'].label = _("Payment Processor")
+        self.fields['payment_processor'].widget = forms.Select(choices=SupportedPaymentProcessor.choices)
+        self.fields['payment_processor'].label = _("Payment Processor")
 
 
 class PaymentProcessorSiteSelectForm(PaymentProcessorForm):
@@ -45,8 +45,7 @@ class PaymentProcessorSiteConfig(SiteConfigBaseClass):
     # TODO: This should be implemented in the SiteConfigBaseClass  
     def save(self, valid_form):
         site_config, created = SiteConfigModel.objects.get_or_create(site=self.site, key=self.key)
-        site_config.value = {"payment_processor": valid_form.cleaned_data['processor']}
-        site_config.site = self.site
+        site_config.value = {"payment_processor": valid_form.cleaned_data['payment_processor']}
         site_config.save()
 
     # TODO: This should be implemented in the SiteConfigBaseClass

@@ -3,8 +3,6 @@ from datetime import datetime
 from django import forms
 from django.apps import apps
 from django.conf import settings
-from django.contrib.sites.models import Site
-from django.db.models import TextChoices
 from django.forms import inlineformset_factory
 from django.forms.widgets import SelectDateWidget, TextInput
 from django.utils.translation import ugettext_lazy as _

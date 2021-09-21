@@ -9,10 +9,8 @@ from siteconfigs.models import SiteConfigModel
 
 
 def get_site_payment_processor(site):
-    site_processor = PaymentProcessorSiteConfig()
-    try:
-        return import_string(f"vendor.processors.{SiteConfigModel.objects.get(site=site, key=site_processor.key).value['payment_processor']}")
-    except ObjectDoesNotExist:
-        # Should it return the default if not found?
-        # raise ValueError("PromoProcessor has not been configured")
-        return import_string(f"vendor.processors.{site_processor.default['payment_processor']}")
+    site_processor = PaymentProcessorSiteConfig(site)
+    if site_processor.instance:
+        return import_string(f"vendor.processors.{site_processor.instance.value['payment_processor']}")
+    else:
+        import_string(f"vendor.processors.{site_processor.default['payment_processor']}")
