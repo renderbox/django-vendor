@@ -28,6 +28,7 @@ class PaymentProcessorBase(object):
     status = None
     invoice = None
     provider = None
+    # TODO: Change payment to a list as an invoice can have multiple payment. EG: 1 for 1 type purchases and n for any amount of subscriptions. 
     payment = None
     payment_info = {}
     billing_address = {}
@@ -101,7 +102,7 @@ class PaymentProcessorBase(object):
         """
         self.payment.success = payment_success
         self.payment.transaction = transaction_id
-        self.payment.result.update(result_info)
+        self.payment.result['raw'] = result_info.get('raw', "")
         self.payment.save()
 
     def update_invoice_status(self, new_status):

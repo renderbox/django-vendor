@@ -431,12 +431,13 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
 
-        if not self.processor.payment:
-            self.assertIsNotNone(self.processor.payment_info.errors)
-        elif 'cvvResultCode' in self.processor.transaction_response:
-            self.assertEquals("N", self.processor.transaction_response.cvvResultCode.text)
-        else:
-            print(f'\ntest_process_payment_fail_cvv_no_match:\n Response: {Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", "")}\n')
+        self.assertIn("'cvvResultCode': 'N'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
+        # if not self.processor.payment:
+        #     self.assertIsNotNone(self.processor.payment_info.errors)
+        # elif 'cvvResultCode' in self.processor.transaction_response:
+        #     self.assertEquals("N", self.processor.transaction_response.cvvResultCode.text)
+        # else:
+        #     print(f'\ntest_process_payment_fail_cvv_no_match:\n Response: {Payment.objects.filter(invoice=self.existing_invoice).order_by("pk").first().result.get("raw", "")}\n')
 
     def test_process_payment_fail_cvv_should_not_be_on_card(self):
         """
@@ -452,12 +453,13 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
 
-        if not self.processor.payment:
-            self.assertIsNotNone(self.processor.payment_info.errors)
-        elif 'cvvResultCode' in self.processor.transaction_response:
-            self.assertEquals("S", self.processor.transaction_response.cvvResultCode.text)
-        else:
-            print(f'\ntest_process_payment_fail_cvv_should_not_be_on_card:\n Response: {Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", "")}\n')
+        self.assertIn("'cvvResultCode': 'S'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
+        # if not self.processor.payment:
+        #     self.assertIsNotNone(self.processor.payment_info.errors)
+        # elif 'cvvResultCode' in self.processor.transaction_response:
+        #     self.assertEquals("S", self.processor.transaction_response.cvvResultCode.text)
+        # else:
+        #     print(f'\ntest_process_payment_fail_cvv_should_not_be_on_card:\n Response: {Payment.objects.filter(invoice=self.existing_invoice).order_by("pk").first().result.get("raw", "")}\n')
 
     def test_process_payment_fail_cvv_not_certified(self):
         """
@@ -474,12 +476,13 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
 
-        if not self.processor.payment:
-            self.assertIsNotNone(self.processor.payment_info.errors)
-        elif 'cvvResultCode' in self.processor.transaction_response:
-            self.assertEquals("U", self.processor.transaction_response.cvvResultCode.text)
-        else:
-            print(f'\ntest_process_payment_fail_cvv_not_certified:\n Response: {Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", "")}\n')
+        self.assertIn("'cvvResultCode': 'U'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
+        # if not self.processor.payment:
+        #     self.assertIsNotNone(self.processor.payment_info.errors)
+        # elif 'cvvResultCode' in self.processor.transaction_response:
+        #     self.assertEquals("U", self.processor.transaction_response.cvvResultCode.text)
+        # else:
+        #     print(f'\ntest_process_payment_fail_cvv_not_certified:\n Response: {Payment.objects.filter(invoice=self.existing_invoice).order_by("pk").first().result.get("raw", "")}\n')
 
     def test_process_payment_fail_cvv_not_processed(self):
         """
@@ -495,12 +498,13 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
 
-        if not self.processor.payment:
-            self.assertIsNotNone(self.processor.payment_info.errors)
-        elif 'cvvResultCode' in self.processor.transaction_response:
-            self.assertEquals("P", self.processor.transaction_response.cvvResultCode.text)
-        else:
-            print(f'\ntest_process_payment_fail_cvv_not_processed\nResponse: {Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", "")}\n')
+        self.assertIn("'cvvResultCode': 'P'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
+        # if not self.processor.payment:
+        #     self.assertIsNotNone(self.processor.payment_info.errors)
+        # elif 'cvvResultCode' in self.processor.transaction_response:
+        #     self.assertEquals("P", self.processor.transaction_response.cvvResultCode.text)
+        # else:
+        #     print(f'\ntest_process_payment_fail_cvv_not_processed\nResponse: {Payment.objects.filter(invoice=self.existing_invoice).order_by("pk").first().result.get("raw", "")}\n')
 
     ##########
     # AVS Tests

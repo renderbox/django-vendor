@@ -1,0 +1,14 @@
+{% extends "vendor/manage/base.html" %}
+{% load i18n %}
+
+
+{% block title %}Site Processors'{% endblock %}
+
+{% block content %}
+<form method="POST" >
+    {% csrf_token %}
+    {{ form.as_p }}
+    <a href="{% url 'vendor_admin:vendor-processor-lists' %}" class="btn btn-danger">{% trans 'Cancel' %}</a>
+    <input type="submit" value="Save" class="btn btn-primary">
+</form>
+{% endblock %}

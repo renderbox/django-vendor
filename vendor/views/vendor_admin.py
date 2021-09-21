@@ -391,17 +391,17 @@ class PaymentWithNoOrderItemsListView(LoginRequiredMixin, ListView):
 
 
 class PaymentProcessorSiteConfigsListView(ListView):
-    template_name = 'vendorpromo/processor_site_config_list.html'
+    template_name = 'vendor/manage/processor_site_config_list.html'
     model = SiteConfigModel
     queryset = SiteConfigModel.objects.all()
 
 
 class PaymentProcessorFormView(FormView):
-    template_name = 'vendorpromo/processor_site_config.html'
+    template_name = 'vendor/manage/processor_site_config.html'
     form_class = PaymentProcessorForm
 
     def get_success_url(self):
-        return reverse('vendorpromo-processor')
+        return reverse('vendor_admin:vendor-processor')
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -412,15 +412,15 @@ class PaymentProcessorFormView(FormView):
     def form_valid(self, form):
         processor_config = PaymentProcessorSiteConfig()
         processor_config.save(form)
-        return redirect('vendorpromo-processor-lists')
+        return redirect('vendor_admin:vendor-processor-lists')
 
 
 class PaymentProcessorSiteSelectFormView(FormView):
-    template_name = 'vendorpromo/processor_site_config.html'
+    template_name = 'vendor/manage/processor_site_config.html'
     form_class = PaymentProcessorSiteSelectForm
 
     def get_success_url(self):
-        return reverse('vendorpromo-processor')
+        return reverse('vendor_admin:vendor-processor')
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -432,4 +432,4 @@ class PaymentProcessorSiteSelectFormView(FormView):
         site = Site.objects.get(pk=form.cleaned_data['site'])
         processor_config = PaymentProcessorSiteSelectSiteConfig(site)
         processor_config.save(form)
-        return redirect('vendorpromo-processor-lists')
+        return redirect('vendor_admin:vendor-processor-lists')

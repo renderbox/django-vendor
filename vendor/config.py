@@ -28,7 +28,6 @@ class PaymentProcessorSiteSelectForm(PaymentProcessorForm):
     site = forms.CharField(label=_("Site"), widget=forms.Select(choices=[(site.pk, site.domain) for site in Site.objects.all()]))
 
 
-
 class PaymentProcessorSiteConfig(SiteConfigBaseClass):
     label = _("Promo Code Processor")
     default = {"payment_processor": "base.PaymentProcessorBase"}
@@ -46,7 +45,7 @@ class PaymentProcessorSiteConfig(SiteConfigBaseClass):
     # TODO: This should be implemented in the SiteConfigBaseClass  
     def save(self, valid_form):
         site_config, created = SiteConfigModel.objects.get_or_create(site=self.site, key=self.key)
-        site_config.value = {"payment_processor": valid_form.cleaned_data['payment_processor']}
+        site_config.value = {"payment_processor": valid_form.cleaned_data['processor']}
         site_config.site = self.site
         site_config.save()
 
