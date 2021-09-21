@@ -17,12 +17,6 @@ class SupportedPaymentProcessor(TextChoices):
 class PaymentProcessorForm(forms.Form):
     payment_processor = forms.CharField(label=_("Payment Processor"), widget=forms.Select(choices=SupportedPaymentProcessor.choices))
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.fields['payment_processor'].widget = forms.Select(choices=SupportedPaymentProcessor.choices)
-        self.fields['payment_processor'].label = _("Payment Processor")
-
 
 class PaymentProcessorSiteSelectForm(PaymentProcessorForm):
     site = forms.CharField(label=_("Site"), widget=forms.Select(choices=[(site.pk, site.domain) for site in Site.objects.all()]))

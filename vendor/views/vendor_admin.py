@@ -393,7 +393,10 @@ class PaymentWithNoOrderItemsListView(LoginRequiredMixin, ListView):
 class PaymentProcessorSiteConfigsListView(ListView):
     template_name = 'vendor/manage/processor_site_config_list.html'
     model = SiteConfigModel
-    queryset = SiteConfigModel.objects.all()
+
+    def get_queryset(self):
+        payment_processor = PaymentProcessorSiteConfig()
+        return SiteConfigModel.objects.filter(key=payment_processor.key)
 
 
 class PaymentProcessorFormView(FormView):
