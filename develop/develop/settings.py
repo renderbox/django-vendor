@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'iso4217',
+    'siteconfigs',
     'vendor'
 ]
 
@@ -163,7 +164,7 @@ STATICFILES_DIRS = [
 
 # Django Vendor Settings
 VENDOR_PRODUCT_MODEL = 'core.Product'
-VENDOR_PAYMENT_PROCESSOR = os.getenv("VENDOR_PAYMENT_PROCESSOR", "base.PaymentProcessorBase")
+# VENDOR_PAYMENT_PROCESSOR = os.getenv("VENDOR_PAYMENT_PROCESSOR", "base.PaymentProcessorBase")
 VENDOR_STATE = os.getenv("VENDOR_STATE", "DEBUG")
 VENDOR_CHARGE_VALIDATION_PRICE = os.getenv("VENDOR_CHARGE_VALIDATION_PRICE", 1)
 DEFAULT_CURRENCY = Currency.usd.name

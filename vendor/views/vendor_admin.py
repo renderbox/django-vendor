@@ -1,25 +1,26 @@
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.sites.models import Site
 from django.db.models import Count
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import View
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import CreateView, UpdateView, FormView
 from django.views.generic.list import ListView
 from django.utils.translation import ugettext as _
 
-from vendor.config import VENDOR_PRODUCT_MODEL
+from vendor.config import VENDOR_PRODUCT_MODEL, PaymentProcessorSiteConfig, PaymentProcessorSiteSelectSiteConfig, PaymentProcessorForm, PaymentProcessorSiteSelectForm
 from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType, PaymentTypes
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
-from vendor.processors import PaymentProcessor
+from vendor.processors import get_site_payment_processor
+
+from siteconfigs.models import SiteConfigModel
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
-
-payment_processor = PaymentProcessor
 #############
 # Admin Views
 
@@ -312,7 +313,7 @@ class AddOfferToProfileView(LoginRequiredMixin, View):
             cart.remove_offer(offer)
             return redirect(reverse('vendor_admin:manager-profile', kwargs={'uuid': customer_profile.uuid}))
 
-        processor = payment_processor(cart)
+        processor = get_site_payment_processor(cart.site)(cart)
         processor.authorize_payment()
 
         messages.info(request, _("Offer Added To Customer Profile"))
@@ -354,7 +355,7 @@ class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
         invoice.save()
         invoice.add_offer(past_receipt.order_item.offer)
 
-        processor = PaymentProcessor(invoice)
+        processor = get_site_payment_processor(invoice.site)(invoice)
         processor.renew_subscription(past_receipt, payment_info)
 
         messages.info(request, _("Subscription Renewed"))
@@ -387,3 +388,51 @@ class PaymentWithNoOrderItemsListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['title'] = _("Payments with no Order Items")
         return context
+
+
+class PaymentProcessorSiteConfigsListView(ListView):
+    template_name = 'vendor/manage/processor_site_config_list.html'
+    model = SiteConfigModel
+
+    def get_queryset(self):
+        payment_processor = PaymentProcessorSiteConfig()
+        return SiteConfigModel.objects.filter(key=payment_processor.key)
+
+
+class PaymentProcessorFormView(FormView):
+    template_name = 'vendor/manage/processor_site_config.html'
+    form_class = PaymentProcessorForm
+
+    def get_success_url(self):
+        return reverse('vendor_admin:vendor-processor')
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        processor_config = PaymentProcessorSiteConfig()
+        context['form'] = processor_config.get_form()
+        return context
+
+    def form_valid(self, form):
+        processor_config = PaymentProcessorSiteConfig()
+        processor_config.save(form)
+        return redirect('vendor_admin:vendor-processor-lists')
+
+
+class PaymentProcessorSiteSelectFormView(FormView):
+    template_name = 'vendor/manage/processor_site_config.html'
+    form_class = PaymentProcessorSiteSelectForm
+
+    def get_success_url(self):
+        return reverse('vendor_admin:vendor-processor')
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        processor_config = PaymentProcessorSiteSelectSiteConfig(Site.objects.get(pk=self.kwargs.get('pk')))
+        context['form'] = processor_config.get_form()
+        return context
+
+    def form_valid(self, form):
+        site = Site.objects.get(pk=form.cleaned_data['site'])
+        processor_config = PaymentProcessorSiteSelectSiteConfig(site)
+        processor_config.save(form)
+        return redirect('vendor_admin:vendor-processor-lists')

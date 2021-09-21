@@ -11,11 +11,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
 from vendor.models import Receipt, Invoice
-from vendor.processors import PaymentProcessor
+from vendor.processors.authorizenet import AuthorizeNetProcessor
 
 logger = logging.getLogger(__name__)
 
-payment_processor = PaymentProcessor
+payment_processor = AuthorizeNetProcessor
 
 
 def renew_subscription_task(json_data):
@@ -66,7 +66,7 @@ def renew_subscription_task(json_data):
     invoice.total = transaction_detail.authAmount.pyval
     invoice.save()
 
-    processor = PaymentProcessor(invoice)
+    processor = AuthorizeNetProcessor(invoice)
     processor.renew_subscription(past_receipt, payment_info)
 
 

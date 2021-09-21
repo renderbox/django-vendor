@@ -7,10 +7,10 @@ from django.forms import inlineformset_factory
 from django.forms.widgets import SelectDateWidget, TextInput
 from django.utils.translation import ugettext_lazy as _
 
-from .config import VENDOR_PRODUCT_MODEL
-from .models import Address, Offer, Price, offer_term_details_default
-from .models.choice import PaymentTypes, TermType, Country
-from .utils import get_site_from_request
+from vendor.config import VENDOR_PRODUCT_MODEL
+from vendor.models import Address, Offer, Price, offer_term_details_default
+from vendor.models.choice import PaymentTypes, TermType, Country
+from vendor.utils import get_site_from_request
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
