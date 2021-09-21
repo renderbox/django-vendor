@@ -1,17 +1,37 @@
 # App Settings
 from django.conf import settings
+from django import forms
+from django.db.models import TextChoices
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 
 from siteconfigs.config import SiteConfigBaseClass
 from siteconfigs.models import SiteConfigModel
-from vendor.forms import PaymentProcessorForm, PaymentProcessorSiteSelectForm, SupportedProcessor
+
+class SupportedPaymentProcessor(TextChoices):
+    PROMO_CODE_BASE = ("base.PaymentProcessorBase", _("Default Processor"))
+    AUTHORIZE_NET = ("authorizenet.AuthorizeNetProcessor", _("Authorize.Net"))
+
+
+class PaymentProcessorForm(forms.Form):
+    processor = forms.CharField(label=_("Payment Processor"), widget=forms.Select(choices=SupportedPaymentProcessor.choices))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['processor'].widget = forms.Select(choices=SupportedPaymentProcessor.choices)
+        self.fields['processor'].label = _("Payment Processor")
+
+
+class PaymentProcessorSiteSelectForm(PaymentProcessorForm):
+    site = forms.CharField(label=_("Site"), widget=forms.Select(choices=[(site.pk, site.domain) for site in Site.objects.all()]))
+
 
 
 class PaymentProcessorSiteConfig(SiteConfigBaseClass):
     label = _("Promo Code Processor")
-    default = {"processor": "base.PaymentProcessorBase"}
+    default = {"payment_processor": "base.PaymentProcessorBase"}
     form_class = PaymentProcessorForm
     key = ""
     instance = None
@@ -42,18 +62,18 @@ class PaymentProcessorSiteConfig(SiteConfigBaseClass):
 
     def get_initials(self):
         if self.instance:
-            return {'payment_processor': [choice for choice in SupportedProcessor.choices if choice[0] == self.instance.value['payment_processor']][0]}
-        return {'payment_processor': SupportedProcessor.choices[0]}
+            return {'payment_processor': [choice for choice in SupportedPaymentProcessor.choices if choice[0] == self.instance.value['payment_processor']][0]}
+        return {'payment_processor': SupportedPaymentProcessor.choices[0]}
 
     def get_selected_processor(self):
         if self.instance:
-            return [choice for choice in SupportedProcessor.choices if choice[0] == self.instance.value['payment_processor']][0]
-        return SupportedProcessor.choices[0]  # Return Default Processors
+            return [choice for choice in SupportedPaymentProcessor.choices if choice[0] == self.instance.value['payment_processor']][0]
+        return SupportedPaymentProcessor.choices[0]  # Return Default Processors
 
 
-class ProcessorSiteSelectSiteConfig(PaymentProcessorSiteConfig):
+class PaymentProcessorSiteSelectSiteConfig(PaymentProcessorSiteConfig):
     label = _("Promo Code Processor")
-    default = {"processor": "base.PromoProcessorBase"}
+    default = {"payment_processor": "base.PromoProcessorBase"}
     form_class = PaymentProcessorSiteSelectForm
     key = ""
     instance = None

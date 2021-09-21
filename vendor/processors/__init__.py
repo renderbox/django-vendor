@@ -1,6 +1,10 @@
 from django.utils.module_loading import import_string
 from django.core.exceptions import ObjectDoesNotExist
+
 from vendor.config import PaymentProcessorSiteConfig
+from vendor.processors.authorizenet import AuthorizeNetProcessor
+from vendor.processors.base import PaymentProcessorBase
+from vendor.processors.dummy import DummyProcessor
 from siteconfigs.models import SiteConfigModel
 
 
@@ -9,7 +13,6 @@ def get_site_payment_processor(site):
     try:
         return import_string(f"vendor.processors.{SiteConfigModel.objects.get(site=site, key=site_processor.key).value}")
     except ObjectDoesNotExist:
-        default_config = PaymentProcessorSiteConfig()
         # Should it return the default if not found?
         # raise ValueError("PromoProcessor has not been configured")
-        return import_string(f"vendor.processors.{default_config.default[default_config.key]}")
+        return import_string(f"vendor.processors.{site_processor.default['payment_processor']}")

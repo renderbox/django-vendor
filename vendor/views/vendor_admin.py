@@ -11,7 +11,7 @@ from django.views.generic.edit import CreateView, UpdateView, FormView
 from django.views.generic.list import ListView
 from django.utils.translation import ugettext as _
 
-from vendor.config import VENDOR_PRODUCT_MODEL
+from vendor.config import VENDOR_PRODUCT_MODEL, PaymentProcessorSiteConfig, PaymentProcessorSiteSelectSiteConfig, PaymentProcessorForm, PaymentProcessorSiteSelectForm
 from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType, PaymentTypes
@@ -390,8 +390,7 @@ class PaymentWithNoOrderItemsListView(LoginRequiredMixin, ListView):
         return context
 
 
-
-class PaymentSiteConfigsListView(ListView):
+class PaymentProcessorSiteConfigsListView(ListView):
     template_name = 'vendorpromo/processor_site_config_list.html'
     model = SiteConfigModel
     queryset = SiteConfigModel.objects.all()
@@ -434,4 +433,3 @@ class PaymentProcessorSiteSelectFormView(FormView):
         processor_config = PaymentProcessorSiteSelectSiteConfig(site)
         processor_config.save(form)
         return redirect('vendorpromo-processor-lists')
-

@@ -13,7 +13,7 @@ from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfi
 from vendor.models.choice import PurchaseStatus
 from vendor.processors.base import PaymentProcessorBase
 from vendor.processors.authorizenet import AuthorizeNetProcessor
-from vendor.processors import PaymentProcessor
+from vendor.processors import PaymentProcessorBase, AuthorizeNetProcessor
 
 ###############################
 # Test constants
@@ -255,7 +255,7 @@ class SupportedProcessorsSetupTests(TestCase):
         Test the initialized of the PaymentProcessor defined in the setting file
         """
         try:
-            processor = PaymentProcessor(self.invoice)
+            processor = PaymentProcessorBase(self.invoice)
         except Exception:
             print("Warning PaymentProcessor defined in settings file did not pass init")
         finally:
