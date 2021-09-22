@@ -19,7 +19,10 @@ class PaymentProcessorForm(forms.Form):
 
 
 class PaymentProcessorSiteSelectForm(PaymentProcessorForm):
-    site = forms.CharField(label=_("Site"), widget=forms.Select(choices=[(site.pk, site.domain) for site in Site.objects.all()]))
+    site = forms.CharField(label=_("Site"))
+
+    def __init__(self, *args, **kwargs):
+        self.fields['site'].widget = forms.Select(choices=[(site.pk, site.domain) for site in Site.objects.all()])
 
 
 class PaymentProcessorSiteConfig(SiteConfigBaseClass):
