@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-09-14 12:59+0000\n"
+"POT-Creation-Date: 2021-09-23 19:12+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,19 +18,42 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: config.py:11
+#: config.py:13
+msgid "Default Processor"
+msgstr "デフォルトのプロセッサ"
+
+#: config.py:14
+msgid "Authorize.Net"
+msgstr "Authorize.Net"
+
+#: config.py:18
+msgid "Payment Processor"
+msgstr "支払い処理業者"
+
+#: config.py:22 models/base.py:78 models/invoice.py:40 models/offer.py:47
+#: models/profile.py:31 templates/vendor/manage/payment_list.html:21
+#: templates/vendor/manage/processor_site_config_list.html:18
+#: templates/vendor/manage/profile_list.html:22
+msgid "Site"
+msgstr "地点"
+
+#: config.py:29 config.py:70
+msgid "Promo Code Processor"
+msgstr "プロモーションコードプロセッサ"
+
+#: config.py:88
 msgid "USD Dollars"
 msgstr "米ドル"
 
-#: forms.py:28
+#: forms.py:31
 msgid "Purchase Price"
 msgstr "購入金額"
 
-#: forms.py:29
+#: forms.py:32
 msgid "Free"
 msgstr "自由"
 
-#: forms.py:41 templates/vendor/invoice_history_detail.html:14
+#: forms.py:44 templates/vendor/invoice_history_detail.html:14
 #: templates/vendor/manage/invoice_detail.html:14
 #: templates/vendor/manage/offers.html:25
 #: templates/vendor/purchase_detail.html:27
@@ -38,97 +61,97 @@ msgstr "自由"
 msgid "Price"
 msgstr "価格"
 
-#: forms.py:59
+#: forms.py:62
 msgid "Available Products:"
 msgstr "利用可能な製品："
 
-#: forms.py:72
+#: forms.py:75
 msgid "Available to Purchase"
 msgstr "購入可能"
 
-#: forms.py:83
+#: forms.py:86
 msgid "Bundle: "
 msgstr "バンドル："
 
-#: forms.py:88
+#: forms.py:91
 msgid "Invalid term details for subscription"
 msgstr "サブスクリプションの期間の詳細が無効です"
 
-#: forms.py:103
+#: forms.py:106
 msgid "Enter Address"
 msgstr "住所を入力してください"
 
-#: forms.py:104
+#: forms.py:107
 msgid "Enter Apt, Suite, Unit, Building, Floor, etc"
 msgstr "アパート、スイート、ユニット、建物、フロアなどを入力してください"
 
-#: forms.py:105
+#: forms.py:108
 msgid "Enter City"
 msgstr "市に入る"
 
-#: forms.py:114
+#: forms.py:117
 msgid "Email Address"
 msgstr "電子メールアドレス"
 
-#: forms.py:124
+#: forms.py:127
 msgid "Billing address is the same as shipping address"
 msgstr "請求先住所は配送先住所と同じです"
 
-#: forms.py:134
+#: forms.py:137
 msgid "Billing Country/Region"
 msgstr "請求国/地域"
 
-#: forms.py:209
+#: forms.py:212
 msgid "The credit card number is invalid"
 msgstr "クレジットカード番号が無効です"
 
-#: forms.py:254
+#: forms.py:257
 msgid "Payment Type"
 msgstr "支払いタイプ"
 
-#: forms.py:258 models/payment.py:33
+#: forms.py:261 models/payment.py:33
 #: templates/vendor/manage/receipt_detail.html:82
 #: templates/vendor/manage/subscription_detail.html:99
 msgid "Name on Card"
 msgstr "カードの名前"
 
-#: forms.py:259
+#: forms.py:262
 msgid "Credit Card Number"
 msgstr "クレジットカード番号"
 
-#: forms.py:260
+#: forms.py:263
 msgid "Expiration Month"
 msgstr "有効期限月"
 
-#: forms.py:261
+#: forms.py:264
 msgid "Expiration Year"
 msgstr "有効期限"
 
-#: forms.py:262
+#: forms.py:265
 msgid "CVV Number"
 msgstr "CVV番号"
 
-#: forms.py:285
+#: forms.py:288
 msgid "You must select a valid expiration month"
 msgstr "有効な有効期限を選択する必要があります"
 
-#: forms.py:293
+#: forms.py:296
 msgid "You must select a valid expiration year"
 msgstr "有効な有効期限を選択する必要があります"
 
-#: forms.py:301
+#: forms.py:304
 msgid "CVV must be all digits"
 msgstr "CVVはすべて数字である必要があります"
 
-#: forms.py:314
+#: forms.py:317
 msgid "The expiration date you entered is in the past."
 msgstr "入力した有効期限は過去のものです。"
 
-#: forms.py:315
+#: forms.py:318
 msgid "Check expiration"
 msgstr "有効期限を確認してください"
 
-#: forms.py:321 models/offer.py:49 models/price.py:15 models/receipt.py:21
+#: forms.py:324 models/offer.py:49 models/price.py:15 models/receipt.py:21
 #: templates/vendor/manage/offers.html:20
 #: templates/vendor/manage/profile_detail.html:256
 #: templates/vendor/manage/receipt_list.html:22
@@ -136,7 +159,7 @@ msgstr "有効期限を確認してください"
 msgid "Start Date"
 msgstr "開始日"
 
-#: forms.py:322 models/offer.py:50 models/price.py:16 models/receipt.py:22
+#: forms.py:325 models/offer.py:50 models/price.py:16 models/receipt.py:22
 #: templates/vendor/manage/offers.html:21
 #: templates/vendor/manage/profile_detail.html:257
 #: templates/vendor/manage/receipt_list.html:23
@@ -144,9 +167,21 @@ msgstr "開始日"
 msgid "End Date"
 msgstr "終了日"
 
-#: forms.py:330
+#: forms.py:333
 msgid "End Date cannot be before Start Date"
 msgstr "あなたはわれあなたのつにこのできました。"
+
+#: forms.py:360
+msgid "API ID"
+msgstr "API ID"
+
+#: forms.py:361
+msgid "Transaction Key"
+msgstr "トランザクションキー"
+
+#: forms.py:362
+msgid "Signiture ID"
+msgstr "署名ID"
 
 #: models/address.py:39 models/invoice.py:38 models/payment.py:23
 #: models/profile.py:28 models/receipt.py:18
@@ -216,12 +251,6 @@ msgstr "ユーザー定義可能なSKUフィールド"
 #: templates/vendor/purchase_list.html:17
 msgid "Name"
 msgstr "名前"
-
-#: models/base.py:78 models/invoice.py:40 models/offer.py:47
-#: models/profile.py:31 templates/vendor/manage/payment_list.html:21
-#: templates/vendor/manage/profile_list.html:22
-msgid "Site"
-msgstr "地点"
 
 #: models/base.py:80 models/offer.py:54 templates/vendor/manage/offers.html:23
 msgid "Available"
@@ -1576,6 +1605,14 @@ msgstr "ウィッシュリスト"
 msgid "Update"
 msgstr "更新"
 
+#: templates/vendor/authorizenet_integration.html:7
+msgid "AuthorizeNet - Integration"
+msgstr "AuthorizeNet-統合"
+
+#: templates/vendor/authorizenet_integration.html:14
+msgid "Apply"
+msgstr "申し込み"
+
 #: templates/vendor/checkout.html:8
 msgid "Secure Checkout"
 msgstr "安全なチェックアウト"
@@ -1857,6 +1894,32 @@ msgstr "プロフィール"
 msgid "No Payments"
 msgstr "支払いなし"
 
+#: templates/vendor/manage/processor_site_config.html:11
+#: templates/vendor/manage/subscription_detail.html:140
+#: templates/vendor/manage/subscription_detail.html:157
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: templates/vendor/manage/processor_site_config_list.html:11
+msgid "Processor Per Site"
+msgstr "サイトごとのプロセッサ"
+
+#: templates/vendor/manage/processor_site_config_list.html:19
+msgid "Processor"
+msgstr "プロセッサー"
+
+#: templates/vendor/manage/processor_site_config_list.html:20
+msgid "New"
+msgstr "新しい"
+
+#: templates/vendor/manage/processor_site_config_list.html:29
+msgid "Edit Processor"
+msgstr "プロセッサーの編集"
+
+#: templates/vendor/manage/processor_site_config_list.html:30
+msgid "Edit Processor and Site"
+msgstr "プロセッサーとサイトの編集"
+
 #: templates/vendor/manage/product.html:7
 #: templates/vendor/manage/product.html:14
 #: templates/vendor/manage/profile_detail.html:96
@@ -2117,11 +2180,6 @@ msgstr "住所の更新"
 msgid "Update Card Info"
 msgstr "カード情報の更新"
 
-#: templates/vendor/manage/subscription_detail.html:140
-#: templates/vendor/manage/subscription_detail.html:157
-msgid "Cancel"
-msgstr "キャンセル"
-
 #: templates/vendor/manage/subscription_detail.html:149
 msgid "Update Billing Address"
 msgstr "請求先住所の更新"
@@ -2336,95 +2394,95 @@ msgstr "日付タイプ"
 msgid "Dates"
 msgstr "日付"
 
-#: views/vendor.py:55
+#: views/vendor.py:52
 msgid "Please add to your cart"
 msgstr "カートに追加してください"
 
-#: views/vendor.py:112
+#: views/vendor.py:109
 msgid "Offer does not exist or is unavailable"
 msgstr "オファーが存在しないか、利用できません"
 
-#: views/vendor.py:127
+#: views/vendor.py:124
 msgid "You Have Already Purchased This Item"
 msgstr "あなたはすでにこのアイテムを購入しました"
 
-#: views/vendor.py:129
+#: views/vendor.py:126
 msgid "You already have this product in you cart. You can only buy one"
 msgstr ""
 "あなたはすでにあなたのカートにこの製品を持っています。 購入できるのは1つだけ"
 "です"
 
-#: views/vendor.py:131
+#: views/vendor.py:128
 msgid "Added item to cart."
 msgstr "カートにアイテムを追加しました。"
 
-#: views/vendor.py:163
+#: views/vendor.py:160
 msgid "Removed item from cart."
 msgstr "カートからアイテムを削除しました。"
 
-#: views/vendor.py:205 views/vendor.py:245 views/vendor.py:296
+#: views/vendor.py:202 views/vendor.py:242 views/vendor.py:293
 msgid "Cart changed while in checkout process"
 msgstr "チェックアウトプロセス中にカートが変更されました"
 
-#: views/vendor.py:311
+#: views/vendor.py:308
 msgid "The payment gateway did not authorize payment."
 msgstr "支払いゲートウェイは支払いを承認しませんでした。"
 
-#: views/vendor.py:382
+#: views/vendor.py:379
 msgid "Not Found"
 msgstr "見つかりません"
 
-#: views/vendor.py:396
+#: views/vendor.py:393
 msgid "Subscription Cancelled"
 msgstr "サブスクリプションがキャンセルされました"
 
-#: views/vendor.py:410
+#: views/vendor.py:407
 msgid "Invalid Card"
 msgstr "無効なカード"
 
-#: views/vendor.py:418
+#: views/vendor.py:415
 msgid ""
 "Payment gateway error: {processor.transaction_message.get('message', '')}"
 msgstr ""
 "支払いゲートウェイエラー：{processor.transaction_message.get('message', '')}"
 
-#: views/vendor.py:421
+#: views/vendor.py:418
 msgid "Success: Payment Updated"
 msgstr "成功：支払いが更新されました"
 
-#: views/vendor.py:433
+#: views/vendor.py:430
 msgid "Failed: %(address_form.errors)s"
 msgstr "失敗：%(address_form.errors)s"
 
-#: views/vendor.py:435
+#: views/vendor.py:432
 msgid "Success: Address Updated"
 msgstr "成功：アドレスが更新されました"
 
-#: views/vendor.py:464
+#: views/vendor.py:461
 msgid "Shipping Address Updated"
 msgstr "配送先住所が更新されました"
 
-#: views/vendor_admin.py:217
+#: views/vendor_admin.py:219
 msgid "Invalid currency"
 msgstr "通貨が無効です"
 
-#: views/vendor_admin.py:296
+#: views/vendor_admin.py:298
 msgid "Customer has no longer access to Product"
 msgstr "お客様は製品にアクセスできなくなります"
 
-#: views/vendor_admin.py:311
+#: views/vendor_admin.py:313
 msgid "Offer and Invoice must have zero value"
 msgstr "オファーと請求書の値はゼロでなければなりません"
 
-#: views/vendor_admin.py:318
+#: views/vendor_admin.py:320
 msgid "Offer Added To Customer Profile"
 msgstr "顧客プロファイルにオファーが追加されました"
 
-#: views/vendor_admin.py:335
+#: views/vendor_admin.py:337
 msgid "Product availability Changed"
 msgstr "製品の入手可能性が変更されました"
 
-#: views/vendor_admin.py:360
+#: views/vendor_admin.py:362
 msgid "Subscription Renewed"
 msgstr "サブスクリプションが更新されました"
 
@@ -2432,7 +2490,7 @@ msgstr "サブスクリプションが更新されました"
 msgid "Payments with no Receipts"
 msgstr "領収書のない支払い"
 
-#: views/vendor_admin.py:392
+#: views/vendor_admin.py:390
 msgid "Payments with no Order Items"
 msgstr "注文アイテムのない支払い"
 

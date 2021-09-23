@@ -357,9 +357,9 @@ class AuthorizeNetIntegrationForm(forms.ModelForm):
         model = Credential
         fields = ['client_id', 'public_key', 'private_key']
         labels = {
-            'client_id': "API ID",
-            'public_key': "Transaction Key",
-            'private_key': "Signiture ID"
+            'client_id': _("API ID"),
+            'public_key': _("Transaction Key"),
+            'private_key': _("Signiture ID")
         }
 
     def __init__(self, *args, **kwargs):
