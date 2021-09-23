@@ -56,6 +56,7 @@ setup(
             'psycopg2-binary',
             'django-crispy-forms',
             "django-site-configs",
+            "django-integrations",
             'django-allauth',
             ],
         'stripe': [             # Packages needed for Stripe

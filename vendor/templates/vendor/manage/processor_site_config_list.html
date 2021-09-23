@@ -27,7 +27,7 @@
                         <td>{{object.value.payment_processor}}</td>
                         <td>
                             <a class="btn btn-success" href="{% url 'vendor_admin:vendor-processor' %}">{% trans 'Edit Processor' %}</a>
-                            <a class="btn btn-success" href="{% url 'vendor_admin:vendor-processor-site' object.site.pk%}">{% trans 'Edit Processor  and Site' %}</a>
+                            <a class="btn btn-success" href="{% url 'vendor_admin:vendor-processor-site' object.site.pk%}">{% trans 'Edit Processor and Site' %}</a>
                         </td>
                     </tr>
                 {% endfor %}
