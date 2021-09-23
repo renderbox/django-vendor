@@ -13,4 +13,4 @@ def get_site_payment_processor(site):
     if site_processor.instance:
         return import_string(f"vendor.processors.{site_processor.instance.value['payment_processor']}")
     else:
-        import_string(f"vendor.processors.{site_processor.default['payment_processor']}")
+        return import_string(f"vendor.processors.{site_processor.default['payment_processor']}")
