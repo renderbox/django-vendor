@@ -12,7 +12,8 @@ from django.views.generic.list import ListView
 from django.utils.translation import ugettext as _
 
 from vendor.config import VENDOR_PRODUCT_MODEL, PaymentProcessorSiteConfig, PaymentProcessorSiteSelectSiteConfig, PaymentProcessorForm, PaymentProcessorSiteSelectForm
-from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm
+from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm, AuthorizeNetIntegrationForm
+from vendor.integrations import AuthorizeNetIntegration
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment
 from vendor.models.choice import TermType, PaymentTypes
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
@@ -436,3 +437,23 @@ class PaymentProcessorSiteSelectFormView(FormView):
         processor_config = PaymentProcessorSiteSelectSiteConfig(site)
         processor_config.save(form)
         return redirect('vendor_admin:vendor-processor-lists')
+
+
+class AuthorizeNetIntegrationView(FormView):
+    template_name = "vendor/authorizenet_integration.html"
+    form_class = AuthorizeNetIntegrationForm
+    success_url = reverse_lazy('authorizenet-integration')
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        authorizenet_integration = AuthorizeNetIntegration(get_site_from_request(self.request))
+        if authorizenet_integration.instance:
+            context['form'] = AuthorizeNetIntegrationForm(instance=authorizenet_integration.instance)
+        else:
+            context['form'] = AuthorizeNetIntegrationForm()
+        return context
+    
+    def form_valid(self, form):
+        authorizenet_integration = AuthorizeNetIntegration(get_site_from_request(self.request))
+        authorizenet_integration.save(form.cleaned_data)
+        return super().form_valid(form)
