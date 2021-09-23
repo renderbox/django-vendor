@@ -3,6 +3,7 @@ Payment processor for Authorize.net.
 """
 import ast
 from decimal import Decimal, ROUND_DOWN
+from vendor.integrations import AuthorizeNetIntegration
 
 from django.conf import settings
 from django.utils import timezone
@@ -68,12 +69,18 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         Merchant Information needed to aprove the transaction.
         """
-        if not (settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID):
-            raise ValueError(
-                "Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID")
         self.merchant_auth = apicontractsv1.merchantAuthenticationType()
-        self.merchant_auth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY
-        self.merchant_auth.name = settings.AUTHORIZE_NET_API_ID
+        self.credentials = AuthorizeNetIntegration(self.invoice.site)
+
+        if self.credentials.instance:
+            self.merchant_auth.name = self.credentials.instance.client_id
+            self.merchant_auth.transactionKey = self.credentials.instance.public_key
+        elif settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID:
+            self.merchant_auth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY
+            self.merchant_auth.name = settings.AUTHORIZE_NET_API_ID
+        else:
+            raise ValueError("Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID")
+
         self.init_payment_type_switch()
         self.init_transaction_types()
 

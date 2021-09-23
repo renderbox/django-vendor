@@ -8,11 +8,10 @@ from django.urls import reverse
 from django.test import TestCase, Client
 from unittest import skipIf
 from random import randrange, choice
+from siteconfigs.models import SiteConfigModel
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem
 from vendor.models.choice import PurchaseStatus
-from vendor.processors.base import PaymentProcessorBase
-from vendor.processors.authorizenet import AuthorizeNetProcessor
 from vendor.processors import PaymentProcessorBase, AuthorizeNetProcessor
 
 ###############################
@@ -296,6 +295,12 @@ class AuthorizeNetProcessorTests(TestCase):
 
     def setUp(self):
         self.existing_invoice = Invoice.objects.get(pk=1)
+        processor_site_config = SiteConfigModel()
+        processor_site_config.site = self.existing_invoice.site
+        processor_site_config.key = 'vendor.config.PaymentProcessorSiteConfig'
+        processor_site_config.value = {"payment_processor": "authorizenet.AuthorizeNetProcessor"}
+        processor_site_config.save()
+
         t_shirt = Product.objects.get(pk=1)
         t_shirt.meta['msrp']['usd'] = randrange(1, 1000)
         t_shirt.save()
