@@ -970,7 +970,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         self.processor.is_data_valid()
         self.processor.create_payment_model()
-        self.assertTrue(self.processor.is_card_valid())
+        is_valid = self.processor.is_card_valid()
+        print(f"Transaction Submitted: {self.processor.transaction_submitted}")
+        print(f"Transaction Response: {self.processor.transaction_response}")
+        print(f"Transaction Msg: {self.processor.transaction_message}")
+        self.assertTrue(is_valid)
 
     ##########
     # Report details
