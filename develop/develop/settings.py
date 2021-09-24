@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'iso4217',
+    'integrations',
+    'siteconfigs',
     'vendor'
 ]
 
@@ -163,7 +165,7 @@ STATICFILES_DIRS = [
 
 # Django Vendor Settings
 VENDOR_PRODUCT_MODEL = 'core.Product'
-VENDOR_PAYMENT_PROCESSOR = os.getenv("VENDOR_PAYMENT_PROCESSOR", "base.PaymentProcessorBase")
+# VENDOR_PAYMENT_PROCESSOR = os.getenv("VENDOR_PAYMENT_PROCESSOR", "base.PaymentProcessorBase")
 VENDOR_STATE = os.getenv("VENDOR_STATE", "DEBUG")
 VENDOR_CHARGE_VALIDATION_PRICE = os.getenv("VENDOR_CHARGE_VALIDATION_PRICE", 1)
 DEFAULT_CURRENCY = Currency.usd.name
@@ -172,7 +174,7 @@ AVAILABLE_CURRENCIES = {'usd': _('USD Dollars'), 'mxn': _('Mexican peso'), 'jpy'
 # Authorize.Net Settings:
 AUTHORIZE_NET_API_ID = os.getenv("AUTHORIZE_NET_API_ID")
 AUTHORIZE_NET_TRANSACTION_KEY = os.getenv("AUTHORIZE_NET_TRANSACTION_KEY")
-AUTHORIZE_NET_SIGNITURE_KEY = os.getenv("AUTHORIZE_NET_SIGNITURE_KEY")
+AUTHORIZE_NET_SIGNATURE_KEY = os.getenv("AUTHORIZE_NET_SIGNATURE_KEY")
 AUTHORIZE_NET_KEY = os.getenv("AUTHORIZE_NET_KEY")
 AUTHORIZE_NET_TRANSACTION_TYPE_DEFAULT = os.getenv("AUTHORIZE_NET_TRANSACTION_TYPE_DEFAULT")
 

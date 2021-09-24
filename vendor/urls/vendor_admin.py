@@ -25,6 +25,10 @@ urlpatterns = [
     path('product/<uuid:uuid>/renew', admin_views.AdminManualSubscriptionRenewal.as_view(), name="manager-product-renew"),
     path('payments/no/receipt/', admin_views.PaymentWithNoReceiptListView.as_view(), name="manager-payment-no-receipt"),
     path('payments/no/orderitems/', admin_views.PaymentWithNoOrderItemsListView.as_view(), name="manager-payment-no-receipt"),
+    path("processors/", admin_views.PaymentProcessorSiteConfigsListView.as_view(), name="vendor-processor-lists"),
+    path("processor/siteconfig/", admin_views.PaymentProcessorFormView.as_view(), name="vendor-processor"),
+    path("processor/siteconfig/<int:pk>/site/", admin_views.PaymentProcessorSiteSelectFormView.as_view(), name="vendor-processor-site"),
+    path("authorizenet/integration/", admin_views.AuthorizeNetIntegrationView.as_view(), name="authorizenet-integration"),
 
     # reports
     path('reports/receipts/download/', report_views.ReceiptListCSV.as_view(), name="manager-receipt-download"),

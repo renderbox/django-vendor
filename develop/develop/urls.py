@@ -23,4 +23,5 @@ urlpatterns = [
     path('sales/manage/', include('vendor.urls.vendor_admin')),
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
+    path('siteconfigs/', include('siteconfigs.urls')),
 ]

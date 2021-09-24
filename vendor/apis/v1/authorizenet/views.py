@@ -11,11 +11,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
 from vendor.models import Receipt, Invoice
-from vendor.processors import PaymentProcessor
+from vendor.processors.authorizenet import AuthorizeNetProcessor
 
 logger = logging.getLogger(__name__)
 
-payment_processor = PaymentProcessor
+payment_processor = AuthorizeNetProcessor
 
 
 def renew_subscription_task(json_data):
@@ -66,7 +66,7 @@ def renew_subscription_task(json_data):
     invoice.total = transaction_detail.authAmount.pyval
     invoice.save()
 
-    processor = PaymentProcessor(invoice)
+    processor = AuthorizeNetProcessor(invoice)
     processor.renew_subscription(past_receipt, payment_info)
 
 
@@ -90,10 +90,10 @@ class AuthorizeNetBaseAPI(View):
         logger.info(f"X ANET SIGNATURE: {self.request.META.get('HTTP_X_ANET_SIGNATURE')}")
 
         if 'HTTP_X_ANET_SIGNATURE' not in self.request.META:
-            logger.warning("Webhook warning SIGNITURE KEY")
+            logger.warning("Webhook warning Signature KEY")
             return False
 
-        hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNITURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
+        hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNATURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
         logger.info(f"Checking hashs\nCALCULATED: {hash_value}\nREQUEST VALUE: {self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]}")
         if hash_value.upper() == self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]:
             return True
