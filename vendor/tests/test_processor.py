@@ -438,7 +438,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         results = " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)])
         if 'The merchant does not accept this type of credit card' in results:
-            print(f'Skipping test {self.__name__} because merchant does not accept card')
+            print(f'Skipping test test_process_payment_fail_cvv_no_match because merchant does not accept card')
         else:
             self.assertIn("'cvvResultCode': 'N'", results)
 
@@ -458,7 +458,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         results = " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)])
         if 'The merchant does not accept this type of credit card' in results:
-            print(f'Skipping test {self.__name__} because merchant does not accept card')
+            print(f'Skipping test test_process_payment_fail_cvv_should_not_be_on_card because merchant does not accept card')
         else:
             self.assertIn("'cvvResultCode': 'S'", results)
 
@@ -479,7 +479,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         results = " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)])
         if 'The merchant does not accept this type of credit card' in results:
-            print(f'Skipping test {self.__name__} because merchant does not accept card')
+            print(f'Skipping test test_process_payment_fail_cvv_not_certified because merchant does not accept card')
         else:
             self.assertIn("'cvvResultCode': 'U'", results)
 
@@ -498,7 +498,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
         results = " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)])
         if 'The merchant does not accept this type of credit card' in results:
-            print(f'Skipping test {self.__name__} because merchant does not accept card')
+            print(f'Skipping test test_process_payment_fail_cvv_not_processed because merchant does not accept card')
         else:
             self.assertIn("'cvvResultCode': 'P'", results)
 
@@ -903,7 +903,7 @@ class AuthorizeNetProcessorTests(TestCase):
             dummy_payment.refresh_from_db()
             print(f'\ntest_subscription_update_payment\nMessage: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}\nSubscription ID: {dummy_receipt.transaction}\n')
             print(f"Update Card number: {self.form_data['credit_card_form']['card_number'][-4:]}")
-            if 'E00027' in self.processor.transaction_message:
+            if 'E00027' in str(self.processor.transaction_message):
                 print("Merchant does not accept this card. Skipping test")
             else:
                 self.assertTrue(self.processor.transaction_submitted)
@@ -965,8 +965,10 @@ class AuthorizeNetProcessorTests(TestCase):
         print(f"Transaction Submitted: {self.processor.transaction_submitted}")
         print(f"Transaction Response: {self.processor.transaction_response}")
         print(f"Transaction Msg: {self.processor.transaction_message}")
-        if 'duplicate' in str(self.processor.transaction_message):
-            print(f"Skipping Test {self.__name__} because of duplicate")
+        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
+            print(f"Skipping Test test_is_card_valid_success because of duplicate")
+        elif 'not accept this type of credit card' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
+            print(f"Skipping Test test_is_card_valid_success because of duplicate")
         else:
             self.assertTrue(is_valid)
 

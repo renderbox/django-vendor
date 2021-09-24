@@ -90,10 +90,10 @@ class AuthorizeNetBaseAPI(View):
         logger.info(f"X ANET SIGNATURE: {self.request.META.get('HTTP_X_ANET_SIGNATURE')}")
 
         if 'HTTP_X_ANET_SIGNATURE' not in self.request.META:
-            logger.warning("Webhook warning SIGNITURE KEY")
+            logger.warning("Webhook warning Signature KEY")
             return False
 
-        hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNITURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
+        hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNATURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
         logger.info(f"Checking hashs\nCALCULATED: {hash_value}\nREQUEST VALUE: {self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]}")
         if hash_value.upper() == self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]:
             return True

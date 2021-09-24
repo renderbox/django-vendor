@@ -180,7 +180,7 @@ msgid "Transaction Key"
 msgstr "トランザクションキー"
 
 #: forms.py:362
-msgid "Signiture ID"
+msgid "Signature ID"
 msgstr "署名ID"
 
 #: models/address.py:39 models/invoice.py:38 models/payment.py:23
