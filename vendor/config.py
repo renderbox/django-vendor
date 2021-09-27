@@ -36,21 +36,7 @@ class PaymentProcessorSiteConfig(SiteConfigBaseClass):
         if site is None:
             site = Site.objects.get_current()
         self.key = ".".join([__name__, __class__.__name__])
-        self.set_instance(site)
         super().__init__(site, self.key)
-
-    # TODO: This should be implemented in the SiteConfigBaseClass  
-    def save(self, valid_form):
-        site_config, created = SiteConfigModel.objects.get_or_create(site=self.site, key=self.key)
-        site_config.value = {"payment_processor": valid_form.cleaned_data['payment_processor']}
-        site_config.save()
-
-    # TODO: This should be implemented in the SiteConfigBaseClass
-    def set_instance(self, site):
-        try:
-            self.instance = SiteConfigModel.objects.get(site=site, key=self.key)
-        except ObjectDoesNotExist:
-            self.instance = None
 
     def get_form(self):
         return self.form_class(initial=self.get_initials())
