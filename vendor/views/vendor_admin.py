@@ -415,7 +415,7 @@ class PaymentProcessorFormView(FormView):
 
     def form_valid(self, form):
         processor_config = PaymentProcessorSiteConfig()
-        processor_config.save(form)
+        processor_config.save(form.cleaned_data["payment_processor"], "payment_processor")
         return redirect('vendor_admin:vendor-processor-lists')
 
 
@@ -435,7 +435,7 @@ class PaymentProcessorSiteSelectFormView(FormView):
     def form_valid(self, form):
         site = Site.objects.get(pk=form.cleaned_data['site'])
         processor_config = PaymentProcessorSiteSelectSiteConfig(site)
-        processor_config.save(form)
+        processor_config.save(form.cleaned_data["payment_processor"], "payment_processor")
         return redirect('vendor_admin:vendor-processor-lists')
 
 
