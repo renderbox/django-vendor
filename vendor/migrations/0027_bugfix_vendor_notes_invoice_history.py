@@ -4,7 +4,7 @@ from django.db import migrations
 
 
 def change_list_to_dict_vendor_notes(apps, schema_editor):
-    InvoiceModel = apps.get_model('vendor', 'InvoiceModel')
+    InvoiceModel = apps.get_model('vendor', 'Invoice')
     for invoice in InvoiceModel.objects.all():
         if isinstance(invoice.vendor_notes, list):
             temp_list = invoice.vendor_notes
