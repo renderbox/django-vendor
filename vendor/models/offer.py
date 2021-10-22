@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from vendor.config import DEFAULT_CURRENCY
-from vendor.utils import get_payment_schedule_end_date
+from vendor.utils import get_payment_scheduled_end_date
 
 from .base import CreateUpdateModelBase, SoftDeleteModelBase
 from .choice import TermType, TermDetailUnits
@@ -175,7 +175,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         return False
 
     def get_next_billing_date(self):
-        return get_payment_schedule_end_date(self)
+        return get_payment_scheduled_end_date(self)
 
     def get_period_length(self):
         if self.terms == TermType.SUBSCRIPTION:
