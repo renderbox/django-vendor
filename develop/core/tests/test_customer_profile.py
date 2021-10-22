@@ -210,7 +210,7 @@ class ModelCustomerProfileTests(TestCase):
         self.assertTrue(len(product))
 
     def test_get_active_product_and_offer(self):
-        product_offer = self.customer_profile_existing.get_acitve_product_and_offer()
+        product_offer = self.customer_profile_existing.get_active_product_and_offer()
         self.assertEqual(product_offer[0][0], Product.objects.get(pk=2))
         self.assertEqual(product_offer[0][1], Offer.objects.get(pk=2))
 

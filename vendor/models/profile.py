@@ -135,7 +135,7 @@ class CustomerProfile(CreateUpdateModelBase):
         return Product.objects.filter(receipts__profile=self)
 
     def get_active_products(self):
-         return set([product  for receipt in self.get_active_receipts() for product in receipt.products.all()])
+         return set([receipt.products.first()  for receipt in self.get_active_receipts()])
 
     def get_completed_receipts(self):
         return self.receipts.filter(status__gte=PurchaseStatus.COMPLETE)
@@ -149,7 +149,7 @@ class CustomerProfile(CreateUpdateModelBase):
     def get_inactive_receipts(self):
         return self.receipts.filter(end_date__lt=timezone.now())
 
-    def get_acitve_product_and_offer(self):
+    def get_active_product_and_offer(self):
         """
         Returns a tuple product and offer tuple that are related to the active receipt
         """
