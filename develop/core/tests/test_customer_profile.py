@@ -198,11 +198,21 @@ class ModelCustomerProfileTests(TestCase):
         offer = Offer.objects.get(pk=3)
         self.assertTrue(len(self.customer_profile.get_active_offer_receipts(offer)) == 0)
 
+    def test_get_active_products_none(self):
+        receipt = Receipt.objects.get(pk=2)
+        receipt.end_date = timezone.now()
+        receipt.save()
+        product = self.customer_profile_existing.get_active_products()
+        self.assertFalse(product.count())
+
     def test_get_active_products(self):
-        pass
+        product = self.customer_profile_existing.get_active_products()
+        self.assertTrue(product.count())
 
     def test_get_active_product_and_offer(self):
-        pass
+        product_offer = self.customer_profile_existing.get_active_product_and_offer()
+        self.assertEqual(product_offer[0][0], Product.objects.get(pk=2))
+        self.assertEqual(product_offer[0][1], Offer.objects.get(pk=2))
 
 
 class AddOfferToProfileView(TestCase):
