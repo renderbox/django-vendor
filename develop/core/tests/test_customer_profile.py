@@ -198,6 +198,12 @@ class ModelCustomerProfileTests(TestCase):
         offer = Offer.objects.get(pk=3)
         self.assertTrue(len(self.customer_profile.get_active_offer_receipts(offer)) == 0)
 
+    def test_get_active_products(self):
+        pass
+
+    def test_get_active_product_and_offer(self):
+        pass
+
 
 class AddOfferToProfileView(TestCase):
 
