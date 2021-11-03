@@ -8,7 +8,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
 
-from vendor.models import generate_sku, validate_msrp_format, validate_msrp
+from vendor.models import generate_sku, receipt, validate_msrp_format, validate_msrp
 from vendor.models import Offer, Receipt, CustomerProfile
 
 User = get_user_model()
@@ -53,11 +53,6 @@ class ModelProductTests(TestCase):
         product_b.site = Site.objects.get(pk=2)
         product_b.save()
 
-        product_c = Product()
-        product_c.name = product_a.name
-        product_c.save()
-
-        self.assertNotEqual(product_a.slug, product_c.slug)
         self.assertEqual(product_a.slug, product_b.slug)
 
     def test_valid_msrp(self):
@@ -119,6 +114,9 @@ class ModelProductTests(TestCase):
 
     def test_inactive_profile_receipts(self):
         product = Product.objects.get(pk=2)
+        receipt = Receipt.objects.get(pk=2)
+        receipt.end_date = timezone.now()
+        receipt.save()
         self.assertIn(Receipt.objects.get(pk=1), product.inactive_profile_receipts())
 
     def test_product_owners(self):
@@ -131,6 +129,9 @@ class ModelProductTests(TestCase):
 
     def test_expired_owners(self):
         product = Product.objects.get(pk=2)
+        receipt = Receipt.objects.get(pk=2)
+        receipt.end_date = timezone.now()
+        receipt.save()
         self.assertIn(CustomerProfile.objects.get(pk=1), product.expired_owners())
 
     def test_save_autocreate_sku_successs(self):
@@ -141,8 +142,18 @@ class ModelProductTests(TestCase):
         )
         self.assertTrue(product_1.sku)
 
-    def test_save_two_products_same_name_autocreate_sku_successs(self):
-        pass
+    def test_save_two_products_same_name_autocreate_sku_fail(self):
+        site = Site.objects.get(pk=1)
+        product_1 = Product.objects.create(
+            name="Test Product",
+            site=site
+        )
+        with self.assertRaises(IntegrityError):
+            product_2 = Product.objects.create(
+                name="Test Product",
+                site=site
+            )
+
 
 class TransactionProductTests(TestCase):
 
