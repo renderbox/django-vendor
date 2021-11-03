@@ -133,6 +133,16 @@ class ModelProductTests(TestCase):
         product = Product.objects.get(pk=2)
         self.assertIn(CustomerProfile.objects.get(pk=1), product.expired_owners())
 
+    def test_save_autocreate_sku_successs(self):
+        site = Site.objects.get(pk=1)
+        product_1 = Product.objects.create(
+            name="Test Product",
+            site=site
+        )
+        self.assertTrue(product_1.sku)
+
+    def test_save_two_products_same_name_autocreate_sku_successs(self):
+        pass
 
 class TransactionProductTests(TestCase):
 

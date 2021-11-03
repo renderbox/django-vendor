@@ -27,8 +27,8 @@ def offer_term_details_default():
     period of 12 months, with 0 trial months
     """
     return {
-        'period_length': 1,
-        'payment_occurrences': 12,
+        "period_length": 1,
+        "payment_occurrences": 12,
         "term_units": TermDetailUnits.MONTH,
         "trial_occurrences": 0,
         "trial_amount": 0

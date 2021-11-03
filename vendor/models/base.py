@@ -34,6 +34,8 @@ def product_description_default():
         'call_out': ' '
     }
 
+def create_sku_if_empty(instance):
+    return f"{instance.site.pk}-{instance.pk}-{instance.name}"
 
 ##################
 # BASE MODELS
@@ -141,3 +143,9 @@ class ProductModelBase(CreateUpdateModelBase):
         owners = self.owners()
         inactive_receipts = self.inactive_profile_receipts()
         return set([receipt.profile for receipt in inactive_receipts if receipt.profile not in owners])
+
+    # def save(self, *args, **kwargs):
+    #     super().save(*args, **kwargs) 
+    #     if not self.sku:
+    #         kwargs['sku'] = create_sku_if_empty(self)
+    #         super().save(*args, **kwargs) 
