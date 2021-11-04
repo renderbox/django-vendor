@@ -7,7 +7,7 @@ from django.utils import timezone, dateformat
 
 from vendor.models.base import CreateUpdateModelBase, SoftDeleteModelBase
 from vendor.models.choice import PurchaseStatus
-from vendor.utils import get_payment_schedule_end_date
+from vendor.utils import get_payment_scheduled_end_date
 
 
 class Receipt(SoftDeleteModelBase, CreateUpdateModelBase):
@@ -52,6 +52,6 @@ class Receipt(SoftDeleteModelBase, CreateUpdateModelBase):
 
     def is_on_trial(self):
         first_payment = Receipt.objects.filter(transaction=self.transaction, order_item__offer__site=self.order_item.offer.site).order_by('start_date').first()
-        if self.end_date <= get_payment_schedule_end_date(first_payment.order_item.offer, first_payment.start_date):
+        if self.end_date <= get_payment_scheduled_end_date(first_payment.order_item.offer, first_payment.start_date):
             return True
         return False

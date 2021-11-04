@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from vendor.models import Receipt, Offer, Invoice, CustomerProfile
-from vendor.utils import get_payment_schedule_end_date
+from vendor.utils import get_payment_scheduled_end_date
 
 
 class ReceiptModelTests(TestCase):
@@ -19,7 +19,7 @@ class ReceiptModelTests(TestCase):
         self.new_invoice.add_offer(Offer.objects.get(pk=4))
         self.new_receipt = Receipt.objects.create(
             start_date=timezone.now(),
-            end_date=get_payment_schedule_end_date(self.new_invoice.order_items.first().offer),
+            end_date=get_payment_scheduled_end_date(self.new_invoice.order_items.first().offer),
             profile=CustomerProfile.objects.get(pk=1),
             order_item=self.new_invoice.order_items.first(),
             transaction=self.first_receipt.transaction
@@ -27,7 +27,7 @@ class ReceiptModelTests(TestCase):
 
     def test_receipt_is_on_trial_true(self):
         self.first_receipt.start_date = timezone.now()
-        self.first_receipt.end_date = get_payment_schedule_end_date(self.first_receipt.order_item.offer)
+        self.first_receipt.end_date = get_payment_scheduled_end_date(self.first_receipt.order_item.offer)
         self.first_receipt.save()
         self.assertTrue(self.new_receipt.is_on_trial())
 

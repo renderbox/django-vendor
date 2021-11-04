@@ -179,7 +179,7 @@ class ModelCustomerProfileTests(TestCase):
         self.assertEqual(0, len(self.customer_profile.get_completed_receipts()))
 
     def test_get_products(self):
-        self.assertFalse(self.customer_profile.get_customer_products())
+        self.assertFalse(self.customer_profile.get_all_customer_products())
 
     def test_get_active_offer_receipts_success(self):
         cart = self.customer_profile.get_cart_or_checkout_cart()
@@ -197,6 +197,22 @@ class ModelCustomerProfileTests(TestCase):
     def test_get_active_offer_receipts_empty(self):
         offer = Offer.objects.get(pk=3)
         self.assertTrue(len(self.customer_profile.get_active_offer_receipts(offer)) == 0)
+
+    def test_get_active_products_none(self):
+        receipt = Receipt.objects.get(pk=2)
+        receipt.end_date = timezone.now()
+        receipt.save()
+        product = self.customer_profile_existing.get_active_products()
+        self.assertFalse(len(product))
+
+    def test_get_active_products(self):
+        product = self.customer_profile_existing.get_active_products()
+        self.assertTrue(len(product))
+
+    def test_get_active_product_and_offer(self):
+        product_offer = self.customer_profile_existing.get_active_product_and_offer()
+        self.assertEqual(product_offer[0][0], Product.objects.get(pk=2))
+        self.assertEqual(product_offer[0][1], Offer.objects.get(pk=2))
 
 
 class AddOfferToProfileView(TestCase):

@@ -8,7 +8,7 @@ from django.utils import timezone
 from vendor import config
 from vendor.models import Payment, Invoice, Receipt
 from vendor.models.choice import PurchaseStatus, TermType
-from vendor.utils import get_payment_schedule_end_date
+from vendor.utils import get_payment_scheduled_end_date
 ##########
 # SIGNALS
 
@@ -141,7 +141,7 @@ class PaymentProcessorBase(object):
             receipt.auto_renew = False
 
         if term_type < TermType.PERPETUAL:
-            receipt.end_date = get_payment_schedule_end_date(order_item.offer)
+            receipt.end_date = get_payment_scheduled_end_date(order_item.offer)
             receipt.auto_renew = True
 
         return receipt
