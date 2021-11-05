@@ -972,6 +972,24 @@ class AuthorizeNetProcessorTests(TestCase):
         else:
             self.assertTrue(is_valid)
 
+    def test_subscription_update_price(self):
+        subscription_list = self.processor.get_list_of_subscriptions()
+        if not len(subscription_list):
+            print("No subscriptions, Skipping Test")
+            return
+        active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
+        subscription_id = active_subscriptions[-1].id.pyval
+        new_price = randrange(1, 1000)
+        if active_subscriptions:
+            self.processor.subscription_update_price(subscription_id, new_price)
+            print(f'\test_subscription_update_price\nMessage: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}\nSubscription ID: {subscription_id}\n')
+            response = self.processor.subscription_info(subscription_id)
+            self.assertTrue(self.processor.transaction_submitted)
+            self.assertEqual(new_price, response.subscription.amount.pyval)
+        else:
+            print("No active Subscriptions, Skipping Test")
+
+
     ##########
     # Report details
     ##########

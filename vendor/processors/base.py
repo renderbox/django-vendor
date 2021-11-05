@@ -388,8 +388,10 @@ class PaymentProcessorBase(object):
 
         self.create_receipts(self.invoice.order_items.all())
 
+    def subscription_update_price(self, subscription):
+        pass
+    
     # -------------------
     # Refund a Payment
-
     def refund_payment(self):
         pass
