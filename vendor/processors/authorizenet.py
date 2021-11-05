@@ -586,6 +586,23 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             return True
         return False
 
+    def subscription_update_price(self, subscription_id, new_price):
+        self.transaction_type = apicontractsv1.ARBSubscriptionType()
+        self.transaction_type.amount = self.to_valid_decimal(new_price)
+
+        self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.subscriptionId = str(subscription_id)
+        self.transaction.subscription = self.transaction_type
+
+        self.controller = ARBUpdateSubscriptionController(self.transaction)
+        self.set_controller_api_endpoint()
+        self.controller.execute()
+
+        response = self.controller.getresponse()
+
+        self.check_subscription_response(response)
+
     ##########
     # Reporting API, for transaction retrieval information
     ##########

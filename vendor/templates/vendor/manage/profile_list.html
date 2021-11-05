@@ -19,6 +19,7 @@
             <th scope="col">{% trans 'User Name' %}</th>
             <th scope="col">{% trans 'Fist Name' %}</th>
             <th scope="col">{% trans 'Last Name' %}</th>
+            <th scope="col">{% trans 'Email' %}</th>
             <th scope="col">{% trans 'Site' %}</th>
             <th scope="col">{% trans 'Currency' %}</th>
           </tr>
@@ -30,6 +31,7 @@
             <td>{{ item.user.username }}</td>
             <td>{{ item.user.first_name }}</td>
             <td>{{ item.user.last_name }}</td>
+            <td>{{ item.user.email }}</td>
             <td>{{ item.site }}</td>
             <td>{{ item.currency }}</td>
           </tr>
