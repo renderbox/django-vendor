@@ -67,59 +67,6 @@ class CartView(TemplateView):
         return render(request, self.template_name, context)
 
 
-class AccountInformationView(LoginRequiredMixin, TemplateView):
-    template_name = 'vendor/checkout.html'
-
-    def get(self, request, *args, **kwargs):
-        context = super().get_context_data(**kwargs)
-        clear_session_purchase_data(request)
-
-        invoice = get_purchase_invoice(request.user, get_site_from_request(request))
-        if not invoice.order_items.count():
-            return redirect('vendor:cart')
-
-        invoice.status = Invoice.InvoiceStatus.CHECKOUT
-        invoice.save()
-
-        existing_account_address = Address.objects.filter(profile__user=request.user, profile__site=get_site_from_request(request))
-
-        if existing_account_address:
-            # TODO: In future the user will be able to select from multiple saved address
-            form = AccountInformationForm(initial={'email': request.user.email}, instance=existing_account_address[0])
-        else:
-            form = AccountInformationForm(initial={'first_name': request.user.first_name, 'last_name': request.user.last_name, 'email': request.user.email})
-
-        context['form'] = form
-        context['invoice'] = invoice
-        return render(request, self.template_name, context)
-
-    def post(self, request, *args, **kwargs):
-        form = AccountInformationForm(request.POST)
-
-        if not form.is_valid():
-            return render(request, self.template_name, {'form': form})
-
-        shipping_address = form.save(commit=False)
-
-        invoice = get_purchase_invoice(request.user, get_site_from_request(request))
-
-        if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
-            messages.info(request, _("Cart changed while in checkout process"))
-            return redirect('vendor:cart')
-
-        invoice.status = Invoice.InvoiceStatus.CHECKOUT
-        invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
-        # TODO: Need to add a drop down to select existing address
-        shipping_address, created = invoice.profile.get_or_create_address(shipping_address)
-        if created:
-            shipping_address.profile = invoice.profile
-            shipping_address.save()
-        invoice.shipping_address = shipping_address
-        invoice.save()
-
-        return redirect('vendor:checkout-payment')
-
-
 class PaymentView(LoginRequiredMixin, TemplateView):
     '''
     Review items and submit Payment
