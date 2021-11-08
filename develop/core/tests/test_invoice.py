@@ -314,7 +314,7 @@ class CartViewTests(TestCase):
         self.client.post(add_mug_url)
         self.assertContains(response, f'<span class="text-primary">${self.invoice.total}</span>')
 
-        remove_shirt_url = reverse("vendor:remove-from-cart", kwargs={'slug': self.shirt_offer.slug})
+        remove_shirt_url = reverse("vendor_api:remove-from-cart", kwargs={'slug': self.shirt_offer.slug})
         self.assertContains(response, f'<span class="text-primary">${self.invoice.total}</span>')
 
     # def test_view_displays_login_instead_checkout(self):

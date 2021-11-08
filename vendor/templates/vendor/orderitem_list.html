@@ -34,7 +34,7 @@
                           </form></td>
                     <td>{{ items.price|localize }}</td>
                     <td>{{ items.total|localize }}</td>
-                    <td><a class="text-danger" href="{% url 'vendor-remove-from-cart' items.offer.sku %}">{% trans 'Remove Item' %}</a></td>
+                    <td><a class="text-danger" href="{% url 'vendor_api:remove-from-cart' items.offer.sku %}">{% trans 'Remove Item' %}</a></td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -30,9 +30,6 @@ def get_purchase_invoice(user, site):
     return profile.get_cart_or_checkout_cart()
 
 
-
-
-
 def check_offer_items_or_redirect(invoice, request):
 
     if invoice.order_items.count() < 1:
@@ -68,37 +65,6 @@ class CartView(TemplateView):
         context['invoice'] = cart
         context['order_items'] = [ order_item for order_item in cart.order_items.all() ]
         return render(request, self.template_name, context)
-
-
-class RemoveFromCartView(View):
-
-    def post(self, request, *args, **kwargs):
-        offer = Offer.objects.get(site=get_site_from_request(request), slug=self.kwargs["slug"])
-        if request.user.is_anonymous:
-            offer_key = str(offer.pk)
-            session_cart = get_or_create_session_cart(request.session)
-
-            if offer_key in session_cart:
-                session_cart[offer_key]['quantity'] -= 1
-
-            if session_cart[offer_key]['quantity'] <= 0:
-                del(session_cart[offer_key])
-
-            request.session['session_cart'] = session_cart
-        else:
-            profile = self.request.user.customer_profile.get(site=get_site_from_request(request))      # Make sure they have a cart
-
-            cart = profile.get_cart_or_checkout_cart()
-
-            if cart.status == Invoice.InvoiceStatus.CHECKOUT:
-                cart.status = Invoice.InvoiceStatus.CART
-                cart.save()
-
-            cart.remove_offer(offer)
-
-        messages.info(self.request, _("Removed item from cart."))
-
-        return redirect('vendor:cart')      # Redirect to cart on success
 
 
 class AccountInformationView(LoginRequiredMixin, TemplateView):
