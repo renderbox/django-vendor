@@ -132,7 +132,7 @@
                     <button id="changeSubscription" class="btn btn-sm btn-primary" type="button" data-toggle="modal"
                         data-target="#update_subscription">{% trans 'Change Subscription' %}</button>
                     <form id="cancelSubscription" class="align-itmes-center" method="post"
-                        action="{% url 'vendor:customer-subscription-cancel' subscription.uuid %}">
+                        action="{% url 'vendor_api:customer-subscription-cancel' subscription.uuid %}">
                         {% csrf_token %}
                         <button class="btn btn-sm btn-primary" type="submit">{% trans 'Cancel Subscription' %}</button>
                     </form>

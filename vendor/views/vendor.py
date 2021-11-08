@@ -4,8 +4,8 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, redirect, Http404
-from django.urls import reverse_lazy
 from django.utils.translation import ugettext as _
+from django.urls import reverse_lazy
 from django.views.generic import TemplateView, View, FormView
 from django.views.generic.edit import UpdateView
 from django.views.generic.detail import DetailView
@@ -286,20 +286,6 @@ class SubscriptionsListView(LoginRequiredMixin, ListView):
         return subscriptions
 
 
-class SubscriptionCancelView(LoginRequiredMixin, View):
-    success_url = reverse_lazy('vendor:customer-subscriptions')
-
-    def post(self, request, *args, **kwargs):
-        receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
-
-        processor = get_site_payment_processor(receipt.order_item.invoice.site)(receipt.order_item.invoice)
-        processor.subscription_cancel(receipt)
-
-        messages.info(self.request, _("Subscription Cancelled"))
-
-        return redirect(request.META.get('HTTP_REFERER', self.success_url))
-
-
 class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
     form_class = CreditCardForm()
     success_url = reverse_lazy('vendor:customer-subscriptions')
@@ -347,12 +333,6 @@ class AddressUpdateView(LoginRequiredMixin, FormView):
             address.save()
 
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
-
-
-class RenewSubscription(LoginRequiredMixin, View):
-
-    def post(self, request, *args, **kwargs):
-        pass
 
 
 class ShippingAddressUpdateView(LoginRequiredMixin, UpdateView):

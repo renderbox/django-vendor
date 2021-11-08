@@ -1,12 +1,14 @@
-
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 
-from vendor.models import Invoice, Offer
+from vendor.models import Invoice, Offer, Receipt
+from vendor.processors import get_site_payment_processor
 from vendor.utils import get_or_create_session_cart, get_site_from_request
 
 class VendorIndexAPI(View):
@@ -96,3 +98,23 @@ class RemoveFromCartView(View):
 
         return redirect('vendor:cart')      # Redirect to cart on success
 
+
+class SubscriptionCancelView(LoginRequiredMixin, View):
+    success_url = reverse_lazy('vendor:customer-subscriptions')
+
+    def post(self, request, *args, **kwargs):
+        receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
+
+        processor = get_site_payment_processor(receipt.order_item.invoice.site)(receipt.order_item.invoice)
+        processor.subscription_cancel(receipt)
+
+        messages.info(self.request, _("Subscription Cancelled"))
+
+        return redirect(request.META.get('HTTP_REFERER', self.success_url))
+
+
+class RenewSubscription(LoginRequiredMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        # TODO: Need to implement
+        pass
