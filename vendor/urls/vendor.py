@@ -6,7 +6,6 @@ app_name = "vendor"
 
 urlpatterns = [
     path('cart/', vendor_views.CartView.as_view(), name="cart"),
-    path('cart/add/<slug:slug>/', vendor_views.AddToCartView.as_view(), name="add-to-cart"),
     path('cart/remove/<slug:slug>/', vendor_views.RemoveFromCartView.as_view(), name="remove-from-cart"),
     path('checkout/summary/<uuid:uuid>/', vendor_views.PaymentSummaryView.as_view(), name="purchase-summary"),
 

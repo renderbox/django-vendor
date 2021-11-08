@@ -55,7 +55,7 @@
                                 <tr>
                                         <th>{% trans 'Buy Again' %}</th>
                                         <td><a class="text-danger"
-                                                        href="{% url 'vendor:add-to-cart' object.order_item.offer.slug %}">{{ object.order_item.offer.name }}</a>
+                                                        href="{% url 'vendor_api:add-to-cart' object.order_item.offer.slug %}">{{ object.order_item.offer.name }}</a>
                                         </td>
                                 </tr>
                                 {% endif %}

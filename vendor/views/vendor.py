@@ -16,7 +16,7 @@ from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationF
 from vendor.models import Offer, Invoice, Address, OrderItem, Receipt
 from vendor.models.choice import TermType, PurchaseStatus
 from vendor.processors import get_site_payment_processor
-from vendor.utils import get_site_from_request
+from vendor.utils import get_site_from_request, get_or_create_session_cart, clear_session_purchase_data
 
 logger = logging.getLogger(__name__)
 
@@ -30,20 +30,7 @@ def get_purchase_invoice(user, site):
     return profile.get_cart_or_checkout_cart()
 
 
-def clear_session_purchase_data(request):
-    if 'billing_address_form' in request.session:
-        del(request.session['billing_address_form'])
-    if 'credit_card_form' in request.session:
-        del(request.session['credit_card_form'])
 
-
-def get_or_create_session_cart(session):
-    session_cart = {}
-    if 'session_cart' not in session:
-        session['session_cart'] = session_cart
-    session_cart = session.get('session_cart')
-
-    return session_cart
 
 
 def check_offer_items_or_redirect(invoice, request):
@@ -81,54 +68,6 @@ class CartView(TemplateView):
         context['invoice'] = cart
         context['order_items'] = [ order_item for order_item in cart.order_items.all() ]
         return render(request, self.template_name, context)
-
-
-class AddToCartView(View):
-    '''
-    Create an order item and add it to the order
-    '''
-    def session_cart(self, request, offer):
-        offer_key = str(offer.pk)
-        session_cart = get_or_create_session_cart(request.session)
-
-        if offer_key not in session_cart:
-            session_cart[offer_key] = {}
-            session_cart[offer_key]['quantity'] = 0
-
-        session_cart[offer_key]['quantity'] += 1
-
-        if not offer.allow_multiple:
-            session_cart[offer_key]['quantity'] = 1
-
-        return session_cart
-
-    def post(self, request, *args, **kwargs):
-        try:
-            offer = Offer.objects.get(site=get_site_from_request(request), slug=self.kwargs["slug"], available=True)
-        except ObjectDoesNotExist:
-            messages.error(_("Offer does not exist or is unavailable"))
-            return redirect('vendor:cart')
-
-        if request.user.is_anonymous:
-            request.session['session_cart'] = self.session_cart(request, offer)
-        else:
-            profile, created = self.request.user.customer_profile.get_or_create(site=get_site_from_request(request))
-
-            cart = profile.get_cart_or_checkout_cart()
-
-            if cart.status == Invoice.InvoiceStatus.CHECKOUT:
-                cart.status = Invoice.InvoiceStatus.CART
-                cart.save()
-
-            if profile.has_product(offer.products.all()) and not offer.allow_multiple:
-                messages.info(self.request, _("You Have Already Purchased This Item"))
-            elif cart.order_items.filter(offer__products__in=offer.products.all()).count() and not offer.allow_multiple:
-                messages.info(self.request, _("You already have this product in you cart. You can only buy one"))
-            else:
-                messages.info(self.request, _("Added item to cart."))
-                cart.add_offer(offer)
-
-        return redirect('vendor:cart')      # Redirect to cart on success
 
 
 class RemoveFromCartView(View):

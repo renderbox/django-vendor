@@ -7,5 +7,6 @@ app_name = "vendor_api"
 
 urlpatterns = [
     path('', api_views.VendorIndexAPI.as_view(), name='api-index'),
+    path('cart/add/<slug:slug>/', api_views.AddToCartView.as_view(), name="add-to-cart"),
     path('authorizenet/authcapture', authorizenet_views.AuthroizeCaptureAPI.as_view(), name='api-authorizenet-authcapture-get')
 ]

@@ -104,7 +104,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         return price.cost
 
     def add_to_cart_link(self):
-        return reverse("vendor:add-to-cart", kwargs={"slug": self.slug})
+        return reverse("vendor_api:add-to-cart", kwargs={"slug": self.slug})
 
     def remove_from_cart_link(self):
         return reverse("vendor:remove-from-cart", kwargs={"slug": self.slug})
