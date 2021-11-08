@@ -1,7 +1,7 @@
 from django.urls import path
 
-from vendor.apis.v1 import views as api_views
-from vendor.apis.v1.authorizenet import views as authorizenet_views
+from vendor.api.v1 import views as api_views
+from vendor.api.v1.authorizenet import views as authorizenet_views
 
 app_name = "vendor_api"
 
