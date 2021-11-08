@@ -24,8 +24,6 @@ from siteconfigs.models import SiteConfigModel
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 #############
 # Admin Views
-
-
 class AdminDashboardView(LoginRequiredMixin, SiteOnRequestFilterMixin, ListView):
     '''
     List of the most recent invoices generated on the current site.
@@ -285,57 +283,6 @@ class AdminProfileDetailView(LoginRequiredMixin, DetailView):
         context['free_offers'] = Offer.objects.filter(prices__cost=0, site=self.object.site)
 
         return context
-
-
-class VoidProductView(LoginRequiredMixin, View):
-    success_url = reverse_lazy('vendor_admin:manage-profiles')
-
-    def post(self, request, *args, **kwargs):
-        receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
-        receipt.void()
-        receipt.save()
-
-        messages.info(request, _("Customer has no longer access to Product"))
-        return redirect(request.META.get('HTTP_REFERER', self.success_url))
-
-
-class AddOfferToProfileView(LoginRequiredMixin, View):
-
-    def get(self, request, *args, **kwargs):
-        customer_profile = CustomerProfile.objects.get(uuid=kwargs.get('uuid_profile'))
-        offer = Offer.objects.get(uuid=kwargs['uuid_offer'])
-
-        cart = customer_profile.get_cart_or_checkout_cart()
-        cart.empty_cart()
-        cart.add_offer(offer)
-
-        if offer.current_price() or cart.total:
-            messages.info(request, _("Offer and Invoice must have zero value"))
-            cart.remove_offer(offer)
-            return redirect(reverse('vendor_admin:manager-profile', kwargs={'uuid': customer_profile.uuid}))
-
-        processor = get_site_payment_processor(cart.site)(cart)
-        processor.authorize_payment()
-
-        messages.info(request, _("Offer Added To Customer Profile"))
-        return redirect(reverse('vendor_admin:manager-profile', kwargs={'uuid': customer_profile.uuid}))
-
-
-class ProductAvailabilityToggleView(LoginRequiredMixin, View):
-    success_url = reverse_lazy('vendor_admin:manager-product-list')
-
-    def post(self, request, *args, **kwargs):
-        product = get_object_or_404(Product, uuid=self.kwargs.get('uuid'))
-
-        product.available = request.POST.get('available', False)
-        product.save()
-
-        for offer in Offer.objects.filter(products__in=[product]):
-            offer.available = product.available
-            offer.save()
-
-        messages.info(request, _("Product availability Changed"))
-        return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
 
 class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):

@@ -426,7 +426,7 @@
                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                     {% for customer_profile in customers_who_dont_own %}
                     <a class="dropdown-item"
-                    href="{% url 'vendor_admin:manager-profile-add-offer' customer_profile.uuid form.instance.uuid %}">{{customer_profile}}</a>
+                    href="{% url 'vendor_api:manager-profile-add-offer' customer_profile.uuid form.instance.uuid %}">{{customer_profile}}</a>
                     {% endfor %}
                 </div>
             </div>

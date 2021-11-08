@@ -104,7 +104,7 @@
               </th>
               <th>
                 <form class="align-itmes-center" method="post"
-                  action="{% url 'vendor_admin:manager-profile-remove-product' receipt.uuid %}">
+                  action="{% url 'vendor_api:manager-profile-remove-product' receipt.uuid %}">
                   {% csrf_token %}
                   <button class="btn btn-sm btn-danger" type="submit">
                     {% trans 'VOID' %}
@@ -174,7 +174,7 @@
           <tr>
             <th>{{ offer }}</th>
             <th>
-              <form action="{% url 'vendor_admin:manager-profile-add-offer' object.uuid offer.uuid %}">
+              <form action="{% url 'vendor_api:manager-profile-add-offer' object.uuid offer.uuid %}">
                 {% csrf_token %}
                 <button class="btn btn-sm btn-primary" type="submit">
                   {% trans 'ASSIGN' %}

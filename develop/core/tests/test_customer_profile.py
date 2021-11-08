@@ -233,17 +233,17 @@ class AddOfferToProfileView(TestCase):
         self.free_offer.products.add(Product.objects.get(pk=5))
 
     def test_view_cart_status_code(self):
-        url = reverse('vendor_admin:manager-profile-add-offer', kwargs={'uuid_profile': self.customer_profile.uuid, 'uuid_offer': self.free_offer.uuid})
+        url = reverse('vendor_api:manager-profile-add-offer', kwargs={'uuid_profile': self.customer_profile.uuid, 'uuid_offer': self.free_offer.uuid})
         response = self.client.get(url)
         self.assertEquals(response.status_code, 302)
 
     def test_adds_free_product_to_profile_success(self):
-        url = reverse('vendor_admin:manager-profile-add-offer', kwargs={'uuid_profile': self.customer_profile.uuid, 'uuid_offer': self.free_offer.uuid})
+        url = reverse('vendor_api:manager-profile-add-offer', kwargs={'uuid_profile': self.customer_profile.uuid, 'uuid_offer': self.free_offer.uuid})
         response = self.client.get(url)
         self.assertTrue(self.customer_profile.receipts.count())
 
     def test_adds_free_product_to_profile_fail(self):
-        url = reverse('vendor_admin:manager-profile-add-offer', kwargs={'uuid_profile': self.customer_profile.uuid, 'uuid_offer': Offer.objects.get(pk=2).uuid})
+        url = reverse('vendor_api:manager-profile-add-offer', kwargs={'uuid_profile': self.customer_profile.uuid, 'uuid_offer': Offer.objects.get(pk=2).uuid})
         response = self.client.get(url)
         self.assertFalse(self.customer_profile.receipts.count())
 
