@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from django.views import View
 
 from vendor.config import VENDOR_PRODUCT_MODEL
@@ -169,6 +170,19 @@ class ProductAvailabilityToggleView(LoginRequiredMixin, View):
         messages.info(request, _("Product availability Changed"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
+
+class SubscriptionPriceUpdateView(LoginRequiredMixin, View):
+    success_url = reverse_lazy('vendor_admin:manager-product-list')
+
+    def post(self, request, *args, **kwargs):
+        site = get_site_from_request(request)
+        receipt = get_object_or_404(Receipt, profile__site=site, uuid=self.request.POST.get('receipt_uuid'))
+        offer = get_object_or_404(Offer, site=site, uuid=self.request.POST.get('offer_uuid'))
+
+        processor = get_site_payment_processor(site)(receipt.order_item.invoice)
+        processor.subscription_update_price(receipt, offer.current_price(), request.user)
+        
+        return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
 class RenewSubscription(LoginRequiredMixin, View):
 

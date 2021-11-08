@@ -13,5 +13,6 @@ urlpatterns = [
     path('product/<uuid:uuid>/remove', api_views.VoidProductView.as_view(), name="manager-profile-remove-product"),
     path('profile/<uuid:uuid_profile>/offer/<uuid:uuid_offer>/add', api_views.AddOfferToProfileView.as_view(), name="manager-profile-add-offer"),
     path('product/<uuid:uuid>/availability', api_views.ProductAvailabilityToggleView.as_view(), name="manager-product-availablility"),
+    path('subscription/price/update', api_views.SubscriptionPriceUpdateView.as_view(), name="manager-subscription-price-update"),
     path('authorizenet/authcapture', authorizenet_views.AuthroizeCaptureAPI.as_view(), name='api-authorizenet-authcapture-get')
 ]
