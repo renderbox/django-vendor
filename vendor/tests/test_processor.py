@@ -962,13 +962,16 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.is_data_valid()
         self.processor.create_payment_model()
         is_valid = self.processor.is_card_valid()
+        print(f"Test is_card_valid_success\n")
         print(f"Transaction Submitted: {self.processor.transaction_submitted}")
         print(f"Transaction Response: {self.processor.transaction_response}")
         print(f"Transaction Msg: {self.processor.transaction_message}")
-        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
+        if 'duplicate' in str(self.processor.transaction_message):
             print(f"Skipping Test test_is_card_valid_success because of duplicate")
+            return None
         elif 'not accept this type of credit card' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print(f"Skipping Test test_is_card_valid_success because of duplicate")
+            return None
         else:
             self.assertTrue(is_valid)
 
@@ -976,7 +979,7 @@ class AuthorizeNetProcessorTests(TestCase):
         subscription_list = self.processor.get_list_of_subscriptions()
         if not len(subscription_list):
             print("No subscriptions, Skipping Test")
-            return
+            return None
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         subscription_id = active_subscriptions[-1].id.pyval
         new_price = randrange(1, 1000)
