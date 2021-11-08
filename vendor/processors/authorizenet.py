@@ -480,6 +480,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         transaction for it. Otherwise it will cancel the subscription on the Gateway
         and if successfull it will cancel it on the receipt.
         """
+        receipt.vendor_notes['cancelled_on'] = timezone.now()
         if not receipt.order_item.invoice.total:
             receipt.cancel()
             receipt.save()
