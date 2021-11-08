@@ -8,7 +8,7 @@ urlpatterns = [
     path('cart/', vendor_views.CartView.as_view(), name="cart"),
     path('checkout/summary/<uuid:uuid>/', vendor_views.PaymentSummaryView.as_view(), name="purchase-summary"),
 
-    path('customer/account/', vendor_views.AccountInformationView.as_view(), name="checkout-account"),
+    path('checkout/account/', vendor_views.AccountInformationView.as_view(), name="checkout-account"),
     path('checkout/payment/', vendor_views.PaymentView.as_view(), name="checkout-payment"),
     path('checkout/review/', vendor_views.ReviewCheckoutView.as_view(), name="checkout-review"),
 
