@@ -110,7 +110,7 @@
                     {% trans 'VOID' %}
                   </button>
                 </form>
-                <form class="align-itmes-center" method="post"
+                <form class="align-items-center" method="post"
                   action="{% url 'vendor_api:customer-subscription-cancel' receipt.uuid %}">
                   {% csrf_token %}
                   <button class="btn btn-sm btn-danger" type="submit">

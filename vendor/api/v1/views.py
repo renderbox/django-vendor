@@ -20,7 +20,6 @@ class VendorIndexAPI(View):
     docstring
     """
     def get(self, request, *args, **kwargs):
-        print('index api')
         return HttpResponse('<h1>Welcome to vendor APIs<h1>')
 
 
@@ -51,7 +50,7 @@ class AddToCartView(View):
             messages.error(_("Offer does not exist or is unavailable"))
             return redirect('vendor:cart')
 
-        if request.user.is_anonymous:
+        if not request.user.is_authenticated:
             request.session['session_cart'] = self.session_cart(request, offer)
         else:
             profile, created = self.request.user.customer_profile.get_or_create(site=get_site_from_request(request))
@@ -80,7 +79,7 @@ class RemoveFromCartView(View):
     '''
     def post(self, request, *args, **kwargs):
         offer = get_object_or_404(Offer, site=get_site_from_request(request), slug=self.kwargs["slug"])
-        if request.user.is_anonymous:
+        if not request.user.is_authenticated:
             offer_key = str(offer.pk)
             session_cart = get_or_create_session_cart(request.session)
 
