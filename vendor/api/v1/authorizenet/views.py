@@ -101,7 +101,7 @@ class AuthorizeNetBaseAPI(View):
         return False
 
 
-class AuthroizeCaptureAPI(AuthorizeNetBaseAPI):
+class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
     """
     API endpoint to get event notifications from authorizenet when a authcaputre is created.
     If there is a subscription tied to the transaction, it will renew such subscription

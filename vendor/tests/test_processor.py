@@ -26,6 +26,9 @@ class BaseProcessorTests(TestCase):
     fixtures = ['user', 'unit_test']
 
     def setUp(self):
+        self.client = Client()
+        self.user = User.objects.get(pk=1)
+        self.client.force_login(self.user)
         self.existing_invoice = Invoice.objects.get(pk=1)
         self.base_processor = PaymentProcessorBase(self.existing_invoice)
         self.subscription_offer = Offer.objects.get(pk=4)
@@ -205,6 +208,18 @@ class BaseProcessorTests(TestCase):
         }
         base_processor.renew_subscription(past_receipt, payment_info)
 
+    def test_subscription_price_update_success(self):
+        receipt = Receipt.objects.get(pk=3)
+        offer = Offer.objects.get(pk=4)
+        price = Price.objects.create(offer=offer, cost=89.99, currency='usd', start_date=timezone.now())
+        offer.prices.add(price)
+
+        processor = PaymentProcessorBase(receipt.order_item.invoice)
+        processor.subscription_update_price(receipt, price, self.user)
+
+        receipt.refresh_from_db()
+        self.assertIn('price_update', receipt.vendor_notes.keys())
+
     # def test_get_header_javascript_success(self):
     #     raise NotImplementedError()
 
@@ -232,8 +247,7 @@ class BaseProcessorTests(TestCase):
     # def test_subscription_payment_success(self):
     #     raise NotImplementedError()
 
-    # def test_subscription_update_payment_success(self):
-    #     raise NotImplementedError()
+
 
     # def test_subscription_cancel_success(self):
     #     raise NotImplementedError()
@@ -962,28 +976,34 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.is_data_valid()
         self.processor.create_payment_model()
         is_valid = self.processor.is_card_valid()
+        print(f"Test is_card_valid_success\n")
         print(f"Transaction Submitted: {self.processor.transaction_submitted}")
         print(f"Transaction Response: {self.processor.transaction_response}")
         print(f"Transaction Msg: {self.processor.transaction_message}")
-        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
+        if 'duplicate' in str(self.processor.transaction_message):
             print(f"Skipping Test test_is_card_valid_success because of duplicate")
-        elif 'not accept this type of credit card' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
+            return None
+        elif 'not accept this type of credit card' in str(self.processor.transaction_message):
             print(f"Skipping Test test_is_card_valid_success because of duplicate")
+            return None
         else:
             self.assertTrue(is_valid)
 
-    def test_subscription_update_price(self):
+    def test_subscription_price_update_success(self):
         subscription_list = self.processor.get_list_of_subscriptions()
         if not len(subscription_list):
             print("No subscriptions, Skipping Test")
-            return
+            return None
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         subscription_id = active_subscriptions[-1].id.pyval
         new_price = randrange(1, 1000)
+        receipt = Receipt.objects.all().last()
+        receipt.transaction = subscription_id
+        receipt.save()
         if active_subscriptions:
-            self.processor.subscription_update_price(subscription_id, new_price)
-            print(f'\test_subscription_update_price\nMessage: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}\nSubscription ID: {subscription_id}\n')
-            response = self.processor.subscription_info(subscription_id)
+            self.processor.subscription_update_price(receipt, new_price, self.user)
+            print(f'\test_subscription_update_price\nMessage: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}\nSubscription ID: {receipt.transaction}\n')
+            response = self.processor.subscription_info(receipt.transaction)
             self.assertTrue(self.processor.transaction_submitted)
             self.assertEqual(new_price, response.subscription.amount.pyval)
         else:

@@ -388,8 +388,12 @@ class PaymentProcessorBase(object):
 
         self.create_receipts(self.invoice.order_items.all())
 
-    def subscription_update_price(self, subscription):
-        pass
+    def subscription_update_price(self, receipt, new_price, user):
+        """
+        Call to handle when a new subscription price needs to be approved.
+        """
+        receipt.vendor_notes['price_update'] = f'Price update ({new_price}) accepted by user: {user.username} on {timezone.now()}'
+        receipt.save()
     
     # -------------------
     # Refund a Payment

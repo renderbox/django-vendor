@@ -66,7 +66,7 @@
             </form>
             {% else %}
             <form id="cancelSubscription" class="align-itmes-center" method="post"
-              action="{% url 'vendor:customer-subscription-cancel' object.uuid %}">
+              action="{% url 'vendor_api:customer-subscription-cancel' object.uuid %}">
               {% csrf_token %}
               <button class="btn btn-sm btn-primary" type="submit">{% trans 'Cancel Subscription' %}</button>
             </form>
