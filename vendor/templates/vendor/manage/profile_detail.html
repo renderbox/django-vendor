@@ -96,7 +96,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for receipt in object.get_active_reciepts %}
+            {% for receipt in object.get_active_receipts %}
             <tr>
               <th>
                 {{ receipt.products.first.name }}
@@ -104,10 +104,17 @@
               </th>
               <th>
                 <form class="align-itmes-center" method="post"
-                  action="{% url 'vendor_admin:manager-profile-remove-product' receipt.uuid %}">
+                  action="{% url 'vendor_api:manager-profile-remove-product' receipt.uuid %}">
                   {% csrf_token %}
                   <button class="btn btn-sm btn-danger" type="submit">
                     {% trans 'VOID' %}
+                  </button>
+                </form>
+                <form class="align-items-center" method="post"
+                  action="{% url 'vendor_api:customer-subscription-cancel' receipt.uuid %}">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-danger" type="submit">
+                    {% trans 'Cancel' %}
                   </button>
                 </form>
               </th>
@@ -174,7 +181,7 @@
           <tr>
             <th>{{ offer }}</th>
             <th>
-              <form action="{% url 'vendor_admin:manager-profile-add-offer' object.uuid offer.uuid %}">
+              <form action="{% url 'vendor_api:manager-profile-add-offer' object.uuid offer.uuid %}">
                 {% csrf_token %}
                 <button class="btn btn-sm btn-primary" type="submit">
                   {% trans 'ASSIGN' %}

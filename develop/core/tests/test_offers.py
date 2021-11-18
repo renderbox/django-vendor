@@ -41,12 +41,12 @@ class ModelOfferTests(TestCase):
     def test_add_offer_to_cart_slug(self):
         mug_offer = Offer.objects.get(pk=4)
         slug = mug_offer.add_to_cart_link()
-        self.assertEquals(slug, '/sales/cart/add/' + mug_offer.slug + '/')
+        self.assertEquals(slug, '/api/cart/add/' + mug_offer.slug + '/')
 
     def test_remove_offer_to_cart_slug(self):
         mug_offer = Offer.objects.get(pk=4)
         slug = mug_offer.remove_from_cart_link()
-        self.assertEquals(slug, '/sales/cart/remove/' + mug_offer.slug + '/')
+        self.assertEquals(slug, '/api/cart/remove/' + mug_offer.slug + '/')
 
     def test_get_current_price_is_msrp(self):
         offer = Offer.objects.get(pk=4)

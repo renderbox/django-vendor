@@ -480,6 +480,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         transaction for it. Otherwise it will cancel the subscription on the Gateway
         and if successfull it will cancel it on the receipt.
         """
+        receipt.vendor_notes['cancelled_on'] = f"{timezone.now():%d/%m/%Y %H:%m:%s}"
         if not receipt.order_item.invoice.total:
             receipt.cancel()
             receipt.save()
@@ -585,6 +586,26 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             self.void_payment(self.transaction_message['trans_id'].text)
             return True
         return False
+
+    def subscription_update_price(self, receipt, new_price, user):
+        self.transaction_type = apicontractsv1.ARBSubscriptionType()
+        self.transaction_type.amount = self.to_valid_decimal(new_price)
+
+        self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.subscriptionId = str(receipt.transaction)
+        self.transaction.subscription = self.transaction_type
+
+        self.controller = ARBUpdateSubscriptionController(self.transaction)
+        self.set_controller_api_endpoint()
+        self.controller.execute()
+
+        response = self.controller.getresponse()
+
+        self.check_subscription_response(response)
+
+        if self.transaction_submitted:
+            super().subscription_update_price(receipt, new_price, user)
 
     ##########
     # Reporting API, for transaction retrieval information

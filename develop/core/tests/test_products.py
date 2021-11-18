@@ -242,7 +242,7 @@ class ViewsProductTests(TestCase):
         self.assertIn('login', response.url)
     
     def test_product_availability_toggle_activate(self):
-        uri = reverse('vendor_admin:manager-product-availablility', kwargs={'uuid': self.product.uuid})
+        uri = reverse('vendor_api:manager-product-availablility', kwargs={'uuid': self.product.uuid})
 
         self.product.available = False
         self.product.save()
@@ -259,7 +259,7 @@ class ViewsProductTests(TestCase):
         self.assertTrue(all((offer.available for offer in Offer.objects.filter(products__in=[self.product]))))
     
     def test_product_availability_toggle_inactivate(self):
-        uri = reverse('vendor_admin:manager-product-availablility', kwargs={'uuid': self.product.uuid})
+        uri = reverse('vendor_api:manager-product-availablility', kwargs={'uuid': self.product.uuid})
 
         self.product.available = True
         self.product.save()

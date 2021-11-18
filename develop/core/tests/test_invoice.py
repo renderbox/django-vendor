@@ -310,11 +310,11 @@ class CartViewTests(TestCase):
         response = self.client.get(self.cart_url)
         self.assertContains(response, f'<span class="text-primary">${self.invoice.total}</span>')
 
-        add_mug_url = reverse("vendor:add-to-cart", kwargs={'slug': self.mug_offer.slug})
+        add_mug_url = reverse("vendor_api:add-to-cart", kwargs={'slug': self.mug_offer.slug})
         self.client.post(add_mug_url)
         self.assertContains(response, f'<span class="text-primary">${self.invoice.total}</span>')
 
-        remove_shirt_url = reverse("vendor:remove-from-cart", kwargs={'slug': self.shirt_offer.slug})
+        remove_shirt_url = reverse("vendor_api:remove-from-cart", kwargs={'slug': self.shirt_offer.slug})
         self.assertContains(response, f'<span class="text-primary">${self.invoice.total}</span>')
 
     # def test_view_displays_login_instead_checkout(self):
