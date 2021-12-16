@@ -9,6 +9,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from vendor.config import VENDOR_PAYMENT_PROCESSOR, VENDOR_STATE
+from vendor.utils import get_future_date_days
 
 try:
     from authorizenet import apicontractsv1
@@ -271,7 +272,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         payment_schedule.interval.length = subscription.offer.get_period_length()
         payment_schedule.totalOccurrences = subscription.offer.get_payment_occurrences()
-        payment_schedule.startDate = timezone.now()
+        payment_schedule.startDate = get_future_date_days(timezone.now(), subscription.offer.get_trial_days())
         payment_schedule.trialOccurrences = subscription.offer.get_trial_occurrences()
         return payment_schedule
 

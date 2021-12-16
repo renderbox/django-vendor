@@ -31,7 +31,8 @@ def offer_term_details_default():
         "payment_occurrences": 12,
         "term_units": TermDetailUnits.MONTH,
         "trial_occurrences": 0,
-        "trial_amount": 0
+        "trial_amount": 0,
+        "trial_days": 0
     }
 
 
@@ -195,3 +196,8 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
 
     def get_trial_amount(self):
         return self.term_details.get('trial_amount', 0)
+    
+    def get_trial_days(self):
+        return self.term_details.get('trial_days', 0)
+    
+
