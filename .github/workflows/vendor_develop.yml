@@ -42,6 +42,7 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
+        python -m pip install mistune==0.8.4
         python -m pip install m2r
         python -m pip install -e .[dev,authorizenet,stripe,test]
     - name: Run Core Tests
