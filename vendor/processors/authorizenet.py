@@ -2,9 +2,9 @@
 Payment processor for Authorize.net.
 """
 import ast
+import pyxb
 from decimal import Decimal, ROUND_DOWN
 from vendor.integrations import AuthorizeNetIntegration
-
 from django.conf import settings
 from django.utils import timezone
 
@@ -27,6 +27,22 @@ from vendor.models.invoice import Invoice
 from vendor.models.address import Country
 from vendor.models.payment import Payment
 from .base import PaymentProcessorBase
+
+
+
+class customdate(pyxb.binding.datatypes.date):
+    def __new__(cls, *args, **kw):
+        # Because of some python, XsdLiteral (pyxb.binding.datatypes line 761)
+        # creates a new custom date object, but with inputs like a datetime
+        # Then the __new__ of date errors out.
+        # So we're going to see if the hour is 12, and minutes, seconds, microseconds and TZ is 0 or empty
+        # If so, we remove it
+        # Similar issue: https://github.com/AuthorizeNet/sdk-python/issues/145
+
+        if len(args) == 8:
+            args = args[:3]
+        return super().__new__(cls, *args, **kw)
+
 
 
 class AuthorizeNetProcessor(PaymentProcessorBase):
@@ -272,7 +288,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         payment_schedule.interval.length = subscription.offer.get_period_length()
         payment_schedule.totalOccurrences = subscription.offer.get_payment_occurrences()
-        payment_schedule.startDate = get_future_date_days(timezone.now(), subscription.offer.get_trial_days())
+        payment_schedule.startDate = customdate(get_future_date_days(timezone.now(), subscription.offer.get_trial_days()))
         payment_schedule.trialOccurrences = subscription.offer.get_trial_occurrences()
         return payment_schedule
 
