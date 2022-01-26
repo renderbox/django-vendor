@@ -32,12 +32,9 @@ from .base import PaymentProcessorBase
 
 class customdate(pyxb.binding.datatypes.date):
     def __new__(cls, *args, **kw):
-        # Because of some python, XsdLiteral (pyxb.binding.datatypes line 761)
-        # creates a new custom date object, but with inputs like a datetime
-        # Then the __new__ of date errors out.
-        # So we're going to see if the hour is 12, and minutes, seconds, microseconds and TZ is 0 or empty
-        # If so, we remove it
-        # Similar issue: https://github.com/AuthorizeNet/sdk-python/issues/145
+        # Because of some python, XsdLiteral (pyxb.binding.datatypes)
+        # When a new date is created that is not a datetime and those, has more arguments,
+        # it requires to only have the year, month and day arguments.
 
         if len(args) == 8:
             args = args[:3]
