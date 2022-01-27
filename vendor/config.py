@@ -4,7 +4,7 @@ from django import forms
 from django.db.models import TextChoices
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from siteconfigs.config import SiteConfigBaseClass
 from siteconfigs.models import SiteConfigModel

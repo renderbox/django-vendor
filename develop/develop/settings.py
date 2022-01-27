@@ -15,7 +15,7 @@ import dj_database_url
 from iso4217 import Currency
 
 from vendor.__version__ import VERSION
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 BUILD_VERSION = VERSION
 
@@ -36,7 +36,6 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -97,6 +96,8 @@ AUTHENTICATION_BACKENDS = [
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 DATABASES = {}
 DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=False, default=os.environ.get('DATABASE_URL', 'sqlite:///{}'.format(os.path.join(BASE_DIR, 'db.sqlite3'))))     # Default to SQLite for testing on GitHub
