@@ -30,7 +30,7 @@ from .base import PaymentProcessorBase
 
 
 
-class customdate(pyxb.binding.datatypes.date):
+class CustomDate(pyxb.binding.datatypes.date):
     def __new__(cls, *args, **kw):
         # Because of some python, XsdLiteral (pyxb.binding.datatypes)
         # When a new date is created that is not a datetime and those, has more arguments,
@@ -285,7 +285,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         payment_schedule.interval.length = subscription.offer.get_period_length()
         payment_schedule.totalOccurrences = subscription.offer.get_payment_occurrences()
-        payment_schedule.startDate = customdate(get_future_date_days(timezone.now(), subscription.offer.get_trial_days()))
+        payment_schedule.startDate = CustomDate(get_future_date_days(timezone.now(), subscription.offer.get_trial_days()))
         payment_schedule.trialOccurrences = subscription.offer.get_trial_occurrences()
         return payment_schedule
 
