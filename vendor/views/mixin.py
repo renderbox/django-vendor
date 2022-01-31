@@ -2,7 +2,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.contrib import messages
 from django.http import Http404
 from django.shortcuts import redirect
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from vendor.utils import get_site_from_request
 
 

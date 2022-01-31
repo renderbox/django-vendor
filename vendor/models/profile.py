@@ -6,7 +6,7 @@ from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
 from django.db.models import Q, QuerySet
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES, TermType, PurchaseStatus
 from .invoice import Invoice

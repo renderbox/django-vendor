@@ -7,7 +7,7 @@ from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from vendor.config import DEFAULT_CURRENCY
 from vendor.utils import get_payment_scheduled_end_date
