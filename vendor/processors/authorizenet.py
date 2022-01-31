@@ -14,6 +14,9 @@ try:
     from authorizenet import apicontractsv1
     from authorizenet import constants
     from authorizenet.apicontrollers import *
+    import pyxb
+
+
     class CustomDate(pyxb.binding.datatypes.date):
         def __new__(cls, *args, **kw):
             # Because of some python, XsdLiteral (pyxb.binding.datatypes)
@@ -23,7 +26,7 @@ try:
             if len(args) == 8:
                 args = args[:3]
             return super().__new__(cls, *args, **kw)
-    import pyxb
+            
 except ModuleNotFoundError:
     if VENDOR_PAYMENT_PROCESSOR == "authorizenet.AuthorizeNetProcessor":
         print("WARNING: authorizenet module not found.  Install the library if you want to use the AuthorizeNetProcessor.")
