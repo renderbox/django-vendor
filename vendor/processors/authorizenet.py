@@ -2,7 +2,6 @@
 Payment processor for Authorize.net.
 """
 import ast
-import pyxb
 from decimal import Decimal, ROUND_DOWN
 from vendor.integrations import AuthorizeNetIntegration
 from django.conf import settings
@@ -15,6 +14,19 @@ try:
     from authorizenet import apicontractsv1
     from authorizenet import constants
     from authorizenet.apicontrollers import *
+    import pyxb
+
+
+    class CustomDate(pyxb.binding.datatypes.date):
+        def __new__(cls, *args, **kw):
+            # Because of some python, XsdLiteral (pyxb.binding.datatypes)
+            # When a new date is created that is not a datetime and those, has more arguments,
+            # it requires to only have the year, month and day arguments.
+
+            if len(args) == 8:
+                args = args[:3]
+            return super().__new__(cls, *args, **kw)
+            
 except ModuleNotFoundError:
     if VENDOR_PAYMENT_PROCESSOR == "authorizenet.AuthorizeNetProcessor":
         print("WARNING: authorizenet module not found.  Install the library if you want to use the AuthorizeNetProcessor.")
@@ -30,15 +42,6 @@ from .base import PaymentProcessorBase
 
 
 
-class CustomDate(pyxb.binding.datatypes.date):
-    def __new__(cls, *args, **kw):
-        # Because of some python, XsdLiteral (pyxb.binding.datatypes)
-        # When a new date is created that is not a datetime and those, has more arguments,
-        # it requires to only have the year, month and day arguments.
-
-        if len(args) == 8:
-            args = args[:3]
-        return super().__new__(cls, *args, **kw)
 
 
 
