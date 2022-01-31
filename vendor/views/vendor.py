@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, redirect, Http404
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, View, FormView
 from django.views.generic.edit import UpdateView
