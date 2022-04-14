@@ -214,6 +214,16 @@ class ModelCustomerProfileTests(TestCase):
         self.assertEqual(product_offer[0][0], Product.objects.get(pk=2))
         self.assertEqual(product_offer[0][1], Offer.objects.get(pk=2))
 
+    def test_get_checkout_invoice_success(self):
+        invoice_invalid_cart = Invoice()
+        invoice_invalid_cart.status = Invoice.InvoiceStatus.CART
+        invoice_invalid_cart.profile = self.customer_profile_existing
+        invoice_invalid_cart.save()
+
+        invoice = self.customer_profile_existing.get_cart_or_checkout_cart()
+
+        self.assertEqual(1, self.customer_profile_existing.invoices.filter(status=Invoice.InvoiceStatus.CART, deleted=False).count())
+
 
 class AddOfferToProfileView(TestCase):
 
