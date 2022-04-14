@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
-from django.db.models import Q, QuerySet
+from django.db.models import Q, QuerySet, Count
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from .base import CreateUpdateModelBase
@@ -60,8 +60,8 @@ class CustomerProfile(CreateUpdateModelBase):
         return self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT).first()
 
     def get_cart_or_checkout_cart(self):
-        checkout_status = self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT, deleted=False)
-        cart_status = self.invoices.filter(status=Invoice.InvoiceStatus.CART, deleted=False)
+        checkout_status = self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT, deleted=False).annotate(item_count=Count('order_items')).order_by('-item_count')
+        cart_status = self.invoices.filter(status=Invoice.InvoiceStatus.CART, deleted=False).annotate(item_count=Count('order_items')).order_by('-item_count')
 
         if checkout_status and cart_status:
             print("here")
@@ -87,7 +87,7 @@ class CustomerProfile(CreateUpdateModelBase):
             for invoice in cart_status.all()[1:]:
                 invoice.delete()
 
-        return cart_status.first()
+        return self.invoices.filter(status=Invoice.InvoiceStatus.CART, deleted=False).first()
 
     def has_invoice_in_checkout(self):
         return bool(self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT).count())
