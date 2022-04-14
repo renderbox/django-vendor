@@ -1,11 +1,10 @@
-
 from core.models import Product
 from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.urls import reverse
-from django.test import TestCase, Client
+from django.test import TestCase, Client, tag
 from unittest import skipIf
 from random import randrange, choice
 from siteconfigs.models import SiteConfigModel
@@ -289,6 +288,8 @@ class SupportedProcessorsSetupTests(TestCase):
         # raise NotImplementedError()
 
 
+# @skipIf(True, "Webhook tests are highly dependent on data in Authroizenet and local data.")
+@tag('external')
 @skipIf((settings.AUTHORIZE_NET_API_ID is None) or (settings.AUTHORIZE_NET_TRANSACTION_KEY is None), "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
 

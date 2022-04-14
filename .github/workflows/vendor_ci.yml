@@ -63,7 +63,7 @@ jobs:
     - name: Run Authorize.Net Tests
       run: |
         cd develop
-        python manage.py test
+        python manage.py test vendor.tests.test_processor.AuthorizeNetProcessorTests --exclude-tag external
       env: 
         DJANGO_DEBUG: 1
         DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
