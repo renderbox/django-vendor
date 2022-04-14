@@ -2,7 +2,7 @@ import json
 import re
 from django.contrib.auth import get_user_model
 from django.http.response import Http404
-from django.test import TestCase, Client
+from django.test import TestCase, Client, tag
 from django.urls import reverse
 from django.utils import timezone
 from unittest import skipIf
@@ -45,7 +45,8 @@ class VendorAPITest(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-@skipIf(True, "Webhook tests are highly dependent on data in Authroizenet and local data.")
+# @skipIf(True, "Webhook tests are highly dependent on data in Authroizenet and local data.")
+@tag('external')
 class AuthorizeNetAPITest(TestCase):
 
     fixtures = ['user', 'unit_test']
