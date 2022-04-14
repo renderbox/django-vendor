@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
-from django.db.models import Q, QuerySet
+from django.db.models import Q, QuerySet, Count
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from .base import CreateUpdateModelBase
@@ -60,13 +60,34 @@ class CustomerProfile(CreateUpdateModelBase):
         return self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT).first()
 
     def get_cart_or_checkout_cart(self):
-        carts_status = [cart.status for cart in self.invoices.filter(status__in=[Invoice.InvoiceStatus.CHECKOUT, Invoice.InvoiceStatus.CART])]
+        checkout_status = self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT, deleted=False).annotate(item_count=Count('order_items')).order_by('-item_count')
+        cart_status = self.invoices.filter(status=Invoice.InvoiceStatus.CART, deleted=False).annotate(item_count=Count('order_items')).order_by('-item_count')
 
-        if Invoice.InvoiceStatus.CHECKOUT in carts_status:
-            return self.invoices.get(status=Invoice.InvoiceStatus.CHECKOUT)
-        else:
+        if checkout_status and cart_status:
+            print("here")
+        
+        if checkout_status.count() > 1 or cart_status.count() > 1:
+            print("here")
+
+        if checkout_status.count() > 1:  # There should only be one invoice in checkout status
+            for invoice in checkout_status.all()[1:]:
+                invoice.delete()
+        
+        if checkout_status:  # If there is an invoice in checkout status it there should be no invoices in cart status
+            for invoice in cart_status.all():
+                invoice.delete()
+
+            return checkout_status.first()
+        
+        if not cart_status:  # There is no invoice in checkout or cart. Create a new one for user.
             cart, created = self.invoices.get_or_create(site=self.site, status=Invoice.InvoiceStatus.CART)
             return cart
+
+        if cart_status.count() > 1:  # There is more the one invoice in cart status. Remove all except one.
+            for invoice in cart_status.all()[1:]:
+                invoice.delete()
+
+        return self.invoices.filter(status=Invoice.InvoiceStatus.CART, deleted=False).first()
 
     def has_invoice_in_checkout(self):
         return bool(self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT).count())

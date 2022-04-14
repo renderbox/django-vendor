@@ -8,7 +8,7 @@ from django.utils import timezone
 from unittest import skipIf
 
 from vendor.processors.base import PaymentProcessorBase
-from vendor.models import Offer, Price, Invoice, OrderItem, Receipt, CustomerProfile, Payment
+from vendor.models import Offer, Price, Receipt
 
 User = get_user_model()
 
