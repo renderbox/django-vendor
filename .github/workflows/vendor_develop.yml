@@ -3,7 +3,11 @@ name: Django Vendor Develop
 on:
   push:
     branches: [ develop ]
-
+  pull_request:
+    branches:
+      - 'release/**'
+      - 'develop'
+      - 'master'
 jobs:
 
   test:
