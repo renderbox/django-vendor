@@ -48,7 +48,7 @@ jobs:
     - name: Run Core Tests
       run: |
         cd develop
-        python manage.py test --exclude-tags external
+        python manage.py test --exclude-tag external
         python manage.py makemigrations --check --dry-run
       env: 
         DJANGO_DEBUG: 1
