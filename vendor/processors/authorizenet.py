@@ -82,12 +82,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             context['billing_address_form'] = BillingAddressForm()
         return context
 
-    def processor_setup(self):
+    def processor_setup(self, site):
         """
         Merchant Information needed to aprove the transaction.
         """
         self.merchant_auth = apicontractsv1.merchantAuthenticationType()
-        self.credentials = AuthorizeNetIntegration(self.invoice.site)
+        self.credentials = AuthorizeNetIntegration(site)
 
         if self.credentials.instance:
             self.merchant_auth.name = self.credentials.instance.client_id

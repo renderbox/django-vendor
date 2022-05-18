@@ -303,7 +303,7 @@ class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
         invoice.save()
         invoice.add_offer(past_receipt.order_item.offer)
 
-        processor = get_site_payment_processor(invoice.site)(invoice)
+        processor = get_site_payment_processor(invoice.site)(invoice.site, invoice)
         processor.renew_subscription(past_receipt, payment_info)
 
         messages.info(request, _("Subscription Renewed"))

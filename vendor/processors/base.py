@@ -38,13 +38,15 @@ class PaymentProcessorBase(object):
     transaction_message = {}
     transaction_response = {}
 
-    def __init__(self, invoice):
+    def __init__(self, site, invoice=None):
         """
         This should not be overriden.  Override one of the methods it calls if you need to.
         """
-        self.set_invoice(invoice)
+        if invoice:
+            self.set_invoice(invoice)
+
         self.provider = self.__class__.__name__
-        self.processor_setup()
+        self.processor_setup(site)
         self.set_api_endpoint()
 
     def set_api_endpoint(self):
@@ -58,7 +60,7 @@ class PaymentProcessorBase(object):
         elif config.VENDOR_STATE == 'PRODUCTION':
             self.API_ENDPOINT = None
 
-    def processor_setup(self):
+    def processor_setup(self, site):
         """
         This is for setting up any of the settings needed for the payment processing.
         For example, here you would set the

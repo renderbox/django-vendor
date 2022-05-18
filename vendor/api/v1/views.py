@@ -111,7 +111,7 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         receipt = get_object_or_404(Receipt, uuid=self.kwargs["uuid"])
 
-        processor = get_site_payment_processor(receipt.order_item.invoice.site)(receipt.order_item.invoice)
+        processor = get_site_payment_processor(receipt.order_item.invoice.site)(receipt.order_item.invoice.site, receipt.order_item.invoice)
         processor.subscription_cancel(receipt)
 
         messages.info(self.request, _("Subscription Cancelled"))
@@ -146,7 +146,7 @@ class AddOfferToProfileView(LoginRequiredMixin, View):
             cart.remove_offer(offer)
             return redirect(reverse('vendor_admin:manager-profile', kwargs={'uuid': customer_profile.uuid}))
 
-        processor = get_site_payment_processor(cart.site)(cart)
+        processor = get_site_payment_processor(cart.site)(cart.site, cart)
         processor.authorize_payment()
 
         messages.info(request, _("Offer Added To Customer Profile"))
@@ -178,7 +178,7 @@ class SubscriptionPriceUpdateView(LoginRequiredMixin, View):
         receipt = get_object_or_404(Receipt, profile__site=site, uuid=self.request.POST.get('receipt_uuid'))
         offer = get_object_or_404(Offer, site=site, uuid=self.request.POST.get('offer_uuid'))
 
-        processor = get_site_payment_processor(site)(receipt.order_item.invoice)
+        processor = get_site_payment_processor(site)(site, receipt.order_item.invoice)
         processor.subscription_update_price(receipt, offer.current_price(), request.user)
         
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
