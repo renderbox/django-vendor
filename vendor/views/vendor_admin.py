@@ -2,7 +2,7 @@ from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.models import Site
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import View
@@ -260,12 +260,29 @@ class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class AdminProfileListView(LoginRequiredMixin, SiteOnRequestFilterMixin, ListView):
+class AdminProfileListView(LoginRequiredMixin, TableFilterMixin, SiteOnRequestFilterMixin, ListView):
     """
     List of CustomerProfiles on site
     """
     template_name = "vendor/manage/profile_list.html"
     model = CustomerProfile
+    paginate_by = 100
+
+
+    def search_filter(self, queryset):
+        search_value = self.request.GET.get('search_filter')
+        return queryset.filter(Q(pk__icontains=search_value) | \
+                               Q(user__email__icontains=search_value))
+
+    def get_paginated_by(self, queryset):
+        if 'paginate_by' in self.request.kwargs:
+            return kwargs['paginate_by']
+        return self.paginate_by
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        return queryset.order_by('pk')
 
 
 class AdminProfileDetailView(LoginRequiredMixin, DetailView):

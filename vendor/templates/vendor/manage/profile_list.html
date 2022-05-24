@@ -2,38 +2,65 @@
 {% load i18n %}
 
 {% block vendor_content %}
-<div class="container-fluid">
 
-  <nav aria-label="breadcrumb">
-    <!-- <ol class="breadcrumb"> -->
-    <h1>{% trans 'Customers Profiles' %}</h1>
-    <!-- </ol> -->
-  </nav>
-  <div class="row">
-    <div class="col">
-      <table class="table table-striped">
+<div class="d-flex flex-row justify-content-between my-3">
+  <h1 class="h1 mb-0 text-gray-800">{% trans 'Customer Profiles' %}</h1>
+</div>
 
+<div class='card shadow'>
+  <div class="card-header bg-light font-weight-bold text-primary p-3 mb-0">
+    {% trans 'Manage Customer Profiles' %}
+  </div>
+  <div class="card-body">
+    <div class="search-bar d-flex justify-content-between align-items-center mb-2">
+      <div class="input-group  flex-nowrap">
+        <input type="text" name="search_filter" class="textinput textInput" id="search_filter" placeholder="{% trans 'Search' %}" {% if request.GET.search_filter %} value="{{request.GET.search_filter}}" {% endif %}>
+        <div class="input-group-append">
+          <button class="btn bg-transparent close" type="button" role="close" aria-role="close" id="search_close"
+            style="margin-left: -1.5rem; z-index: 10;">
+            <i class="fa fa-times"></i>
+          </button>
+        </div>
+        <div class="input-group-append">
+          <button id="search_button" class="btn btn-success" style="z-index: 15;">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+      </div>
+      <form id="profile_pagination_form" method="get" class="form form-inline text-right">
+        <span class="text-dark mr-2">
+          {% trans 'Show:' %}
+        </span>
+        <select class="selectpicker w-auto" name="paginate_by" id="paginate_by" data-show-tick="true">
+          <option {% if paginator.per_page == 25 %}selected{% endif %}>25</option>
+          <option {% if paginator.per_page == 50 %}selected{% endif %}>50</option>
+          <option {% if paginator.per_page == 100 %}selected{% endif %}>100</option>
+        </select>
+      </form>
+    </div>
+    <div class="table-container table-responsive tc-table">
+      <table class='table table-striped mx-3'>
         <thead>
-          <tr>
-            <th scope="col">{% trans 'User ID' %}</th>
-            <th scope="col">{% trans 'User Name' %}</th>
-            <th scope="col">{% trans 'Fist Name' %}</th>
-            <th scope="col">{% trans 'Last Name' %}</th>
-            <th scope="col">{% trans 'Email' %}</th>
-            <th scope="col">{% trans 'Site' %}</th>
-            <th scope="col">{% trans 'Currency' %}</th>
+          <tr class="row">
+            <th class="col">{% trans 'Profile ID' %}</th>
+            <th class="col">{% trans 'User Name' %}</th>
+            <th class="col">{% trans 'Fist Name' %}</th>
+            <th class="col">{% trans 'Last Name' %}</th>
+            <th class="col">{% trans 'Email' %}</th>
+            <th class="col">{% trans 'Site' %}</th>
+            <th class="col">{% trans 'Currency' %}</th>
           </tr>
         </thead>
         <tbody>
           {% for item in object_list %}
-          <tr>
-            <td><a href="{% url 'vendor_admin:manager-profile' item.uuid %}">{{ item.pk }}</a></td>
-            <td>{{ item.user.username }}</td>
-            <td>{{ item.user.first_name }}</td>
-            <td>{{ item.user.last_name }}</td>
-            <td>{{ item.user.email }}</td>
-            <td>{{ item.site }}</td>
-            <td>{{ item.currency }}</td>
+          <tr class="row">
+            <td class="col"><a href="{% url 'vendor_admin:manager-profile' item.uuid %}">{{ item.pk }}</a></td>
+            <td class="col">{{ item.user.username }}</td>
+            <td class="col">{{ item.user.first_name }}</td>
+            <td class="col">{{ item.user.last_name }}</td>
+            <td class="col">{{ item.user.email }}</td>
+            <td class="col">{{ item.site }}</td>
+            <td class="col">{{ item.currency }}</td>
           </tr>
           {% empty %}
           <tr>
@@ -43,10 +70,98 @@
           </tr>
           {% endfor %}
         </tbody>
-
       </table>
-
+    </div>
+    <div class="row">
+      <div class="col-4">
+        {% blocktrans with start=page_obj.start_index end=page_obj.end_index total=paginator.count %} Showing {{ start }} to {{ end }} of {{ total }} entries. {% endblocktrans %}
+      </div>
+      <div class="col-8">
+        <nav>
+          <ul class="pagination justify-content-end">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link text-success"
+                href="?paginate_by={{paginator.per_page}}&page={{ page_obj.previous_page_number }}"
+                aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+                <span class="sr-only">{% trans 'Previous' %}</span>
+              </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+              <a class="page-link text-success disabled" href="#" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+                <span class="sr-only">{% trans 'Previous' %}</span>
+              </a>
+            </li>
+            {% endif %}
+            {% for i in page_obj.paginator.page_range|slice:":5" %}
+            {% if page_obj.number == i %}
+            <li class="page-item page-item-active-override" aria-current="page">
+              <span class="page-link">
+                {{ i }}
+                <span class="sr-only">({% trans 'current' %})</span>
+              </span>
+            </li>
+            {% else %}
+            <li class="page-item"><a class="page-link text-success"
+                href="?paginate_by={{paginator.per_page}}&page={{ i }}">{{ i }}</a></li>
+            {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link text-success"
+                href="?paginate_by={{paginator.per_page}}&page={{ page_obj.next_page_number }}"
+                aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+                <span class="sr-only">{% trans 'Next' %}</span>
+              </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+              <a class="page-link disabled" href="#" tabindex="-1" aria-disabled="true" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+                <span class="sr-only">{% trans 'Next' %}</span>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
     </div>
   </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function () {
+
+  function getFilterKWARG() {
+    let search = $("#search_filter").val()
+    let paginate_by = $("#paginate_by").val()
+    let page = {{ page_obj.number }}
+    let ordering = ""
+    return '?search_filter=' + search + '&paginate_by=' + paginate_by
+  }
+
+  $("#profile_pagination_form").on("change", function (event) {
+    $(location).attr('href', getFilterKWARG());
+  })
+
+  $("#search_filter").on("keyup", function (event) {
+    if (event.keyCode === 13) {
+      $(location).attr('href', getFilterKWARG());
+    }
+  })
+
+  $("#search_button").on("click", function (event) {
+    $(location).attr('href', getFilterKWARG());
+  })
+
+
+});
+</script>
 {% endblock %}
