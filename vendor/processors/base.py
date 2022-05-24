@@ -124,7 +124,7 @@ class PaymentProcessorBase(object):
         If payment was successful and invoice status is complete returns True. Otherwise
         false and no receipts should be created.
         """
-        if self.payment.success and self.invoice.status == Invoice.InvoiceStatus.COMPLETE:
+        if self.payment.success and (self.invoice.status == Invoice.InvoiceStatus.PROCESSING or self.invoice.status == Invoice.InvoiceStatus.COMPLETE):
             return True
         return False
 
@@ -260,7 +260,7 @@ class PaymentProcessorBase(object):
             self.create_payment_model()
             self.process_payment()
             self.save_payment_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
-            self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+            self.update_invoice_status(Invoice.InvoiceStatus.PROCESSING)
             if self.is_payment_and_invoice_complete():
                 self.invoice.save_discounts_vendor_notes()
                 self.create_receipts(self.invoice.get_one_time_transaction_order_items())
@@ -342,7 +342,7 @@ class PaymentProcessorBase(object):
             self.create_payment_model()
             self.subscription_payment(subscription)
             self.save_payment_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
-            self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+            self.update_invoice_status(Invoice.InvoiceStatus.PROCESSING)
             if self.is_payment_and_invoice_complete():
                 self.invoice.save_discounts_vendor_notes()
                 self.create_order_item_receipt(subscription)
@@ -386,7 +386,7 @@ class PaymentProcessorBase(object):
 
         self.payment.save()
 
-        self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+        self.update_invoice_status(Invoice.InvoiceStatus.PROCESSING)
 
         self.create_receipts(self.invoice.order_items.all())
 

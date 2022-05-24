@@ -41,10 +41,6 @@ from vendor.models.payment import Payment
 from .base import PaymentProcessorBase
 
 
-
-
-
-
 class AuthorizeNetProcessor(PaymentProcessorBase):
     """
     Implementation of AUTHORIZE.Net SDK
@@ -397,7 +393,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         if (response.messages.resultCode == "Ok"):
             self.transaction_submitted = True
-
 
     def to_valid_decimal(self, number):
         # TODO: Need to check currency to determin decimal places.
