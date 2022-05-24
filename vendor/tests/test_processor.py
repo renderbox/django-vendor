@@ -1068,6 +1068,38 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertEquals(response.status_code, 302)
         self.assertIn('login', response.url)
 
+    ##########
+    # Expiration Card Tests
+    ##########
+    def test_get_expiring_cards_fail(self):
+        site = Site.objects.get(pk=1)
+        processor = AuthorizeNetProcessor(site)
+
+        processor.get_customer_id_for_expiring_cards("2022-6")  # should be in the format YYYY-MM
+
+        self.assertFalse(processor.transaction_submitted)
+
+    def test_get_expiring_cards_success(self):
+        site = Site.objects.get(pk=1)
+        processor = AuthorizeNetProcessor(site)
+
+        processor.get_customer_id_for_expiring_cards("2024-01")
+
+        self.assertTrue(processor.transaction_submitted)
+
+
+    def test_get_customer_email(self):
+        site = Site.objects.get(pk=1)
+        processor = AuthorizeNetProcessor(site)
+
+        ids = processor.get_customer_id_for_expiring_cards("2023-01")
+        emails = []
+
+        for cp_id in ids:
+            emails.append(processor.get_customer_email(cp_id))
+
+        self.assertTrue(emails)
+
 
 @skipIf((settings.STRIPE_TEST_SECRET_KEY or settings.STRIPE_TEST_PUBLIC_KEY) is None, "Strip enviornment variables not set, skipping tests")
 class StripeProcessorTests(TestCase):
