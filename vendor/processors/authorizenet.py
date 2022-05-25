@@ -633,7 +633,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def get_customer_id_for_expiring_cards(self, month):
         paging = apicontractsv1.Paging()
-        paging.limit = 10
+        paging.limit = 5
         paging.offset = 1
         sorting = apicontractsv1.CustomerPaymentProfileSorting()
         sorting.orderBy = apicontractsv1.CustomerPaymentProfileOrderFieldEnum.id
@@ -654,14 +654,14 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.check_customer_list_response(response)
         customer_profile_ids = []
-        last_page = 2
+        last_page = 1
         
         if self.transaction_submitted:
-            last_page = ceil(response.totalNumInResultSet.pyval / paging.limit) + 1
+            last_page = ceil(response.totalNumInResultSet.pyval / paging.limit)
             customer_profile_ids.extend([customer_profile.customerProfileId.text for customer_profile in response.paymentProfiles.paymentProfile])
 
-        for offset in range(2, last_page):
-            paging.offset = offset
+        for previous_page in range(1, last_page):
+            paging.offset = previous_page + 1
             self.transaction.paging = paging
             self.controller = getCustomerPaymentProfileListController(self.transaction)
             self.controller.execute()
