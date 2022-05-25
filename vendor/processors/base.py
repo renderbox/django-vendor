@@ -286,6 +286,7 @@ class PaymentProcessorBase(object):
         This is where the core of the payment processing happens.
         """
         # Gateway Transaction goes here...
+        pass
 
     def free_payment(self):
         """
@@ -352,6 +353,7 @@ class PaymentProcessorBase(object):
         Call handels the authrization and creation for a subscription.
         """
         # Gateway Transaction goes here...
+        pass
 
     def subscription_info(self):
         pass

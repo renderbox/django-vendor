@@ -35,8 +35,12 @@ class PaymentProcessorSiteConfig(SiteConfigBaseClass):
     def __init__(self, site=None):
         if site is None:
             site = Site.objects.get_current()
+
         self.key = ".".join([__name__, __class__.__name__])
         super().__init__(site, self.key)
+        
+        if not self.instance:
+            self.default['payment_processor'] = VENDOR_PAYMENT_PROCESSOR
 
     def get_form(self):
         return self.form_class(initial=self.get_initials())

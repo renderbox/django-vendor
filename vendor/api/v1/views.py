@@ -14,7 +14,10 @@ from vendor.models import CustomerProfile, Invoice, Offer, Receipt
 from vendor.processors import get_site_payment_processor
 from vendor.utils import get_or_create_session_cart, get_site_from_request
 
+
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
+
+
 class VendorIndexAPI(View):
     """
     docstring
@@ -182,6 +185,7 @@ class SubscriptionPriceUpdateView(LoginRequiredMixin, View):
         processor.subscription_update_price(receipt, offer.current_price(), request.user)
         
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
+
 
 class RenewSubscription(LoginRequiredMixin, View):
 
