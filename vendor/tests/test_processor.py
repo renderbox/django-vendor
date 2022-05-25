@@ -1,10 +1,13 @@
 from core.models import Product
 from datetime import timedelta
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
 from django.utils import timezone
 from django.urls import reverse
 from django.test import TestCase, Client, tag
+
 from unittest import skipIf
 from random import randrange, choice
 from siteconfigs.models import SiteConfigModel
@@ -26,10 +29,11 @@ class BaseProcessorTests(TestCase):
 
     def setUp(self):
         self.client = Client()
+        self.site = Site.objects.get(pk=1)
         self.user = User.objects.get(pk=1)
         self.client.force_login(self.user)
         self.existing_invoice = Invoice.objects.get(pk=1)
-        self.base_processor = PaymentProcessorBase(self.existing_invoice)
+        self.base_processor = PaymentProcessorBase(self.site, self.existing_invoice)
         self.subscription_offer = Offer.objects.get(pk=4)
         self.form_data = {
             'billing_address_form': {
@@ -57,19 +61,10 @@ class BaseProcessorTests(TestCase):
             base_processor = PaymentProcessorBase()
 
     def test_base_processor_init_success(self):
-        base_processor = PaymentProcessorBase(self.existing_invoice)
+        base_processor = PaymentProcessorBase(self.site, self.existing_invoice)
 
         self.assertEquals('PaymentProcessorBase', base_processor.provider)
         self.assertIsNotNone(base_processor.invoice)
-
-    # def test_processor_setup_success(self):
-        # raise NotImplementedError()
-
-    # def test_set_payment_info_success(self):
-        # raise NotImplementedError()
-
-    # def test_set_invoice_success(self):
-        # raise NotImplementedError()
 
     def test_create_payment_model_success(self):
         self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
@@ -79,8 +74,23 @@ class BaseProcessorTests(TestCase):
 
         self.assertIsNotNone(self.base_processor.payment)
 
-    # def test_save_payment_transaction_success(self):
-        # raise NotImplementedError()
+    def test_save_payment_transaction_success(self):
+        payment_success = True
+        transaction_id = '1423wasd'
+        result_info = {'raw': "raw response"}
+
+        self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
+        self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+        self.base_processor.is_data_valid()
+        self.base_processor.create_payment_model()
+        self.base_processor.save_payment_transaction_result(payment_success, transaction_id, result_info)
+
+        self.assertIsNotNone(self.base_processor.payment)
+        self.base_processor.payment.refresh_from_db()
+
+        self.assertTrue(self.base_processor.payment.success)
+        self.assertEquals(self.base_processor.payment.transaction, transaction_id)
+        self.assertEquals(self.base_processor.payment.result['raw'], result_info['raw'])
 
     def test_update_invoice_status_success(self):
         self.base_processor.transaction_submitted = True
@@ -184,7 +194,7 @@ class BaseProcessorTests(TestCase):
         invoice.save()
         invoice.add_offer(Offer.objects.get(pk=8))
 
-        base_processor = PaymentProcessorBase(invoice)
+        base_processor = PaymentProcessorBase(invoice.site, invoice)
 
         base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
         base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
@@ -201,7 +211,7 @@ class BaseProcessorTests(TestCase):
         invoice.add_offer(Offer.objects.get(pk=5))
         past_receipt = Receipt.objects.get(pk=1)
 
-        base_processor = PaymentProcessorBase(invoice)
+        base_processor = PaymentProcessorBase(invoice.site, invoice)
         payment_info = {
             'account_number': '0002',
         }
@@ -213,7 +223,7 @@ class BaseProcessorTests(TestCase):
         price = Price.objects.create(offer=offer, cost=89.99, currency='usd', start_date=timezone.now())
         offer.prices.add(price)
 
-        processor = PaymentProcessorBase(receipt.order_item.invoice)
+        processor = PaymentProcessorBase(receipt.order_item.invoice.site, receipt.order_item.invoice)
         processor.subscription_update_price(receipt, price, self.user)
 
         receipt.refresh_from_db()
@@ -261,13 +271,14 @@ class SupportedProcessorsSetupTests(TestCase):
 
     def setUp(self):
         self.invoice = Invoice.objects.get(pk=1)
+        self.site = Site.objects.get(pk=1)
 
     def test_configured_processor_setup(self):
         """
         Test the initialized of the PaymentProcessor defined in the setting file
         """
         try:
-            processor = PaymentProcessorBase(self.invoice)
+            processor = PaymentProcessorBase(self.site, self.invoice)
         except Exception:
             print("Warning PaymentProcessor defined in settings file did not pass init")
         finally:
@@ -278,7 +289,7 @@ class SupportedProcessorsSetupTests(TestCase):
             if not (settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID):
                 raise ValueError(
                 "Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID")
-            processor = AuthorizeNetProcessor(self.invoice)
+            processor = AuthorizeNetProcessor(self.site, self.invoice)
         except Exception:
             print("AuthorizeNetProcessor did not initalized correctly")
         finally:
@@ -308,14 +319,19 @@ class AuthorizeNetProcessorTests(TestCase):
         '2223000010309711'
     ]
 
-    def setUp(self):
-        self.existing_invoice = Invoice.objects.get(pk=1)
-        processor_site_config = SiteConfigModel()
-        processor_site_config.site = self.existing_invoice.site
-        processor_site_config.key = 'vendor.config.PaymentProcessorSiteConfig'
-        processor_site_config.value = {"payment_processor": "authorizenet.AuthorizeNetProcessor"}
-        processor_site_config.save()
+    def setup_processor_site_config(self):
+        self.processor_site_config = SiteConfigModel()
+        self.processor_site_config.site = self.existing_invoice.site
+        self.processor_site_config.key = 'vendor.config.PaymentProcessorSiteConfig'
+        self.processor_site_config.value = {"payment_processor": "authorizenet.AuthorizeNetProcessor"}
+        self.processor_site_config.save()
 
+    def setup_user_client(self):
+        self.client = Client()
+        self.user = User.objects.get(pk=1)
+        self.client.force_login(self.user)
+
+    def setup_existing_invoice(self):
         t_shirt = Product.objects.get(pk=1)
         t_shirt.meta['msrp']['usd'] = randrange(1, 1000)
         t_shirt.save()
@@ -338,9 +354,6 @@ class AuthorizeNetProcessorTests(TestCase):
                 'payment_type': '10'}
         }
         self.subscription_offer = Offer.objects.get(pk=6)
-        self.client = Client()
-        self.user = User.objects.get(pk=1)
-        self.client.force_login(self.user)
         price = Price.objects.get(pk=1)
         price.cost = randrange(1, 1000)
         price.priority = 10
@@ -351,7 +364,14 @@ class AuthorizeNetProcessorTests(TestCase):
         subscription_price.priority = 10
         subscription_price.save()
         self.existing_invoice.update_totals()
-        self.processor = AuthorizeNetProcessor(self.existing_invoice)
+
+    def setUp(self):
+        self.setup_user_client()
+        self.existing_invoice = Invoice.objects.get(pk=1)
+        self.setup_processor_site_config()
+        self.setup_existing_invoice()
+        self.site = self.processor_site_config.site
+        self.processor = AuthorizeNetProcessor(self.site, self.existing_invoice)
 
 
     ##########
@@ -824,7 +844,7 @@ class AuthorizeNetProcessorTests(TestCase):
         """
         Checks for transaction_submitted fail because the transaction id does not match
         """
-        self.processor = AuthorizeNetProcessor(self.existing_invoice)
+        self.processor = AuthorizeNetProcessor(self.site, self.existing_invoice)
         status_before_transaction = self.existing_invoice.status
 
         # Get Settled payment
@@ -881,7 +901,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.existing_invoice.update_totals()
         self.existing_invoice.save()
 
-        self.processor = AuthorizeNetProcessor(self.existing_invoice)
+        self.processor = AuthorizeNetProcessor(self.site, self.existing_invoice)
 
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
@@ -953,7 +973,7 @@ class AuthorizeNetProcessorTests(TestCase):
         price.start_date = timezone.now() - timedelta(days=1)
         price.save()
         self.existing_invoice.save()
-        self.processor = AuthorizeNetProcessor(self.existing_invoice)
+        self.processor = AuthorizeNetProcessor(self.site, self.existing_invoice)
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         self.processor.is_data_valid()
@@ -971,7 +991,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.existing_invoice.update_totals()
         self.existing_invoice.save()
         self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
-        self.processor = AuthorizeNetProcessor(self.existing_invoice)
+        self.processor = AuthorizeNetProcessor(self.site, self.existing_invoice)
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         self.processor.is_data_valid()
@@ -1016,7 +1036,7 @@ class AuthorizeNetProcessorTests(TestCase):
     ##########
     def test_get_transaction_details(self):
         transaction_id = '60160039986'
-        self.processor = AuthorizeNetProcessor(self.existing_invoice)
+        self.processor = AuthorizeNetProcessor(self.site, self.existing_invoice)
         transaction_detail = self.processor.get_transaction_detail(transaction_id)
         self.assertTrue(transaction_detail)
 
@@ -1047,6 +1067,38 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertEquals(response.status_code, 302)
         self.assertIn('login', response.url)
+
+    ##########
+    # Expiration Card Tests
+    ##########
+    def test_get_expiring_cards_fail(self):
+        site = Site.objects.get(pk=1)
+        processor = AuthorizeNetProcessor(site)
+
+        processor.get_customer_id_for_expiring_cards("2022-6")  # should be in the format YYYY-MM
+
+        self.assertFalse(processor.transaction_submitted)
+
+    def test_get_expiring_cards_success(self):
+        site = Site.objects.get(pk=1)
+        processor = AuthorizeNetProcessor(site)
+
+        processor.get_customer_id_for_expiring_cards("2024-01")
+
+        self.assertTrue(processor.transaction_submitted)
+
+
+    def test_get_customer_email(self):
+        site = Site.objects.get(pk=1)
+        processor = AuthorizeNetProcessor(site)
+
+        ids = processor.get_customer_id_for_expiring_cards("2023-01")
+        emails = []
+
+        for cp_id in ids:
+            emails.append(processor.get_customer_email(cp_id))
+
+        self.assertTrue(emails)
 
 
 @skipIf((settings.STRIPE_TEST_SECRET_KEY or settings.STRIPE_TEST_PUBLIC_KEY) is None, "Strip enviornment variables not set, skipping tests")
