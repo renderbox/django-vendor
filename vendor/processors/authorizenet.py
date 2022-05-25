@@ -633,7 +633,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def get_customer_id_for_expiring_cards(self, month):
         paging = apicontractsv1.Paging()
-        paging.limit = 5
+        paging.limit = 10
         paging.offset = 1
         sorting = apicontractsv1.CustomerPaymentProfileSorting()
         sorting.orderBy = apicontractsv1.CustomerPaymentProfileOrderFieldEnum.id
