@@ -6,7 +6,7 @@ from decimal import Decimal, ROUND_DOWN
 from vendor.integrations import AuthorizeNetIntegration
 from django.conf import settings
 from django.utils import timezone
-
+from math import ceil
 from vendor.config import VENDOR_PAYMENT_PROCESSOR, VENDOR_STATE
 from vendor.utils import get_future_date_days
 
@@ -39,10 +39,6 @@ from vendor.models.invoice import Invoice
 from vendor.models.address import Country
 from vendor.models.payment import Payment
 from .base import PaymentProcessorBase
-
-
-
-
 
 
 class AuthorizeNetProcessor(PaymentProcessorBase):
@@ -82,12 +78,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             context['billing_address_form'] = BillingAddressForm()
         return context
 
-    def processor_setup(self):
+    def processor_setup(self, site):
         """
         Merchant Information needed to aprove the transaction.
         """
         self.merchant_auth = apicontractsv1.merchantAuthenticationType()
-        self.credentials = AuthorizeNetIntegration(self.invoice.site)
+        self.credentials = AuthorizeNetIntegration(site)
 
         if self.credentials.instance:
             self.merchant_auth.name = self.credentials.instance.client_id
@@ -387,6 +383,17 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             if 'subscriptionId' in response.__dict__:
                 self.transaction_message['subscription_id'] = response.subscriptionId.text
 
+    def check_customer_list_response(self, response):
+        self.transaction_response = response
+        self.transaction_message = {}
+        self.transaction_submitted = False
+        self.transaction_message['msg'] = ""
+        self.transaction_message['code'] = response.messages.message[0]['code'].text
+        self.transaction_message['message'] = response.messages.message[0]['text'].text
+
+        if (response.messages.resultCode == "Ok"):
+            self.transaction_submitted = True
+
     def to_valid_decimal(self, number):
         # TODO: Need to check currency to determin decimal places.
         return Decimal(number).quantize(Decimal('.00'))
@@ -623,6 +630,66 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         if self.transaction_submitted:
             super().subscription_update_price(receipt, new_price, user)
+
+    def get_customer_id_for_expiring_cards(self, month):
+        paging = apicontractsv1.Paging()
+        paging.limit = 10
+        paging.offset = 1
+        sorting = apicontractsv1.CustomerPaymentProfileSorting()
+        sorting.orderBy = apicontractsv1.CustomerPaymentProfileOrderFieldEnum.id
+        sorting.orderDescending = "false"
+
+        self.transaction = apicontractsv1.getCustomerPaymentProfileListRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+
+        self.transaction.searchType = apicontractsv1.CustomerPaymentProfileSearchTypeEnum.cardsExpiringInMonth
+        self.transaction.month = month
+        self.transaction.sorting = sorting
+        self.transaction.paging = paging
+
+        self.controller = getCustomerPaymentProfileListController(self.transaction)
+        self.controller.execute()
+
+        response = self.controller.getresponse()
+
+        self.check_customer_list_response(response)
+        customer_profile_ids = []
+        last_page = 1
+        
+        if self.transaction_submitted:
+            last_page = ceil(response.totalNumInResultSet.pyval / paging.limit)
+            customer_profile_ids.extend([customer_profile.customerProfileId.text for customer_profile in response.paymentProfiles.paymentProfile])
+
+        for previous_page in range(1, last_page):
+            paging.offset = previous_page + 1
+            self.transaction.paging = paging
+            self.controller = getCustomerPaymentProfileListController(self.transaction)
+            self.controller.execute()
+            response = self.controller.getresponse()
+            self.check_customer_list_response(response)
+            if self.transaction_submitted:
+                customer_profile_ids.extend([customer_profile.customerProfileId.text for customer_profile in response.paymentProfiles.paymentProfile])
+
+        return customer_profile_ids
+    
+    def get_customer_email(self, customer_id):
+        self.transaction = apicontractsv1.getCustomerProfileRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.customerProfileId = customer_id
+
+        self.controller = getCustomerProfileController(self.transaction)
+        self.controller.execute()
+
+        response = self.controller.getresponse()
+
+        self.check_customer_list_response(response)
+
+        if self.transaction_submitted:
+            return response.profile.email.pyval
+        
+        return None
+
+
 
     ##########
     # Reporting API, for transaction retrieval information

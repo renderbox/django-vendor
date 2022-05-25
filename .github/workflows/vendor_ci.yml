@@ -60,17 +60,17 @@ jobs:
       env: 
         DJANGO_DEBUG: 1
         DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
-    - name: Run Authorize.Net Tests
-      run: |
-        cd develop
-        python manage.py test vendor.tests.test_processor.AuthorizeNetProcessorTests --exclude-tag external
-      env: 
-        DJANGO_DEBUG: 1
-        DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
-        AUTHORIZE_NET_API_ID: ${{ secrets.AUTHORIZE_NET_API_ID }}
-        AUTHORIZE_NET_TRANSACTION_KEY: ${{ secrets.AUTHORIZE_NET_TRANSACTION_KEY }}
-        AUTHORIZE_NET_TRANSACTION_TYPE_DEFAULT: "authCaptureTransaction"
-        VENDOR_PAYMENT_PROCESSOR: "authorizenet.AuthorizeNetProcessor"
+    # - name: Run Authorize.Net Tests
+    #   run: |
+    #     cd develop
+    #     python manage.py test vendor.tests.test_processor.AuthorizeNetProcessorTests --exclude-tag external
+    #   env: 
+    #     DJANGO_DEBUG: 1
+    #     DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
+    #     AUTHORIZE_NET_API_ID: ${{ secrets.AUTHORIZE_NET_API_ID }}
+    #     AUTHORIZE_NET_TRANSACTION_KEY: ${{ secrets.AUTHORIZE_NET_TRANSACTION_KEY }}
+    #     AUTHORIZE_NET_TRANSACTION_TYPE_DEFAULT: "authCaptureTransaction"
+    #     VENDOR_PAYMENT_PROCESSOR: "authorizenet.AuthorizeNetProcessor"
     - name: Build Package
       run: |
         python setup.py sdist bdist_wheel

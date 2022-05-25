@@ -38,13 +38,15 @@ class PaymentProcessorBase(object):
     transaction_message = {}
     transaction_response = {}
 
-    def __init__(self, invoice):
+    def __init__(self, site, invoice=None):
         """
         This should not be overriden.  Override one of the methods it calls if you need to.
         """
-        self.set_invoice(invoice)
+        if invoice:
+            self.set_invoice(invoice)
+
         self.provider = self.__class__.__name__
-        self.processor_setup()
+        self.processor_setup(site)
         self.set_api_endpoint()
 
     def set_api_endpoint(self):
@@ -58,7 +60,7 @@ class PaymentProcessorBase(object):
         elif config.VENDOR_STATE == 'PRODUCTION':
             self.API_ENDPOINT = None
 
-    def processor_setup(self):
+    def processor_setup(self, site):
         """
         This is for setting up any of the settings needed for the payment processing.
         For example, here you would set the
@@ -122,7 +124,7 @@ class PaymentProcessorBase(object):
         If payment was successful and invoice status is complete returns True. Otherwise
         false and no receipts should be created.
         """
-        if self.payment.success and self.invoice.status == Invoice.InvoiceStatus.COMPLETE:
+        if self.payment.success and (self.invoice.status == Invoice.InvoiceStatus.PROCESSING or self.invoice.status == Invoice.InvoiceStatus.COMPLETE):
             return True
         return False
 
@@ -258,7 +260,7 @@ class PaymentProcessorBase(object):
             self.create_payment_model()
             self.process_payment()
             self.save_payment_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
-            self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+            self.update_invoice_status(Invoice.InvoiceStatus.PROCESSING)
             if self.is_payment_and_invoice_complete():
                 self.invoice.save_discounts_vendor_notes()
                 self.create_receipts(self.invoice.get_one_time_transaction_order_items())
@@ -284,6 +286,7 @@ class PaymentProcessorBase(object):
         This is where the core of the payment processing happens.
         """
         # Gateway Transaction goes here...
+        pass
 
     def free_payment(self):
         """
@@ -340,7 +343,7 @@ class PaymentProcessorBase(object):
             self.create_payment_model()
             self.subscription_payment(subscription)
             self.save_payment_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
-            self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+            self.update_invoice_status(Invoice.InvoiceStatus.PROCESSING)
             if self.is_payment_and_invoice_complete():
                 self.invoice.save_discounts_vendor_notes()
                 self.create_order_item_receipt(subscription)
@@ -350,6 +353,7 @@ class PaymentProcessorBase(object):
         Call handels the authrization and creation for a subscription.
         """
         # Gateway Transaction goes here...
+        pass
 
     def subscription_info(self):
         pass
@@ -384,7 +388,7 @@ class PaymentProcessorBase(object):
 
         self.payment.save()
 
-        self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+        self.update_invoice_status(Invoice.InvoiceStatus.PROCESSING)
 
         self.create_receipts(self.invoice.order_items.all())
 

@@ -135,7 +135,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
 
         context = super().get_context_data()
 
-        processor = get_site_payment_processor(invoice.site)(invoice)
+        processor = get_site_payment_processor(invoice.site)(invoice.site, invoice)
 
         context = processor.get_checkout_context(context=context)
 
@@ -158,7 +158,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
             billing_address_form = BillingAddressForm(request.POST)
 
         if not (billing_address_form.is_valid() and credit_card_form.is_valid()):
-            processor = get_site_payment_processor(invoice.site)(invoice)
+            processor = get_site_payment_processor(invoice.site)(invoice.site, invoice)
             context['billing_address_form'] = billing_address_form
             context['credit_card_form'] = credit_card_form
             return render(request, self.template_name, processor.get_checkout_context(context=context))
@@ -180,7 +180,7 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 
         context = super().get_context_data()
 
-        processor = get_site_payment_processor(invoice.site)(invoice)
+        processor = get_site_payment_processor(invoice.site)(invoice.site, invoice)
         if 'billing_address_form' in request.session:
             billing_address_form = BillingAddressForm(request.session['billing_address_form'])
             billing_address_form.is_valid()
@@ -200,7 +200,7 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
             messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
 
-        processor = get_site_payment_processor(invoice.site)(invoice)
+        processor = get_site_payment_processor(invoice.site)(invoice.site, invoice)
 
         processor.set_billing_address_form_data(request.session.get('billing_address_form'), BillingAddressForm)
         processor.set_payment_info_form_data(request.session.get('credit_card_form'), CreditCardForm)
@@ -300,7 +300,7 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
             messages.info(request, _("Invalid Card"))
             return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
-        processor = get_site_payment_processor(receipt.order_item.invoice.site)(receipt.order_item.invoice)
+        processor = get_site_payment_processor(receipt.order_item.invoice.site)(receipt.order_item.invoice.site, receipt.order_item.invoice)
         processor.set_payment_info_form_data(request.POST, CreditCardForm)
         processor.subscription_update_payment(receipt)
 

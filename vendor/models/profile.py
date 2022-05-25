@@ -63,12 +63,6 @@ class CustomerProfile(CreateUpdateModelBase):
         checkout_status = self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT, deleted=False).annotate(item_count=Count('order_items')).order_by('-item_count')
         cart_status = self.invoices.filter(status=Invoice.InvoiceStatus.CART, deleted=False).annotate(item_count=Count('order_items')).order_by('-item_count')
 
-        if checkout_status and cart_status:
-            print("here")
-        
-        if checkout_status.count() > 1 or cart_status.count() > 1:
-            print("here")
-
         if checkout_status.count() > 1:  # There should only be one invoice in checkout status
             for invoice in checkout_status.all()[1:]:
                 invoice.delete()
