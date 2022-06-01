@@ -143,7 +143,7 @@ class CustomerProfile(CreateUpdateModelBase):
         """
         Get all products that the customer has purchased and returns True if it has.
         """
-        return bool(self.receipts.filter(products__in=products, status__gte=PurchaseStatus.COMPLETE).first())
+        return bool(self.receipts.filter(products__in=products).first())
 
     def get_all_customer_products(self):
         Product = get_product_model()
@@ -151,9 +151,6 @@ class CustomerProfile(CreateUpdateModelBase):
 
     def get_active_products(self):
          return set([receipt.products.first()  for receipt in self.get_active_receipts()])
-
-    def get_completed_receipts(self):
-        return self.receipts.filter(status__gte=PurchaseStatus.COMPLETE)
 
     def get_active_offer_receipts(self, offer):
         return self.receipts.filter(Q(order_item__offer=offer), Q(end_date__gte=timezone.now()) | Q(end_date=None))

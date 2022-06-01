@@ -119,8 +119,7 @@ class ModelCustomerProfileTests(TestCase):
         receipt = Receipt(profile=self.customer_profile,
                           order_item=cart.order_items.first(),
                           start_date=timezone.now(),
-                          transaction="123",
-                          status=PurchaseStatus.COMPLETE)
+                          transaction="123")
         receipt.save()
         self.assertEqual(1, len(self.customer_profile.get_recurring_receipts()))
         self.assertEqual(0, len(self.customer_profile.get_one_time_transaction_receipts()))
@@ -133,8 +132,7 @@ class ModelCustomerProfileTests(TestCase):
         receipt = Receipt(profile=self.customer_profile,
                           order_item=cart.order_items.first(),
                           start_date=timezone.now(),
-                          transaction="123",
-                          status=PurchaseStatus.COMPLETE)
+                          transaction="123")
         receipt.save()
         self.assertEqual(0, len(self.customer_profile.get_recurring_receipts()))
         self.assertEqual(1, len(self.customer_profile.get_one_time_transaction_receipts()))
@@ -147,8 +145,7 @@ class ModelCustomerProfileTests(TestCase):
         receipt = Receipt(profile=self.customer_profile,
                           order_item=cart.order_items.first(),
                           start_date=timezone.now(),
-                          transaction="123",
-                          status=PurchaseStatus.COMPLETE)
+                          transaction="123")
         receipt.save()
         receipt.products.add(offer.products.first())
         self.assertTrue(self.customer_profile.has_previously_owned_products(Product.objects.filter(pk=3)))
@@ -166,8 +163,7 @@ class ModelCustomerProfileTests(TestCase):
         receipt = Receipt(profile=self.customer_profile,
                           order_item=cart.order_items.first(),
                           start_date=timezone.now(),
-                          transaction="123",
-                          status=PurchaseStatus.COMPLETE)
+                          transaction="123")
         receipt.save()
         self.assertEqual(1, len(self.customer_profile.get_completed_receipts()))
 
@@ -189,8 +185,7 @@ class ModelCustomerProfileTests(TestCase):
         receipt = Receipt(profile=self.customer_profile,
                           order_item=cart.order_items.first(),
                           start_date=timezone.now(),
-                          transaction="123",
-                          status=PurchaseStatus.COMPLETE)
+                          transaction="123")
         receipt.save()
         self.assertTrue(len(self.customer_profile.get_active_offer_receipts(offer)) > 0)
 

@@ -253,12 +253,12 @@ class OrderHistoryDetailView(LoginRequiredMixin, DetailView):
     slug_url_kwarg = 'uuid'
 
 
-class ProductsListView(LoginRequiredMixin, ListView):
+class ReceiptListView(LoginRequiredMixin, ListView):
     model = Receipt
     template_name = 'vendor/purchase_list.html'
 
     def get_queryset(self):
-        return self.request.user.customer_profile.get(site=get_site_from_request(self.request)).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
+        return self.request.user.customer_profile.get(site=get_site_from_request(self.request)).receipts.all()
 
 
 class ReceiptDetailView(LoginRequiredMixin, DetailView):
@@ -281,10 +281,12 @@ class SubscriptionsListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         try:
-            receipts = self.request.user.customer_profile.get(site=get_site_from_request(self.request)).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
+            receipts = self.request.user.customer_profile.get(site=get_site_from_request(self.request)).receipts.filter(auto_renew=True)
         except ObjectDoesNotExist:
             raise Http404(_("Not Found"))
+        
         subscriptions = [ receipt for receipt in receipts.all() if receipt.order_item.offer.terms > TermType.PERPETUAL and receipt.order_item.offer.terms < TermType.ONE_TIME_USE ]
+        
         return subscriptions
 
 

@@ -12,7 +12,7 @@ urlpatterns = [
     path('checkout/payment/', vendor_views.PaymentView.as_view(), name="checkout-payment"),
     path('checkout/review/', vendor_views.ReviewCheckoutView.as_view(), name="checkout-review"),
 
-    path('customer/products/', vendor_views.ProductsListView.as_view(), name="customer-products"),
+    path('customer/products/', vendor_views.ReceiptListView.as_view(), name="customer-products"),
     path('customer/product/<uuid:uuid>/receipt/', vendor_views.ReceiptDetailView.as_view(), name="customer-receipt"),
     path('customer/subscriptions/', vendor_views.SubscriptionsListView.as_view(), name="customer-subscriptions"),
     path('customer/subscription/update/<uuid:uuid>/payment', vendor_views.SubscriptionUpdatePaymentView.as_view(), name="customer-subscription-update-payment"),

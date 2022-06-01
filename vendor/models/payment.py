@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 from vendor.models.receipt import Receipt
 from vendor.models.base import SoftDeleteModelBase
+from vendor.models.choice import PurchaseStatus
 from vendor.utils import get_display_decimal
 
 
@@ -32,6 +33,7 @@ class Payment(SoftDeleteModelBase):
     success = models.BooleanField(_("Successful"), default=False)
     payee_full_name = models.CharField(_("Name on Card"), max_length=50)
     payee_company = models.CharField(_("Company"), max_length=50, blank=True, null=True)
+    status = models.IntegerField(_("Status"), choices=PurchaseStatus.choices, default=0)
 
     def get_related_receipts(self):
         return Receipt.objects.filter(transaction=self.transaction)

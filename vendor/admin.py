@@ -137,9 +137,9 @@ class OfferAdmin(admin.ModelAdmin):
 
 class PaymentAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid', 'invoice', 'profile', )
-    list_display = ('pk', 'created', 'transaction', 'invoice', 'profile', 'amount', 'deleted')
+    list_display = ('pk', 'created', 'transaction', 'invoice', 'profile', 'amount', 'deleted', 'status')
     search_fields = ('pk', 'transaction', 'profile__user__username', )
-    list_filter = ('profile__site__domain', 'success')
+    list_filter = ('profile__site__domain', 'success', 'status')
     exclude = ('billing_address', )
     actions = [soft_delete_payments_without_order_items_invoice, soft_delete_payments_with_no_receipt]
 
@@ -147,8 +147,8 @@ class PaymentAdmin(admin.ModelAdmin):
 class ReceiptAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid', 'profile', 'order_item',)
     exclude = ('updated', )
-    list_display = ('pk', 'transaction', 'created', 'profile', 'order_item', 'status', 'start_date', 'end_date', 'deleted')
-    list_filter = ('profile__site__domain', 'status', 'products')
+    list_display = ('pk', 'transaction', 'created', 'profile', 'order_item', 'start_date', 'end_date', 'deleted')
+    list_filter = ('profile__site__domain', 'products')
     search_fields = ('pk', 'transaction', 'profile__user__username', )
 
 

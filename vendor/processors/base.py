@@ -136,7 +136,6 @@ class PaymentProcessorBase(object):
         receipt.transaction = self.payment.transaction
         receipt.meta.update(self.payment.result)
         receipt.meta['payment_amount'] = self.payment.amount
-        receipt.status = PurchaseStatus.COMPLETE
         receipt.start_date = today
 
         if term_type == TermType.PERPETUAL or term_type == TermType.ONE_TIME_USE:

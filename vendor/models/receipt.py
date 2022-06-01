@@ -23,7 +23,7 @@ class Receipt(SoftDeleteModelBase, CreateUpdateModelBase):
     auto_renew = models.BooleanField(_("Auto Renew"), default=False)        # For subscriptions
     vendor_notes = models.JSONField(_("Vendor Notes"), default=dict)
     transaction = models.CharField(_("Transaction"), max_length=80)
-    status = models.IntegerField(_("Status"), choices=PurchaseStatus.choices, default=0)       # Fulfilled, Refund
+    status = models.IntegerField(_("Status"), choices=PurchaseStatus.choices, default=0)
     meta = models.JSONField(_("Meta"), default=dict)
 
     class Meta:
@@ -47,11 +47,11 @@ class Receipt(SoftDeleteModelBase, CreateUpdateModelBase):
         self.meta['voided_on'] = dateformat.format(self.end_date, 'Y-M-d H:i:s')
 
     def cancel(self):
-        self.status = PurchaseStatus.CANCELED
         self.auto_renew = False
 
     def is_on_trial(self):
         first_payment = Receipt.objects.filter(transaction=self.transaction, order_item__offer__site=self.order_item.offer.site).order_by('start_date').first()
+        
         if self.end_date <= get_payment_scheduled_end_date(first_payment.order_item.offer, first_payment.start_date):
             return True
         return False

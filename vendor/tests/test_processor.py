@@ -961,7 +961,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if active_subscriptions:
             self.processor.subscription_cancel(dummy_receipt)
             self.assertTrue(self.processor.transaction_submitted)
-            self.assertTrue(dummy_receipt.status, PurchaseStatus.CANCELED)
+            self.assertFalse(dummy_receipt.auto_renew)
         else:
             print("No active Subscriptions, Skipping Test")
 
