@@ -94,14 +94,14 @@ class BaseProcessorTests(TestCase):
 
     def test_update_invoice_status_success(self):
         self.base_processor.transaction_submitted = True
-        self.base_processor.update_invoice_status(InvoiceStatus.REFUNDED)
+        self.base_processor.update_invoice_status(InvoiceStatus.COMPLETE)
 
-        self.assertEquals(InvoiceStatus.REFUNDED, self.base_processor.invoice.status)
+        self.assertEquals(InvoiceStatus.COMPLETE, self.base_processor.invoice.status)
 
     def test_update_invoice_status_fails(self):
-        self.base_processor.update_invoice_status(InvoiceStatus.REFUNDED)
+        self.base_processor.update_invoice_status(InvoiceStatus.COMPLETE)
 
-        self.assertNotEquals(InvoiceStatus.REFUNDED, self.base_processor.invoice.status)
+        self.assertNotEquals(InvoiceStatus.COMPLETE, self.base_processor.invoice.status)
 
     def test_create_receipt_by_term_type_subscription(self):
         self.base_processor.invoice.add_offer(self.subscription_offer)
@@ -782,7 +782,9 @@ class AuthorizeNetProcessorTests(TestCase):
             if self.processor.transaction_message['error_code'] == 8:
                 print("The credit card has expired. Skipping\n")
                 return
-        self.assertEquals(InvoiceStatus.REFUNDED, self.existing_invoice.status)
+        # self.assertEquals(InvoiceStatus.REFUNDED, self.existing_invoice.status)
+        # self.assertEquals(PaymentStatus.REFUNDED, payment.status)
+        raise Exception()
 
     def test_refund_fail_invalid_account_number(self):
         """

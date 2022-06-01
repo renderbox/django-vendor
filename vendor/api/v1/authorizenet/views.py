@@ -58,7 +58,7 @@ def renew_subscription_task(json_data):
         }
         invoice_history.append(invoice_info)
 
-    invoice = Invoice(status=InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
+    invoice = Invoice(status=InvoiceStatus.CHECKOUT, site=past_receipt.order_item.invoice.site)
     invoice.profile = past_receipt.profile
     invoice.ordered_date = timezone.now()
     invoice.vendor_notes['history'] = invoice_history

@@ -315,7 +315,7 @@ class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
             'msg': 'renewed manually'
         }
 
-        invoice = Invoice(status=InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
+        invoice = Invoice(status=InvoiceStatus.CHECKOUT, site=past_receipt.order_item.invoice.site)
         invoice.profile = past_receipt.profile
         invoice.save()
         invoice.add_offer(past_receipt.order_item.offer)
