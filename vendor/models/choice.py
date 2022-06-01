@@ -10,6 +10,12 @@ from iso4217 import Currency
 CURRENCY_CHOICES = [(c.name, c.value) for c in Currency]
 
 
+class InvoiceStatus(models.IntegerChoices):
+    CART = 0, _("Cart")               # total = subtotal = sum(OrderItems.Offer.Price + Product.TaxClassifier). Avalara
+    CHECKOUT = 10, _("Checkout")      # total = subtotal + shipping + Tax against Addrr if any.
+    COMPLETE = 20, _("Complete")      # Payment Processor Completed Transaction.
+
+
 class TermType(models.IntegerChoices):
     SUBSCRIPTION = 100, _("Subscription")
     MONTHLY_SUBSCRIPTION = 101, _("Monthly Subscription")

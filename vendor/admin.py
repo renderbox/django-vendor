@@ -5,6 +5,8 @@ from django.db.models import Count
 
 from vendor.models import TaxClassifier, Offer, Price, CustomerProfile, \
     Invoice, OrderItem, Receipt, Wishlist, WishlistItem, Address, Payment
+from vendor.models.choice import InvoiceStatus
+
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +44,7 @@ def soft_delete_invoices_with_deleted_payments(modeladmin, request, queryset):
     This action finds any invoice that has a status greater then Checkout and has a soft deleted payment.
     If an invoice has two payments, both need to be deleted to delete the invoice.
     '''
-    for invoice in Invoice.objects.filter(status__gt=Invoice.InvoiceStatus.CHECKOUT):
+    for invoice in Invoice.objects.filter(status__gt=InvoiceStatus.CHECKOUT):
         soft_delete = True
         for payment in invoice.payments.all():
             if not payment.deleted:

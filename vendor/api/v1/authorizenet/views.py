@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
 from vendor.models import Receipt, Invoice
+from vendor.models.choice import InvoiceStatus
 from vendor.processors.authorizenet import AuthorizeNetProcessor
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ def renew_subscription_task(json_data):
         }
         invoice_history.append(invoice_info)
 
-    invoice = Invoice(status=Invoice.InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
+    invoice = Invoice(status=InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
     invoice.profile = past_receipt.profile
     invoice.ordered_date = timezone.now()
     invoice.vendor_notes['history'] = invoice_history

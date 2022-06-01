@@ -7,7 +7,7 @@ from django.conf import settings
 from django.utils import timezone
 from vendor import config
 from vendor.models import Payment, Invoice, Receipt
-from vendor.models.choice import PurchaseStatus, TermType
+from vendor.models.choice import PurchaseStatus, TermType, InvoiceStatus
 from vendor.utils import get_payment_scheduled_end_date
 ##########
 # SIGNALS
@@ -116,7 +116,7 @@ class PaymentProcessorBase(object):
         if self.transaction_submitted:
             self.invoice.status = new_status
         else:
-            self.invoice.status = Invoice.InvoiceStatus.CART
+            self.invoice.status = InvoiceStatus.CART
         self.invoice.save()
 
     def is_payment_and_invoice_complete(self):
@@ -124,7 +124,7 @@ class PaymentProcessorBase(object):
         If payment was successful and invoice status is complete returns True. Otherwise
         false and no receipts should be created.
         """
-        if self.payment.success and (self.invoice.status == Invoice.InvoiceStatus.PROCESSING or self.invoice.status == Invoice.InvoiceStatus.COMPLETE):
+        if self.payment.success and (self.invoice.status == InvoiceStatus.PROCESSING or self.invoice.status == InvoiceStatus.COMPLETE):
             return True
         return False
 
@@ -260,7 +260,7 @@ class PaymentProcessorBase(object):
             self.create_payment_model()
             self.process_payment()
             self.save_payment_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
-            self.update_invoice_status(Invoice.InvoiceStatus.PROCESSING)
+            self.update_invoice_status(InvoiceStatus.PROCESSING)
             if self.is_payment_and_invoice_complete():
                 self.invoice.save_discounts_vendor_notes()
                 self.create_receipts(self.invoice.get_one_time_transaction_order_items())
@@ -307,7 +307,7 @@ class PaymentProcessorBase(object):
         self.payment.result = {'first': True}
         self.payment.save()
 
-        self.update_invoice_status(Invoice.InvoiceStatus.COMPLETE)
+        self.update_invoice_status(InvoiceStatus.COMPLETE)
 
         self.create_receipts(self.invoice.order_items.all())
 
@@ -343,7 +343,7 @@ class PaymentProcessorBase(object):
             self.create_payment_model()
             self.subscription_payment(subscription)
             self.save_payment_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
-            self.update_invoice_status(Invoice.InvoiceStatus.PROCESSING)
+            self.update_invoice_status(InvoiceStatus.PROCESSING)
             if self.is_payment_and_invoice_complete():
                 self.invoice.save_discounts_vendor_notes()
                 self.create_order_item_receipt(subscription)
@@ -388,7 +388,7 @@ class PaymentProcessorBase(object):
 
         self.payment.save()
 
-        self.update_invoice_status(Invoice.InvoiceStatus.PROCESSING)
+        self.update_invoice_status(InvoiceStatus.PROCESSING)
 
         self.create_receipts(self.invoice.order_items.all())
 

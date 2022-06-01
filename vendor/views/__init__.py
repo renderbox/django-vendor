@@ -17,6 +17,7 @@ from django.http import HttpResponse
 
 from vendor.models import Offer, OrderItem, Invoice, Payment, Address
 from vendor.models.address import Address as GoogleAddress
+from vendor.models.choice import InvoiceStatus
 from vendor.forms import BillingAddressForm, CreditCardForm
 
 from .vendor_admin import AdminDashboardView, AdminInvoiceDetailView, AdminInvoiceListView
@@ -32,7 +33,7 @@ class OrderHistoryListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         try:
-            return self.request.user.customer_profile.get().invoices.filter(status__gt=Invoice.InvoiceStatus.CART)  # The profile and user are site specific so this should only return what's on the site for that user excluding the cart
+            return self.request.user.customer_profile.get().invoices.filter(status__gt=InvoiceStatus.CART)  # The profile and user are site specific so this should only return what's on the site for that user excluding the cart
         except ObjectDoesNotExist:         # Catch the actual error for the exception
             return []   # Return empty list if there is no customer_profile
 

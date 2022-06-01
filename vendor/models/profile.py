@@ -14,7 +14,7 @@ from .utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
 
 from vendor.models.base import get_product_model
-
+from vendor.models.choice import InvoiceStatus
 #####################
 # CUSTOMER PROFILE
 #####################
@@ -46,22 +46,22 @@ class CustomerProfile(CreateUpdateModelBase):
         return str(self.user.username) + _("Customer Profile")
 
     def revert_invoice_to_cart(self):
-        cart = self.invoices.get(status=Invoice.InvoiceStatus.CHECKOUT)
-        cart.status = Invoice.InvoiceStatus.CART
+        cart = self.invoices.get(status=InvoiceStatus.CHECKOUT)
+        cart.status = InvoiceStatus.CART
         cart.save()
 
     def get_cart(self):
         if self.has_invoice_in_checkout():
             self.revert_invoice_to_cart()
-        cart, created = self.invoices.get_or_create(status=Invoice.InvoiceStatus.CART)
+        cart, created = self.invoices.get_or_create(status=InvoiceStatus.CART)
         return cart
 
     def get_checkout_cart(self):
-        return self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT).first()
+        return self.invoices.filter(status=InvoiceStatus.CHECKOUT).first()
 
     def get_cart_or_checkout_cart(self):
-        checkout_status = self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT, deleted=False).annotate(item_count=Count('order_items')).order_by('-item_count')
-        cart_status = self.invoices.filter(status=Invoice.InvoiceStatus.CART, deleted=False).annotate(item_count=Count('order_items')).order_by('-item_count')
+        checkout_status = self.invoices.filter(status=InvoiceStatus.CHECKOUT, deleted=False).annotate(item_count=Count('order_items')).order_by('-item_count')
+        cart_status = self.invoices.filter(status=InvoiceStatus.CART, deleted=False).annotate(item_count=Count('order_items')).order_by('-item_count')
 
         if checkout_status.count() > 1:  # There should only be one invoice in checkout status
             for invoice in checkout_status.all()[1:]:
@@ -74,17 +74,17 @@ class CustomerProfile(CreateUpdateModelBase):
             return checkout_status.first()
         
         if not cart_status:  # There is no invoice in checkout or cart. Create a new one for user.
-            cart, created = self.invoices.get_or_create(site=self.site, status=Invoice.InvoiceStatus.CART)
+            cart, created = self.invoices.get_or_create(site=self.site, status=InvoiceStatus.CART)
             return cart
 
         if cart_status.count() > 1:  # There is more the one invoice in cart status. Remove all except one.
             for invoice in cart_status.all()[1:]:
                 invoice.delete()
 
-        return self.invoices.filter(status=Invoice.InvoiceStatus.CART, deleted=False).first()
+        return self.invoices.filter(status=InvoiceStatus.CART, deleted=False).first()
 
     def has_invoice_in_checkout(self):
-        return bool(self.invoices.filter(status=Invoice.InvoiceStatus.CHECKOUT).count())
+        return bool(self.invoices.filter(status=InvoiceStatus.CHECKOUT).count())
 
     def filter_products(self, products):
         """

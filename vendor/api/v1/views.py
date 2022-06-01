@@ -11,6 +11,7 @@ from django.views import View
 
 from vendor.config import VENDOR_PRODUCT_MODEL
 from vendor.models import CustomerProfile, Invoice, Offer, Receipt
+from vendor.models.choice import InvoiceStatus
 from vendor.processors import get_site_payment_processor
 from vendor.utils import get_or_create_session_cart, get_site_from_request
 
@@ -60,8 +61,8 @@ class AddToCartView(View):
 
             cart = profile.get_cart_or_checkout_cart()
 
-            if cart.status == Invoice.InvoiceStatus.CHECKOUT:
-                cart.status = Invoice.InvoiceStatus.CART
+            if cart.status == InvoiceStatus.CHECKOUT:
+                cart.status = InvoiceStatus.CART
                 cart.save()
 
             if profile.has_product(offer.products.all()) and not offer.allow_multiple:
@@ -98,8 +99,8 @@ class RemoveFromCartView(View):
 
             cart = profile.get_cart_or_checkout_cart()
 
-            if cart.status == Invoice.InvoiceStatus.CHECKOUT:
-                cart.status = Invoice.InvoiceStatus.CART
+            if cart.status == InvoiceStatus.CHECKOUT:
+                cart.status = InvoiceStatus.CART
                 cart.save()
 
             cart.remove_offer(offer)

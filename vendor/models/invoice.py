@@ -14,7 +14,7 @@ from vendor.models.utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
 from vendor.utils import get_site_from_request
 from .base import CreateUpdateModelBase
-from .choice import CURRENCY_CHOICES, TermType
+from .choice import CURRENCY_CHOICES, TermType, InvoiceStatus
 from .offer import Offer
 from .base import SoftDeleteModelBase
 
@@ -26,15 +26,6 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
     '''
     An invoice starts off as a Cart until it is puchased, then it becomes an Invoice.
     '''
-    class InvoiceStatus(models.IntegerChoices):
-        CART = 0, _("Cart")               # total = subtotal = sum(OrderItems.Offer.Price + Product.TaxClassifier). Avalara
-        CHECKOUT = 10, _("Checkout")      # total = subtotal + shipping + Tax against Addrr if any.
-        QUEUED = 20, _("Queued")          # Queued to for Payment Processor.
-        PROCESSING = 30, _("Processing")  # Payment Processor update, start of payment.
-        FAILED = 40, _("Failed")          # Payment Processor Failed Transaction.
-        COMPLETE = 50, _("Complete")      # Payment Processor Completed Transaction.
-        REFUNDED = 60, _("Refunded")      # Invoice Refunded to client.
-
     uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
     profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Customer Profile"), on_delete=models.CASCADE, related_name="invoices")
     site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="invoices")                      # For multi-site support

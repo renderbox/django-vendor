@@ -7,7 +7,7 @@ from django.utils import timezone
 from core.models import Product
 
 from vendor.models import Offer, Price, Invoice, Receipt, CustomerProfile
-from vendor.models.choice import PurchaseStatus, TermType
+from vendor.models.choice import PurchaseStatus, TermType, InvoiceStatus
 
 
 class ModelCustomerProfileTests(TestCase):
@@ -48,7 +48,7 @@ class ModelCustomerProfileTests(TestCase):
         cp = CustomerProfile.objects.get(pk=1)
         invoice = cp.get_cart()
 
-        invoice.status = Invoice.InvoiceStatus.COMPLETE
+        invoice.status = InvoiceStatus.COMPLETE
         invoice.save()
 
         new_invoice = cp.get_cart()
@@ -86,23 +86,23 @@ class ModelCustomerProfileTests(TestCase):
     def test_get_checkout_cart(self):
         cp = CustomerProfile.objects.get(pk=1)
         invoice = cp.get_cart()
-        invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        invoice.status = InvoiceStatus.CHECKOUT
         invoice.save()
 
         self.assertIsNotNone(cp.get_checkout_cart())
-        self.assertEqual(cp.get_checkout_cart().status, Invoice.InvoiceStatus.CHECKOUT)
+        self.assertEqual(cp.get_checkout_cart().status, InvoiceStatus.CHECKOUT)
 
     def test_gets_cart(self):
         cart = self.customer_profile_existing.get_cart_or_checkout_cart()
 
-        self.assertEqual(cart.status, Invoice.InvoiceStatus.CART)
+        self.assertEqual(cart.status, InvoiceStatus.CART)
 
     def test_gets_checkout_cart(self):
-        self.customer_profile_existing.invoices.add(Invoice.objects.create(status=Invoice.InvoiceStatus.CHECKOUT, profile=self.customer_profile_existing))
+        self.customer_profile_existing.invoices.add(Invoice.objects.create(status=InvoiceStatus.CHECKOUT, profile=self.customer_profile_existing))
 
         cart = self.customer_profile_existing.get_cart_or_checkout_cart()
 
-        self.assertEqual(cart.status, Invoice.InvoiceStatus.CHECKOUT)
+        self.assertEqual(cart.status, InvoiceStatus.CHECKOUT)
 
     def test_get_cart_items_count(self):
         invoice = Invoice.objects.get(pk=1)
@@ -216,13 +216,13 @@ class ModelCustomerProfileTests(TestCase):
 
     def test_get_checkout_invoice_success(self):
         invoice_invalid_cart = Invoice()
-        invoice_invalid_cart.status = Invoice.InvoiceStatus.CART
+        invoice_invalid_cart.status = InvoiceStatus.CART
         invoice_invalid_cart.profile = self.customer_profile_existing
         invoice_invalid_cart.save()
 
         invoice = self.customer_profile_existing.get_cart_or_checkout_cart()
 
-        self.assertEqual(1, self.customer_profile_existing.invoices.filter(status=Invoice.InvoiceStatus.CART, deleted=False).count())
+        self.assertEqual(1, self.customer_profile_existing.invoices.filter(status=InvoiceStatus.CART, deleted=False).count())
 
 
 class AddOfferToProfileView(TestCase):
