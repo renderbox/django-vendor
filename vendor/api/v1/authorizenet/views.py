@@ -13,20 +13,22 @@ from django.utils import timezone
 from vendor.models import Receipt, Invoice
 from vendor.models.choice import InvoiceStatus
 from vendor.processors.authorizenet import AuthorizeNetProcessor
+from vendor.utils import get_site_from_request
+
 
 logger = logging.getLogger(__name__)
 
 payment_processor = AuthorizeNetProcessor
 
 
-def renew_subscription_task(json_data):
+def renew_subscription_task(site, json_data):
     """
     function to be added or called to a task queue to handle the the a subscription renewal.
     """
     transaction_id = json_data['payload']['id']
-    dummy_invoice = Invoice()
+    dummy_invoice = Invoice(site=site)
 
-    processor = payment_processor(dummy_invoice)
+    processor = payment_processor(site, dummy_invoice)
     logger.info(f"Getting transaction detail for id: {transaction_id}")
     transaction_detail = processor.get_transaction_detail(transaction_id)
 
@@ -121,7 +123,7 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
 
         request_data = json.loads(request.body)
         logger.info(f"Renewing subscription request body: {request_data}")
-        renew_subscription_task(request_data)
+        renew_subscription_task(get_site_from_request(request), request_data)
         logger.info("authcapture subscription renewed")
 
         return JsonResponse({"msg": "subscription renewed"})
