@@ -782,9 +782,7 @@ class AuthorizeNetProcessorTests(TestCase):
             if self.processor.transaction_message['error_code'] == 8:
                 print("The credit card has expired. Skipping\n")
                 return
-        # self.assertEquals(InvoiceStatus.REFUNDED, self.existing_invoice.status)
-        # self.assertEquals(PaymentStatus.REFUNDED, payment.status)
-        raise Exception()
+        self.assertEquals(PurchaseStatus.REFUNDED, payment.status)
 
     def test_refund_fail_invalid_account_number(self):
         """

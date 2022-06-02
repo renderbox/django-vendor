@@ -34,7 +34,7 @@ except ModuleNotFoundError:
     pass
 
 from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models.choice import TransactionTypes, PaymentTypes, TermType, TermDetailUnits, InvoiceStatus
+from vendor.models.choice import TransactionTypes, PaymentTypes, TermType, TermDetailUnits, InvoiceStatus, PurchaseStatus
 from vendor.models.invoice import Invoice
 from vendor.models.address import Country
 from vendor.models.payment import Payment
@@ -568,8 +568,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if self.transaction_submitted:
             payment.status = PurchaseStatus.REFUNDED
             payment.save()
-
-            # self.update_invoice_status(InvoiceStatus.REFUNDED)
 
     def void_payment(self, transaction_id):
         self.transaction = self.create_transaction()
