@@ -566,8 +566,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.check_response(response)
 
         if self.transaction_submitted:
-            raise Exception()
-            # TODO: payment.status Refunded
+            payment.status = PurchaseStatus.REFUNDED
+            payment.save()
+
             # self.update_invoice_status(InvoiceStatus.REFUNDED)
 
     def void_payment(self, transaction_id):

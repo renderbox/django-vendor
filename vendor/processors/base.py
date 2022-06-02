@@ -79,11 +79,11 @@ class PaymentProcessorBase(object):
         """
 
         self.payment = Payment(profile=self.invoice.profile,
-                                                amount=self.invoice.total,
-                                                provider=self.provider,
-                                                invoice=self.invoice,
-                                                created=timezone.now()
-                                                )
+                               amount=self.invoice.total,
+                               provider=self.provider,
+                               invoice=self.invoice,
+                               created=timezone.now()
+                            )
         self.payment.result['account_number'] = self.payment_info.cleaned_data.get('card_number')[-4:]
         self.payment.result['first'] = True
         self.payment.payee_full_name = self.payment_info.cleaned_data.get('full_name')
@@ -301,6 +301,7 @@ class PaymentProcessorBase(object):
         self.payment.save()
         self.transaction_submitted = True
         self.payment.success = True
+        self.payment.status = PurchaseStatus.COMPLETE
         self.payment.transaction = f"{self.payment.uuid}-free"
         self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
         self.payment.result = {'first': True}
@@ -382,6 +383,7 @@ class PaymentProcessorBase(object):
         self.transaction_submitted = True
 
         self.payment.success = True
+        self.payment.status = PurchaseStatus.COMPLETE
         self.payment.transaction = past_receipt.transaction
         self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
 
