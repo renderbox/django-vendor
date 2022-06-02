@@ -155,25 +155,6 @@ class ModelCustomerProfileTests(TestCase):
 
         self.assertFalse(self.customer_profile.has_previously_owned_products(Product.objects.filter(pk=3)))
 
-    def test_get_completed_receipts(self):
-        cart = self.customer_profile.get_cart_or_checkout_cart()
-        offer = Offer.objects.get(pk=3)
-        cart.add_offer(offer)
-
-        receipt = Receipt(profile=self.customer_profile,
-                          order_item=cart.order_items.first(),
-                          start_date=timezone.now(),
-                          transaction="123")
-        receipt.save()
-        self.assertEqual(1, len(self.customer_profile.get_completed_receipts()))
-
-    def test_get_completed_receipts_empty(self):
-        cart = self.customer_profile.get_cart_or_checkout_cart()
-        offer = Offer.objects.get(pk=3)
-        cart.add_offer(offer)
-
-        self.assertEqual(0, len(self.customer_profile.get_completed_receipts()))
-
     def test_get_products(self):
         self.assertFalse(self.customer_profile.get_all_customer_products())
 

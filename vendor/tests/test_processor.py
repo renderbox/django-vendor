@@ -1088,7 +1088,15 @@ class AuthorizeNetProcessorTests(TestCase):
         processor.get_customer_id_for_expiring_cards("2024-01")
 
         self.assertTrue(processor.transaction_submitted)
+        self.assertFalse(processor.transaction_submitted)
 
+    def test_get_expiring_cards_empty(self):
+        site = Site.objects.get(pk=1)
+        processor = AuthorizeNetProcessor(site)
+
+        ids = processor.get_customer_id_for_expiring_cards("2020-01")
+
+        self.assertFalse(ids)
 
     def test_get_customer_email(self):
         site = Site.objects.get(pk=1)

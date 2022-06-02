@@ -23,7 +23,6 @@ class Receipt(SoftDeleteModelBase, CreateUpdateModelBase):
     auto_renew = models.BooleanField(_("Auto Renew"), default=False)        # For subscriptions
     vendor_notes = models.JSONField(_("Vendor Notes"), default=dict)
     transaction = models.CharField(_("Transaction"), max_length=80)
-    status = models.IntegerField(_("Status"), choices=PurchaseStatus.choices, default=0)
     meta = models.JSONField(_("Meta"), default=dict)
 
     class Meta:
