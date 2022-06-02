@@ -21,9 +21,9 @@ class Receipt(SoftDeleteModelBase, CreateUpdateModelBase):
     start_date = models.DateTimeField(_("Start Date"), blank=True, null=True)
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True)
     auto_renew = models.BooleanField(_("Auto Renew"), default=False)        # For subscriptions
-    vendor_notes = models.JSONField(_("Vendor Notes"), default=dict)
+    vendor_notes = models.JSONField(_("Vendor Notes"), default=dict, blank=True, null=True)
     transaction = models.CharField(_("Transaction"), max_length=80)
-    meta = models.JSONField(_("Meta"), default=dict)
+    meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)
 
     class Meta:
         verbose_name = "Receipt"
