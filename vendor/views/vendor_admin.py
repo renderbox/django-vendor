@@ -15,7 +15,7 @@ from vendor.config import VENDOR_PRODUCT_MODEL, PaymentProcessorSiteConfig, Paym
 from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm, AuthorizeNetIntegrationForm
 from vendor.integrations import AuthorizeNetIntegration
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment
-from vendor.models.choice import TermType, PaymentTypes
+from vendor.models.choice import TermType, PaymentTypes, InvoiceStatus
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
 from vendor.processors import get_site_payment_processor
 
@@ -315,7 +315,7 @@ class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
             'msg': 'renewed manually'
         }
 
-        invoice = Invoice(status=Invoice.InvoiceStatus.PROCESSING, site=past_receipt.order_item.invoice.site)
+        invoice = Invoice(status=InvoiceStatus.CHECKOUT, site=past_receipt.order_item.invoice.site)
         invoice.profile = past_receipt.profile
         invoice.save()
         invoice.add_offer(past_receipt.order_item.offer)

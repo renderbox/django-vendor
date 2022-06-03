@@ -13,7 +13,7 @@ from random import randrange, choice
 from siteconfigs.models import SiteConfigModel
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem
-from vendor.models.choice import PurchaseStatus
+from vendor.models.choice import PurchaseStatus, InvoiceStatus
 from vendor.processors import PaymentProcessorBase, AuthorizeNetProcessor
 
 ###############################
@@ -94,14 +94,14 @@ class BaseProcessorTests(TestCase):
 
     def test_update_invoice_status_success(self):
         self.base_processor.transaction_submitted = True
-        self.base_processor.update_invoice_status(Invoice.InvoiceStatus.REFUNDED)
+        self.base_processor.update_invoice_status(InvoiceStatus.COMPLETE)
 
-        self.assertEquals(Invoice.InvoiceStatus.REFUNDED, self.base_processor.invoice.status)
+        self.assertEquals(InvoiceStatus.COMPLETE, self.base_processor.invoice.status)
 
     def test_update_invoice_status_fails(self):
-        self.base_processor.update_invoice_status(Invoice.InvoiceStatus.REFUNDED)
+        self.base_processor.update_invoice_status(InvoiceStatus.COMPLETE)
 
-        self.assertNotEquals(Invoice.InvoiceStatus.REFUNDED, self.base_processor.invoice.status)
+        self.assertNotEquals(InvoiceStatus.COMPLETE, self.base_processor.invoice.status)
 
     def test_create_receipt_by_term_type_subscription(self):
         self.base_processor.invoice.add_offer(self.subscription_offer)
@@ -121,7 +121,7 @@ class BaseProcessorTests(TestCase):
         # raise NotImplementedError()
 
     def test_create_receipts_success(self):
-        self.base_processor.invoice.status = Invoice.InvoiceStatus.COMPLETE
+        self.base_processor.invoice.status = InvoiceStatus.COMPLETE
         self.base_processor.payment = Payment.objects.get(pk=1)
         self.base_processor.create_receipts(self.base_processor.invoice.order_items.all())
 
@@ -131,7 +131,7 @@ class BaseProcessorTests(TestCase):
     #     subscription_id = 123456789
     #     self.base_processor.invoice.add_offer(self.subscription_offer)
     #     self.base_processor.invoice.save()
-    #     self.base_processor.invoice.status = Invoice.InvoiceStatus.COMPLETE
+    #     self.base_processor.invoice.status = InvoiceStatus.COMPLETE
     #     self.base_processor.payment = Payment.objects.get(pk=1)
     #     self.base_processor.create_receipts(self.base_processor.invoice.order_items.all())
 
@@ -417,7 +417,7 @@ class AuthorizeNetProcessorTests(TestCase):
         print(self.processor.transaction_message)
         self.assertIsNotNone(self.processor.payment)
         self.assertTrue(self.processor.payment.success)
-        self.assertEquals(Invoice.InvoiceStatus.COMPLETE, self.processor.invoice.status)
+        self.assertEquals(InvoiceStatus.COMPLETE, self.processor.invoice.status)
 
     def test_process_payment_transaction_fail_invalid_card(self):
         """
@@ -433,7 +433,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertIsNone(self.processor.payment)
         self.assertFalse(self.processor.transaction_submitted)
-        self.assertEquals(Invoice.InvoiceStatus.CART, self.processor.invoice.status)
+        self.assertEquals(InvoiceStatus.CART, self.processor.invoice.status)
 
     def test_process_payment_transaction_fail_invalid_expiration(self):
         """
@@ -451,7 +451,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertIsNone(self.processor.payment)
         self.assertFalse(self.processor.transaction_submitted)
-        self.assertEquals(Invoice.InvoiceStatus.CART, self.processor.invoice.status)
+        self.assertEquals(InvoiceStatus.CART, self.processor.invoice.status)
 
     ##########
     # CVV Tests
@@ -638,7 +638,7 @@ class AuthorizeNetProcessorTests(TestCase):
         else:
             self.assertIn("'avsResultCode': 'R'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
             self.assertFalse(self.processor.payment.success)
-            self.assertEquals(Invoice.InvoiceStatus.CART, self.processor.invoice.status)
+            self.assertEquals(InvoiceStatus.CART, self.processor.invoice.status)
 
     def test_process_payment_avs_not_supported(self):
         """
@@ -782,7 +782,7 @@ class AuthorizeNetProcessorTests(TestCase):
             if self.processor.transaction_message['error_code'] == 8:
                 print("The credit card has expired. Skipping\n")
                 return
-        self.assertEquals(Invoice.InvoiceStatus.REFUNDED, self.existing_invoice.status)
+        self.assertEquals(PurchaseStatus.REFUNDED, payment.status)
 
     def test_refund_fail_invalid_account_number(self):
         """
@@ -959,7 +959,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if active_subscriptions:
             self.processor.subscription_cancel(dummy_receipt)
             self.assertTrue(self.processor.transaction_submitted)
-            self.assertTrue(dummy_receipt.status, PurchaseStatus.CANCELED)
+            self.assertFalse(dummy_receipt.auto_renew)
         else:
             print("No active Subscriptions, Skipping Test")
 

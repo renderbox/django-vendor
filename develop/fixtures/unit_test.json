@@ -452,6 +452,7 @@
         "success": true,
         "payee_full_name": "Bob Ross",
         "payee_company": "Whitemoon Dreams",
+        "status": 20,
         "deleted": false
     }
 },
@@ -471,6 +472,7 @@
         "success": true,
         "payee_full_name": "Bob Ross",
         "payee_company": "Whitemoon Dreams",
+        "status": 20,
         "deleted": false
     }
 },
@@ -595,7 +597,6 @@
         "auto_renew": false,
         "vendor_notes": {},
         "transaction": "7127667",
-        "status": 20,
         "meta": {},
         "deleted": false
     }
@@ -613,7 +614,6 @@
         "auto_renew": false,
         "vendor_notes": {},
         "transaction": "1-1-1",
-        "status": 20,
         "meta": {},
         "deleted": false
     }
@@ -631,7 +631,6 @@
         "auto_renew": true,
         "vendor_notes": {},
         "transaction": "1-1-2",
-        "status": 20,
         "meta": {},
         "deleted": false
     }
