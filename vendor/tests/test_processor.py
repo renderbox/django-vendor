@@ -1094,6 +1094,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         ids = processor.get_customer_id_for_expiring_cards("2020-01")
 
+        self.assertTrue(processor.transaction_submitted)
         self.assertFalse(ids)
 
     def test_get_customer_email(self):
