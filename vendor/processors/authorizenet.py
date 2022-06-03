@@ -656,7 +656,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         customer_profile_ids = []
         last_page = 1
         
-        if self.transaction_submitted and response.paymentProfiles.paymentProfile:
+        if self.transaction_submitted and response.paymentProfiles:
             last_page = ceil(response.totalNumInResultSet.pyval / paging.limit)
             customer_profile_ids.extend([customer_profile.customerProfileId.text for customer_profile in response.paymentProfiles.paymentProfile])
 
@@ -667,7 +667,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             self.controller.execute()
             response = self.controller.getresponse()
             self.check_customer_list_response(response)
-            if self.transaction_submitted and response.paymentProfiles.paymentProfile:
+            if self.transaction_submitted and response.paymentProfiles:
                 customer_profile_ids.extend([customer_profile.customerProfileId.text for customer_profile in response.paymentProfiles.paymentProfile])
 
         return customer_profile_ids
