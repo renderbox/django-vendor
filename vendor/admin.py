@@ -105,13 +105,9 @@ class AddressAdmin(admin.ModelAdmin):
 
 class CustomerProfileAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid',)
-    list_display = ('user', 'site', 'currency')
+    list_display = ('user', 'site', 'currency', 'created')
     search_fields = ('profile__user__username', )
     list_filter = ('site__domain', )
-    inlines = [
-        ReceiptInline,
-        InvoiceInline
-    ]
 
 
 class InvoiceAdmin(admin.ModelAdmin):
