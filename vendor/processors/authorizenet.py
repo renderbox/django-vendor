@@ -3,12 +3,14 @@ Payment processor for Authorize.net.
 """
 import ast
 from decimal import Decimal, ROUND_DOWN
-from vendor.integrations import AuthorizeNetIntegration
 from django.conf import settings
 from django.utils import timezone
+from django.db.models import IntegerChoices
 from math import ceil
 from vendor.config import VENDOR_PAYMENT_PROCESSOR, VENDOR_STATE
 from vendor.utils import get_future_date_days
+from vendor.integrations import AuthorizeNetIntegration
+
 
 try:
     from authorizenet import apicontractsv1
@@ -294,6 +296,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         order.description = description
         return order
 
+    def create_paging(self, limit, offset=1):
+        paging = apicontractsv1.Paging()
+        paging.limit = limit
+        paging.offset = offset
+
+        return paging
+
     ##########
     # Django-Vendor to Authoriaze.net data exchange functions
     ##########
@@ -425,6 +434,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.check_response(response)
 
         self.process_payment_transaction_response()
+
+        if self.transaction_submitted:
+            self.payment.status = PurchaseStatus.CAPTURED
+        else:
+            self.payment.status = PurchaseStatus.DECLINED
+
+        self.payment.save()
 
     def subscription_payment(self, subscription):
         """
@@ -636,6 +652,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         paging = apicontractsv1.Paging()
         paging.limit = 10
         paging.offset = 1
+
         sorting = apicontractsv1.CustomerPaymentProfileSorting()
         sorting.orderBy = apicontractsv1.CustomerPaymentProfileOrderFieldEnum.id
         sorting.orderDescending = "false"
@@ -745,10 +762,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
             return response.transaction
 
-    def get_list_of_subscriptions(self):
+    def get_list_of_subscriptions(self, limit, offset=1):
         self.transaction = apicontractsv1.ARBGetSubscriptionListRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.searchType = apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionActive
+        self.transaction.paging = self.create_paging(limit, offset)
 
         self.controller = ARBGetSubscriptionListController(self.transaction)
         self.set_controller_api_endpoint()
@@ -756,7 +774,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         # Work on the response
         response = self.controller.getresponse()
-        if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok and hasattr(response.subscriptionDetails, 'subscriptionDetail'):
-            return response.subscriptionDetails.subscriptionDetail
+
+        self.check_response(response)
+
+        if self.transaction_submitted:
+            return self.transaction_response.subscriptionDetails.subscriptionDetail
         else:
             return []
