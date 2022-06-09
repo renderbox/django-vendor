@@ -35,6 +35,7 @@ class BaseProcessorTests(TestCase):
         self.existing_invoice = Invoice.objects.get(pk=1)
         self.base_processor = PaymentProcessorBase(self.site, self.existing_invoice)
         self.subscription_offer = Offer.objects.get(pk=4)
+        self.hamster_wheel = Offer.objects.get(pk=3)
         self.form_data = {
             'billing_address_form': {
                 'billing-name': 'Home',
@@ -109,13 +110,22 @@ class BaseProcessorTests(TestCase):
 
         order_item_subscription = self.base_processor.invoice.order_items.get(offer__pk=4)
         self.base_processor.payment = Payment.objects.get(pk=1)
-        for product in order_item_subscription.offer.products.all():
-            self.base_processor.create_receipt_by_term_type(product, order_item_subscription, order_item_subscription.offer.terms)
+        
+        self.base_processor.create_subscription_model()
+        self.base_processor.create_receipt_by_term_type(order_item_subscription, order_item_subscription.offer.terms)
 
-        self.assertIsNotNone(Receipt.objects.all())
 
-    # def test_create_receipt_by_term_type_perpetual(self):
-        # raise NotImplementedError()
+        self.assertIsNotNone(self.base_processor.subscription)
+        self.assertIsNotNone(self.base_processor.receipt.subscription)
+
+    def test_create_receipt_by_term_type_perpetual(self):
+        self.base_processor.invoice.save()
+        perpetual_order_item = self.base_processor.invoice.order_items.get(offer__pk=1)
+
+        self.base_processor.payment = Payment.objects.get(pk=1)
+        self.base_processor.create_receipt_by_term_type(perpetual_order_item, perpetual_order_item.offer.terms)
+
+        self.assertIsNone(self.base_processor.receipt.subscription)
 
     # def test_create_receipt_by_term_type_one_time_use(self):
         # raise NotImplementedError()
@@ -138,7 +148,7 @@ class BaseProcessorTests(TestCase):
     #     subscription_list = self.existing_invoice.order_items.filter(offer__terms=TermType.SUBSCRIPTION)
     #     subscription = subscription_list[0]
 
-    #     self.base_processor.update_subscription_receipt(subscription, subscription_id, PurchaseStatus.COMPLETE)
+    #     self.base_processor.update_subscription_receipt(subscription, subscription_id, PurchaseStatus.SETTLED)
     #     receipt = Receipt.objects.get(meta__subscription_id=subscription_id)
 
     #     self.assertIsNotNone(receipt)
@@ -255,8 +265,6 @@ class BaseProcessorTests(TestCase):
 
     # def test_subscription_payment_success(self):
     #     raise NotImplementedError()
-
-
 
     # def test_subscription_cancel_success(self):
     #     raise NotImplementedError()
@@ -541,7 +549,6 @@ class AuthorizeNetProcessorTests(TestCase):
     # AVS Tests
     # Reference: https://support.authorize.net/s/article/What-Are-the-Different-Address-Verification-Service-AVS-Response-Codes
     ##########
-
     def test_process_payment_avs_addr_match_zipcode_no_match(self):
         """
         A = Street Address: Match -- First 5 Digits of ZIP: No Match
@@ -911,14 +918,20 @@ class AuthorizeNetProcessorTests(TestCase):
         # print(self.processor.transaction_message)
         self.assertTrue(self.processor.transaction_submitted)
         self.assertIn('subscriptionId', self.processor.transaction_response['raw'])
+        self.assertIsNotNone(self.processor.subscription)
+        self.assertFalse(self.processor.payment.transaction)
+        self.assertFalse(self.processor.receipt.transaction)
 
     def test_subscription_update_payment(self):
         self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
         subscription_list = self.processor.get_list_of_subscriptions()
+
         if not len(subscription_list):
             print("No subscriptions, Skipping Test")
             return
+
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
+
         dummy_receipt = Receipt(order_item=OrderItem.objects.get(pk=2))
         dummy_receipt.profile = CustomerProfile.objects.get(pk=1)
         dummy_receipt.transaction = active_subscriptions[-1].id.pyval
@@ -959,7 +972,6 @@ class AuthorizeNetProcessorTests(TestCase):
         if active_subscriptions:
             self.processor.subscription_cancel(dummy_receipt)
             self.assertTrue(self.processor.transaction_submitted)
-            self.assertFalse(dummy_receipt.auto_renew)
         else:
             print("No active Subscriptions, Skipping Test")
 
@@ -1108,6 +1120,7 @@ class AuthorizeNetProcessorTests(TestCase):
             emails.append(processor.get_customer_email(cp_id))
 
         self.assertTrue(emails)
+        
 
 
 @skipIf((settings.STRIPE_TEST_SECRET_KEY or settings.STRIPE_TEST_PUBLIC_KEY) is None, "Strip enviornment variables not set, skipping tests")
