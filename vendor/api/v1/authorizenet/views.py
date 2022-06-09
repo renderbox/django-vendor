@@ -4,14 +4,14 @@ import hmac
 import logging
 
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, MultipleObjectsReturned, ObjectDoesNotExist
 from django.http import JsonResponse
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
-from vendor.models import Receipt, Invoice
-from vendor.models.choice import InvoiceStatus
+from vendor.models import Receipt, Invoice, Subscription, Payment
+from vendor.models.choice import InvoiceStatus, PurchaseStatus
 from vendor.processors.authorizenet import AuthorizeNetProcessor
 from vendor.utils import get_site_from_request
 
@@ -21,23 +21,27 @@ logger = logging.getLogger(__name__)
 payment_processor = AuthorizeNetProcessor
 
 
-def renew_subscription_task(site, json_data):
+def update_payment(site, transaction_id, json_data):
+    try:
+        payment = Payment.objects.get(profile__site=site, transaction=transaction_id)
+        payment.status = PurchaseStatus.CAPTURED
+        payment.result[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = json_data
+        payment.save()
+    
+    except MultipleObjectsReturned as exce:
+        logger.error(f"AuthorizeCaptureAPI update_payment multiple payments for transaction: {transaction_id} error: {exce}")
+
+    except ObjectDoesNotExist as exce:
+        logger.error(f"AuthorizeCaptureAPI update_payment payment does not exist for transaction: {transaction_id} error: {exce}")
+
+    except Exception as exce:
+        logger.error(f"AuthorizeCaptureAPI update_payment error: {exce}")
+    
+def renew_subscription_task(site, json_data, transaction_detail):
     """
     function to be added or called to a task queue to handle the the a subscription renewal.
     """
     transaction_id = json_data['payload']['id']
-    dummy_invoice = Invoice(site=site)
-
-    processor = payment_processor(site, dummy_invoice)
-    logger.info(f"Getting transaction detail for id: {transaction_id}")
-    transaction_detail = processor.get_transaction_detail(transaction_id)
-
-    if not hasattr(transaction_detail, 'subscription'):
-        return None
-    if transaction_detail.subscription.payNum.pyval == 1:
-        return None
-
-    past_receipt = Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created').last()
 
     payment_info = {
         'account_number': transaction_detail.payment.creditCard.cardNumber.text[-4:],
@@ -48,29 +52,57 @@ def renew_subscription_task(site, json_data):
         'subscription_id': transaction_detail.subscription.id.text,
         'payment_number': transaction_detail.subscription.payNum.text
     }
+    
+    try:
+        subscription = Subscription.objects.get(gateway_id=transaction_detail.subscription.id.text)
+    except MultipleObjectsReturned as exce:
+        logger.error(f"renew_subscription_task more than one subscription returned, for {transaction_detail.subscription.id.text} exce: {exce}")
+        return None
+    except ObjectDoesNotExist as exce:
+        logger.error(f"renew_subscription_task subscription does not exist {transaction_detail.subscription.id.text} exce: {exce}")
+        return None
 
-    invoice_history = []
+    try:
+        payment = subscription.payments.get(transaction=None, status=PurchaseStatus.QUEUED)
+        receipt = subscription.receipts.get(transaction=None)
 
-    for receipt in Receipt.objects.filter(transaction=transaction_detail.subscription.id.text).order_by('created'):
-        past_invoice = receipt.order_item.invoice
-        invoice_info = {
-            "invoice_id": past_invoice.pk,
-            "receipt_id": receipt.pk,
-            "payments": [payment.pk for payment in past_invoice.payments.all()]
-        }
-        invoice_history.append(invoice_info)
+        payment.transaction = transaction_id
+        payment.status = PurchaseStatus.CAPTURED
+        payment.result = {}
+        payment.result['raw'] = json_data
+        payment.save()
 
-    invoice = Invoice(status=InvoiceStatus.CHECKOUT, site=past_receipt.order_item.invoice.site)
-    invoice.profile = past_receipt.profile
-    invoice.ordered_date = timezone.now()
-    invoice.vendor_notes['history'] = invoice_history
-    invoice.save()
-    invoice.add_offer(past_receipt.order_item.offer)
-    invoice.total = transaction_detail.authAmount.pyval
-    invoice.save()
+        receipt.transaction = transaction_id
+        receipt.meta.update(payment.result)
+        receipt.save()
+        logger.info("renew_subscription_task payment and receipt updated")
 
-    processor = AuthorizeNetProcessor(invoice)
-    processor.renew_subscription(past_receipt, payment_info)
+    except MultipleObjectsReturned as exce:
+        logger.error(f"renew_subscription_task multiple payments returned with None as Transaction, for {transaction_detail.subscription.id.text} exce: {exce}")
+        return None
+
+    except ObjectDoesNotExist as exce:
+        past_payment = subscription.payments.all().order_by('created').last()
+        past_receipt = subscription.receipts.all().order_by('created').last()
+
+        if not (past_payment or past_receipt):
+            logger.error(f"renew_subscription_task no past receipt or payments exist for {transaction_detail.subscription.id.text} exce: {exce}")
+            return None
+
+        invoice = Invoice.objects.create(
+            status=InvoiceStatus.CHECKOUT,
+            site=past_payment.profile.site,
+            profile=past_payment.profile,
+            ordered_date=timezone.now(),
+            total=transaction_detail.authAmount.pyval
+        )
+        invoice.add_offer(past_receipt.order_item.offer)
+        invoice.save()
+
+        processor = AuthorizeNetProcessor(site, invoice)
+        processor.subscription = subscription
+        processor.renew_subscription(past_receipt, payment_info)
+        logger.info("renew_subscription_task subscription renewed")
 
 
 class AuthorizeNetBaseAPI(View):
@@ -112,6 +144,7 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
 
     def post(self, request, *args, **kwargs):
         logger.info(f"AuthorizeNet AuthCapture Event webhook: {request.POST}")
+        site = get_site_from_request(request)
 
         if not request.body:
             logger.warning("Webhook event has no body")
@@ -119,11 +152,18 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
 
         if not self.is_valid_post():
             logger.error(f"authcapture: Request was denied: {request}")
-            # raise PermissionDenied() # This will be uncommented out until we know that a valid call is being properly validated. 
+            raise PermissionDenied()
 
         request_data = json.loads(request.body)
-        logger.info(f"Renewing subscription request body: {request_data}")
-        renew_subscription_task(get_site_from_request(request), request_data)
-        logger.info("authcapture subscription renewed")
+        transaction_id = request_data['id']
+        logger.info(f"renew_subscription_task Getting transaction detail for id: {transaction_id}")
+        
+        processor = payment_processor(site)
+        transaction_detail = processor.get_transaction_detail(transaction_id)
 
-        return JsonResponse({"msg": "subscription renewed"})
+        if not hasattr(transaction_detail, 'subscription'):
+            update_payment(site, transaction_id, request_data)
+        else:
+            renew_subscription_task(site, request_data, transaction_detail)
+
+        return JsonResponse({"msg": "AuthorizeCaptureAPI finished"})
