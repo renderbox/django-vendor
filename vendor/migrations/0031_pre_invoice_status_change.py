@@ -9,6 +9,7 @@ def pre_invoice_status_change(apps, schema_editor):
     for invoice in InvoiceModel.objects.filter(status__gt=10):
         invoice.status = 20  # Current status is queue but it will change to complete
         invoice.save()
+        print(f"Invoice Status Updated {invoice}")
 
 
 class Migration(migrations.Migration):

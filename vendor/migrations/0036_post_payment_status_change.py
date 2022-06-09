@@ -4,19 +4,22 @@ from django.db import migrations
 from vendor.models import Payment
 
 def post_payment_status_change(apps, schema_editor):
+    ReceiptModel = apps.get_model('vendor', 'Receipt')
 
     for payment in Payment.objects.all():
-        receipt = payment.get_receipt()
+        receipt = pk=payment.get_receipt()
         
         if receipt:
-            payment.status = receipt.status
+            r = ReceiptModel.objects.get(pk=receipt.pk)
+            payment.status = r.status
             payment.save()
+            print(f"Payment Status Updated {payment}")
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vendor', '0033_payment_status'),
+        ('vendor', '0035_add_subscription_relation'),
     ]
 
     operations = [
