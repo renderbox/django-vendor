@@ -31,9 +31,10 @@ class PurchaseStatus(models.IntegerChoices):
     ACTIVE = 2, _("Active")
     AUTHORIZED = 10, _("Authorized")
     CAPTURED = 15, _("Captured")
-    COMPLETE = 20, _("Completed")
+    SETTLED = 20, _("Settled")
     CANCELED = 30, _("Canceled")
     REFUNDED = 35, _("Refunded")
+    DECLINED = 40, _("Declined")
 
 
 class PaymentTypes(models.IntegerChoices):
