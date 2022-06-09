@@ -4,7 +4,8 @@ from django.contrib import admin
 from django.db.models import Count
 
 from vendor.models import TaxClassifier, Offer, Price, CustomerProfile, \
-    Invoice, OrderItem, Receipt, Wishlist, WishlistItem, Address, Payment
+    Invoice, OrderItem, Receipt, Wishlist, WishlistItem, Address, Payment, \
+    Subscription
 from vendor.models.choice import InvoiceStatus
 
 
@@ -133,7 +134,7 @@ class OfferAdmin(admin.ModelAdmin):
 
 class PaymentAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid', 'invoice', 'profile', )
-    list_display = ('pk', 'created', 'transaction', 'invoice', 'profile', 'amount', 'deleted', 'status')
+    list_display = ('pk', 'created', 'transaction', 'subscription', 'invoice', 'profile', 'amount', 'deleted', 'status')
     search_fields = ('pk', 'transaction', 'profile__user__username', )
     list_filter = ('profile__site__domain', 'success', 'status')
     exclude = ('billing_address', )
@@ -143,9 +144,18 @@ class PaymentAdmin(admin.ModelAdmin):
 class ReceiptAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid', 'profile', 'order_item',)
     exclude = ('updated', )
-    list_display = ('pk', 'transaction', 'created', 'profile', 'order_item', 'start_date', 'end_date', 'deleted')
+    list_display = ('pk', 'transaction', 'subscription', 'created', 'profile', 'order_item', 'start_date', 'end_date', 'deleted')
     list_filter = ('profile__site__domain', 'products')
     search_fields = ('pk', 'transaction', 'profile__user__username', )
+
+
+class SubscriptionAdmin(admin.ModelAdmin):
+    readonly_fields = ('uuid', )
+    exclude = ('updated', )
+    list_display = ('pk', 'gateway_id', 'created', 'profile')
+    list_filter = ('profile__site__domain', )
+    search_fields = ('pk', 'gateway_id', 'profile__user__username', )
+
 
 
 class TaxClassifierAdmin(admin.ModelAdmin):
@@ -170,4 +180,5 @@ admin.site.register(Wishlist, WishlistAdmin)
 admin.site.register(Address, AddressAdmin)
 admin.site.register(Receipt, ReceiptAdmin)
 admin.site.register(Payment, PaymentAdmin)
+admin.site.register(Subscription, SubscriptionAdmin)
 admin.site.register(OrderItem)
