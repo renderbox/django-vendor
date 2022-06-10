@@ -15,7 +15,7 @@ from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem
 from vendor.models.choice import PurchaseStatus, InvoiceStatus
 from vendor.processors import PaymentProcessorBase, AuthorizeNetProcessor
-
+from vendor.processors.authorizenet import create_subscription_model_form_past_receipts
 ###############################
 # Test constants
 ###############################
@@ -1042,7 +1042,8 @@ class AuthorizeNetProcessorTests(TestCase):
         else:
             print("No active Subscriptions, Skipping Test")
 
-
+    def test_create_subscription_model_form_past_receipts(self):
+        create_subscription_model_form_past_receipts(self.site)
     ##########
     # Report details
     ##########

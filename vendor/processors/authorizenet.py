@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.db.models import IntegerChoices
 from math import ceil
 from vendor.config import VENDOR_PAYMENT_PROCESSOR, VENDOR_STATE
-from vendor.utils import get_future_date_days
+from vendor.utils import get_future_date_days, get_payment_scheduled_end_date
 from vendor.integrations import AuthorizeNetIntegration
 
 
@@ -37,9 +37,8 @@ except ModuleNotFoundError:
 
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models.choice import TransactionTypes, PaymentTypes, TermType, TermDetailUnits, InvoiceStatus, PurchaseStatus
-from vendor.models.invoice import Invoice
+from vendor.models import Invoice, Payment, Subscription, Receipt
 from vendor.models.address import Country
-from vendor.models.payment import Payment
 from .base import PaymentProcessorBase
 
 
@@ -775,10 +774,78 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         # Work on the response
         response = self.controller.getresponse()
 
-        self.check_response(response)
+        self.check_subscription_response(response)
 
         if self.transaction_submitted:
             return self.transaction_response.subscriptionDetails.subscriptionDetail
         else:
             return []
+
+def create_subscription_model_form_past_receipts(site):
+    processor = AuthorizeNetProcessor(site)
+
+    subscriptions = processor.get_list_of_subscriptions(1000)
+    active_subscriptions = [ s for s in subscriptions if s['status'] == 'active' ]
+
+    for sub_detail in active_subscriptions:
+        past_receipt = Receipt.objects.filter(transaction=sub_detail.id.text).first()
+        
+        if past_receipt:        
+            subscription = Subscription()
+            subscription.gateway_id = sub_detail.id.text
+            subscription.profile = past_receipt.profile
+            subscription.auto_renew = True
+            subscription.save()
+            
+            subscription_info = processor.subscription_info(sub_detail.id.text)
+
+            for transaction in subscription_info.subscription.arbTransactions.arbTransaction:
+                trans_processor = AuthorizeNetProcessor(site)
+                trans_detail = trans_processor.get_transaction_detail(transaction.transId.text)
+                invoice = Invoice.objects.create(
+                    status=InvoiceStatus.COMPLETE,
+                    site=past_receipt.profile.site,
+                    profile=past_receipt.profile,
+                    ordered_date=trans_detail.submitTimeUTC.pyval,
+                    total=trans_detail.settleAmount.pyval
+                )
+                invoice.add_offer(past_receipt.order_item.offer)
+                invoice.save()
+
+                payment_info = {
+                    'account_number': trans_detail.payment.creditCard.cardNumber.text[-4:],
+                    'account_type': trans_detail.payment.creditCard.cardType.text,
+                    'full_name': " ".join([trans_detail.billTo.firstName.text, trans_detail.billTo.lastName.text]),
+                    'transaction_id': transaction.transId.text,
+                    'subscription_id': trans_detail.subscription.id.text,
+                    'payment_number': trans_detail.subscription.payNum.text
+                }
+
+                # Create Payment
+                payment = Payment(profile=invoice.profile,
+                               amount=invoice.total,
+                               invoice=invoice,
+                               created=trans_detail.submitTimeUTC.pyval)
+                payment.result = payment_info
+
+                payment.success = True
+                payment.status = PurchaseStatus.SETTLED
+                payment.transaction = transaction.transId.text
+                payment.payee_full_name = payment_info['full_name']
+                payment.save()
+
+                # Create Receipt
+                receipt = Receipt()
+                receipt.profile = invoice.profile
+                receipt.order_item = past_receipt.order_item
+                receipt.transaction = payment.transaction
+                receipt.meta.update(payment.result)
+                receipt.meta['payment_amount'] = payment.amount
+                receipt.start_date = trans_detail.submitTimeUTC.pyval
+                receipt.save()
+
+                receipt.end_date = get_payment_scheduled_end_date(past_receipt.order_item.offer, start_date=receipt.start_date)
+                receipt.subscription = subscription
+                    
+                receipt.save()
 

@@ -4,9 +4,7 @@ from decimal import Decimal, ROUND_UP
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils import timezone
 
-from vendor.models import Subscription, Receipt, Payment, Invoice
-from vendor.models.choice import TermDetailUnits, InvoiceStatus
-from vendor.processors import AuthorizeNetProcessor
+from vendor.models.choice import TermDetailUnits
 
 
 #############
@@ -67,36 +65,4 @@ def get_payment_scheduled_end_date(offer, start_date=timezone.now()):
 def get_display_decimal(amount):
     return Decimal(amount).quantize(Decimal('.00'), rounding=ROUND_UP)
 
-
-def create_subscription_model_form_past_receipts(site):
-    processor = AuthorizeNetProcessor(site)
-
-    subscriptions = processor.get_list_of_subscriptions(1000)
-    active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
-
-    for sub_detail in active_subscriptions:
-        subscription = Subscription()
-        past_receipt = Receipt.objects.filter(transaction=sub_detail.id.text).first()
-        
-        subscription.gateway_id = sub_detail.id.text
-        subscription.profile = past_receipt.profile
-        subscription.auto_renew = True
-        subscription.save()
-        
-        response = processor.get_subscription_info(sub_detail.id.text)
-
-        for transaction in response.arbTransaction.arbTransaction:
-            invoice = Invoice.objects.create(
-                status=InvoiceStatus.CHECKOUT,
-                site=past_receipt.profile.site,
-                profile=past_receipt.profile,
-                ordered_date=timezone.now(),
-                total=transaction_detail.authAmount.pyval
-            )
-            invoice.add_offer(past_receipt.order_item.offer)
-            invoice.save()
-
-            renew_processor = AuthorizeNetProcessor(site, invoice)
-            renew_processor.subscription = subscription
-            renew_processor.renew_subscription(transaction_id, {"msg": "Created by create_subscription_model_form_past_receipts"})
 
