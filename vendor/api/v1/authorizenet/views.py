@@ -101,7 +101,7 @@ def renew_subscription_task(site, json_data, transaction_detail):
 
         processor = AuthorizeNetProcessor(site, invoice)
         processor.subscription = subscription
-        processor.renew_subscription(past_receipt, payment_info)
+        processor.renew_subscription(transaction_id, payment_info)
         logger.info("renew_subscription_task subscription renewed")
 
 

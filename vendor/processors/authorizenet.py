@@ -547,7 +547,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction = apicontractsv1.ARBGetSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.subscriptionId = str(subscription_id)
-        self.transaction.includeTransactions = False
+        self.transaction.includeTransactions = True
 
         self.controller = ARBGetSubscriptionController(self.transaction)
         self.set_controller_api_endpoint()
@@ -781,3 +781,4 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             return self.transaction_response.subscriptionDetails.subscriptionDetail
         else:
             return []
+
