@@ -2,6 +2,7 @@
 Payment processor for Authorize.net.
 """
 import ast
+from datetime import datetime
 from decimal import Decimal, ROUND_DOWN
 from django.conf import settings
 from django.utils import timezone
@@ -788,25 +789,30 @@ def create_subscription_model_form_past_receipts(site):
     active_subscriptions = [ s for s in subscriptions if s['status'] == 'active' ]
 
     for sub_detail in active_subscriptions:
-        past_receipt = Receipt.objects.filter(transaction=sub_detail.id.text).first()
+        subscription_id = sub_detail.id.text
+        past_receipt = Receipt.objects.filter(transaction=subscription_id).first()
         
         if past_receipt:        
             subscription = Subscription()
-            subscription.gateway_id = sub_detail.id.text
+            subscription.gateway_id = subscription_id
             subscription.profile = past_receipt.profile
             subscription.auto_renew = True
             subscription.save()
             
-            subscription_info = processor.subscription_info(sub_detail.id.text)
+            subscription_info = processor.subscription_info(subscription_id)
 
             for transaction in subscription_info.subscription.arbTransactions.arbTransaction:
+                transaction_id = transaction.transId.text
                 trans_processor = AuthorizeNetProcessor(site)
-                trans_detail = trans_processor.get_transaction_detail(transaction.transId.text)
+
+                trans_detail = trans_processor.get_transaction_detail(transaction_id)
+                submitted_datetime = datetime.strptime(trans_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S.%f%z')
+
                 invoice = Invoice.objects.create(
                     status=InvoiceStatus.COMPLETE,
                     site=past_receipt.profile.site,
                     profile=past_receipt.profile,
-                    ordered_date=trans_detail.submitTimeUTC.pyval,
+                    ordered_date=submitted_datetime,
                     total=trans_detail.settleAmount.pyval
                 )
                 invoice.add_offer(past_receipt.order_item.offer)
@@ -816,7 +822,7 @@ def create_subscription_model_form_past_receipts(site):
                     'account_number': trans_detail.payment.creditCard.cardNumber.text[-4:],
                     'account_type': trans_detail.payment.creditCard.cardType.text,
                     'full_name': " ".join([trans_detail.billTo.firstName.text, trans_detail.billTo.lastName.text]),
-                    'transaction_id': transaction.transId.text,
+                    'transaction_id': transaction_id,
                     'subscription_id': trans_detail.subscription.id.text,
                     'payment_number': trans_detail.subscription.payNum.text
                 }
@@ -825,12 +831,12 @@ def create_subscription_model_form_past_receipts(site):
                 payment = Payment(profile=invoice.profile,
                                amount=invoice.total,
                                invoice=invoice,
-                               created=trans_detail.submitTimeUTC.pyval)
+                               created=submitted_datetime)
                 payment.result = payment_info
 
                 payment.success = True
                 payment.status = PurchaseStatus.SETTLED
-                payment.transaction = transaction.transId.text
+                payment.transaction = transaction_id
                 payment.payee_full_name = payment_info['full_name']
                 payment.save()
 
@@ -841,7 +847,7 @@ def create_subscription_model_form_past_receipts(site):
                 receipt.transaction = payment.transaction
                 receipt.meta.update(payment.result)
                 receipt.meta['payment_amount'] = payment.amount
-                receipt.start_date = trans_detail.submitTimeUTC.pyval
+                receipt.start_date = submitted_datetime
                 receipt.save()
 
                 receipt.end_date = get_payment_scheduled_end_date(past_receipt.order_item.offer, start_date=receipt.start_date)
