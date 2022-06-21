@@ -17,7 +17,6 @@
           <tr>
             <th scope="col">{% trans 'Subscription ID' %}</th>
             <th scope="col">{% trans 'Subscription' %}</th>
-            <th scope="col">{% trans 'Terms' %}</th>
             <th scope="col">{% trans 'Profile' %}</th>
             <th scope="col">{% trans 'Start Date' %}</th>
             <th scope="col">{% trans 'End Date' %}</th>
@@ -29,23 +28,16 @@
           {% for item in object_list %}
           <tr>
             <td>
-              {% if 'free' in item.transaction %}
-              <a class="text-dark">
-                {{ item.transaction|slice:"-10:" }}
-              </a>
-              {% else %}
               <a href="{% url 'vendor_admin:manager-subscription' item.uuid %}">
-                {{ item.transaction }}
+                {{ item.gateway_id }}
               </a>
-              {% endif %}
             </td>
-            <td>{{ item.order_item.offer }}</td>
-            <td>{{ item.order_item.offer.get_terms_display }}</td>
+            <td>{{ item.receipts.first.order_item.offer }}</td>
             <td>{{ item.profile }}</td>
-            <td>{{ item.start_date|date:"M d, Y" }}</td>
-            <td>{{ item.end_date|date:"M d, Y" }}</td>
+            <td>{{ item.receipts.first.start_date|date:"M d, Y" }}</td>
+            <td>{{ item.receipts.last.end_date|date:"M d, Y" }}</td>
             <td>{{ item.get_status_display }}</td>
-            <td>${{ item.order_item.price }}</td>
+            <td>${{ item.products.first.order_item.price }}</td>
           </tr>
           {% empty %}
           <tr>

@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils import timezone, dateformat
 
 from vendor.models.base import CreateUpdateModelBase, SoftDeleteModelBase
-from vendor.models.choice import PurchaseStatus
+from vendor.models.choice import PurchaseStatus, SubscriptionStatus
 from vendor.utils import get_payment_scheduled_end_date
 
 
@@ -19,6 +19,7 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
     gateway_id = models.CharField(_("Subscription Gateway ID"), max_length=80)
     profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Purchase Profile"), on_delete=models.CASCADE, related_name="subscriptions")
     auto_renew = models.BooleanField(_("Auto Renew"), default=False)
+    status = models.IntegerField(_("Status"), choices=SubscriptionStatus.choices, default=0)
     meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)
 
     class Meta:
@@ -35,11 +36,18 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
         subscription to a Payment Gateway, make sure to also cancel such subscription
         in the given Payment Gateway.
         """
-        self.end_date = timezone.now()
-        self.meta['voided_on'] = dateformat.format(self.end_date, 'Y-M-d H:i:s')
+        receipt = self.receipts.order_by('created').last()
+        receipt.end_date = timezone.now()
+        receipt.meta['voided_on'] = receipt.end_date.strftime("%Y-%m-%d_%H:%M:%S")
+        receipt.save()
+        self.meta[receipt.end_date.strftime("%Y-%m-%d_%H:%M:%S")] = f'voided receipt: {receipt.uuid}'
+        self.save()
 
     def cancel(self):
+        self.status = SubscriptionStatus.CANCELED
         self.auto_renew = False
+        self.meta[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = 'Subscription Canceled'
+        self.save()
 
     def is_on_trial(self):
         first_payment = Receipt.objects.filter(transaction=self.transaction, order_item__offer__site=self.order_item.offer.site).order_by('start_date').first()

@@ -37,8 +37,6 @@ class VendorAPITest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn('price_update', receipt.vendor_notes.keys())
 
-
-
     def test_subscription_price_update_fail(self):
         url = reverse('vendor_api:manager-subscription-price-update')
         response = self.client.post(url, data={"receipt_uuid": "188e45aa-0fdf-4877-ba84-f4c39c0fc41b", "offer_uuid": "188e45aa-0fdf-4877-ba84-f4c39c0fc41b"})

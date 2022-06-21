@@ -12,7 +12,7 @@ from unittest import skipIf
 from random import randrange, choice
 from siteconfigs.models import SiteConfigModel
 from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem
+from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem, Subscription
 from vendor.models.choice import PurchaseStatus, InvoiceStatus
 from vendor.processors import PaymentProcessorBase, AuthorizeNetProcessor
 from vendor.processors.authorizenet import create_subscription_model_form_past_receipts
@@ -225,7 +225,7 @@ class BaseProcessorTests(TestCase):
         payment_info = {
             'account_number': '0002',
         }
-        base_processor.renew_subscription(past_receipt, payment_info)
+        base_processor.renew_subscription(past_receipt.transaction, payment_info)
 
     def test_subscription_price_update_success(self):
         receipt = Receipt.objects.get(pk=3)
@@ -479,7 +479,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
 
-        results = " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)])
+        results = ''.join([p.result.get('raw') for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'raw' in p.result])
         if 'The merchant does not accept this type of credit card' in results:
             print(f'Skipping test test_process_payment_fail_cvv_no_match because merchant does not accept card')
         else:
@@ -499,7 +499,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
 
-        results = " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)])
+        results = ''.join([p.result.get('raw') for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'raw' in p.result])
         if 'The merchant does not accept this type of credit card' in results:
             print(f'Skipping test test_process_payment_fail_cvv_should_not_be_on_card because merchant does not accept card')
         else:
@@ -520,7 +520,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
 
-        results = " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)])
+        results = ''.join([p.result.get('raw') for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'raw' in p.result])
         if 'The merchant does not accept this type of credit card' in results:
             print(f'Skipping test test_process_payment_fail_cvv_not_certified because merchant does not accept card')
         else:
@@ -539,7 +539,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
-        results = " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)])
+        results = ''.join([p.result.get('raw') for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'raw' in p.result])
         if 'The merchant does not accept this type of credit card' in results:
             print(f'Skipping test test_process_payment_fail_cvv_not_processed because merchant does not accept card')
         else:
@@ -563,7 +563,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        self.assertIn("'avsResultCode': 'A'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
+        self.assertIn("'avsResultCode': 'A'", ''.join([p.result.get('raw') for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'raw' in p.result]))
 
     def test_process_payment_avs_service_error(self):
         """
@@ -583,7 +583,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'E'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
+            self.assertIn("'avsResultCode': 'E'", ''.join([p.result.get('raw') for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'raw' in p.result]))
 
     def test_process_payment_avs_non_us_card(self):
         """
@@ -603,7 +603,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'G'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
+            self.assertIn("'avsResultCode': 'G'", ''.join([p.result.get('raw') for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'raw' in p.result]))
 
     def test_process_payment_avs_addr_no_match_zipcode_no_match(self):
         """
@@ -623,7 +623,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'N'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
+            self.assertIn("'avsResultCode': 'N'", ''.join([p.result.get('raw') for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'raw' in p.result]))
 
     def test_process_payment_avs_retry_service_unavailable(self):
         """
@@ -643,7 +643,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'R'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
+            self.assertIn("'avsResultCode': 'R'", ''.join([p.result.get('raw') for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'raw' in p.result]))
             self.assertFalse(self.processor.payment.success)
             self.assertEquals(InvoiceStatus.CART, self.processor.invoice.status)
 
@@ -663,7 +663,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'S'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
+            self.assertIn("'avsResultCode': 'S'", ''.join([p.result.get('raw') for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'raw' in p.result]))
 
     def test_process_payment_avs_addrs_info_unavailable(self):
         """
@@ -683,7 +683,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'U'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
+            self.assertIn("'avsResultCode': 'U'", ''.join([p.result.get('raw') for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'raw' in p.result]))
 
     def test_process_payment_avs_addr_no_match_zipcode_match_9_digits(self):
         """
@@ -703,7 +703,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'W'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
+            self.assertIn("'avsResultCode': 'W'", ''.join([p.result.get('raw') for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'raw' in p.result]))
 
     def test_process_payment_avs_addr_match_zipcode_match(self):
         """
@@ -723,7 +723,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'X'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
+            self.assertIn("'avsResultCode': 'X'", ''.join([p.result.get('raw') for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'raw' in p.result]))
 
     def test_process_payment_avs_addr_no_match_zipcode_match_5_digits(self):
         """
@@ -743,7 +743,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
-            self.assertIn("'avsResultCode': 'Z'", " ".join([p.result.get('raw', '') for p in Payment.objects.filter(invoice=self.existing_invoice)]))
+            self.assertIn("'avsResultCode': 'Z'", ''.join([p.result.get('raw') for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'raw' in p.result]))
 
     ##########
     # Refund Transactin Tests
@@ -969,8 +969,12 @@ class AuthorizeNetProcessorTests(TestCase):
         dummy_receipt.profile = CustomerProfile.objects.get(pk=1)
         dummy_receipt.transaction = active_subscriptions[0].id.pyval
 
+        dummy_subscription = Subscription.objects.create(
+            gateway_id=active_subscriptions[0].id.pyval,
+            profile=CustomerProfile.objects.get(pk=1),
+        )
         if active_subscriptions:
-            self.processor.subscription_cancel(dummy_receipt)
+            self.processor.subscription_cancel(dummy_subscription)
             self.assertTrue(self.processor.transaction_submitted)
         else:
             print("No active Subscriptions, Skipping Test")

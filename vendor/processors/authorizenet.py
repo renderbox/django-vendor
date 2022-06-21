@@ -341,6 +341,18 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.transaction_response = transaction_info
 
+    def save_subscription_result(self):
+        """
+        Processes the transaction reponse from the gateway so it can be saved in the payment model
+        The transaction id is the subscription id returned by Authorize.Net
+        """
+        self.transaction_id = self.transaction_message.get("subscription_id", 'failed_subscription')
+
+        transaction_info = {}
+        transaction_info['raw'] = self.get_transaction_raw_response()
+
+        self.transaction_response = transaction_info
+
     def check_response(self, response):
         """
         Checks the transaction response and set the transaction_submitted and transaction_response variables
@@ -474,7 +486,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
         self.check_subscription_response(response)
 
-        self.save_payment_subscription()
+        self.save_subscription_result()
 
     def subscription_update_payment(self, receipt):
         """
@@ -514,21 +526,15 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.payment.save()
 
-    def subscription_cancel(self, receipt):
+    def subscription_cancel(self, subscription):
         """
         If receipt.invoice.total is zero, no need to call Gateway as there is no
         transaction for it. Otherwise it will cancel the subscription on the Gateway
         and if successfull it will cancel it on the receipt.
         """
-        receipt.vendor_notes['cancelled_on'] = f"{timezone.now():%d/%m/%Y %H:%m:%s}"
-        if not receipt.order_item.invoice.total:
-            receipt.cancel()
-            receipt.save()
-            return None
-
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = str(receipt.transaction)
+        self.transaction.subscriptionId = str(subscription.gateway_id)
         self.transaction.includeTransactions = False
 
         self.controller = ARBCancelSubscriptionController(self.transaction)
@@ -540,8 +546,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.check_subscription_response(response)
 
         if self.transaction_submitted:
-            receipt.cancel()
-            receipt.save()
+            super().subscription_cancel(subscription)
 
     def subscription_info(self, subscription_id):
         self.transaction = apicontractsv1.ARBGetSubscriptionRequest()
@@ -600,13 +605,15 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.check_response(response)
 
+        super().void_payment()
+
     def is_card_valid(self):
         """
         Handles an Authorize Only transaction to ensure that the funds are in the customers bank account
         """
         invoice_number = str(self.invoice.pk)[:19]
         description = "This amount is only to check for valid cards and will not be charged. Depending on your bank the charge can take 3 to 5 days to be removed."
-        self.create_payment_model()
+        self.create_payment_model(settings.VENDOR_CHARGE_VALIDATION_PRICE)
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(self.transaction_types[TransactionTypes.AUTHORIZE])
         self.transaction_type.amount = self.to_valid_decimal(settings.VENDOR_CHARGE_VALIDATION_PRICE)
@@ -624,6 +631,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.check_response(response)
 
         if self.transaction_submitted:
+            self.payment.transaction = self.transaction_message['trans_id'].text
+            self.payment.save()
             self.void_payment(self.transaction_message['trans_id'].text)
             return True
         return False
@@ -762,7 +771,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
             return response.transaction
 
-    def get_list_of_subscriptions(self, limit, offset=1):
+    def get_list_of_subscriptions(self, limit=1000, offset=1):
         self.transaction = apicontractsv1.ARBGetSubscriptionListRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.searchType = apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionActive

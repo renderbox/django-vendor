@@ -15,6 +15,7 @@ from vendor.utils import get_payment_scheduled_end_date
 vendor_pre_authorization = django.dispatch.Signal()
 vendor_process_payment = django.dispatch.Signal()
 vendor_post_authorization = django.dispatch.Signal()
+vendor_subscription_cancel = django.dispatch.Signal()
 
 
 #############
@@ -75,10 +76,12 @@ class PaymentProcessorBase(object):
     def set_invoice(self, invoice):
         self.invoice = invoice
 
-    def create_payment_model(self):
+    def create_payment_model(self, amount=None):
         """
         Create payment instance with base information to track payment submissions
         """
+        if not amount:
+            amount = self.invoice.total
 
         self.payment = Payment(profile=self.invoice.profile,
                                amount=self.invoice.total,
@@ -109,6 +112,15 @@ class PaymentProcessorBase(object):
         self.payment.transaction = transaction_id
         self.payment.result['raw'] = result_info.get('raw', "")
         self.payment.save()
+
+    def save_subscription_transaction_result(self, subscription_success, transaction_id, result_info):
+        """
+        Saves the result output of any transaction.
+        """
+        self.subscription.success = subscription_success
+        self.subscription.gateway_id = transaction_id
+        self.subscription.meta[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = result_info.get('raw', "")
+        self.subscription.save()
 
     def update_invoice_status(self, new_status):
         """
@@ -327,7 +339,8 @@ class PaymentProcessorBase(object):
         """
         Call to handle a payment that has not been settled and wants to be voided
         """
-        pass
+        self.payment.status = PurchaseStatus.VOID
+        self.payment.save()
 
     # -------------------
     # Process a Subscription
@@ -343,13 +356,13 @@ class PaymentProcessorBase(object):
             self.create_payment_model()
             self.subscription_payment(subscription)
             self.update_invoice_status(InvoiceStatus.COMPLETE)
+            self.create_subscription_model()
             
             if self.is_transaction_and_invoice_complete():
-                self.create_subscription_model()
                 self.invoice.save_discounts_vendor_notes()
                 self.create_order_item_receipt(subscription)
-            else:
-                self.save_payment_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
+
+            self.save_subscription_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
 
     def subscription_payment(self, subscription):
         """
@@ -375,8 +388,9 @@ class PaymentProcessorBase(object):
     def subscription_update_payment(self):
         pass
 
-    def subscription_cancel(self):
-        pass
+    def subscription_cancel(self, subscription):
+        subscription.cancel()
+        vendor_subscription_cancel.send(sender=self.__class__)
 
     def is_card_valid(self):
         """

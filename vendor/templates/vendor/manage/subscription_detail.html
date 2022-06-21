@@ -8,17 +8,18 @@
   <div class='col-6'>
     <div class='card'>
       <div class='card-header'>
-        {% trans 'Overview' %}
+        {% trans 'Subscription Overview' %}
       </div>
       <div class='card-body'>
-        <h4>{{ object.order_item.name}}</h4>
-        <p>{{ object.order_item.offer.offer_description|default_if_none:"" }}</p>
+        <h4>{{ object.gateway_id}}</h4>
+        <h4>{{ object.receipts.first.order_item.name}}</h4>
+        <p>{{ object.receipts.first.order_item.offer.offer_description|default_if_none:"" }}</p>
         <div class='row'>
           <div class='d-flex flex-column w-50 px-3 py-2'>
             <div class='font-weight-bold'>
               {% trans 'Transaction' %}
             </div>
-            {{object.transaction}}
+            {{object.gateway_id}}
           </div>
           <div class='d-flex flex-column w-50 px-3 py-2'>
             <div class='font-weight-bold'>
@@ -30,14 +31,14 @@
             <div class='font-weight-bold'>
               {% trans 'Term Type' %}
             </div>
-            {{object.order_item.offer.get_terms_display}}
+            {{object.receipts.first.order_item.offer.get_terms_display}}
           </div>
           <div class='d-flex flex-column w-50 px-3 py-2'>
             <div class='font-weight-bold'>
               {% trans 'Trial Period' %}
             </div>
-            {{object.order_item.offer.term_details.trial_occurrences|default:'0'}}
-            {% if object.order_item.offer.term_details.term_units == 10 %}
+            {{object.receipts.first.order_item.offer.term_details.trial_occurrences|default:'0'}}
+            {% if object.receipts.first.order_item.offer.term_details.term_units == 10 %}
             {% trans 'Days' %}
             {% else %}
             {% trans 'Months' %}
@@ -48,19 +49,19 @@
               {% trans 'Ends On' %}
             </div>
             <div class="{% if not object.auto_renew %}text-danger{% endif %}">
-              {{ object.end_date|date:'Y-M -d' }}
+              {{ object.receipts.last.end_date|date:'Y-M-d' }}
             </div>
           </div>
           <div class='d-flex flex-column w-50 px-3 py-2'>
             <div class='font-weight-bold'>
               {% trans 'Cost' %}
             </div>
-            ${{ object.order_item.get_total_display }} {{ object.order_item.invoice.currency|upper }}
+            ${{ object.payments.last.amount }} {{ object.receipts.first.order_item.invoice.currency|upper }}
           </div>
           <div class='d-flex flex-column w-100 px-3 py-2'>
             <div class='font-weight-bold'>{% trans 'Actions:' %}</div>
             {% if object.status == 30 %}
-            <form class="align-itmes-center" method="post" action="{{ object.order_item.offer.add_to_cart_link }}">
+            <form class="align-itmes-center" method="post" action="{{ object.receipts.first.order_item.offer.add_to_cart_link }}">
               {% csrf_token %}
               <button class="btn btn-sm btn-primary" type="submit">{% trans 'Renew Subscription' %}</button>
             </form>

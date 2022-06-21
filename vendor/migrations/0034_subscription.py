@@ -24,6 +24,7 @@ class Migration(migrations.Migration):
                 ('auto_renew', models.BooleanField(default=False, verbose_name='Auto Renew')),
                 ('meta', models.JSONField(blank=True, default=dict, null=True, verbose_name='Meta')),
                 ('profile', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subscriptions', to='vendor.customerprofile', verbose_name='Purchase Profile')),
+                ('status', models.IntegerField(choices=[(10, 'Pause'), (20, 'Active'), (30, 'Canceled'), (40, 'Suspended')], default=0, verbose_name='Status')),
             ],
             options={
                 'verbose_name': 'Subscription',

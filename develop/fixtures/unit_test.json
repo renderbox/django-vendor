@@ -604,7 +604,7 @@
     "model": "vendor.receipt",
     "pk": 2,
     "fields": {
-        "created": "2020-10-02T16:53:37.438Z",
+        "created": "2020-06-30T01:20:01.616Z",
         "updated": "2020-10-02T16:53:37.438Z",
         "profile": 1,
         "order_item": 2,
