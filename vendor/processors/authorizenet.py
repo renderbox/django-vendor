@@ -801,7 +801,11 @@ def create_subscription_model_form_past_receipts(site):
         subscription_id = sub_detail.id.text
         past_receipt = Receipt.objects.filter(transaction=subscription_id).first()
         
-        if past_receipt:        
+        if past_receipt:
+            Receipt.objects.filter(transaction=subscription_id).update(deleted=True)
+            payments = Payment.objects.filter(transaction=subscription_id).update(deleted=True)
+            Invoice.objects.filter(payments__in=payments).update(deleted=True)
+            
             subscription = Subscription()
             subscription.gateway_id = subscription_id
             subscription.profile = past_receipt.profile
@@ -847,6 +851,7 @@ def create_subscription_model_form_past_receipts(site):
                 payment.status = PurchaseStatus.SETTLED
                 payment.transaction = transaction_id
                 payment.payee_full_name = payment_info['full_name']
+                payment.amount = trans_detail.settleAmount.pyval
                 payment.save()
 
                 # Create Receipt
