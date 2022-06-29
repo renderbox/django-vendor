@@ -36,11 +36,14 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
         subscription to a Payment Gateway, make sure to also cancel such subscription
         in the given Payment Gateway.
         """
-        receipt = self.receipts.order_by('created').last()
-        receipt.end_date = timezone.now()
-        receipt.meta['voided_on'] = receipt.end_date.strftime("%Y-%m-%d_%H:%M:%S")
-        receipt.save()
-        self.meta[receipt.end_date.strftime("%Y-%m-%d_%H:%M:%S")] = f'voided receipt: {receipt.uuid}'
+        active_receipts = self.receipts.filter(end_date__gte=timezone.now())
+
+        for receipt in active_receipts:
+            receipt.end_date = timezone.now()
+            receipt.meta['voided_on'] = receipt.end_date.strftime("%Y-%m-%d_%H:%M:%S")
+            receipt.save()
+            
+        self.meta[receipt.end_date.strftime("%Y-%m-%d_%H:%M:%S")] = f'voided receipst: {[receipt.uuid for receipt in active_receipts]}'
         self.save()
 
     def cancel(self):

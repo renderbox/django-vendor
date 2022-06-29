@@ -128,8 +128,7 @@ class VoidProductView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         receipt = get_object_or_404(Receipt, uuid=self.kwargs["uuid"])
-        receipt.void()
-        receipt.save()
+        receipt.subscription.void()
 
         messages.info(request, _("Customer has no longer access to Product"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))

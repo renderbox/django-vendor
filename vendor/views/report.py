@@ -10,7 +10,7 @@ from django.views.generic.list import BaseListView
 from django.views.generic.edit import FormMixin
 
 from vendor.forms import DateRangeForm
-from vendor.models import Receipt, Invoice
+from vendor.models import Receipt, Invoice, CustomerProfile
 from vendor.utils import get_site_from_request
 
 
