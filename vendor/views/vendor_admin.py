@@ -321,7 +321,7 @@ class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
         invoice.add_offer(past_receipt.order_item.offer)
 
         processor = get_site_payment_processor(invoice.site)(invoice.site, invoice)
-        processor.renew_subscription(past_receipt, payment_info)
+        processor.renew_subscription(past_receipt.transaction, payment_info)
 
         messages.info(request, _("Subscription Renewed"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))

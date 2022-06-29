@@ -84,7 +84,7 @@
     <div class='card'>
       <div class='card-header'>
         <div class='d-flex flex-row justify-content-between'>
-          {% trans 'Active Products Owned' %}
+          {% trans 'Active Receipts' %}
         </div>
       </div>
       <div class='card-body'>
@@ -110,13 +110,6 @@
                     {% trans 'VOID' %}
                   </button>
                 </form>
-                <form class="align-items-center" method="post"
-                  action="{% url 'vendor_api:customer-subscription-cancel' receipt.uuid %}">
-                  {% csrf_token %}
-                  <button class="btn btn-sm btn-danger" type="submit">
-                    {% trans 'Cancel' %}
-                  </button>
-                </form>
               </th>
             </tr>
             {% endfor %}
@@ -129,7 +122,7 @@
     <div class='card'>
       <div class='card-header'>
         <div class='d-flex flex-row justify-content-between'>
-          {% trans 'Inactive Products Owned' %}
+          {% trans 'Past Receipts' %}
         </div>
       </div>
       <div class='card-body'>
@@ -148,13 +141,6 @@
                 <p>{{receipt.start_date|date:"Y-m-d"}} to {{receipt.end_date|date:"Y-m-d"}}</p>
               </th>
               <th>
-                <form class="align-itmes-center" method="post"
-                  action="{% url 'vendor_admin:manager-product-renew' receipt.uuid %}">
-                  {% csrf_token %}
-                  <button class="btn btn-sm btn-danger" type="submit">
-                    {% trans 'Renew' %}
-                  </button>
-                </form>
               </th>
             </tr>
             {% endfor %}
@@ -197,7 +183,30 @@
   </div>
 </div>
 <div class='row'>
-
+  <h3 class="col-12">{% trans 'Subscriptions' %}</h3>
+  {% for subscription in object.subscriptions.all %}
+  <div class="col-3">
+    <div class="card">
+      <div class="card-header">
+        {{ subscription.receipts.first.order_item.offer.name }}
+      </div>
+      <div class="card-body row">
+        <form class="mx-2" method="post" action="{% url 'vendor_api:customer-subscription-cancel' subscription.uuid %}">
+          {% csrf_token %}
+          <button class="btn btn-sm btn-danger" type="submit">
+            {% trans 'Cancel' %}
+          </button>
+        </form>
+        <form class="mx-2" method="post" action="{% url 'vendor_admin:manager-product-renew' subscription.uuid %}">
+          {% csrf_token %}
+          <button class="btn btn-sm btn-danger" type="submit">
+          {% trans 'Renew' %}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
 </div>
 <div class='row'>
   <h3>{% trans 'Invoices' %}</h3>

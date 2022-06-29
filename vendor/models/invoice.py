@@ -142,9 +142,9 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
             self.total = 0
 
     def get_payment_billing_address(self):
-        if not self.payments.filter(success=True).first().billing_address:
+        if not self.payments.first().billing_address:
             return ""
-        return self.payments.filter(success=True).first().billing_address.get_address_display()
+        return self.payments.first().billing_address.get_address_display()
 
     def get_absolute_management_url(self):
         """
