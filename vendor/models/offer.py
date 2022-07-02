@@ -121,8 +121,10 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
     def description(self):
         if self.offer_description:
             return self.offer_description
-        else:
+        elif self.products.count():
             return self.products.all().first().description
+        else:
+            return ""
 
     def discount(self, currency=DEFAULT_CURRENCY):
         """
