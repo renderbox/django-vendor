@@ -42,6 +42,10 @@ class CustomerProfile(CreateUpdateModelBase):
             return "New Customer Profile"
         return f"{self.user.username} - {self.site}"
 
+    @property
+    def email(self):
+        return self.user.email
+
     def get_customer_profile_display(self):
         return str(self.user.username) + _("Customer Profile")
 
