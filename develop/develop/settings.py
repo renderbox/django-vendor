@@ -206,9 +206,29 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'file': {
-            'level': 'WARNING',
+            'level': 'DEGUG',
             'class': 'logging.FileHandler',
             'filename': 'debug.log',
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'info.log',
+        },
+        'file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': 'warning.log',
+        },
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': 'error.log',
+        },
+        'file': {
+            'level': 'CRITICAL',
+            'class': 'logging.FileHandler',
+            'filename': 'crititcal.log',
         },
         'console': {
             'level': 'WARNING',
@@ -223,7 +243,27 @@ LOGGING = {
         },
         'vendor': {
             'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'vendor': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'vendor': {
+            'handlers': ['file'],
             'level': 'WARNING',
+            'propagate': True,
+        },
+        'vendor': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'vendor': {
+            'handlers': ['file'],
+            'level': 'CRITICAL',
             'propagate': True,
         },
     },
