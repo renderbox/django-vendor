@@ -226,6 +226,16 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+        'vendor': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'vendor': {
+            'handlers': ['file'],
+            'level': 'CRITICAL',
+            'propagate': True,
+        },
     },
 }
 
