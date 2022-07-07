@@ -133,7 +133,7 @@ class AuthorizeNetBaseAPI(View):
 
         except TypeError as exce:
             logger.error(f'AuthorizeNetBaseAPI is_valid_post: TypeError Exception: {exce}')
-            
+
         return False
 
 
@@ -143,19 +143,19 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
     If there is a subscription tied to the transaction, it will renew such subscription
     """
 
-    def post(self, request, *args, **kwargs):
-        logger.info(f"AuthorizeCaptureAPI post: Event webhook: {request.POST}")
-        site = get_site_from_request(request)
+    def post(self, *args, **kwargs):
+        logger.info(f"AuthorizeCaptureAPI post: Event webhook: {self.request.POST}")
+        site = get_site_from_request(self.request)
 
-        if not request.body:
+        if not self.request.body:
             logger.warning("AuthorizeCaptureAPI post: Webhook event has no body")
             return JsonResponse({"msg": "AuthorizeCaptureAPI post: Webhook event has no body"})
 
         if not self.is_valid_post():
-            logger.error(f"AuthorizeCaptureAPI post: Request was denied: {request}")
+            logger.error(f"AuthorizeCaptureAPI post: Request was denied: {self.request}")
             raise PermissionDenied()
 
-        request_data = json.loads(request.body)
+        request_data = json.loads(self.request.body)
         transaction_id = request_data['id']
         logger.info(f"AuthorizeCaptureAPI post: Getting transaction detail for id: {transaction_id}")
         
