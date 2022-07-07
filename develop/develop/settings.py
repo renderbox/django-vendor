@@ -206,7 +206,6 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'file': {
-            'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': 'vendor.log',
         },
@@ -216,26 +215,31 @@ LOGGING = {
         }
     },
     'loggers': {
-        'django': {
+        'debug': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'info': {
             'handlers': ['file'],
             'level': 'INFO',
             'propagate': True,
         },
-        'vendor': {
-            'handlers': ['file'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'vendor': {
+        'error': {
             'handlers': ['file'],
             'level': 'ERROR',
             'propagate': True,
         },
-        'vendor': {
+        'critical': {
             'handlers': ['file'],
             'level': 'CRITICAL',
             'propagate': True,
         },
+        'warning': {
+            'handlers': ['file'],
+            'level': 'WARNING',
+            'propagate': True,
+        }
     },
 }
 
