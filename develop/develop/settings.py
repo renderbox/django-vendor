@@ -205,40 +205,31 @@ DJANGO_LOG_LEVEL=DEBUG
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+        }
+    },
     'handlers': {
         'file': {
             'class': 'logging.FileHandler',
-            'filename': 'vendor.log',
-        },
-        'console': {
-            'level': 'WARNING',
-            'class': 'logging.StreamHandler'
+            'filename': '~/django-vendor/logs/vendor.log',
         }
     },
     'loggers': {
-        'debug': {
+        'vendor': {
             'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': True,
         },
-        'info': {
+        'core': {
             'handlers': ['file'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': True,
         },
-        'error': {
+        'develop': {
             'handlers': ['file'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-        'critical': {
-            'handlers': ['file'],
-            'level': 'CRITICAL',
-            'propagate': True,
-        },
-        'warning': {
-            'handlers': ['file'],
-            'level': 'WARNING',
+            'level': 'DEBUG',
             'propagate': True,
         }
     },
