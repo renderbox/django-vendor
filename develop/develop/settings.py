@@ -215,6 +215,7 @@ LOGGING = {
         'file': {
             'class': 'logging.FileHandler',
             'filename': '~/django-vendor/logs/vendor.log',
+            'level': 'DEBUG',
             'formatter': 'verbose'
         }
     },
