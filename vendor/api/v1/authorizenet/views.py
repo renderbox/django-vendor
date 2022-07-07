@@ -158,6 +158,10 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
 
         request_data = json.loads(self.request.body)
         logger.info(f"AuthorizeCaptureAPI post: request data: {request_data}")
+        if not request_data.get('id'):
+            logger.error(f"AuthorizeCaptureAPI post: No transaction id request data: {request_data}")
+            return JsonResponse({"msg": "AuthorizeCaptureAPI post: No transaction id"})
+
         transaction_id = request_data['id']
         logger.info(f"AuthorizeCaptureAPI post: Getting transaction detail for id: {transaction_id}")
         
