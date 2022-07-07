@@ -146,6 +146,7 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
     def post(self, *args, **kwargs):
         logger.info(f"AuthorizeCaptureAPI post: Event webhook: {self.request.POST}")
         site = get_site_from_request(self.request)
+        logger.info(f"AuthorizeCaptureAPI post: site: {site}")
 
         if not self.request.body:
             logger.warning("AuthorizeCaptureAPI post: Webhook event has no body")
