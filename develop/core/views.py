@@ -1,6 +1,9 @@
+import logging
+
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
 from django.shortcuts import render
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 from django.views.generic.list import ListView
 
 from vendor.models import Offer
@@ -8,6 +11,9 @@ from vendor.forms import CreditCardForm
 from vendor.models.choice import PaymentTypes
 from vendor.utils import get_site_from_request
 from vendor.views.mixin import ProductRequiredMixin
+
+
+logger = logging.getLogger(__name__)
 
 
 class VendorIndexView(ListView):
@@ -59,3 +65,14 @@ class AccountView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
 
         return render(request, self.template_name, context)
+
+class LoggerTestView(LoginRequiredMixin, View):
+
+    def get(self, request, *args, **kwargs):
+        logger.debug("Debug Test Logger")
+        logger.info("info Test Logger")
+        logger.warning("warning Test Logger")
+        logger.error("error Test Logger")
+        logger.critical("critical Test Logger")
+
+        return JsonResponse({"msgs": "testing logger"})
