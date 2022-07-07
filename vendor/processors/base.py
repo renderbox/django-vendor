@@ -7,7 +7,7 @@ from django.conf import settings
 from django.utils import timezone
 from vendor import config
 from vendor.models import Payment, Invoice, Receipt, Subscription
-from vendor.models.choice import PurchaseStatus, TermType, InvoiceStatus
+from vendor.models.choice import PurchaseStatus, SubscriptionStatus, TermType, InvoiceStatus
 from vendor.utils import get_payment_scheduled_end_date
 ##########
 # SIGNALS
@@ -117,7 +117,9 @@ class PaymentProcessorBase(object):
         """
         Saves the result output of any transaction.
         """
-        self.subscription.success = subscription_success
+        if subscription_success:
+            self.subscription.status = SubscriptionStatus.ACTIVE
+            
         self.subscription.gateway_id = transaction_id
         self.subscription.meta[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = result_info.get('raw', "")
         self.subscription.save()

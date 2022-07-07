@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils import timezone, dateformat
 
 from vendor.models.base import CreateUpdateModelBase, SoftDeleteModelBase
-from vendor.models.choice import PurchaseStatus, SubscriptionStatus
+from vendor.models.choice import SubscriptionStatus
 from vendor.utils import get_payment_scheduled_end_date
 
 
