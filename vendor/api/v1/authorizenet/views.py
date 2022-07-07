@@ -144,7 +144,7 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
     """
 
     def post(self, *args, **kwargs):
-        logger.info(f"AuthorizeCaptureAPI post: Event webhook: {self.request.POST}")
+        logger.info(f"AuthorizeCaptureAPI post: Event webhook: {self.request.body}")
         site = get_site_from_request(self.request)
         logger.info(f"AuthorizeCaptureAPI post: site: {site}")
 
@@ -157,6 +157,7 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
             raise PermissionDenied()
 
         request_data = json.loads(self.request.body)
+        logger.info(f"AuthorizeCaptureAPI post: request data: {request_data}")
         transaction_id = request_data['id']
         logger.info(f"AuthorizeCaptureAPI post: Getting transaction detail for id: {transaction_id}")
         
