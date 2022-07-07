@@ -116,7 +116,7 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
         subscription = get_object_or_404(Subscription, uuid=self.kwargs["uuid"])
 
         processor = get_site_payment_processor(subscription.profile.site)(subscription.profile.site)
-        processor.subscription_cancel(receipt)
+        processor.subscription_cancel(subscription)
 
         messages.info(self.request, _("Subscription Cancelled"))
 
