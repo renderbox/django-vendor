@@ -84,7 +84,7 @@ class PaymentProcessorBase(object):
             amount = self.invoice.total
 
         self.payment = Payment(profile=self.invoice.profile,
-                               amount=self.invoice.total,
+                               amount=amount,
                                provider=self.provider,
                                invoice=self.invoice,
                                created=timezone.now()
