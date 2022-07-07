@@ -208,12 +208,14 @@ LOGGING = {
     'formatters': {
         'verbose': {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-        }
+            'style': '{',
+        },
     },
     'handlers': {
         'file': {
             'class': 'logging.FileHandler',
             'filename': '~/django-vendor/logs/vendor.log',
+            'formatter': 'verbose'
         }
     },
     'loggers': {
