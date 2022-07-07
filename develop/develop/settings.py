@@ -201,6 +201,7 @@ VENDOR_COUNTRY_DEFAULT = 'US'
 # can change the value on MIGRATION_0023_DEFAULT_USER
 MIGRATION_0023_DEFAULT_USER = None
 
+DJANGO_LOG_LEVEL=DEBUG
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
