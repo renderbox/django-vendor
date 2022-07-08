@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 def update_payment(site, transaction_id, json_data):
     try:
         logger.info(f"AuthorizeCaptureAPI update_payment transaction id {transaction_id}")
-        payment = Payment.objects.get(profile__site=site, transaction=transaction_id).exclude(status=PurchaseStatus.VOID)
+        payment = Payment.objects.get(profile__site=site, transaction=transaction_id, status__lt=PurchaseStatus.VOID)
         payment.status = PurchaseStatus.CAPTURED
         payment.result[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = json_data
         payment.save()
