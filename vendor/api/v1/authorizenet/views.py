@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from vendor.models import Receipt, Invoice, Subscription, Payment
 from vendor.models.choice import InvoiceStatus, PurchaseStatus
-from vendor.processors.authorizenet import AuthorizeNetProcessor
+from vendor.processors.authorizenet import AuthorizeNetProcessor, create_subscription_model_form_past_receipts
 from vendor.utils import get_site_from_request
 
 
@@ -158,11 +158,12 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
 
         request_data = json.loads(self.request.body)
         logger.info(f"AuthorizeCaptureAPI post: request data: {request_data}")
-        if not request_data.get('id'):
+
+        if not request_data.get('payload').get('id'):
             logger.error(f"AuthorizeCaptureAPI post: No transaction id request data: {request_data}")
             return JsonResponse({"msg": "AuthorizeCaptureAPI post: No transaction id"})
 
-        transaction_id = request_data['id']
+        transaction_id = request_data.get('payload').get('id')
         logger.info(f"AuthorizeCaptureAPI post: Getting transaction detail for id: {transaction_id}")
         
         processor = AuthorizeNetProcessor(site)
@@ -170,9 +171,16 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
 
         if not hasattr(transaction_detail, 'subscription'):
             logger.info(f"AuthorizeCaptureAPI post: updating payment for transaction detail: {transaction_detail}")
-            update_payment(site, transaction_id, request_data)
+            update_payment(site, transaction_id, request_data.get('payload'))
         else:
             logger.info(f"AuthorizeCaptureAPI post: savint subscription transaction: {transaction_detail}")
-            subscription_save_transaction(site, request_data, transaction_detail)
+            subscription_save_transaction(site, request_data.get('payload'), transaction_detail)
 
         return JsonResponse({"msg": "AuthorizeCaptureAPI post event finished"})
+
+class SyncSubscriptions(View):
+
+    def get(self, *args, **kwargs):
+        site = get_site_from_request(self.request)
+        create_subscription_model_form_past_receipts(site)
+        return JsonResponse({'msg': 'one more time'})

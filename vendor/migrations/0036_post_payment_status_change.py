@@ -7,7 +7,7 @@ def post_payment_status_change(apps, schema_editor):
     ReceiptModel = apps.get_model('vendor', 'Receipt')
 
     for payment in Payment.objects.all():
-        receipt = pk=payment.get_receipt()
+        receipt = payment.get_receipt()
         
         if receipt:
             r = ReceiptModel.objects.get(pk=receipt.pk)

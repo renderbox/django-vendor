@@ -37,7 +37,7 @@ except ModuleNotFoundError:
     pass
 
 from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models.choice import TransactionTypes, PaymentTypes, TermType, TermDetailUnits, InvoiceStatus, PurchaseStatus
+from vendor.models.choice import SubscriptionStatus, TransactionTypes, PaymentTypes, TermType, TermDetailUnits, InvoiceStatus, PurchaseStatus
 from vendor.models import Invoice, Payment, Subscription, Receipt
 from vendor.models.address import Country
 from .base import PaymentProcessorBase
@@ -803,10 +803,11 @@ def create_subscription_model_form_past_receipts(site):
         
         if past_receipt:
             Receipt.objects.filter(transaction=subscription_id).update(deleted=True)
-            payments = Payment.objects.filter(transaction=subscription_id).update(deleted=True)
-            Invoice.objects.filter(payments__in=payments).update(deleted=True)
+            Payment.objects.filter(transaction=subscription_id).update(deleted=True)
+            Invoice.objects.filter(payments__in=Payment.objects.filter(transaction=subscription_id)).update(deleted=True)
             
             subscription = Subscription()
+            subscription.status = SubscriptionStatus.ACTIVE
             subscription.gateway_id = subscription_id
             subscription.profile = past_receipt.profile
             subscription.auto_renew = True
