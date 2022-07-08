@@ -15,6 +15,6 @@ urlpatterns = [
     path('product/<uuid:uuid>/availability', api_views.ProductAvailabilityToggleView.as_view(), name="manager-product-availablility"),
     path('subscription/price/update', api_views.SubscriptionPriceUpdateView.as_view(), name="manager-subscription-price-update"),
     path('authorizenet/authcapture', authorizenet_views.AuthorizeCaptureAPI.as_view(), name='api-authorizenet-authcapture'),
-    path('authorizenet/void', authorizenet_views.AuthorizeCaptureAPI.as_view(), name='api-authorizenet-void'),
+    path('authorizenet/void', authorizenet_views.VoidAPI.as_view(), name='api-authorizenet-void'),
     path('authorizenet/sync/subscriptions/', authorizenet_views.SyncSubscriptions.as_view(), name='api-authorizenet-sync-subscriptions')
 ]
