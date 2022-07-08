@@ -196,7 +196,7 @@ class VoidAPI(AuthorizeNetBaseAPI):
         request_data = json.loads(self.request.body)
         logger.info(f"VoidAPI post: request data: {request_data}")
 
-        if request_data.get('eventType') != 'net.authorize.payment.authorization.created':
+        if request_data.get('eventType') != 'net.authorize.payment.void.created':
             logger.error(f"VoidAPI post: wrong event type: {request_data.get('eventType')}")
             return JsonResponse({"msg": "Event type is incorrect"})
         
