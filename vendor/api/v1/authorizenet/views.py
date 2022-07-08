@@ -178,6 +178,35 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
 
         return JsonResponse({"msg": "AuthorizeCaptureAPI post event finished"})
 
+class VoidAPI(AuthorizeNetBaseAPI):
+
+    def post(self, *args, **kwargs):
+        logger.info(f"VoidAPI post: Event webhook: {self.request.body}")
+        site = get_site_from_request(self.request)
+        logger.info(f"VoidAPI post: site: {site}")
+
+        if not self.request.body:
+            logger.warning("VoidAPI post: Webhook event has no body")
+            return JsonResponse({"msg": "VoidAPI post: Webhook event has no body"})
+
+        if not self.is_valid_post():
+            logger.error(f"VoidAPI post: Request was denied: {self.request}")
+            raise PermissionDenied()
+        
+        request_data = json.loads(self.request.body)
+        logger.info(f"VoidAPI post: request data: {request_data}")
+
+        if request_data.get('eventType') != 'net.authorize.payment.authorization.created':
+            logger.error(f"VoidAPI post: wrong event type: {request_data.get('eventType')}")
+            return JsonResponse({"msg": "Event type is incorrect"})
+        
+        Payment.objects.filter(site=site, transaction=request_data.get('payload').get('id')).update(status=PurchaseStatus.VOID)
+        logger.info(f"VoidAPI post: payment with transaction voided: {request_data.get('payload').get('id')}")
+
+        return JsonResponse({"msg": "VoidAPI post: success"})
+
+
+
 class SyncSubscriptions(View):
 
     def get(self, *args, **kwargs):
