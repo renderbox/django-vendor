@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 def update_payment(site, transaction_id, json_data):
     try:
         logger.info(f"AuthorizeCaptureAPI update_payment transaction id {transaction_id}")
-        payment = Payment.objects.get(profile__site=site, transaction=transaction_id)
+        payment = Payment.objects.get(profile__site=site, transaction=transaction_id).exclude(status=PurchaseStatus.VOID)
         payment.status = PurchaseStatus.CAPTURED
         payment.result[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = json_data
         payment.save()
@@ -200,7 +200,7 @@ class VoidAPI(AuthorizeNetBaseAPI):
             logger.error(f"VoidAPI post: wrong event type: {request_data.get('eventType')}")
             return JsonResponse({"msg": "Event type is incorrect"})
         
-        Payment.objects.filter(site=site, transaction=request_data.get('payload').get('id')).update(status=PurchaseStatus.VOID)
+        Payment.objects.filter(profile__site=site, transaction=request_data.get('payload').get('id')).update(status=PurchaseStatus.VOID)
         logger.info(f"VoidAPI post: payment with transaction voided: {request_data.get('payload').get('id')}")
 
         return JsonResponse({"msg": "VoidAPI post: success"})
