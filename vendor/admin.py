@@ -112,7 +112,7 @@ class CustomerProfileAdmin(admin.ModelAdmin):
 
 
 class InvoiceAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', 'profile', 'shipping_address')
+    readonly_fields = ('uuid', 'shipping_address')
     list_display = ('__str__', 'profile', 'site', 'status', 'total', 'created', 'deleted')
     search_fields = ('uuid', 'profile__user__username', )
     list_filter = ('site__domain', )
@@ -120,6 +120,16 @@ class InvoiceAdmin(admin.ModelAdmin):
         OrderItemInline,
     ]
     actions = [soft_delete_invoices_with_deleted_payments]
+    
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        form = super().get_form(request, obj, change, **kwargs)
+
+        if not obj:
+            return form
+
+        form.base_fields['profile'].queryset = CustomerProfile.objects.filter(site=obj.profile.site)
+
+        return form
 
 
 class OfferAdmin(admin.ModelAdmin):
@@ -133,29 +143,58 @@ class OfferAdmin(admin.ModelAdmin):
 
 
 class PaymentAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', 'invoice', 'profile', )
+    readonly_fields = ('uuid', 'invoice' )
     list_display = ('pk', 'created', 'transaction', 'subscription', 'invoice', 'profile', 'amount', 'deleted', 'status')
     search_fields = ('pk', 'transaction', 'profile__user__username', )
     list_filter = ('profile__site__domain', 'success', 'status')
     exclude = ('billing_address', )
     actions = [soft_delete_payments_without_order_items_invoice, soft_delete_payments_with_no_receipt]
+    
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        form = super().get_form(request, obj, change, **kwargs)
+
+        if not obj:
+            return form
+
+        form.base_fields['profile'].queryset = CustomerProfile.objects.filter(site=obj.profile.site)
+
+        return form
 
 
 class ReceiptAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', 'profile', 'order_item',)
+    readonly_fields = ('uuid', 'order_item',)
     exclude = ('updated', )
     list_display = ('pk', 'transaction', 'subscription', 'created', 'profile', 'order_item', 'start_date', 'end_date', 'deleted')
     list_filter = ('profile__site__domain', 'products')
     search_fields = ('pk', 'transaction', 'profile__user__username', )
+    
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        form = super().get_form(request, obj, change, **kwargs)
+
+        if not obj:
+            return form
+
+        form.base_fields['profile'].queryset = CustomerProfile.objects.filter(site=obj.profile.site)
+
+        return form
 
 
 class SubscriptionAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid', )
     exclude = ('updated', )
-    list_display = ('pk', 'gateway_id', 'created', 'profile')
+    list_display = ('pk', 'gateway_id', 'created', 'profile', 'status')
     list_filter = ('profile__site__domain', )
     search_fields = ('pk', 'gateway_id', 'profile__user__username', )
 
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        form = super().get_form(request, obj, change, **kwargs)
+
+        if not obj:
+            return form
+
+        form.base_fields['profile'].queryset = CustomerProfile.objects.filter(site=obj.profile.site)
+
+        return form
 
 
 class TaxClassifierAdmin(admin.ModelAdmin):

@@ -43,7 +43,7 @@ class VendorAPITest(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-# @skipIf(True, "Webhook tests are highly dependent on data in Authroizenet and local data.")
+@skipIf(True, "Webhook tests are highly dependent on data in Authroizenet and local data.")
 class AuthorizeNetAPITest(TestCase):
 
     fixtures = ['user', 'unit_test']
@@ -54,7 +54,7 @@ class AuthorizeNetAPITest(TestCase):
         self.client.force_login(self.user)
 
     def test_webhook_authcapture(self):
-        url = reverse('vendor_api:api-authorizenet-authcapture-get')
+        url = reverse('vendor_api:api-authorizenet-authcapture')
         payload = {
             "notificationId": "afc50fb2-a243-44ec-8e6c-fda7d35ecbec",
             "eventType": "net.authorize.payment.authcapture.created",
