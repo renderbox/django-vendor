@@ -1046,8 +1046,9 @@ class AuthorizeNetProcessorTests(TestCase):
         else:
             print("No active Subscriptions, Skipping Test")
 
-    def test_create_subscription_model_form_past_receipts(self):
-        create_subscription_model_form_past_receipts(self.site)
+    # def test_create_subscription_model_form_past_receipts(self):
+    #     create_subscription_model_form_past_receipts(self.site)
+
     ##########
     # Report details
     ##########
