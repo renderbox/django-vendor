@@ -272,7 +272,8 @@ class AdminProfileListView(LoginRequiredMixin, TableFilterMixin, SiteOnRequestFi
     def search_filter(self, queryset):
         search_value = self.request.GET.get('search_filter')
         return queryset.filter(Q(pk__icontains=search_value) | \
-                               Q(user__email__icontains=search_value))
+                               Q(user__email__icontains=search_value) | \
+                               Q(user__username__icontains=search_value))
 
     def get_paginated_by(self, queryset):
         if 'paginate_by' in self.request.kwargs:
