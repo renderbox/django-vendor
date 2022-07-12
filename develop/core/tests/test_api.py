@@ -46,7 +46,7 @@ class VendorAPITest(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-# @skipIf(True, "Webhook tests are highly dependent on data in Authroizenet and local data.")
+@skipIf(True, "Webhook tests are highly dependent on data in Authroizenet and local data.")
 class AuthorizeNetAPITest(TestCase):
 
     fixtures = ['user', 'unit_test']
