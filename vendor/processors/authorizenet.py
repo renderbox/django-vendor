@@ -2,13 +2,16 @@
 Payment processor for Authorize.net.
 """
 import ast
+from datetime import datetime
 from decimal import Decimal, ROUND_DOWN
-from vendor.integrations import AuthorizeNetIntegration
 from django.conf import settings
 from django.utils import timezone
+from django.db.models import IntegerChoices
 from math import ceil
 from vendor.config import VENDOR_PAYMENT_PROCESSOR, VENDOR_STATE
-from vendor.utils import get_future_date_days
+from vendor.utils import get_future_date_days, get_payment_scheduled_end_date
+from vendor.integrations import AuthorizeNetIntegration
+
 
 try:
     from authorizenet import apicontractsv1
@@ -34,10 +37,9 @@ except ModuleNotFoundError:
     pass
 
 from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models.choice import TransactionTypes, PaymentTypes, TermType, TermDetailUnits, InvoiceStatus, PurchaseStatus
-from vendor.models.invoice import Invoice
+from vendor.models.choice import SubscriptionStatus, TransactionTypes, PaymentTypes, TermType, TermDetailUnits, InvoiceStatus, PurchaseStatus
+from vendor.models import Invoice, Payment, Subscription, Receipt
 from vendor.models.address import Country
-from vendor.models.payment import Payment
 from .base import PaymentProcessorBase
 
 
@@ -85,12 +87,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.merchant_auth = apicontractsv1.merchantAuthenticationType()
         self.credentials = AuthorizeNetIntegration(site)
 
-        if self.credentials.instance:
-            self.merchant_auth.name = self.credentials.instance.client_id
-            self.merchant_auth.transactionKey = self.credentials.instance.public_key
-        elif settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID:
+        if settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID:
             self.merchant_auth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY
             self.merchant_auth.name = settings.AUTHORIZE_NET_API_ID
+        elif self.credentials.instance:
+            self.merchant_auth.name = self.credentials.instance.client_id
+            self.merchant_auth.transactionKey = self.credentials.instance.public_key
         else:
             raise ValueError("Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID")
 
@@ -294,6 +296,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         order.description = description
         return order
 
+    def create_paging(self, limit, offset=1):
+        paging = apicontractsv1.Paging()
+        paging.limit = limit
+        paging.offset = offset
+
+        return paging
+
     ##########
     # Django-Vendor to Authoriaze.net data exchange functions
     ##########
@@ -326,6 +335,18 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         The transaction id is the subscription id returned by Authorize.Net
         """
         self.transaction_id = self.transaction_message.get("subscription_id", 'failed_payement')
+
+        transaction_info = {}
+        transaction_info['raw'] = self.get_transaction_raw_response()
+
+        self.transaction_response = transaction_info
+
+    def save_subscription_result(self):
+        """
+        Processes the transaction reponse from the gateway so it can be saved in the payment model
+        The transaction id is the subscription id returned by Authorize.Net
+        """
+        self.transaction_id = self.transaction_message.get("subscription_id", 'failed_subscription')
 
         transaction_info = {}
         transaction_info['raw'] = self.get_transaction_raw_response()
@@ -426,6 +447,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.process_payment_transaction_response()
 
+        if self.transaction_submitted:
+            self.payment.status = PurchaseStatus.CAPTURED
+        else:
+            self.payment.status = PurchaseStatus.DECLINED
+
+        self.payment.save()
+
     def subscription_payment(self, subscription):
         """
         subscription: Type: OrderItem
@@ -458,7 +486,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
         self.check_subscription_response(response)
 
-        self.save_payment_subscription()
+        self.save_subscription_result()
 
     def subscription_update_payment(self, receipt):
         """
@@ -498,21 +526,15 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.payment.save()
 
-    def subscription_cancel(self, receipt):
+    def subscription_cancel(self, subscription):
         """
         If receipt.invoice.total is zero, no need to call Gateway as there is no
         transaction for it. Otherwise it will cancel the subscription on the Gateway
         and if successfull it will cancel it on the receipt.
         """
-        receipt.vendor_notes['cancelled_on'] = f"{timezone.now():%d/%m/%Y %H:%m:%s}"
-        if not receipt.order_item.invoice.total:
-            receipt.cancel()
-            receipt.save()
-            return None
-
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = str(receipt.transaction)
+        self.transaction.subscriptionId = str(subscription.gateway_id)
         self.transaction.includeTransactions = False
 
         self.controller = ARBCancelSubscriptionController(self.transaction)
@@ -524,14 +546,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.check_subscription_response(response)
 
         if self.transaction_submitted:
-            receipt.cancel()
-            receipt.save()
+            super().subscription_cancel(subscription)
 
     def subscription_info(self, subscription_id):
         self.transaction = apicontractsv1.ARBGetSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.subscriptionId = str(subscription_id)
-        self.transaction.includeTransactions = False
+        self.transaction.includeTransactions = True
 
         self.controller = ARBGetSubscriptionController(self.transaction)
         self.set_controller_api_endpoint()
@@ -584,13 +605,15 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.check_response(response)
 
+        super().void_payment()
+
     def is_card_valid(self):
         """
         Handles an Authorize Only transaction to ensure that the funds are in the customers bank account
         """
         invoice_number = str(self.invoice.pk)[:19]
         description = "This amount is only to check for valid cards and will not be charged. Depending on your bank the charge can take 3 to 5 days to be removed."
-        self.create_payment_model()
+        self.create_payment_model(settings.VENDOR_CHARGE_VALIDATION_PRICE)
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(self.transaction_types[TransactionTypes.AUTHORIZE])
         self.transaction_type.amount = self.to_valid_decimal(settings.VENDOR_CHARGE_VALIDATION_PRICE)
@@ -608,6 +631,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.check_response(response)
 
         if self.transaction_submitted:
+            self.payment.transaction = self.transaction_message['trans_id'].text
+            self.payment.save()
             self.void_payment(self.transaction_message['trans_id'].text)
             return True
         return False
@@ -636,6 +661,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         paging = apicontractsv1.Paging()
         paging.limit = 10
         paging.offset = 1
+
         sorting = apicontractsv1.CustomerPaymentProfileSorting()
         sorting.orderBy = apicontractsv1.CustomerPaymentProfileOrderFieldEnum.id
         sorting.orderDescending = "false"
@@ -690,7 +716,21 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         
         return None
 
+    def get_settled_transactions(self, start_date, end_date):
+        batch_list = self.get_settled_batch_list(start_date, end_date)
+        successfull_transactions = []
+        if not batch_list:
+            return []
+        
+        for batch in batch_list:
+            transaction_list = self.get_transaction_batch_list(str(batch.batchId))
+            successfull_transactions.extend([ t.transId.text for t in transaction_list if t['transactionStatus'] == 'settledSuccessfully' ])
 
+        return successfull_transactions
+    
+    def update_receipts_to_settled(self, site, settled_transactions):
+        return Payment.objects.filter(profile__site=site, transaction__in=settled_transactions).update(status=PurchaseStatus.SETTLED)
+        
 
     ##########
     # Reporting API, for transaction retrieval information
@@ -745,10 +785,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
             return response.transaction
 
-    def get_list_of_subscriptions(self):
+    def get_list_of_subscriptions(self, limit=1000, offset=1):
         self.transaction = apicontractsv1.ARBGetSubscriptionListRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.searchType = apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionActive
+        self.transaction.paging = self.create_paging(limit, offset)
 
         self.controller = ARBGetSubscriptionListController(self.transaction)
         self.set_controller_api_endpoint()
@@ -756,7 +797,104 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         # Work on the response
         response = self.controller.getresponse()
-        if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok and hasattr(response.subscriptionDetails, 'subscriptionDetail'):
-            return response.subscriptionDetails.subscriptionDetail
+
+        self.check_subscription_response(response)
+
+        if self.transaction_submitted:
+            return self.transaction_response.subscriptionDetails.subscriptionDetail
         else:
             return []
+
+def create_subscription_model_form_past_receipts(site):
+    print("Starting Subscription Migration")
+    processor = AuthorizeNetProcessor(site)
+
+    subscriptions = processor.get_list_of_subscriptions(1000)
+    active_subscriptions = [ s for s in subscriptions if s['status'] == 'active' ]
+    
+    create_subscriptions = [sub.id.text for sub in active_subscriptions if not Subscription.objects.filter(profile__site=site, gateway_id=sub.id.text).count() ]
+    print(f"Create Subscriptions: {[sub for sub in create_subscriptions]}")
+
+    for sub_detail in create_subscriptions:
+        print(f"Starting Migration for Subscription: {sub_detail}")
+        subscription_id = sub_detail
+        past_receipt = Receipt.objects.filter(transaction=subscription_id).first()
+        
+        if past_receipt:
+            print(f"Deleting Receipts: {Receipt.objects.filter(transaction=subscription_id)}")
+            Receipt.objects.filter(transaction=subscription_id).update(deleted=True)
+            print(f"Deleting Payments: {Payment.objects.filter(transaction=subscription_id)}")
+            Payment.objects.filter(transaction=subscription_id).update(deleted=True)
+            print(f"Deleting Invoices: {Invoice.objects.filter(payments__in=Payment.objects.filter(transaction=subscription_id))}")
+            Invoice.objects.filter(payments__in=Payment.objects.filter(transaction=subscription_id)).update(deleted=True)
+            
+            subscription, created = Subscription.objects.get_or_create(
+                gateway_id=subscription_id,
+                profile=past_receipt.profile
+            )
+            subscription.status = SubscriptionStatus.ACTIVE
+            subscription.auto_renew = True
+            subscription.save()
+            print(f"Created subscription: {subscription}")
+            
+            subscription_info = processor.subscription_info(subscription_id)
+
+            for transaction in subscription_info.subscription.arbTransactions.arbTransaction:
+                print(f"Processing transaction {transaction}")
+                try:
+                    transaction_id = transaction.transId.text
+
+                    trans_processor = AuthorizeNetProcessor(site)
+
+                    trans_detail = trans_processor.get_transaction_detail(transaction_id)
+                    submitted_datetime = datetime.strptime(trans_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S.%f%z')
+
+                    invoice = Invoice.objects.create(
+                        status=InvoiceStatus.COMPLETE,
+                        site=past_receipt.profile.site,
+                        profile=past_receipt.profile,
+                        ordered_date=submitted_datetime,
+                        total=trans_detail.settleAmount.pyval
+                    )
+                    invoice.add_offer(past_receipt.order_item.offer)
+                    invoice.save()
+
+                    payment_info = {
+                        'account_number': trans_detail.payment.creditCard.cardNumber.text[-4:],
+                        'account_type': trans_detail.payment.creditCard.cardType.text,
+                        'full_name': " ".join([trans_detail.billTo.firstName.text, trans_detail.billTo.lastName.text]),
+                        'transaction_id': transaction_id,
+                        'subscription_id': trans_detail.subscription.id.text,
+                        'payment_number': trans_detail.subscription.payNum.text
+                    }
+
+                    # Create Payment
+                    payment = Payment(profile=invoice.profile,
+                                amount=invoice.total,
+                                invoice=invoice,
+                                created=submitted_datetime)
+                    payment.result = payment_info
+                    payment.subscription = subscription
+                    payment.success = True
+                    payment.status = PurchaseStatus.SETTLED
+                    payment.transaction = transaction_id
+                    payment.payee_full_name = payment_info['full_name']
+                    payment.amount = trans_detail.settleAmount.pyval
+                    payment.save()
+
+                    # Create Receipt
+                    receipt = Receipt()
+                    receipt.profile = invoice.profile
+                    receipt.order_item = past_receipt.order_item
+                    receipt.transaction = payment.transaction
+                    receipt.meta.update(payment.result)
+                    receipt.meta['payment_amount'] = payment.amount
+                    receipt.start_date = submitted_datetime
+                    receipt.save()
+
+                    receipt.end_date = get_payment_scheduled_end_date(past_receipt.order_item.offer, start_date=receipt.start_date)
+                    receipt.subscription = subscription
+                    receipt.save()
+                except Exception as exce:
+                    print(f"Invalid Transaction")
+

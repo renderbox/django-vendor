@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from vendor.models.choice import TermDetailUnits
 
+
 #############
 # Requst and Session Utils
 def get_site_from_request(request):
@@ -63,3 +64,5 @@ def get_payment_scheduled_end_date(offer, start_date=timezone.now()):
 
 def get_display_decimal(amount):
     return Decimal(amount).quantize(Decimal('.00'), rounding=ROUND_UP)
+
+

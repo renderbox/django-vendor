@@ -4,7 +4,8 @@ from django.contrib import admin
 from django.db.models import Count
 
 from vendor.models import TaxClassifier, Offer, Price, CustomerProfile, \
-    Invoice, OrderItem, Receipt, Wishlist, WishlistItem, Address, Payment
+    Invoice, OrderItem, Receipt, Wishlist, WishlistItem, Address, Payment, \
+    Subscription
 from vendor.models.choice import InvoiceStatus
 
 
@@ -81,7 +82,16 @@ class PriceInline(admin.TabularInline):
 
 class ReceiptInline(admin.TabularInline):
     model = Receipt
-    extra = 1
+    exclude = ('deleted', 'uuid', 'vendor_notes', 'meta', 'profile')
+    readonly_fields = ('pk', 'transaction', 'order_item', 'start_date', 'end_date')
+    max_num = 1
+
+
+class PaymentInline(admin.TabularInline):
+    model = Payment
+    exclude = ('deleted', 'uuid', 'provider', 'profile', 'billing_address', 'result', 'payee_full_name', 'payee_company')
+    readonly_fields = ('pk', 'transaction', 'invoice', 'created', 'status', 'amount', 'success')
+    max_num = 1
 
 
 class WishlistInline(admin.TabularInline):
@@ -104,14 +114,14 @@ class AddressAdmin(admin.ModelAdmin):
 
 
 class CustomerProfileAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid',)
-    list_display = ('user', 'site', 'currency', 'created')
-    search_fields = ('profile__user__username', )
+    readonly_fields = ('uuid', 'user', 'currency', 'site')
+    list_display = ('pk', 'user', 'email', 'site', 'currency', 'created')
+    search_fields = ('profile__user__username', 'profile__user__email')
     list_filter = ('site__domain', )
 
 
 class InvoiceAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', 'profile', 'shipping_address')
+    readonly_fields = ('uuid', 'shipping_address', 'profile')
     list_display = ('__str__', 'profile', 'site', 'status', 'total', 'created', 'deleted')
     search_fields = ('uuid', 'profile__user__username', )
     list_filter = ('site__domain', )
@@ -132,8 +142,8 @@ class OfferAdmin(admin.ModelAdmin):
 
 
 class PaymentAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', 'invoice', 'profile', )
-    list_display = ('pk', 'created', 'transaction', 'invoice', 'profile', 'amount', 'deleted', 'status')
+    readonly_fields = ('uuid', 'invoice', 'profile' )
+    list_display = ('pk', 'created', 'transaction', 'subscription', 'invoice', 'profile', 'amount', 'deleted', 'status')
     search_fields = ('pk', 'transaction', 'profile__user__username', )
     list_filter = ('profile__site__domain', 'success', 'status')
     exclude = ('billing_address', )
@@ -141,11 +151,30 @@ class PaymentAdmin(admin.ModelAdmin):
 
 
 class ReceiptAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', 'profile', 'order_item',)
+    readonly_fields = ('uuid', 'order_item', 'profile')
     exclude = ('updated', )
-    list_display = ('pk', 'transaction', 'created', 'profile', 'order_item', 'start_date', 'end_date', 'deleted')
+    list_display = ('pk', 'transaction', 'subscription', 'created', 'profile', 'order_item', 'start_date', 'end_date', 'deleted')
     list_filter = ('profile__site__domain', 'products')
     search_fields = ('pk', 'transaction', 'profile__user__username', )
+    # Example for future filters on AdminForm Fields
+    # def get_form(self, request, obj=None, change=False, **kwargs):
+    #     form = super().get_form(request, obj, change, **kwargs)
+
+    #     if not obj:
+    #         return form
+
+    #     form.base_fields['profile'].queryset = CustomerProfile.objects.filter(site=obj.profile.site)
+
+    #     return form
+
+
+class SubscriptionAdmin(admin.ModelAdmin):
+    readonly_fields = ('uuid', 'profile')
+    exclude = ('updated', )
+    list_display = ('pk', 'gateway_id', 'created', 'profile', 'status')
+    list_filter = ('profile__site__domain', )
+    search_fields = ('pk', 'gateway_id', 'profile__user__username', )
+    inlines = [PaymentInline, ReceiptInline]
 
 
 class TaxClassifierAdmin(admin.ModelAdmin):
@@ -170,4 +199,5 @@ admin.site.register(Wishlist, WishlistAdmin)
 admin.site.register(Address, AddressAdmin)
 admin.site.register(Receipt, ReceiptAdmin)
 admin.site.register(Payment, PaymentAdmin)
+admin.site.register(Subscription, SubscriptionAdmin)
 admin.site.register(OrderItem)

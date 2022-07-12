@@ -10,6 +10,7 @@ from vendor.models.payment import Payment
 from vendor.models.price import Price
 from vendor.models.profile import CustomerProfile
 from vendor.models.receipt import Receipt
+from vendor.models.subscription import Subscription
 from vendor.models.tax import TaxClassifier
 from vendor.models.wishlist import Wishlist, WishlistItem
 # from .product import Product

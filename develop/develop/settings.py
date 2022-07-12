@@ -201,30 +201,40 @@ VENDOR_COUNTRY_DEFAULT = 'US'
 # can change the value on MIGRATION_0023_DEFAULT_USER
 MIGRATION_0023_DEFAULT_USER = None
 
+DJANGO_LOG_LEVEL=DEBUG
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} {levelname} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'file': {
-            'level': 'WARNING',
             'class': 'logging.FileHandler',
-            'filename': 'debug.log',
-        },
-        'console': {
-            'level': 'WARNING',
-            'class': 'logging.StreamHandler'
+            'filename': 'vendor.log',
+            'level': 'DEBUG',
+            'formatter': 'verbose'
         }
     },
     'loggers': {
-        'django': {
-            'handlers': ['file'],
-            'level': 'WARNING',
-            'propagate': True,
-        },
         'vendor': {
             'handlers': ['file'],
-            'level': 'WARNING',
+            'level': 'DEBUG',
             'propagate': True,
         },
+        'core': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'develop': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        }
     },
 }
+

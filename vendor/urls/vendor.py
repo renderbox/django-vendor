@@ -5,6 +5,7 @@ from vendor.views import vendor as vendor_views
 app_name = "vendor"
 
 urlpatterns = [
+    path('', vendor_views.VendorHomeView.as_view(), name='vendor-home'),
     path('cart/', vendor_views.CartView.as_view(), name="cart"),
     path('checkout/summary/<uuid:uuid>/', vendor_views.PaymentSummaryView.as_view(), name="purchase-summary"),
 

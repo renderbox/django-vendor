@@ -50,7 +50,7 @@ class StripeProcessor(PaymentProcessorBase):
 
             payment.transaction = charge['id']
             payment.success = True
-            payment.status = PurchaseStatus.COMPLETE
+            payment.status = PurchaseStatus.SETTLED
 
         except stripe.error.CardError as e:
             # Since it's a decline, stripe.error.CardError will be caught

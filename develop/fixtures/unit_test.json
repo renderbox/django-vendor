@@ -594,7 +594,6 @@
         "order_item": 2,
         "start_date": "2020-10-02T16:53:37.437Z",
         "end_date": "2020-11-02T16:53:37.437Z",
-        "auto_renew": false,
         "vendor_notes": {},
         "transaction": "7127667",
         "meta": {},
@@ -605,13 +604,12 @@
     "model": "vendor.receipt",
     "pk": 2,
     "fields": {
-        "created": "2020-10-02T16:53:37.438Z",
+        "created": "2020-06-30T01:20:01.616Z",
         "updated": "2020-10-02T16:53:37.438Z",
         "profile": 1,
         "order_item": 2,
         "start_date": "2020-10-02T16:53:37.437Z",
         "end_date": null,
-        "auto_renew": false,
         "vendor_notes": {},
         "transaction": "1-1-1",
         "meta": {},
@@ -622,16 +620,64 @@
     "model": "vendor.receipt",
     "pk": 3,
     "fields": {
-        "created": "2020-10-02T16:53:37.438Z",
         "updated": "2020-10-02T16:53:37.438Z",
+        "created": "2020-10-02T16:53:37.438Z",
         "profile": 1,
         "order_item": 4,
         "start_date": "2020-10-02T16:53:37.437Z",
         "end_date": "2020-11-02T16:53:37.437Z",
-        "auto_renew": true,
         "vendor_notes": {},
-        "transaction": "1-1-2",
+        "transaction": "7702256",
         "meta": {},
+        "deleted": false
+    }
+},
+{
+    "model": "vendor.subscription",
+    "pk": 1,
+    "fields": {
+        "uuid": "ccda0d8a-0ddf-440b-8804-eddc28014931",
+        "updated": "2020-10-02T16:53:37.438Z",
+        "created": "2020-10-02T16:53:37.438Z",
+        "profile": 1,
+        "gateway_id": "7127667"
+    }
+},
+{
+    "model": "vendor.receipt",
+    "pk": 4,
+    "fields": {
+        "updated": "2020-10-02T16:53:37.438Z",
+        "created": "2020-10-02T16:53:37.438Z",
+        "profile": 1,
+        "order_item": 4,
+        "start_date": "2020-10-02T16:53:37.437Z",
+        "end_date": "2020-11-02T16:53:37.437Z",
+        "vendor_notes": {},
+        "transaction": null,
+        "meta": {},
+        "deleted": false,
+        "subscription": 1
+    }
+},
+{
+    "model": "vendor.payment",
+    "pk": 3,
+    "fields": {
+        "invoice": 1,
+        "uuid": "ccda0d8a-0ddf-440b-8804-eddc28114931",
+        "created": "2020-10-02T16:53:37.438Z",
+        "transaction": null,
+        "provider": "AuthorizeNetProcessor",
+        "amount": 408.43,
+        "profile": 1,
+        "billing_address": 1,
+        "result": null,
+        "success": false,
+        "payee_full_name": "Bob Ross",
+        "payee_company": "Whitemoon Dreams",
+        "status": 1,
+        "subscription": 1,
         "deleted": false
     }
 }

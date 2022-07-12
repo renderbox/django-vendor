@@ -14,7 +14,7 @@ from django.utils.translation import gettext as _
 from vendor.config import VENDOR_PRODUCT_MODEL, PaymentProcessorSiteConfig, PaymentProcessorSiteSelectSiteConfig, PaymentProcessorForm, PaymentProcessorSiteSelectForm
 from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm, AuthorizeNetIntegrationForm
 from vendor.integrations import AuthorizeNetIntegration
-from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment
+from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment, Subscription
 from vendor.models.choice import TermType, PaymentTypes, InvoiceStatus
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
 from vendor.processors import get_site_payment_processor
@@ -232,11 +232,11 @@ class AdminSubscriptionListView(LoginRequiredMixin, ListView):
     List of all the invoices generated on the current site.
     '''
     template_name = "vendor/manage/receipt_list.html"
-    model = Receipt
+    model = Subscription
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(products__in=Product.on_site.all(), order_item__offer__terms__lt=TermType.PERPETUAL)
+        return queryset
 
 
 class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
@@ -244,13 +244,13 @@ class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
     Gets all Customer Profile information for quick lookup and management
     '''
     template_name = 'vendor/manage/subscription_detail.html'
-    model = Receipt
+    model = Subscription
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        payment = Payment.objects.get(transaction=context['object'].transaction)
+        payment = transaction=context['object'].payments.first()
 
         context['payment'] = payment
         context['payment_form'] = CreditCardForm(
@@ -272,7 +272,8 @@ class AdminProfileListView(LoginRequiredMixin, TableFilterMixin, SiteOnRequestFi
     def search_filter(self, queryset):
         search_value = self.request.GET.get('search_filter')
         return queryset.filter(Q(pk__icontains=search_value) | \
-                               Q(user__email__icontains=search_value))
+                               Q(user__email__icontains=search_value) | \
+                               Q(user__username__icontains=search_value))
 
     def get_paginated_by(self, queryset):
         if 'paginate_by' in self.request.kwargs:
@@ -321,7 +322,7 @@ class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
         invoice.add_offer(past_receipt.order_item.offer)
 
         processor = get_site_payment_processor(invoice.site)(invoice.site, invoice)
-        processor.renew_subscription(past_receipt, payment_info)
+        processor.renew_subscription(past_receipt.transaction, payment_info)
 
         messages.info(request, _("Subscription Renewed"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))

@@ -6,9 +6,9 @@ from django.db import migrations
 def pre_invoice_status_change(apps, schema_editor):
     InvoiceModel = apps.get_model('vendor', 'Invoice')
 
-    for invoice in InvoiceModel.objects.filter(status__gt=10):
-        invoice.status = 20  # Current status is queue but it will change to complete
-        invoice.save()
+    print(f"Invoice Status Updating {InvoiceModel.objects.filter(status__gt=10).count()}")
+    InvoiceModel.objects.filter(status__gt=10).update(status=20)
+    print(f"Invoice Status Updated {InvoiceModel.objects.filter(status__gt=10).count()}")
 
 
 class Migration(migrations.Migration):

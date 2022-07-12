@@ -37,6 +37,10 @@ def check_offer_items_or_redirect(invoice, request):
         redirect('vendor:cart')
 
 
+class VendorHomeView(TemplateView):
+    template_name = 'vendor/index.html'
+
+
 class CartView(TemplateView):
     '''
     View items in the cart

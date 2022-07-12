@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.views import View
 
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import CustomerProfile, Invoice, Offer, Receipt
+from vendor.models import CustomerProfile, Invoice, Offer, Receipt, Subscription
 from vendor.models.choice import InvoiceStatus
 from vendor.processors import get_site_payment_processor
 from vendor.utils import get_or_create_session_cart, get_site_from_request
@@ -113,10 +113,10 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
     success_url = reverse_lazy('vendor:customer-subscriptions')
 
     def post(self, request, *args, **kwargs):
-        receipt = get_object_or_404(Receipt, uuid=self.kwargs["uuid"])
+        subscription = get_object_or_404(Subscription, uuid=self.kwargs["uuid"])
 
-        processor = get_site_payment_processor(receipt.order_item.invoice.site)(receipt.order_item.invoice.site, receipt.order_item.invoice)
-        processor.subscription_cancel(receipt)
+        processor = get_site_payment_processor(subscription.profile.site)(subscription.profile.site)
+        processor.subscription_cancel(subscription)
 
         messages.info(self.request, _("Subscription Cancelled"))
 
@@ -128,8 +128,7 @@ class VoidProductView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         receipt = get_object_or_404(Receipt, uuid=self.kwargs["uuid"])
-        receipt.void()
-        receipt.save()
+        receipt.subscription.void()
 
         messages.info(request, _("Customer has no longer access to Product"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
