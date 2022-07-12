@@ -36,7 +36,9 @@ class Payment(SoftDeleteModelBase):
     status = models.IntegerField(_("Status"), choices=PurchaseStatus.choices, default=0)
     subscription = models.ForeignKey("vendor.Subscription", verbose_name=_("Subscription"), on_delete=models.CASCADE, related_name="payments", blank=True, null=True, default=None)
 
-    
+    def __str__(self):
+        return f"{self.transaction} - {self.profile.user.username}"
+
     def get_related_receipts(self):
         return Receipt.objects.filter(transaction=self.transaction)
 

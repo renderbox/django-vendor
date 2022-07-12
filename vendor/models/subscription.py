@@ -26,6 +26,12 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
         verbose_name = "Subscription"
         verbose_name_plural = "Subscriptions"
 
+    def __str__(self):
+        if self.receipts.count():
+            return f"{self.receipts.first().order_item.name}"
+        
+        return f"{self.uuid}"
+
     def get_absolute_url(self):
         return reverse('vendor:customer-receipt', kwargs={'uuid': self.uuid})
 

@@ -82,7 +82,16 @@ class PriceInline(admin.TabularInline):
 
 class ReceiptInline(admin.TabularInline):
     model = Receipt
-    extra = 1
+    exclude = ('deleted', 'uuid', 'vendor_notes', 'meta', 'profile')
+    readonly_fields = ('pk', 'transaction', 'order_item', 'start_date', 'end_date')
+    max_num = 1
+
+
+class PaymentInline(admin.TabularInline):
+    model = Payment
+    exclude = ('deleted', 'uuid', 'provider', 'profile', 'billing_address', 'result', 'payee_full_name', 'payee_company')
+    readonly_fields = ('pk', 'transaction', 'invoice', 'created', 'status', 'amount', 'success')
+    max_num = 1
 
 
 class WishlistInline(admin.TabularInline):
@@ -112,7 +121,7 @@ class CustomerProfileAdmin(admin.ModelAdmin):
 
 
 class InvoiceAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', 'shipping_address')
+    readonly_fields = ('uuid', 'shipping_address', 'profile')
     list_display = ('__str__', 'profile', 'site', 'status', 'total', 'created', 'deleted')
     search_fields = ('uuid', 'profile__user__username', )
     list_filter = ('site__domain', )
@@ -120,16 +129,6 @@ class InvoiceAdmin(admin.ModelAdmin):
         OrderItemInline,
     ]
     actions = [soft_delete_invoices_with_deleted_payments]
-    
-    def get_form(self, request, obj=None, change=False, **kwargs):
-        form = super().get_form(request, obj, change, **kwargs)
-
-        if not obj:
-            return form
-
-        form.base_fields['profile'].queryset = CustomerProfile.objects.filter(site=obj.profile.site)
-
-        return form
 
 
 class OfferAdmin(admin.ModelAdmin):
@@ -143,58 +142,39 @@ class OfferAdmin(admin.ModelAdmin):
 
 
 class PaymentAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', 'invoice' )
+    readonly_fields = ('uuid', 'invoice', 'profile' )
     list_display = ('pk', 'created', 'transaction', 'subscription', 'invoice', 'profile', 'amount', 'deleted', 'status')
     search_fields = ('pk', 'transaction', 'profile__user__username', )
     list_filter = ('profile__site__domain', 'success', 'status')
     exclude = ('billing_address', )
     actions = [soft_delete_payments_without_order_items_invoice, soft_delete_payments_with_no_receipt]
-    
-    def get_form(self, request, obj=None, change=False, **kwargs):
-        form = super().get_form(request, obj, change, **kwargs)
-
-        if not obj:
-            return form
-
-        form.base_fields['profile'].queryset = CustomerProfile.objects.filter(site=obj.profile.site)
-
-        return form
 
 
 class ReceiptAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', 'order_item',)
+    readonly_fields = ('uuid', 'order_item', 'profile')
     exclude = ('updated', )
     list_display = ('pk', 'transaction', 'subscription', 'created', 'profile', 'order_item', 'start_date', 'end_date', 'deleted')
     list_filter = ('profile__site__domain', 'products')
     search_fields = ('pk', 'transaction', 'profile__user__username', )
-    
-    def get_form(self, request, obj=None, change=False, **kwargs):
-        form = super().get_form(request, obj, change, **kwargs)
+    # Example for future filters on AdminForm Fields
+    # def get_form(self, request, obj=None, change=False, **kwargs):
+    #     form = super().get_form(request, obj, change, **kwargs)
 
-        if not obj:
-            return form
+    #     if not obj:
+    #         return form
 
-        form.base_fields['profile'].queryset = CustomerProfile.objects.filter(site=obj.profile.site)
+    #     form.base_fields['profile'].queryset = CustomerProfile.objects.filter(site=obj.profile.site)
 
-        return form
+    #     return form
 
 
 class SubscriptionAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', )
+    readonly_fields = ('uuid', 'profile')
     exclude = ('updated', )
     list_display = ('pk', 'gateway_id', 'created', 'profile', 'status')
     list_filter = ('profile__site__domain', )
     search_fields = ('pk', 'gateway_id', 'profile__user__username', )
-
-    def get_form(self, request, obj=None, change=False, **kwargs):
-        form = super().get_form(request, obj, change, **kwargs)
-
-        if not obj:
-            return form
-
-        form.base_fields['profile'].queryset = CustomerProfile.objects.filter(site=obj.profile.site)
-
-        return form
+    inlines = [PaymentInline, ReceiptInline]
 
 
 class TaxClassifierAdmin(admin.ModelAdmin):
