@@ -184,25 +184,27 @@
 </div>
 <div class='row'>
   <h3 class="col-12">{% trans 'Subscriptions' %}</h3>
-  {% for subscription in object.subscriptions.all %}
+  {% for subscription in object.get_active_subscriptions %}
   <div class="col-3">
     <div class="card">
       <div class="card-header">
         {{ subscription.receipts.first.order_item.offer.name }}
       </div>
       <div class="card-body row">
+        {% if subscription.status < 30 %}
         <form class="mx-2" method="post" action="{% url 'vendor_api:customer-subscription-cancel' subscription.uuid %}">
           {% csrf_token %}
           <button class="btn btn-sm btn-danger" type="submit">
             {% trans 'Cancel' %}
           </button>
         </form>
-        <form class="mx-2" method="post" action="{% url 'vendor_admin:manager-product-renew' subscription.uuid %}">
+        {% endif %}
+        <!-- <form class="mx-2" method="post" action="{% url 'vendor_admin:manager-product-renew' subscription.uuid %}">
           {% csrf_token %}
           <button class="btn btn-sm btn-danger" type="submit">
           {% trans 'Renew' %}
           </button>
-        </form>
+        </form> -->
       </div>
     </div>
   </div>

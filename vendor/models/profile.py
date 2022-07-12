@@ -8,7 +8,7 @@ from django.db.models import Q, QuerySet, Count
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from .base import CreateUpdateModelBase
-from .choice import CURRENCY_CHOICES, TermType, PurchaseStatus
+from .choice import CURRENCY_CHOICES, TermType, PurchaseStatus, SubscriptionStatus
 from .invoice import Invoice
 from .utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
@@ -170,3 +170,9 @@ class CustomerProfile(CreateUpdateModelBase):
         Returns a tuple product and offer tuple that are related to the active receipt
         """
         return [(receipt.products.first(), receipt.order_item.offer) for receipt in self.receipts.filter(Q(end_date__gte=timezone.now()) | Q(end_date=None))]
+
+    def get_subscriptions(self):
+        return self.subscriptions.all()
+
+    def get_active_subscriptions(self):
+        return self.subscriptions.filter(status=SubscriptionStatus.ACTIVE)
