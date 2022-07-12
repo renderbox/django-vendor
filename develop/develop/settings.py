@@ -214,7 +214,7 @@ LOGGING = {
     'handlers': {
         'file': {
             'class': 'logging.FileHandler',
-            'filename': '../logs/vendor.log',
+            'filename': 'vendor.log',
             'level': 'DEBUG',
             'formatter': 'verbose'
         }
