@@ -716,7 +716,21 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         
         return None
 
+    def get_settled_transactions(self, start_date, end_date):
+        batch_list = self.get_settled_batch_list(start_date, end_date)
+        successfull_transactions = []
+        if not batch_list:
+            return []
+        
+        for batch in batch_list:
+            transaction_list = self.get_transaction_batch_list(str(batch.batchId))
+            successfull_transactions.extend([ t.transId.text for t in transaction_list if t['transactionStatus'] == 'settledSuccessfully' ])
 
+        return successfull_transactions
+    
+    def update_receipts_to_settled(self, site, settled_transactions):
+        return Payment.objects.filter(profile__site=site, transaction__in=settled_transactions).update(status=PurchaseStatus.SETTLED)
+        
 
     ##########
     # Reporting API, for transaction retrieval information

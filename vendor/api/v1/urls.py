@@ -16,5 +16,6 @@ urlpatterns = [
     path('subscription/price/update', api_views.SubscriptionPriceUpdateView.as_view(), name="manager-subscription-price-update"),
     path('authorizenet/authcapture', authorizenet_views.AuthorizeCaptureAPI.as_view(), name='api-authorizenet-authcapture'),
     path('authorizenet/void', authorizenet_views.VoidAPI.as_view(), name='api-authorizenet-void'),
-    path('authorizenet/sync/subscriptions/', authorizenet_views.SyncSubscriptions.as_view(), name='api-authorizenet-sync-subscriptions')
+    path('authorizenet/sync/subscriptions/', authorizenet_views.SyncSubscriptionsView.as_view(), name='api-authorizenet-sync-subscriptions'),
+    path('authorizenet/settled/transactions/', authorizenet_views.GetSettledTransactionsView.as_view(), name='api-authorizenet-settled-transactions')
 ]

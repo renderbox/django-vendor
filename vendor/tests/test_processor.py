@@ -1058,6 +1058,11 @@ class AuthorizeNetProcessorTests(TestCase):
         transaction_detail = self.processor.get_transaction_detail(transaction_id)
         self.assertTrue(transaction_detail)
 
+    def test_get_settled_transaction(self):
+        start_date, end_date = (timezone.now() - timedelta(days=3)), timezone.now()
+        settled_transactions = self.processor.get_settled_transactions(start_date, end_date)
+
+        self.assertTrue(settled_transactions)
     ##########
     # Transaction View Tests
     ##########

@@ -5,11 +5,14 @@ import logging
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, MultipleObjectsReturned, ObjectDoesNotExist
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.views import View
+from django.views.generic.edit import FormMixin
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.urls import reverse_lazy
 
+from vendor.forms import DateTimeRangeForm
 from vendor.models import Receipt, Invoice, Subscription, Payment
 from vendor.models.choice import InvoiceStatus, PurchaseStatus
 from vendor.processors.authorizenet import AuthorizeNetProcessor, create_subscription_model_form_past_receipts
@@ -207,9 +210,25 @@ class VoidAPI(AuthorizeNetBaseAPI):
 
 
 
-class SyncSubscriptions(View):
+class SyncSubscriptionsView(View):
 
     def get(self, *args, **kwargs):
         site = get_site_from_request(self.request)
         create_subscription_model_form_past_receipts(site)
         return JsonResponse({'msg': 'one more time'})
+
+
+class GetSettledTransactionsView(FormMixin, View):
+    form_class = DateTimeRangeForm
+    success_url = reverse_lazy('vendor:vendor-home')
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form_class()(request.POST)
+        site = get_site_from_request(self.request)
+        processor = AuthorizeNetProcessor(site)
+
+        if form.is_valid():
+            settled_transactions = processor.get_settled_transactions(form.cleaned_data['start_date'], form.cleaned_data['end_date'])
+            processor.update_receipts_to_settled(site, settled_transactions)
+
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER', self.get_success_url()))
