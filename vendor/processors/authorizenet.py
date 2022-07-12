@@ -87,12 +87,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.merchant_auth = apicontractsv1.merchantAuthenticationType()
         self.credentials = AuthorizeNetIntegration(site)
 
-        if self.credentials.instance:
-            self.merchant_auth.name = self.credentials.instance.client_id
-            self.merchant_auth.transactionKey = self.credentials.instance.public_key
-        elif settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID:
+        if settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID:
             self.merchant_auth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY
             self.merchant_auth.name = settings.AUTHORIZE_NET_API_ID
+        elif self.credentials.instance:
+            self.merchant_auth.name = self.credentials.instance.client_id
+            self.merchant_auth.transactionKey = self.credentials.instance.public_key
         else:
             raise ValueError("Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID")
 
