@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 from vendor.models.receipt import Receipt
 from vendor.models.base import SoftDeleteModelBase
+from vendor.models.choice import PurchaseStatus
 from vendor.utils import get_display_decimal
 
 
@@ -23,7 +24,7 @@ class Payment(SoftDeleteModelBase):
     uuid = models.UUIDField(_("UUID"), editable=False, unique=True, default=uuid.uuid4, null=False, blank=False)
     invoice = models.ForeignKey("vendor.Invoice", verbose_name=_("Invoice"), on_delete=models.CASCADE, related_name="payments")
     created = models.DateTimeField(_("Date Created"), auto_now_add=True)
-    transaction = models.CharField(_("Transaction ID"), max_length=50)
+    transaction = models.CharField(_("Transaction ID"), max_length=80, blank=True, null=True)
     provider = models.CharField(_("Payment Provider"), max_length=30)
     amount = models.FloatField(_("Amount"))
     profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Purchase Profile"), blank=True, on_delete=models.CASCADE, related_name="payments")
@@ -32,6 +33,11 @@ class Payment(SoftDeleteModelBase):
     success = models.BooleanField(_("Successful"), default=False)
     payee_full_name = models.CharField(_("Name on Card"), max_length=50)
     payee_company = models.CharField(_("Company"), max_length=50, blank=True, null=True)
+    status = models.IntegerField(_("Status"), choices=PurchaseStatus.choices, default=0)
+    subscription = models.ForeignKey("vendor.Subscription", verbose_name=_("Subscription"), on_delete=models.CASCADE, related_name="payments", blank=True, null=True, default=None)
+
+    def __str__(self):
+        return f"{self.transaction} - {self.profile.user.username}"
 
     def get_related_receipts(self):
         return Receipt.objects.filter(transaction=self.transaction)

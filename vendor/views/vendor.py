@@ -14,7 +14,7 @@ from django.views.generic.list import ListView
 
 from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm, AddressForm
 from vendor.models import Offer, Invoice, Address, OrderItem, Receipt
-from vendor.models.choice import TermType, PurchaseStatus
+from vendor.models.choice import TermType, PurchaseStatus, InvoiceStatus
 from vendor.processors import get_site_payment_processor
 from vendor.utils import get_site_from_request, get_or_create_session_cart, clear_session_purchase_data
 
@@ -35,6 +35,10 @@ def check_offer_items_or_redirect(invoice, request):
     if invoice.order_items.count() < 1:
         messages.info(request, _("Please add to your cart"))
         redirect('vendor:cart')
+
+
+class VendorHomeView(TemplateView):
+    template_name = 'vendor/index.html'
 
 
 class CartView(TemplateView):
@@ -79,7 +83,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         if not invoice.order_items.count():
             return redirect('vendor:cart')
 
-        invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        invoice.status = InvoiceStatus.CHECKOUT
         invoice.save()
 
         existing_account_address = Address.objects.filter(profile__user=request.user, profile__site=get_site_from_request(request))
@@ -104,11 +108,11 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
         invoice = get_purchase_invoice(request.user, get_site_from_request(request))
 
-        if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
+        if not invoice.order_items.count() or invoice.status == InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
 
-        invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        invoice.status = InvoiceStatus.CHECKOUT
         invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
         # TODO: Need to add a drop down to select existing address
         shipping_address, created = invoice.profile.get_or_create_address(shipping_address)
@@ -145,7 +149,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user, get_site_from_request(request))
 
-        if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
+        if not invoice.order_items.count() or invoice.status == InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
 
@@ -196,7 +200,7 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         # context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user, get_site_from_request(request))
 
-        if not invoice.order_items.count() or invoice.status == Invoice.InvoiceStatus.CART:
+        if not invoice.order_items.count() or invoice.status == InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
 
@@ -238,7 +242,7 @@ class OrderHistoryListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         try:
             # The profile and user are site specific so this should only return what's on the site for that user excluding the cart
-            return self.request.user.customer_profile.get(site=get_site_from_request(self.request)).invoices.filter(status__gt=Invoice.InvoiceStatus.CART)
+            return self.request.user.customer_profile.get(site=get_site_from_request(self.request)).invoices.filter(status__gt=InvoiceStatus.CART)
         except ObjectDoesNotExist:         # Catch the actual error for the exception
             return []   # Return empty list if there is no customer_profile
 
@@ -253,12 +257,12 @@ class OrderHistoryDetailView(LoginRequiredMixin, DetailView):
     slug_url_kwarg = 'uuid'
 
 
-class ProductsListView(LoginRequiredMixin, ListView):
+class ReceiptListView(LoginRequiredMixin, ListView):
     model = Receipt
     template_name = 'vendor/purchase_list.html'
 
     def get_queryset(self):
-        return self.request.user.customer_profile.get(site=get_site_from_request(self.request)).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
+        return self.request.user.customer_profile.get(site=get_site_from_request(self.request)).receipts.all()
 
 
 class ReceiptDetailView(LoginRequiredMixin, DetailView):
@@ -281,10 +285,12 @@ class SubscriptionsListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         try:
-            receipts = self.request.user.customer_profile.get(site=get_site_from_request(self.request)).receipts.filter(status__gte=PurchaseStatus.COMPLETE)
+            receipts = self.request.user.customer_profile.get(site=get_site_from_request(self.request)).receipts.filter(auto_renew=True)
         except ObjectDoesNotExist:
             raise Http404(_("Not Found"))
+        
         subscriptions = [ receipt for receipt in receipts.all() if receipt.order_item.offer.terms > TermType.PERPETUAL and receipt.order_item.offer.terms < TermType.ONE_TIME_USE ]
+        
         return subscriptions
 
 

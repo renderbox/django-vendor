@@ -7,7 +7,7 @@ from django.utils import timezone
 from core.models import Product
 
 from vendor.models import Offer, Price, Invoice, Receipt, CustomerProfile
-from vendor.models.choice import PurchaseStatus, TermType
+from vendor.models.choice import PurchaseStatus, TermType, InvoiceStatus
 
 
 class ModelCustomerProfileTests(TestCase):
@@ -48,7 +48,7 @@ class ModelCustomerProfileTests(TestCase):
         cp = CustomerProfile.objects.get(pk=1)
         invoice = cp.get_cart()
 
-        invoice.status = Invoice.InvoiceStatus.COMPLETE
+        invoice.status = InvoiceStatus.COMPLETE
         invoice.save()
 
         new_invoice = cp.get_cart()
@@ -86,23 +86,23 @@ class ModelCustomerProfileTests(TestCase):
     def test_get_checkout_cart(self):
         cp = CustomerProfile.objects.get(pk=1)
         invoice = cp.get_cart()
-        invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        invoice.status = InvoiceStatus.CHECKOUT
         invoice.save()
 
         self.assertIsNotNone(cp.get_checkout_cart())
-        self.assertEqual(cp.get_checkout_cart().status, Invoice.InvoiceStatus.CHECKOUT)
+        self.assertEqual(cp.get_checkout_cart().status, InvoiceStatus.CHECKOUT)
 
     def test_gets_cart(self):
         cart = self.customer_profile_existing.get_cart_or_checkout_cart()
 
-        self.assertEqual(cart.status, Invoice.InvoiceStatus.CART)
+        self.assertEqual(cart.status, InvoiceStatus.CART)
 
     def test_gets_checkout_cart(self):
-        self.customer_profile_existing.invoices.add(Invoice.objects.create(status=Invoice.InvoiceStatus.CHECKOUT, profile=self.customer_profile_existing))
+        self.customer_profile_existing.invoices.add(Invoice.objects.create(status=InvoiceStatus.CHECKOUT, profile=self.customer_profile_existing))
 
         cart = self.customer_profile_existing.get_cart_or_checkout_cart()
 
-        self.assertEqual(cart.status, Invoice.InvoiceStatus.CHECKOUT)
+        self.assertEqual(cart.status, InvoiceStatus.CHECKOUT)
 
     def test_get_cart_items_count(self):
         invoice = Invoice.objects.get(pk=1)
@@ -119,8 +119,7 @@ class ModelCustomerProfileTests(TestCase):
         receipt = Receipt(profile=self.customer_profile,
                           order_item=cart.order_items.first(),
                           start_date=timezone.now(),
-                          transaction="123",
-                          status=PurchaseStatus.COMPLETE)
+                          transaction="123")
         receipt.save()
         self.assertEqual(1, len(self.customer_profile.get_recurring_receipts()))
         self.assertEqual(0, len(self.customer_profile.get_one_time_transaction_receipts()))
@@ -133,8 +132,7 @@ class ModelCustomerProfileTests(TestCase):
         receipt = Receipt(profile=self.customer_profile,
                           order_item=cart.order_items.first(),
                           start_date=timezone.now(),
-                          transaction="123",
-                          status=PurchaseStatus.COMPLETE)
+                          transaction="123")
         receipt.save()
         self.assertEqual(0, len(self.customer_profile.get_recurring_receipts()))
         self.assertEqual(1, len(self.customer_profile.get_one_time_transaction_receipts()))
@@ -147,8 +145,7 @@ class ModelCustomerProfileTests(TestCase):
         receipt = Receipt(profile=self.customer_profile,
                           order_item=cart.order_items.first(),
                           start_date=timezone.now(),
-                          transaction="123",
-                          status=PurchaseStatus.COMPLETE)
+                          transaction="123")
         receipt.save()
         receipt.products.add(offer.products.first())
         self.assertTrue(self.customer_profile.has_previously_owned_products(Product.objects.filter(pk=3)))
@@ -157,26 +154,6 @@ class ModelCustomerProfileTests(TestCase):
         cart = self.customer_profile.get_cart_or_checkout_cart()
 
         self.assertFalse(self.customer_profile.has_previously_owned_products(Product.objects.filter(pk=3)))
-
-    def test_get_completed_receipts(self):
-        cart = self.customer_profile.get_cart_or_checkout_cart()
-        offer = Offer.objects.get(pk=3)
-        cart.add_offer(offer)
-
-        receipt = Receipt(profile=self.customer_profile,
-                          order_item=cart.order_items.first(),
-                          start_date=timezone.now(),
-                          transaction="123",
-                          status=PurchaseStatus.COMPLETE)
-        receipt.save()
-        self.assertEqual(1, len(self.customer_profile.get_completed_receipts()))
-
-    def test_get_completed_receipts_empty(self):
-        cart = self.customer_profile.get_cart_or_checkout_cart()
-        offer = Offer.objects.get(pk=3)
-        cart.add_offer(offer)
-
-        self.assertEqual(0, len(self.customer_profile.get_completed_receipts()))
 
     def test_get_products(self):
         self.assertFalse(self.customer_profile.get_all_customer_products())
@@ -189,8 +166,7 @@ class ModelCustomerProfileTests(TestCase):
         receipt = Receipt(profile=self.customer_profile,
                           order_item=cart.order_items.first(),
                           start_date=timezone.now(),
-                          transaction="123",
-                          status=PurchaseStatus.COMPLETE)
+                          transaction="123")
         receipt.save()
         self.assertTrue(len(self.customer_profile.get_active_offer_receipts(offer)) > 0)
 
@@ -216,13 +192,13 @@ class ModelCustomerProfileTests(TestCase):
 
     def test_get_checkout_invoice_success(self):
         invoice_invalid_cart = Invoice()
-        invoice_invalid_cart.status = Invoice.InvoiceStatus.CART
+        invoice_invalid_cart.status = InvoiceStatus.CART
         invoice_invalid_cart.profile = self.customer_profile_existing
         invoice_invalid_cart.save()
 
         invoice = self.customer_profile_existing.get_cart_or_checkout_cart()
 
-        self.assertEqual(1, self.customer_profile_existing.invoices.filter(status=Invoice.InvoiceStatus.CART, deleted=False).count())
+        self.assertEqual(1, self.customer_profile_existing.invoices.filter(status=InvoiceStatus.CART, deleted=False).count())
 
 
 class AddOfferToProfileView(TestCase):

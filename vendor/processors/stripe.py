@@ -6,7 +6,7 @@ from django.conf import settings
 import stripe
 
 from .base import PaymentProcessorBase
-
+from vendor.models.choice import PurchaseStatus
 
 class StripeProcessor(PaymentProcessorBase):
 
@@ -50,6 +50,7 @@ class StripeProcessor(PaymentProcessorBase):
 
             payment.transaction = charge['id']
             payment.success = True
+            payment.status = PurchaseStatus.SETTLED
 
         except stripe.error.CardError as e:
             # Since it's a decline, stripe.error.CardError will be caught

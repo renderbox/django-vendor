@@ -5,6 +5,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 
 from vendor.models import Offer, Invoice, OrderItem, CustomerProfile, Payment, Price
+from vendor.models.choice import InvoiceStatus
 from vendor.forms import BillingAddressForm, CreditCardForm
 from vendor.utils import get_display_decimal
 
@@ -136,7 +137,7 @@ class ModelInvoiceTests(TestCase):
         self.assertEqual(0, self.existing_invoice.order_items.count())
 
     def test_empty_cart_in_checkout_state(self):
-        self.existing_invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        self.existing_invoice.status = InvoiceStatus.CHECKOUT
         self.existing_invoice.save()
         self.assertNotEqual(0, self.existing_invoice.order_items.count())
         self.existing_invoice.empty_cart()
@@ -421,7 +422,7 @@ class ReviewCheckoutViewTests(TestCase):
         session['billing_address_form'] = BillingAddressForm().initial
         session['credit_card_form'] = CreditCardForm().initial
         session.save()
-        self.invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        self.invoice.status = InvoiceStatus.CHECKOUT
         self.invoice.save()
 
         response = self.client.post(self.view_url)
@@ -429,7 +430,7 @@ class ReviewCheckoutViewTests(TestCase):
         self.assertRedirects(response, reverse('vendor:checkout-account'))
 
     def test_view_payment_success(self):
-        self.invoice.status = Invoice.InvoiceStatus.CHECKOUT
+        self.invoice.status = InvoiceStatus.CHECKOUT
         self.invoice.save()
         Payment.objects.all().delete()
         form_data = {

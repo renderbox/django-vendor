@@ -335,6 +335,21 @@ class DateRangeForm(forms.Form):
 
         return cleaned_data
 
+class DateTimeRangeForm(forms.Form):
+    start_date = forms.DateTimeField(required=False, label=_("Start Date"), widget=SelectDateWidget())
+    end_date = forms.DateTimeField(required=False, label=_("End Date"), widget=SelectDateWidget())
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+
+        if end_date and end_date < start_date:
+            self.add_error('end_date', _('End Date cannot be before Start Date'))
+            del(cleaned_data['end_date'])
+
+        return cleaned_data
+
 ##########
 # From Sets
 ##########
