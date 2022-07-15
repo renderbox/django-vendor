@@ -57,3 +57,21 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
         self.auto_renew = False
         self.meta[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = 'Subscription Canceled'
         self.save()
+
+    def get_next_billing_date(self):
+        receipts = self.receipts.filter(Q(end_date__gte=timezone.now()) | Q(end_date=None)).order_by('end_date')
+        
+        if not receipts.count():
+            return None
+
+        return receipts.first().end_date
+        
+    def get_last_payment_date(self):
+        payment = self.payments.filter(status__lte=PurchaseStatus.SETTLED).order_by('-date_created').first()
+
+        if not payments.count():
+            return None
+
+        return payment.get_receipt().start_date
+        
+

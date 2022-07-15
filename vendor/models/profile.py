@@ -1,4 +1,4 @@
-import uuid
+1import uuid
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -176,3 +176,23 @@ class CustomerProfile(CreateUpdateModelBase):
 
     def get_active_subscriptions(self):
         return self.subscriptions.filter(status=SubscriptionStatus.ACTIVE)
+
+    def get_next_billing_date(self):
+        next_billing_dates = []
+        
+        if not self.subscriptions.filter(status=SubscriptionStatus.ACTIVE).count():
+            return None
+
+        next_billing_dates = [subscription.get_next_billing_date() for subscription in self.get_active_subscriptions()]
+
+        return sorted(next_billing_dates)[0]
+
+    def get_last_payment_date(self):
+        last_payment_dates = []
+        
+        if not self.subscriptions.filter(status=SubscriptionStatus.ACTIVE).count():
+            return None
+
+        last_payment_dates = [subscription.get_last_payment_date() for subscription in self.get_active_subscriptions()]
+
+        return sorted(last_payment_dates)[-1]
