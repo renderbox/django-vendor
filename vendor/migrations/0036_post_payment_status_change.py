@@ -5,8 +5,9 @@ from vendor.models import Payment
 
 def post_payment_status_change(apps, schema_editor):
     ReceiptModel = apps.get_model('vendor', 'Receipt')
+    PaymentModel = apps.get_model('vendor', 'Payment')
 
-    for payment in Payment.objects.all():
+    for payment in PaymentModel.objects.all():
         receipt = payment.get_receipt()
         
         if receipt:
