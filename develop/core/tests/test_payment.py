@@ -44,6 +44,15 @@ class PaymentModelTests(TestCase):
         self.assertEqual(Payment.objects.all().count() - deleted_payment_difference, Payment.not_deleted.count())
         self.assertEquals(payment_count_before_deletion, Payment.objects.all().count())
 
+    def test_get_settled_payments_in_date_range_success(self):
+        raise NotImplemented
+
+    def test_get_settled_payments_in_date_range_fail(self):
+        raise NotImplemented
+
+    def get_reports_manager(self):
+        raise NotImplemented
+
 
 class PaymentViewTests(TestCase):
 

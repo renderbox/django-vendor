@@ -200,6 +200,9 @@ class ModelCustomerProfileTests(TestCase):
 
         self.assertEqual(1, self.customer_profile_existing.invoices.filter(status=InvoiceStatus.CART, deleted=False).count())
 
+    def test_next_billing_date(self):
+        # TODO: Finish this test
+        pass
 
 class AddOfferToProfileView(TestCase):
 
