@@ -38,3 +38,6 @@ class ModelSubscriptionTests(TestCase):
     def test_get_next_billing_date(self):
         # TODO: Finish this test
         pass
+
+    def get_reports_manager(self):
+        raise NotImplemented
