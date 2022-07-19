@@ -39,5 +39,6 @@ class ModelSubscriptionTests(TestCase):
         # TODO: Finish this test
         pass
 
-    def get_reports_manager(self):
-        raise NotImplemented
+    def test_get_reports_manager(self):
+        # TODO: Finish this test
+        pass

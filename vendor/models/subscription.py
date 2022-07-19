@@ -7,7 +7,7 @@ from django.utils import timezone, dateformat
 
 from vendor.models.base import CreateUpdateModelBase, SoftDeleteModelBase
 from vendor.models.choice import SubscriptionStatus, PurchaseStatus
-from vendor.models.modelmanagers import SubscriptionReportModelMangaer
+from vendor.models.modelmanagers import SubscriptionReportModelManger
 from vendor.utils import get_payment_scheduled_end_date
 
 
@@ -23,7 +23,7 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
     status = models.IntegerField(_("Status"), choices=SubscriptionStatus.choices, default=0)
     meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)
 
-    reports = SubscriptionReportModelMangaer()
+    reports = SubscriptionReportModelManger()
 
     class Meta:
         verbose_name = "Subscription"
