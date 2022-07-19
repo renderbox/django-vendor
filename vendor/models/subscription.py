@@ -6,7 +6,8 @@ from django.urls import reverse
 from django.utils import timezone, dateformat
 
 from vendor.models.base import CreateUpdateModelBase, SoftDeleteModelBase
-from vendor.models.choice import SubscriptionStatus
+from vendor.models.choice import SubscriptionStatus, PurchaseStatus
+from vendor.models.modelmanagers import SubscriptionReportModelMangaer
 from vendor.utils import get_payment_scheduled_end_date
 
 
@@ -22,6 +23,8 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
     status = models.IntegerField(_("Status"), choices=SubscriptionStatus.choices, default=0)
     meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)
 
+    reports = SubscriptionReportModelMangaer()
+
     class Meta:
         verbose_name = "Subscription"
         verbose_name_plural = "Subscriptions"
@@ -31,6 +34,10 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
             return f"{self.receipts.first().order_item.name}"
         
         return f"{self.uuid}"
+
+    @property
+    def name(self):
+        return self.__str__()
 
     def get_absolute_url(self):
         return reverse('vendor:customer-receipt', kwargs={'uuid': self.uuid})
@@ -57,3 +64,21 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
         self.auto_renew = False
         self.meta[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = 'Subscription Canceled'
         self.save()
+
+    def get_next_billing_date(self):
+        receipts = self.receipts.filter(Q(end_date__gte=timezone.now()) | Q(end_date=None)).order_by('end_date')
+        
+        if not receipts.count():
+            return None
+
+        return receipts.first().end_date
+        
+    def get_last_payment_date(self):
+        payment = self.payments.filter(status__lte=PurchaseStatus.SETTLED).order_by('-created').first()
+
+        if not payment:
+            return None
+
+        return payment.get_receipt().start_date
+        
+

@@ -392,7 +392,7 @@ class PaymentProcessorBase(object):
 
     def subscription_cancel(self, subscription):
         subscription.cancel()
-        vendor_subscription_cancel.send(sender=self.__class__)
+        vendor_subscription_cancel.send(sender=self.__class__, subscription=subscription)
 
     def is_card_valid(self):
         """
