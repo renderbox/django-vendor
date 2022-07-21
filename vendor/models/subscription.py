@@ -7,8 +7,23 @@ from django.utils import timezone, dateformat
 
 from vendor.models.base import CreateUpdateModelBase, SoftDeleteModelBase
 from vendor.models.choice import SubscriptionStatus, PurchaseStatus
-from vendor.models.modelmanagers import SubscriptionReportModelManger
 from vendor.utils import get_payment_scheduled_end_date
+
+
+class SubscriptionReportModelManger(models.Manager):
+    def get_total_cancelled_subscriptions(self, start_date=None, end_date=None):
+        qs = super().get_queryset()
+        
+        if not (start_date and end_date):
+            return qs.filter(status=SubscriptionStatus.CANCELED)
+
+        elif start_date and end_date is None:
+            return qs.filter(status=SubscriptionStatus.CANCELED, updated__date__gte=start_date)
+
+        elif start_date is None and end_date:
+            return qs.filter(status=SubscriptionStatus.CANCELED, updated__date__lte=end_date)
+            
+        return qs.filter(status=SubscriptionStatus.CANCELED, updated__date__gte=start_date, updated__date__lte=end_date)
 
 
 class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
