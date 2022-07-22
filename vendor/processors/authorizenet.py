@@ -897,6 +897,7 @@ def create_subscription_model_form_past_receipts(site):
                     receipt.start_date = submitted_datetime
                     receipt.save()
 
+                    receipt.products.add(past_receipt.products.first())
                     receipt.end_date = get_payment_scheduled_end_date(past_receipt.order_item.offer, start_date=receipt.start_date)
                     receipt.subscription = subscription
                     receipt.save()
