@@ -884,6 +884,7 @@ def create_subscription_model_form_past_receipts(site):
                     payment.transaction = transaction_id
                     payment.payee_full_name = payment_info['full_name']
                     payment.amount = trans_detail.settleAmount.pyval
+                    payment.submitted_date = trans_detail.submitTimeUTC.pyval
                     payment.save()
 
                     # Create Receipt
