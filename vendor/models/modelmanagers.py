@@ -1,9 +1,5 @@
-from django.db.models.aggregates import Sum
-from django.db.models import Count
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
-
-from vendor.models.choice import PurchaseStatus, SubscriptionStatus
 
 class ActiveManager(models.Manager):
     """
