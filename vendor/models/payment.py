@@ -1,14 +1,107 @@
 import uuid
 
+from django.db.models.aggregates import Sum
+from django.db.models import Count
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from vendor.models.receipt import Receipt
+from vendor.models.subscription import Subscription
 from vendor.models.base import SoftDeleteModelBase
 from vendor.models.choice import PurchaseStatus
-from vendor.models.modelmanagers import PaymentReportModelManager
 from vendor.utils import get_display_decimal
+
+
+
+class PaymentReportModelManager(models.Manager):
+    def get_total_settled_purchases(self, start_date=None, end_date=None):
+        qs = super().get_queryset()
+
+        if not (start_date and end_date):
+            return qs.filter(status=PurchaseStatus.SETTLED).aggregate(Sum('amount'))
+
+        if start_date and end_date is None:
+            return qs.filter(submitted_date__gte=start_date, status=PurchaseStatus.SETTLED).aggregate(Sum('amount'))
+
+        if start_date is None and end_date:
+            return qs.filter(submitted_date__lte=end_date, status=PurchaseStatus.SETTLED).aggregate(Sum('amount'))
+
+        return qs.filter(submitted_date__gte=start_date, submitted_date__lte=end_date, status=PurchaseStatus.SETTLED).aggregate((Sum('amount')))
+
+    def get_total_settled_purchases_by_site(self, site, start_date=None, end_date=None):
+        qs = super().get_queryset()
+
+        if not (start_date and end_date):
+            amount_qs = qs.filter(profile__site=site, status=PurchaseStatus.SETTLED).aggregate(Sum('amount'))
+
+        elif start_date and end_date is None:
+            amount_qs = qs.filter(profile__site=site, submitted_date__gte=start_date, status=PurchaseStatus.SETTLED).aggregate(Sum('amount'))
+
+        elif start_date is None and end_date:
+            amount_qs = qs.filter(profile__site=site, submitted_date__lte=end_date, status=PurchaseStatus.SETTLED).aggregate(Sum('amount'))
+
+        else:
+            amount_qs = qs.filter(profile__site=site, submitted_date__gte=start_date, submitted_date__lte=end_date, status=PurchaseStatus.SETTLED).aggregate(Sum('amount'))
+        
+        if not amount_qs['amount__sum']:
+            return 0
+
+        return amount_qs['amount__sum']
+
+    
+    def get_total_settled_purchases_by_subscription(self, site, start_date=None, end_date=None):
+        qs = super().get_queryset()
+        organized_data = {}
+
+        if not (start_date and end_date):
+            filtered_data = qs.filter(profile__site=site, status=PurchaseStatus.SETTLED).values('subscription').annotate(Sum('amount'))
+
+        elif start_date and end_date is None:
+            filtered_data = qs.filter(profile__site=site, submitted_date__gte=start_date, status=PurchaseStatus.SETTLED).values('subscription').annotate(Sum('amount'))
+
+        elif start_date is None and end_date:
+            filtered_data = qs.filter(profile__site=site, submitted_date__lte=end_date, status=PurchaseStatus.SETTLED).values('subscription').annotate(Sum('amount'))
+        else:
+            filtered_data = qs.filter(profile__site=site, submitted_date__gte=start_date, submitted_date__lte=end_date, status=PurchaseStatus.SETTLED).values('subscription').annotate((Sum('amount')))
+        
+        organized_data = {}
+        for data in filtered_data:
+            organized_data[Subscription.objects.get(pk=data['subscription']).name] = 0
+        
+        for data in filtered_data:
+            organized_data[Subscription.objects.get(pk=data['subscription']).name] += data['amount__sum']
+
+        return organized_data
+    
+    def get_total_settled_purchases_by_site_and_subscription(self, start_date=None, end_date=None):
+        qs = super().get_queryset()
+        organized_data = {}
+        
+        if not (start_date and end_date):
+            filtered_data = qs.filter(status=PurchaseStatus.SETTLED).values('profile__site', 'subscription').annotate(Sum('amount'))
+
+        elif start_date and end_date is None:
+            filtered_data = qs.filter(submitted_date__gte=start_date, status=PurchaseStatus.SETTLED).values('profile__site', 'subscription').annotate(Sum('amount'))
+
+        elif start_date is None and end_date:
+            filtered_data = qs.filter(submitted_date__lte=end_date, status=PurchaseStatus.SETTLED).values('profile__site', 'subscription').annotate(Sum('amount'))
+        
+        else:
+            filtered_data = qs.filter(submitted_date__gte=start_date, submitted_date__lte=end_date, status=PurchaseStatus.SETTLED).values('profile__site', 'subscription').annotate((Sum('amount')))
+
+        organized_data = {data['profile__site']: {} for data in filtered_data}
+        
+        for data in filtered_data:
+            organized_data[data['profile__site']][Subscription.objects.get(pk=data['subscription']).name] = 0
+
+        for data in filtered_data:
+            organized_data[data['profile__site']][Subscription.objects.get(pk=data['subscription']).name] += data['amount__sum']
+
+        return organized_data
+
+
+
 
 
 ##########
