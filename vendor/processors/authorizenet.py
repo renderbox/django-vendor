@@ -2,6 +2,8 @@
 Payment processor for Authorize.net.
 """
 import ast
+import logging
+
 from datetime import datetime
 from decimal import Decimal, ROUND_DOWN
 from django.conf import settings
@@ -12,6 +14,7 @@ from vendor.config import VENDOR_PAYMENT_PROCESSOR, VENDOR_STATE
 from vendor.utils import get_future_date_days, get_payment_scheduled_end_date
 from vendor.integrations import AuthorizeNetIntegration
 
+logger = logging.getLogger(__name__)
 
 try:
     from authorizenet import apicontractsv1
@@ -87,13 +90,14 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.merchant_auth = apicontractsv1.merchantAuthenticationType()
         self.credentials = AuthorizeNetIntegration(site)
 
-        if settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID:
-            self.merchant_auth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY
-            self.merchant_auth.name = settings.AUTHORIZE_NET_API_ID
-        elif self.credentials.instance:
+        if self.credentials.instance:
             self.merchant_auth.name = self.credentials.instance.client_id
             self.merchant_auth.transactionKey = self.credentials.instance.public_key
+        elif settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID:
+            self.merchant_auth.transactionKey = settings.AUTHORIZE_NET_TRANSACTION_KEY
+            self.merchant_auth.name = settings.AUTHORIZE_NET_API_ID
         else:
+            logger.error("AuthorizeNetProcessor Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID")
             raise ValueError("Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID")
 
         self.init_payment_type_switch()
@@ -378,6 +382,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
                     if hasattr(response.transactionResponse, 'errors') is True:
                         self.transaction_message['error_code'] = response.transactionResponse.errors.error[0].errorCode
                         self.transaction_message['error_text'] = response.transactionResponse.errors.error[0].errorText
+                        logger.info(f"AuthorizeNetProcessor check_response Failed Transaction: code {self.transaction_message['error_code']}, msg: {self.transaction_message['error_text']}")
             # Or, print errors if the API request wasn't successful
             else:
                 self.transaction_message['msg'] = 'Failed Transaction.'
@@ -387,7 +392,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
                 else:
                     self.transaction_message['error_code'] = response.messages.message[0]['code'].text
                     self.transaction_message['error_text'] = response.messages.message[0]['text'].text
+                logger.info(f"AuthorizeNetProcessor check_response Failed Transaction: code {self.transaction_message['error_code']}, msg: {self.transaction_message['error_text']}")
         else:
+            logger.info("AuthorizeNetProcessor check_response Null Response")
             self.transaction_message['msg'] = 'Null Response.'
 
     def check_subscription_response(self, response):
@@ -403,6 +410,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             self.transaction_message['msg'] = "Subscription Tansaction Complete"
             if 'subscriptionId' in response.__dict__:
                 self.transaction_message['subscription_id'] = response.subscriptionId.text
+        
+        logger.info(f"AuthorizeNetProcessor check_subscription_response submitted: {self.transaction_submitted} msg: {self.transaction_message}")
 
     def check_customer_list_response(self, response):
         self.transaction_response = response
