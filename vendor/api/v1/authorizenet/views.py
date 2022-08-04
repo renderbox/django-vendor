@@ -128,9 +128,19 @@ class AuthorizeNetBaseAPI(View):
         if 'HTTP_X_ANET_SIGNATURE' not in self.request.META:
             logger.warning("AuthorizeNetBaseAPI is_valid_post: Signature Key not it request")
             return False
+
         try:
-            hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNATURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
+            self.credentials = AuthorizeNetIntegration(site)
+
+            if self.credentials.instance.private_key:
+                hash_value = hmac.new(bytes(self.credentials.instance.private_key, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
+            elif settings.AUTHORIZE_NET_SIGNATURE_KEY:
+                hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNATURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
+            else:
+                raise TypeError("No private key set")
+
             logger.info(f"AuthorizeNetBaseAPI is_valid_post: Checking hashs\nCALCULATED: {hash_value}\nREQUEST VALUE: {self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]}")
+
             if hash_value.upper() == self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]:
                 return True
 
