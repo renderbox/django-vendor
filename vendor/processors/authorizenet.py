@@ -7,8 +7,9 @@ import logging
 from datetime import datetime
 from decimal import Decimal, ROUND_DOWN
 from django.conf import settings
-from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import IntegerChoices
+from django.utils import timezone
 from math import ceil
 from vendor.config import VENDOR_PAYMENT_PROCESSOR, VENDOR_STATE
 from vendor.utils import get_future_date_days, get_payment_scheduled_end_date
@@ -41,7 +42,7 @@ except ModuleNotFoundError:
 
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models.choice import SubscriptionStatus, TransactionTypes, PaymentTypes, TermType, TermDetailUnits, InvoiceStatus, PurchaseStatus
-from vendor.models import Invoice, Payment, Subscription, Receipt
+from vendor.models import Invoice, Payment, Subscription, Receipt, Offer, CustomerProfile
 from vendor.models.address import Country
 from .base import PaymentProcessorBase
 
@@ -733,16 +734,20 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         
         for batch in batch_list:
             transaction_list = self.get_transaction_batch_list(str(batch.batchId))
-            successfull_transactions.extend([ t.transId.text for t in transaction_list if t['transactionStatus'] == 'settledSuccessfully' ])
+            successfull_transactions.extend([ transaction for transaction in transaction_list if transaction['transactionStatus'] == 'settledSuccessfully' ])
 
         return successfull_transactions
     
     def update_payments_to_settled(self, site, settled_transactions):
         for settled_transaction in settled_transactions:
-            payment = Payment.objects.get(profile__site=site, transaction=settled_transaction)
-            payment.status = PurchaseStatus.SETTLED
-            payment.submitted_date = settled_transction.submitTimeUTC.pyval
-            payment.save()
+            try:
+                payment = Payment.objects.get(profile__site=site, transaction=settled_transaction.transId.text)
+                payment.status = PurchaseStatus.SETTLED
+                payment.submitted_date = settled_transaction.submitTimeUTC.pyval
+                payment.save()
+            except ObjectDoesNotExist as exce:
+                logger.error(f"update_payments_to_settled payment for transaction: {settled_transaction.transId.text} was not found for site: {site}")
+
         
 
     ##########
@@ -913,3 +918,79 @@ def create_subscription_model_form_past_receipts(site):
                 except Exception as exce:
                     logger.info(f"create_subscription_model_form_past_receipts Invalid Transaction: {exce}")
 
+        else:
+            subscription_info = processor.subscription_info(subscription_id)
+
+            try:
+                profile = CustomerProfile.objects.get(site=site, user__email=subscription_info.subscription.profile.email.text)
+                offer = Offer.objects.get(site=site, name=subscription_info.subscription.name)
+
+
+                subscription, created = Subscription.objects.get_or_create(
+                    gateway_id=subscription_id,
+                    profile=profile
+                )
+                if subscription_info.subscription.status.text == 'active':
+                    subscription.status = SubscriptionStatus.ACTIVE
+                subscription.auto_renew = True
+                subscription.save()
+            
+                for transaction in subscription_info.subscription.arbTransactions.arbTransaction:
+                    logger.info(f"create_subscription_model_form_past_receipts Processing transaction {transaction}")
+                    transaction_id = transaction.transId.text
+
+                    trans_processor = AuthorizeNetProcessor(site)
+
+                    trans_detail = trans_processor.get_transaction_detail(transaction_id)
+                    submitted_datetime = datetime.strptime(trans_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S.%f%z')
+
+                    invoice = Invoice.objects.create(
+                        status=InvoiceStatus.COMPLETE,
+                        site=site,
+                        profile=profile,
+                        ordered_date=submitted_datetime,
+                        total=trans_detail.settleAmount.pyval
+                    )
+                    invoice.add_offer(offer)
+                    invoice.save()
+
+                    payment_info = {
+                        'account_number': trans_detail.payment.creditCard.cardNumber.text[-4:],
+                        'account_type': trans_detail.payment.creditCard.cardType.text,
+                        'full_name': " ".join([trans_detail.billTo.firstName.text, trans_detail.billTo.lastName.text]),
+                        'transaction_id': transaction_id,
+                        'subscription_id': trans_detail.subscription.id.text,
+                        'payment_number': trans_detail.subscription.payNum.text
+                    }
+
+                    # Create Payment
+                    payment = Payment(profile=invoice.profile,
+                                amount=invoice.total,
+                                invoice=invoice,
+                                created=submitted_datetime)
+                    payment.result = payment_info
+                    payment.subscription = subscription
+                    payment.success = True
+                    payment.status = PurchaseStatus.SETTLED
+                    payment.transaction = transaction_id
+                    payment.payee_full_name = payment_info['full_name']
+                    payment.amount = trans_detail.settleAmount.pyval
+                    payment.submitted_date = trans_detail.submitTimeUTC.pyval
+                    payment.save()
+
+                    # Create Receipt
+                    receipt = Receipt()
+                    receipt.profile = invoice.profile
+                    receipt.order_item = invoice.order_items.first()
+                    receipt.transaction = payment.transaction
+                    receipt.meta.update(payment.result)
+                    receipt.meta['payment_amount'] = payment.amount
+                    receipt.start_date = submitted_datetime
+                    receipt.save()
+
+                    receipt.products.add(offer.products.first())
+                    receipt.end_date = get_payment_scheduled_end_date(offer, start_date=receipt.start_date)
+                    receipt.subscription = subscription
+                    receipt.save()
+            except Exception as exce:
+                logger.info(f"create_subscription_model_form_past_receipts Invalid Transaction: {exce} subscription id: {subscription_id}")
