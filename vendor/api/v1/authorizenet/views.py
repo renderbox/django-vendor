@@ -110,7 +110,6 @@ def settle_authorizenet_transactions(site, start_date, end_date):
     processor = AuthorizeNetProcessor(site)
 
     settled_transactions = processor.get_settled_transactions(start_date, end_date)
-
     processor.update_payments_to_settled(site, settled_transactions)
 
 
@@ -246,6 +245,5 @@ class GetSettledTransactionsView(FormMixin, View):
 
         if form.is_valid():
             settle_authorizenet_transactions(site, start_date, end_date)
-
 
         return HttpResponseRedirect(self.request.META.get('HTTP_REFERER', self.get_success_url()))

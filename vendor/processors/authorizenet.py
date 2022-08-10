@@ -739,7 +739,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     
     def update_payments_to_settled(self, site, settled_transactions):
         for settled_transaction in settled_transactions:
-            payment = Payment.objects.get(profile__site=site, transaction=settled_transaction.transId.text)
+            payment = Payment.objects.get(profile__site=site, transaction=settled_transaction)
             payment.status = PurchaseStatus.SETTLED
             payment.submitted_date = settled_transction.submitTimeUTC.pyval
             payment.save()
