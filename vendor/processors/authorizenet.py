@@ -737,7 +737,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         return successfull_transactions
     
-    def update_receipts_to_settled(self, site, settled_transactions):
+    def update_payments_to_settled(self, site, settled_transactions):
         for settled_transaction in settled_transactions:
             payment = Payment.objects.get(profile__site=site, transaction=settled_transaction.transId.text)
             payment.status = PurchaseStatus.SETTLED

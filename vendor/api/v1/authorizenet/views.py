@@ -111,7 +111,7 @@ def settle_authorizenet_transactions(site, start_date, end_date):
 
     settled_transactions = processor.get_settled_transactions(start_date, end_date)
 
-    processor.update_receipts_to_settled(site, settled_transactions)
+    processor.update_payments_to_settled(site, settled_transactions)
 
 
 class AuthorizeNetBaseAPI(View):
