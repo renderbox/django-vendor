@@ -819,26 +819,26 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             return []
 
 def create_subscription_model_form_past_receipts(site):
-    print("Starting Subscription Migration")
+    logger.info("create_subscription_model_form_past_receipts Starting Subscription Migration")
     processor = AuthorizeNetProcessor(site)
 
     subscriptions = processor.get_list_of_subscriptions(1000)
     active_subscriptions = [ s for s in subscriptions if s['status'] == 'active' ]
     
     create_subscriptions = [sub.id.text for sub in active_subscriptions if not Subscription.objects.filter(profile__site=site, gateway_id=sub.id.text).count() ]
-    print(f"Create Subscriptions: {[sub for sub in create_subscriptions]}")
+    logger.info(f"create_subscription_model_form_past_receipts Create Subscriptions: {[sub for sub in create_subscriptions]}")
 
     for sub_detail in create_subscriptions:
-        print(f"Starting Migration for Subscription: {sub_detail}")
+        logger.info(f"create_subscription_model_form_past_receipts Starting Migration for Subscription: {sub_detail}")
         subscription_id = sub_detail
         past_receipt = Receipt.objects.filter(transaction=subscription_id).first()
         
         if past_receipt:
-            print(f"Deleting Receipts: {Receipt.objects.filter(transaction=subscription_id)}")
+            logger.info(f"create_subscription_model_form_past_receipts Deleting Receipts: {Receipt.objects.filter(transaction=subscription_id)}")
             Receipt.objects.filter(transaction=subscription_id).update(deleted=True)
-            print(f"Deleting Payments: {Payment.objects.filter(transaction=subscription_id)}")
+            logger.info(f"create_subscription_model_form_past_receipts Deleting Payments: {Payment.objects.filter(transaction=subscription_id)}")
             Payment.objects.filter(transaction=subscription_id).update(deleted=True)
-            print(f"Deleting Invoices: {Invoice.objects.filter(payments__in=Payment.objects.filter(transaction=subscription_id))}")
+            logger.info(f"create_subscription_model_form_past_receipts Deleting Invoices: {Invoice.objects.filter(payments__in=Payment.objects.filter(transaction=subscription_id))}")
             Invoice.objects.filter(payments__in=Payment.objects.filter(transaction=subscription_id)).update(deleted=True)
             
             subscription, created = Subscription.objects.get_or_create(
@@ -848,12 +848,12 @@ def create_subscription_model_form_past_receipts(site):
             subscription.status = SubscriptionStatus.ACTIVE
             subscription.auto_renew = True
             subscription.save()
-            print(f"Created subscription: {subscription}")
+            logger.info(f"create_subscription_model_form_past_receipts Created subscription: {subscription}")
             
             subscription_info = processor.subscription_info(subscription_id)
 
             for transaction in subscription_info.subscription.arbTransactions.arbTransaction:
-                print(f"Processing transaction {transaction}")
+                logger.info(f"create_subscription_model_form_past_receipts Processing transaction {transaction}")
                 try:
                     transaction_id = transaction.transId.text
 
@@ -911,5 +911,5 @@ def create_subscription_model_form_past_receipts(site):
                     receipt.subscription = subscription
                     receipt.save()
                 except Exception as exce:
-                    print(f"Invalid Transaction")
+                    logger.info(f"create_subscription_model_form_past_receipts Invalid Transaction: {exce}")
 
