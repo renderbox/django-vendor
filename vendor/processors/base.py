@@ -94,9 +94,11 @@ class PaymentProcessorBase(object):
         self.payment.payee_full_name = self.payment_info.cleaned_data.get('full_name')
         self.payment.payee_company = self.billing_address.cleaned_data.get('company')
         self.payment.status = PurchaseStatus.QUEUED
+        self.payment.submitted_date = timezone.now()
 
         billing_address = self.billing_address.save(commit=False)
         billing_address, created = self.invoice.profile.get_or_create_address(billing_address)
+
         if created:
             billing_address.profile = self.invoice.profile
             billing_address.save()
