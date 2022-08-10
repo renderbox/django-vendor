@@ -106,6 +106,14 @@ def subscription_save_transaction(site, json_data, transaction_detail):
         return None # No need to continue to create receipt as it is done in the above function
 
 
+def settle_authorizenet_transactions(site, start_date, end_date):
+    processor = AuthorizeNetProcessor(site)
+
+    settled_transactions = processor.get_settled_transactions(start_date, end_date)
+
+    processor.update_receipts_to_settled(site, settled_transactions)
+
+
 class AuthorizeNetBaseAPI(View):
     """
     Base class to handel Authroize.Net webhooks.
@@ -191,6 +199,7 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
 
         return JsonResponse({"msg": "AuthorizeCaptureAPI post event finished"})
 
+
 class VoidAPI(AuthorizeNetBaseAPI):
 
     def post(self, *args, **kwargs):
@@ -219,7 +228,6 @@ class VoidAPI(AuthorizeNetBaseAPI):
         return JsonResponse({"msg": "VoidAPI post: success"})
 
 
-
 class SyncSubscriptionsView(View):
 
     def get(self, *args, **kwargs):
@@ -235,10 +243,9 @@ class GetSettledTransactionsView(FormMixin, View):
     def post(self, request, *args, **kwargs):
         form = self.get_form_class()(request.POST)
         site = get_site_from_request(self.request)
-        processor = AuthorizeNetProcessor(site)
 
         if form.is_valid():
-            settled_transactions = processor.get_settled_transactions(form.cleaned_data['start_date'], form.cleaned_data['end_date'])
-            processor.update_receipts_to_settled(site, settled_transactions)
+            settle_authorizenet_transactions(site, start_date, end_date)
+
 
         return HttpResponseRedirect(self.request.META.get('HTTP_REFERER', self.get_success_url()))
