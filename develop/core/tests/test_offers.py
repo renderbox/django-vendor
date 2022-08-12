@@ -80,7 +80,7 @@ class ModelOfferTests(TestCase):
 
     def test_offer_description_from_product(self):
         offer = Offer.objects.get(pk=3)
-        self.assertEquals(offer.description, offer.products.all().first().description)
+        self.assertEquals(offer.description, offer.products.all().first().description.get("description", ""))
 
     def test_offer_description(self):
         offer = Offer.objects.get(pk=4)
