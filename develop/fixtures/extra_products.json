@@ -11,7 +11,9 @@
         "site": 1,
         "slug": "6",
         "available": true,
-        "description": "6",
+        "description": {
+            "description": "6"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -35,7 +37,9 @@
         "site": 1,
         "slug": "7",
         "available": true,
-        "description": "7",
+        "description": {
+            "description": "7"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -59,7 +63,9 @@
         "site": 1,
         "slug": "8",
         "available": true,
-        "description": "8",
+        "description": {
+            "description": "8"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -83,7 +89,9 @@
         "site": 1,
         "slug": "9",
         "available": true,
-        "description": "9",
+        "description": {
+            "description": "9"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -107,7 +115,9 @@
         "site": 1,
         "slug": "10",
         "available": true,
-        "description": "10",
+        "description": {
+            "description": "10"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -131,7 +141,9 @@
         "site": 1,
         "slug": "11",
         "available": true,
-        "description": "11",
+        "description": {
+            "description": "11"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -155,7 +167,9 @@
         "site": 1,
         "slug": "12",
         "available": true,
-        "description": "12",
+        "description": {
+            "description": "12"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -179,7 +193,9 @@
         "site": 1,
         "slug": "13",
         "available": true,
-        "description": "13",
+        "description": {
+            "description": "13"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -203,7 +219,9 @@
         "site": 1,
         "slug": "14",
         "available": true,
-        "description": "14",
+        "description": {
+            "description": "14"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -227,7 +245,9 @@
         "site": 1,
         "slug": "15",
         "available": true,
-        "description": "15",
+        "description": {
+            "description": "15"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -251,7 +271,9 @@
         "site": 1,
         "slug": "16",
         "available": true,
-        "description": "16",
+        "description": {
+            "description": "16"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -275,7 +297,9 @@
         "site": 1,
         "slug": "17",
         "available": true,
-        "description": "17",
+        "description": {
+            "description": "17"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -299,7 +323,9 @@
         "site": 1,
         "slug": "18",
         "available": true,
-        "description": "18",
+        "description": {
+            "description": "18"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -323,7 +349,9 @@
         "site": 1,
         "slug": "19",
         "available": true,
-        "description": "19",
+        "description": {
+            "description": "19"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -347,7 +375,9 @@
         "site": 1,
         "slug": "20",
         "available": true,
-        "description": "20",
+        "description": {
+            "description": "20"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -371,7 +401,9 @@
         "site": 1,
         "slug": "21",
         "available": true,
-        "description": "21",
+        "description": {
+            "description": "21"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -395,7 +427,9 @@
         "site": 1,
         "slug": "22",
         "available": true,
-        "description": "22",
+        "description": {
+            "description": "22"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -419,7 +453,9 @@
         "site": 1,
         "slug": "23",
         "available": true,
-        "description": "23",
+        "description": {
+            "description": "23"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -443,7 +479,9 @@
         "site": 1,
         "slug": "24",
         "available": true,
-        "description": "24",
+        "description": {
+            "description": "24"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -467,7 +505,9 @@
         "site": 1,
         "slug": "25",
         "available": true,
-        "description": "25",
+        "description": {
+            "description": "25"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -491,7 +531,9 @@
         "site": 1,
         "slug": "26",
         "available": true,
-        "description": "26",
+        "description": {
+            "description": "26"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -515,7 +557,9 @@
         "site": 1,
         "slug": "27",
         "available": true,
-        "description": "27",
+        "description": {
+            "description": "27"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -539,7 +583,9 @@
         "site": 1,
         "slug": "28",
         "available": true,
-        "description": "28",
+        "description": {
+            "description": "28"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -563,7 +609,9 @@
         "site": 1,
         "slug": "29",
         "available": true,
-        "description": "29",
+        "description": {
+            "description": "29"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -587,7 +635,9 @@
         "site": 1,
         "slug": "30",
         "available": true,
-        "description": "30",
+        "description": {
+            "description": "30"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -611,7 +661,9 @@
         "site": 1,
         "slug": "31",
         "available": true,
-        "description": "31",
+        "description": {
+            "description": "31"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -635,7 +687,9 @@
         "site": 1,
         "slug": "32",
         "available": true,
-        "description": "32",
+        "description": {
+            "description": "32"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -659,7 +713,9 @@
         "site": 1,
         "slug": "33",
         "available": true,
-        "description": "33",
+        "description": {
+            "description": "33"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -683,7 +739,9 @@
         "site": 1,
         "slug": "34",
         "available": true,
-        "description": "34",
+        "description": {
+            "description": "34"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -707,7 +765,9 @@
         "site": 1,
         "slug": "35",
         "available": true,
-        "description": "35",
+        "description": {
+            "description": "35"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -731,7 +791,9 @@
         "site": 1,
         "slug": "36",
         "available": true,
-        "description": "36",
+        "description": {
+            "description": "36"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -755,7 +817,9 @@
         "site": 1,
         "slug": "37",
         "available": true,
-        "description": "37",
+        "description": {
+            "description": "37"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -779,7 +843,9 @@
         "site": 1,
         "slug": "38",
         "available": true,
-        "description": "38",
+        "description": {
+            "description": "38"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -803,7 +869,9 @@
         "site": 1,
         "slug": "39",
         "available": true,
-        "description": "39",
+        "description": {
+            "description": "39"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -827,7 +895,9 @@
         "site": 1,
         "slug": "40",
         "available": true,
-        "description": "40",
+        "description": {
+            "description": "40"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -851,7 +921,9 @@
         "site": 1,
         "slug": "41",
         "available": true,
-        "description": "41",
+        "description": {
+            "description": "41"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -875,7 +947,9 @@
         "site": 1,
         "slug": "42",
         "available": true,
-        "description": "42",
+        "description": {
+            "description": "42"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -899,7 +973,9 @@
         "site": 1,
         "slug": "43",
         "available": true,
-        "description": "43",
+        "description": {
+            "description": "43"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -923,7 +999,9 @@
         "site": 1,
         "slug": "44",
         "available": true,
-        "description": "44",
+        "description": {
+            "description": "44"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -947,7 +1025,9 @@
         "site": 1,
         "slug": "45",
         "available": true,
-        "description": "45",
+        "description": {
+            "description": "45"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -971,7 +1051,9 @@
         "site": 1,
         "slug": "46",
         "available": true,
-        "description": "46",
+        "description": {
+            "description": "46"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -995,7 +1077,9 @@
         "site": 1,
         "slug": "47",
         "available": true,
-        "description": "47",
+        "description": {
+            "description": "47"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -1019,7 +1103,9 @@
         "site": 1,
         "slug": "48",
         "available": true,
-        "description": "48",
+        "description": {
+            "description": "48"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -1043,7 +1129,9 @@
         "site": 1,
         "slug": "49",
         "available": true,
-        "description": "49",
+        "description": {
+            "description": "49"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -1067,7 +1155,9 @@
         "site": 1,
         "slug": "50",
         "available": true,
-        "description": "50",
+        "description": {
+            "description": "50"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -1091,7 +1181,9 @@
         "site": 1,
         "slug": "51",
         "available": true,
-        "description": "51",
+        "description": {
+            "description": "51"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -1115,7 +1207,9 @@
         "site": 1,
         "slug": "52",
         "available": true,
-        "description": "52",
+        "description": {
+            "description": "52"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -1139,7 +1233,9 @@
         "site": 1,
         "slug": "53",
         "available": true,
-        "description": "53",
+        "description": {
+            "description": "53"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -1153,17 +1249,19 @@
 },
 {
     "model": "core.product",
-    "pk": 53,
+    "pk": 54,
     "fields": {
         "created": "2020-06-30T00:48:03.710Z",
         "updated": "2020-06-30T00:48:03.710Z",
         "sku": null,
         "uuid": "188e45aa-0fdf-4877-ba84-f4c39c0fc454",
-        "name": "53",
+        "name": "54",
         "site": 1,
-        "slug": "53",
+        "slug": "54",
         "available": true,
-        "description": "53",
+        "description": {
+            "description": "54"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -1187,7 +1285,9 @@
         "site": 1,
         "slug": "55",
         "available": true,
-        "description": "55",
+        "description": {
+            "description": "55"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -1211,7 +1311,9 @@
         "site": 1,
         "slug": "56",
         "available": true,
-        "description": "56",
+        "description": {
+            "description": "56"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
@@ -1235,7 +1337,9 @@
         "site": 1,
         "slug": "57",
         "available": true,
-        "description": "57",
+        "description": {
+            "description": "57"
+        },
         "meta": {
             "msrp": {
                 "default": "usd",
