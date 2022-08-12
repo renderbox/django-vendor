@@ -35,7 +35,9 @@
         "site": 1,
         "slug": "mouse-t-shirt",
         "available": false,
-        "description": "Powerful T-Shirt",
+        "description": {
+            "description": "Powerful T-Shirt"
+        },
         "meta": { "msrp": { "default": "usd", "usd": 9.99 }},
         "classification": [],
         "offers": [
@@ -56,7 +58,9 @@
         "site": 1,
         "slug": "wheel-of-cheddar",
         "available": false,
-        "description": "This is a food item",
+        "description": {
+            "description": "This is a food item"
+        },
         "meta": {"msrp": {"default": "usd", "usd": 75.00, "jpy": 75.00}},
         "classification": [],
         "offers": [
@@ -77,7 +81,9 @@
         "site": 1,
         "slug": "hamster-wheel",
         "available": false,
-        "description": "",
+        "description": {
+            "description": ""
+        },
         "meta": {"msrp": {"default": "usd", "usd": 25.00 }},
         "classification": [],
         "offers": [
@@ -98,7 +104,9 @@
         "site": 1,
         "slug": "hulk-mug",
         "available": false,
-        "description": "",
+        "description": {
+            "description": ""
+        },
         "meta": {"msrp": {"default": "mxn", "usd": 25.2, "mxn": 21.12}},
         "classification": [],
         "offers": [
@@ -120,7 +128,9 @@
         "site": 1,
         "slug": "vendor-license",
         "available": false,
-        "description": "",
+        "description": {
+            "description": ""
+        },
         "meta": {"msrp": {"default": "usd", "usd": 0}},
         "classification": [],
         "offers": [
