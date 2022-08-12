@@ -122,7 +122,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         if self.offer_description:
             return self.offer_description
         elif self.products.count():
-            return self.products.all().first().description
+            return self.products.all().first().description.get("description", "")
         else:
             return ""
 
