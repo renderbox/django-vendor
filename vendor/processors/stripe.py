@@ -24,6 +24,17 @@ class StripeProcessor(PaymentProcessorBase):
     https://stripe.com/docs/api/authentication?lang=python
     """
 
+    transaction_submitted = False
+
+    def get_checkout_context(self, request=None, context={}):
+        context = super().get_checkout_context(context=context)
+        # TODO need to figure out how we're building stripe form
+        """if 'credit_card_form' not in context:
+            context['credit_card_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
+        if 'billing_address_form' not in context:
+            context['billing_address_form'] = BillingAddressForm()"""
+        return context
+
     def processor_setup(self, site):
         self.credentials = StripeIntegration(site)
 
@@ -35,22 +46,13 @@ class StripeProcessor(PaymentProcessorBase):
             logger.error("StripeProcessor missing keys in settings: STRIPE_API_KEY")
             raise ValueError("StripeProcessor missing keys in settings: STRIPE_API_KEY")
 
-        self.init_transaction_types()
-
-    def init_transaction_types(self):
-        self.transaction_types = {
-            TransactionTypes.AUTHORIZE: self.AUTHORIZE,
-            TransactionTypes.CAPTURE: self.CAPTURE,
-            TransactionTypes.REFUND: self.REFUND,
-            TransactionTypes.VOID: self.VOID,
-        }
-
     def create_charge(self, source):
         # TODO do something with result error strings below
         # TODO integrate vendor.models.Payment
+        self.payment.status = PurchaseStatus.DECLINED
         try:
             charge = stripe.Charge.create(
-                amount=self.invoice.total,
+                amount=self.invoice.get_one_time_transaction_total(),
                 currency=self.invoice.currency,
                 source=source,
                 customer=self.invoice.profile.user.pk
@@ -90,6 +92,8 @@ class StripeProcessor(PaymentProcessorBase):
             # TODO: Send email to self
             result = '{"message":"A serious error has occured.  Our team has been notified."}'
 
+        self.transaction_submitted = True
+        self.payment.status = PurchaseStatus.CAPTURED
         return charge
 
     def create_customer(self):
@@ -141,7 +145,7 @@ class StripeProcessor(PaymentProcessorBase):
             intent = stripe.PaymentIntent.create(
                 customer=customer['id'],
                 setup_future_usage='off_session',
-                amount=self.invoice.total,
+                amount=self.invoice.get_one_time_transaction_total(),
                 currency=self.invoice.currency,
                 automatic_payment_methods={
                     'enabled': True,
@@ -185,3 +189,4 @@ class StripeProcessor(PaymentProcessorBase):
             result = '{"message":"A serious error has occured.  Our team has been notified."}'
 
         return intent.client_secret
+
