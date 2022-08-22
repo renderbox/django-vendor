@@ -128,7 +128,7 @@ class AuthorizeNetBaseAPI(View):
         """
         return super().dispatch(*args, **kwargs)
 
-    def is_valid_post(self):
+    def is_valid_post(self, site):
         logger.info(f"AuthorizeNetBaseAPI is_valid_post: Request body: {self.request.body}")
         logger.info(f"AuthorizeNetBaseAPI is_valid_post: X ANET SIGNATURE: {self.request.META.get('HTTP_X_ANET_SIGNATURE')}")
 
@@ -172,7 +172,7 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
             logger.warning("AuthorizeCaptureAPI post: Webhook event has no body")
             return JsonResponse({"msg": "AuthorizeCaptureAPI post: Webhook event has no body"})
 
-        if not self.is_valid_post():
+        if not self.is_valid_post(site):
             logger.error(f"AuthorizeCaptureAPI post: Request was denied: {self.request}")
             raise PermissionDenied()
 
@@ -210,7 +210,7 @@ class VoidAPI(AuthorizeNetBaseAPI):
             logger.warning("VoidAPI post: Webhook event has no body")
             return JsonResponse({"msg": "VoidAPI post: Webhook event has no body"})
 
-        if not self.is_valid_post():
+        if not self.is_valid_post(site):
             logger.error(f"VoidAPI post: Request was denied: {self.request}")
             raise PermissionDenied()
         
