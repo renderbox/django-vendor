@@ -24,7 +24,21 @@ class StripeProcessor(PaymentProcessorBase):
     https://stripe.com/docs/api/authentication?lang=python
     """
 
+    TRANSACTION_SUCCESS_MESSAGE = 'message'
+    TRANSACTION_SUCCESS_CODE = 'code'
+    TRANSACTION_FAIL_MESSAGE = 'error_text'
+    TRANSACTION_FAIL_CODE = 'error_code'
+    TRANSACTION_RESPONSE_CODE = 'response_code'
     transaction_submitted = False
+
+    SUBSCRIPTION_TYPE_ANNUAL = 'annual'
+    SUBSCRIPTION_TYPE_MONTHLY = 'monthly'
+
+    # ex price_1LZfm72eZvKYlo2CTSzfbawl get the value from stripe dashboard
+    SUBSCRIPTION_PLANS = {
+        SUBSCRIPTION_TYPE_ANNUAL: settings.STRIPE_SUBSCRIPTION_ANNUAL,
+        SUBSCRIPTION_TYPE_MONTHLY: settings.STRIPE_SUBSCRIPTION_MONTHLY
+    }
 
     def get_checkout_context(self, request=None, context={}):
         context = super().get_checkout_context(context=context)
@@ -35,21 +49,19 @@ class StripeProcessor(PaymentProcessorBase):
             context['billing_address_form'] = BillingAddressForm()"""
         return context
 
-    def processor_setup(self, site):
+    def processor_setup(self, site, source=None):
         self.credentials = StripeIntegration(site)
-
+        self.stripe_source = source
         if self.credentials.instance:
             stripe.api_key = self.credentials.instance.private_key
         elif settings.STRIPE_API_KEY:
-            stripe.api_key = settings.STRIPE_API_KEY
+            stripe.api_key = settings.STRIPE_PUBLIC_KEY
         else:
-            logger.error("StripeProcessor missing keys in settings: STRIPE_API_KEY")
-            raise ValueError("StripeProcessor missing keys in settings: STRIPE_API_KEY")
+            logger.error("StripeProcessor missing keys in settings: STRIPE_PUBLIC_KEY")
+            raise ValueError("StripeProcessor missing keys in settings: STRIPE_PUBLIC_KEY")
 
     def create_charge(self, source):
-        # TODO do something with result error strings below
         # TODO integrate vendor.models.Payment
-        self.payment.status = PurchaseStatus.DECLINED
         try:
             charge = stripe.Charge.create(
                 amount=self.invoice.get_one_time_transaction_total(),
@@ -59,41 +71,52 @@ class StripeProcessor(PaymentProcessorBase):
             )
         except stripe.error.CardError as e:
             # Since it's a decline, stripe.error.CardError will be caught
-
-            print('Status is: %s' % e.http_status)
-            print('Code is: %s' % e.code)
-            # param is '' in this case
-            print('Param is: %s' % e.param)
-            print('Message is: %s' % e.user_message)
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = e.user_message
+            return None
         except stripe.error.RateLimitError as e:
             # Too many requests made to the API too quickly
-            result = '{"message":"Rate Limit Error"}'
-
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Rate Limit Error"
+            return None
         except stripe.error.InvalidRequestError as e:
             # Invalid parameters were supplied to Stripe's API
-            result = '{"message":"Invalid Parameters"}'
-
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Invalid Parameters"
+            return None
         except stripe.error.AuthenticationError as e:
             # Authentication with Stripe's API failed
             # (maybe you changed API keys recently)
-            result = '{"message":"Not Authenticated"}'
-
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Not Authenticated"
+            return None
         except stripe.error.APIConnectionError as e:
             # Network communication with Stripe failed
-            result = '{"message":"Network Error"}'
-
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Network Error"
+            return None
         except stripe.error.StripeError as e:
             # Display a very generic error to the user, and maybe send
             # yourself an email
-            result = '{"message":"Something Went Wrong.  You were not charged, please try again."}'
-
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Something Went Wrong.  You were not charged, please try again."
+            return None
         except Exception as e:
             # Something else happened, completely unrelated to Stripe
             # TODO: Send email to self
-            result = '{"message":"A serious error has occured.  Our team has been notified."}'
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "A serious error has occured.  Our team has been notified."
+            return None
 
-        self.transaction_submitted = True
-        self.payment.status = PurchaseStatus.CAPTURED
+        self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = '201'
+        self.transaction_message[self.TRANSACTION_SUCCESS_MESSAGE] = "Card was successfully charged"
         return charge
 
     def create_customer(self):
@@ -110,31 +133,51 @@ class StripeProcessor(PaymentProcessorBase):
 
         except stripe.error.RateLimitError as e:
             # Too many requests made to the API too quickly
-            result = '{"message":"Rate Limit Error"}'
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Rate Limit Error"
+            return None
 
         except stripe.error.InvalidRequestError as e:
             # Invalid parameters were supplied to Stripe's API
-            result = '{"message":"Invalid Parameters"}'
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Invalid Parameters"
+            return None
 
         except stripe.error.AuthenticationError as e:
             # Authentication with Stripe's API failed
             # (maybe you changed API keys recently)
-            result = '{"message":"Not Authenticated"}'
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Not Authenticated"
+            return None
 
         except stripe.error.APIConnectionError as e:
             # Network communication with Stripe failed
-            result = '{"message":"Network Error"}'
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Network Error"
+            return None
 
         except stripe.error.StripeError as e:
             # Display a very generic error to the user, and maybe send
             # yourself an email
-            result = '{"message":"Something Went Wrong.  You were not charged, please try again."}'
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Something Went Wrong.  You were not charged, please try again."
+            return None
 
         except Exception as e:
             # Something else happened, completely unrelated to Stripe
             # TODO: Send email to self
-            result = '{"message":"A serious error has occured.  Our team has been notified."}'
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "A serious error has occured.  Our team has been notified."
+            return None
 
+        self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = '201'
+        self.transaction_message[self.TRANSACTION_SUCCESS_MESSAGE] = "Success"
         return customer
 
     def create_payment_intent(self, customer):
@@ -151,15 +194,6 @@ class StripeProcessor(PaymentProcessorBase):
                     'enabled': True,
                 },
             )
-
-        except stripe.error.CardError as e:
-            # Since it's a decline, stripe.error.CardError will be caught
-
-            print('Status is: %s' % e.http_status)
-            print('Code is: %s' % e.code)
-            # param is '' in this case
-            print('Param is: %s' % e.param)
-            print('Message is: %s' % e.user_message)
 
         except stripe.error.RateLimitError as e:
             # Too many requests made to the API too quickly
@@ -189,4 +223,82 @@ class StripeProcessor(PaymentProcessorBase):
             result = '{"message":"A serious error has occured.  Our team has been notified."}'
 
         return intent.client_secret
+
+    def create_subscription(self, customer, destination_customer, subscription_type=SUBSCRIPTION_TYPE_MONTHLY):
+        """
+        Subscription pricing will be created in stripe dashboard
+        """
+        try:
+            price = self.SUBSCRIPTION_PLANS[self.SUBSCRIPTION_TYPE_MONTHLY] \
+                if subscription_type == self.SUBSCRIPTION_TYPE_MONTHLY \
+                else self.SUBSCRIPTION_PLANS[self.SUBSCRIPTION_TYPE_ANNUAL]
+            stripe_subscription = stripe.Subscription.create(
+                customer=customer,
+                currency=self.invoice.currency,
+                items=[
+                    {"price": price}
+                ],
+                expand=["latest_invoice.payment_intent"],
+                transfer_data={"destination": destination_customer},
+                application_fee_percent=30.00
+            )
+
+        except stripe.error.RateLimitError as e:
+            # Too many requests made to the API too quickly
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Rate Limit Error"
+            return None
+
+        except stripe.error.InvalidRequestError as e:
+            # Invalid parameters were supplied to Stripe's API
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Invalid Parameters"
+            return None
+
+        except stripe.error.AuthenticationError as e:
+            # Authentication with Stripe's API failed
+            # (maybe you changed API keys recently)
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Not Authenticated"
+            return None
+
+        except stripe.error.APIConnectionError as e:
+            # Network communication with Stripe failed
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Network Error"
+            return None
+
+        except stripe.error.StripeError as e:
+            # Display a very generic error to the user, and maybe send
+            # yourself an email
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "Something Went Wrong.  You were not charged, please try again."
+            return None
+
+        except Exception as e:
+            # Something else happened, completely unrelated to Stripe
+            # TODO: Send email to self
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = e.http_status
+            self.transaction_message[self.TRANSACTION_FAIL_CODE] = e.code
+            self.transaction_message[self.TRANSACTION_FAIL_MESSAGE] = "A serious error has occured.  Our team has been notified."
+            return None
+
+        self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = '201'
+        self.transaction_message[self.TRANSACTION_SUCCESS_MESSAGE] = "Success"
+        return stripe_subscription
+
+    def process_payment(self):
+        self.transaction_submitted = False
+        charge = self.create_charge()
+        if charge["captured"]:
+            self.transaction_submitted = True
+            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = '201'
+            self.transaction_message[self.TRANSACTION_SUCCESS_MESSAGE] = "Success"
+            self.payment.status = PurchaseStatus.CAPTURED
+
 

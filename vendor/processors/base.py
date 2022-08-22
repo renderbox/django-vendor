@@ -40,6 +40,7 @@ class PaymentProcessorBase(object):
     transaction_submitted = False
     transaction_message = {}
     transaction_response = {}
+    stripe_source = None
 
     def __init__(self, site, invoice=None):
         """
