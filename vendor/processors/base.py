@@ -9,6 +9,7 @@ from vendor import config
 from vendor.models import Payment, Invoice, Receipt, Subscription
 from vendor.models.choice import PurchaseStatus, SubscriptionStatus, TermType, InvoiceStatus
 from vendor.utils import get_payment_scheduled_end_date
+from decimal import Decimal, ROUND_DOWN
 ##########
 # SIGNALS
 
@@ -40,7 +41,6 @@ class PaymentProcessorBase(object):
     transaction_submitted = False
     transaction_message = {}
     transaction_response = {}
-    stripe_source = None
 
     def __init__(self, site, invoice=None):
         """
@@ -247,6 +247,10 @@ class PaymentProcessorBase(object):
         Unique partial template for the processor
         """
         pass
+
+    def to_valid_decimal(self, number):
+        # TODO: Need to check currency to determin decimal places.
+        return Decimal(number).quantize(Decimal('.00'))
 
     # -------------------
     # Process a Payment

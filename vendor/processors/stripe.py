@@ -31,14 +31,7 @@ class StripeProcessor(PaymentProcessorBase):
     TRANSACTION_RESPONSE_CODE = 'response_code'
     transaction_submitted = False
 
-    SUBSCRIPTION_TYPE_ANNUAL = 'annual'
-    SUBSCRIPTION_TYPE_MONTHLY = 'monthly'
-
-    # ex price_1LZfm72eZvKYlo2CTSzfbawl get the value from stripe dashboard
-    SUBSCRIPTION_PLANS = {
-        SUBSCRIPTION_TYPE_ANNUAL: settings.STRIPE_SUBSCRIPTION_ANNUAL,
-        SUBSCRIPTION_TYPE_MONTHLY: settings.STRIPE_SUBSCRIPTION_MONTHLY
-    }
+    products_mapping = {}
 
     def get_checkout_context(self, request=None, context={}):
         context = super().get_checkout_context(context=context)
@@ -52,6 +45,7 @@ class StripeProcessor(PaymentProcessorBase):
     def processor_setup(self, site, source=None):
         self.credentials = StripeIntegration(site)
         self.stripe_source = source
+        self.site = site
         if self.credentials.instance:
             stripe.api_key = self.credentials.instance.private_key
         elif settings.STRIPE_API_KEY:
@@ -59,6 +53,272 @@ class StripeProcessor(PaymentProcessorBase):
         else:
             logger.error("StripeProcessor missing keys in settings: STRIPE_PUBLIC_KEY")
             raise ValueError("StripeProcessor missing keys in settings: STRIPE_PUBLIC_KEY")
+
+        self.initialize_products()
+
+    def initialize_products(self):
+        """
+        Grab all subscription offers on invoice and either create or fetch Stripe products.
+        Then using those products, create Stripe prices. Add all that to products_mapping
+        """
+        for subscription in self.invoice.get_recurring_order_items():
+            product_name = subscription.offer.name
+            product_name_full = f'{product_name} - site {self.site.pk}'
+            product_details = subscription.offer.term_details
+            total = self.to_valid_decimal(subscription.total - subscription.discounts)
+            interval = "month" if product_details['term_units'] == TermDetailUnits.MONTH else "year"
+            status, obj_or_message = self.check_product_doesnt_exist(product_name_full)
+            if status is None:
+                raise Exception('Something went wrong with stripe. Check logs')
+            elif status and not obj_or_message:
+                # Didnt fail but no products returned with this offer name. So create it
+                product = stripe.Product.create(
+                    name=product_name,
+                    metadata=product_details,
+                    default_price_data={
+                        "currency": self.invoice.currency,
+                        "unit_amount_decimal": total,
+                    },
+                    recurring={
+                        "interval": interval,
+                        "interval_count": product_details['payment_occurrences']
+
+                    }
+                )
+                product_id = product['id']
+
+                # Each product needs an attached price obj. Check if one exists for the product
+                # and attach it to the mapping or create one and attach
+                status, price_obj_or_message = self.check_price_does_exist(product_id)
+                if status:
+                    if price_obj_or_message:
+                        price_status, price_id = self.get_price_id_with_product(product_id)
+                    else:
+                        price_status, price_id = self.create_price_with_product(product_id)
+
+                self.products_mapping[product_name] = {
+                    'product_id': product_id,
+                    'price_id': price_id
+                }
+
+            elif status and obj_or_message:
+                # Didnt fail and already have product with this offer name. Grab it
+                product_status, product_id = self.get_product_id_with_name(product_name_full)
+
+                # Each product needs an attached price obj. Check if one exists for the product
+                # and attach it to the mapping or create one and attach
+                if product_status and product_id:
+                    price_status, price_obj_or_message = self.check_price_does_exist(product_id)
+                    if price_status:
+                        if price_obj_or_message:
+                            price_status2, price_id = self.get_price_id_with_product(product_id)
+                        else:
+                            price_status2, price_id = self.create_price_with_product(product_id)
+
+                    self.products_mapping[product_name] = {
+                        'product_id': product_id,
+                        'price_id': price_id
+                    }
+
+    def check_product_does_exist(self, name):
+        try:
+            search_data = stripe.Product.search(
+                query=f'name~"{name}"'
+            )
+        except stripe.error.CardError as e:
+            # Since it's a decline, stripe.error.CardError will be caught
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.RateLimitError as e:
+            # Too many requests made to the API too quickly
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.InvalidRequestError as e:
+            # Invalid parameters were supplied to Stripe's API
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.AuthenticationError as e:
+            # Authentication with Stripe's API failed
+            # (maybe you changed API keys recently)
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.APIConnectionError as e:
+            # Network communication with Stripe failed
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.StripeError as e:
+            # Display a very generic error to the user, and maybe send
+            # yourself an email
+            logger.error(e.user_message)
+            return None, e.user_message
+        except Exception as e:
+            # Something else happened, completely unrelated to Stripe
+            # TODO: Send email to self
+            logger.error(e.user_message)
+            return None, e.user_message
+
+        return True, search_data['data']
+
+    def get_product_id_with_name(self, name):
+        try:
+            search_data = stripe.Product.search(
+                query=f'name~"{name}"'
+            )
+        except stripe.error.CardError as e:
+            # Since it's a decline, stripe.error.CardError will be caught
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.RateLimitError as e:
+            # Too many requests made to the API too quickly
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.InvalidRequestError as e:
+            # Invalid parameters were supplied to Stripe's API
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.AuthenticationError as e:
+            # Authentication with Stripe's API failed
+            # (maybe you changed API keys recently)
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.APIConnectionError as e:
+            # Network communication with Stripe failed
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.StripeError as e:
+            # Display a very generic error to the user, and maybe send
+            # yourself an email
+            logger.error(e.user_message)
+            return None, e.user_message
+        except Exception as e:
+            # Something else happened, completely unrelated to Stripe
+            # TODO: Send email to self
+            logger.error(e.user_message)
+            return None, e.user_message
+
+        return True, search_data['data'][0]['id']
+
+    def check_price_does_exist(self, product):
+        try:
+            search_data = stripe.Price.search(
+                query=f'product:"{product}"'
+            )
+        except stripe.error.CardError as e:
+            # Since it's a decline, stripe.error.CardError will be caught
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.RateLimitError as e:
+            # Too many requests made to the API too quickly
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.InvalidRequestError as e:
+            # Invalid parameters were supplied to Stripe's API
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.AuthenticationError as e:
+            # Authentication with Stripe's API failed
+            # (maybe you changed API keys recently)
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.APIConnectionError as e:
+            # Network communication with Stripe failed
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.StripeError as e:
+            # Display a very generic error to the user, and maybe send
+            # yourself an email
+            logger.error(e.user_message)
+            return None, e.user_message
+        except Exception as e:
+            # Something else happened, completely unrelated to Stripe
+            # TODO: Send email to self
+            logger.error(e.user_message)
+            return None, e.user_message
+
+        return True, search_data['data']
+
+    def get_price_id_with_product(self, product):
+        try:
+            price = stripe.Price.retrieve(product)
+        except stripe.error.CardError as e:
+            # Since it's a decline, stripe.error.CardError will be caught
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.RateLimitError as e:
+            # Too many requests made to the API too quickly
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.InvalidRequestError as e:
+            # Invalid parameters were supplied to Stripe's API
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.AuthenticationError as e:
+            # Authentication with Stripe's API failed
+            # (maybe you changed API keys recently)
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.APIConnectionError as e:
+            # Network communication with Stripe failed
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.StripeError as e:
+            # Display a very generic error to the user, and maybe send
+            # yourself an email
+            logger.error(e.user_message)
+            return None, e.user_message
+        except Exception as e:
+            # Something else happened, completely unrelated to Stripe
+            # TODO: Send email to self
+            logger.error(e.user_message)
+            return None, e.user_message
+
+        return True, price['id']
+
+    def create_price_with_product(self, product):
+        try:
+            # recurring interval and unit amount defined in product
+            price = stripe.Price.create(
+                currency=self.invoice.currency,
+                product=product
+            )
+        except stripe.error.CardError as e:
+            # Since it's a decline, stripe.error.CardError will be caught
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.RateLimitError as e:
+            # Too many requests made to the API too quickly
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.InvalidRequestError as e:
+            # Invalid parameters were supplied to Stripe's API
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.AuthenticationError as e:
+            # Authentication with Stripe's API failed
+            # (maybe you changed API keys recently)
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.APIConnectionError as e:
+            # Network communication with Stripe failed
+            logger.error(e.user_message)
+            return None, e.user_message
+        except stripe.error.StripeError as e:
+            # Display a very generic error to the user, and maybe send
+            # yourself an email
+            logger.error(e.user_message)
+            return None, e.user_message
+        except Exception as e:
+            # Something else happened, completely unrelated to Stripe
+            # TODO: Send email to self
+            logger.error(e.user_message)
+            return None, e.user_message
+
+        return True, price['id']
+
+
+
+
+
 
     def create_charge(self, source):
         # TODO integrate vendor.models.Payment
@@ -224,23 +484,23 @@ class StripeProcessor(PaymentProcessorBase):
 
         return intent.client_secret
 
-    def create_subscription(self, customer, destination_customer, subscription_type=SUBSCRIPTION_TYPE_MONTHLY):
+    def create_subscription(self, offer, clients_customer, our_customer, application_fee=30.00):
         """
         Subscription pricing will be created in stripe dashboard
         """
         try:
-            price = self.SUBSCRIPTION_PLANS[self.SUBSCRIPTION_TYPE_MONTHLY] \
-                if subscription_type == self.SUBSCRIPTION_TYPE_MONTHLY \
-                else self.SUBSCRIPTION_PLANS[self.SUBSCRIPTION_TYPE_ANNUAL]
+
             stripe_subscription = stripe.Subscription.create(
-                customer=customer,
+                customer=clients_customer,
                 currency=self.invoice.currency,
                 items=[
-                    {"price": price}
+                    {
+                        "price": self.products_mapping[offer.name]['price_id']
+                    }
                 ],
                 expand=["latest_invoice.payment_intent"],
-                transfer_data={"destination": destination_customer},
-                application_fee_percent=30.00
+                transfer_data={"destination": our_customer},
+                application_fee_percent=application_fee
             )
 
         except stripe.error.RateLimitError as e:
@@ -300,5 +560,6 @@ class StripeProcessor(PaymentProcessorBase):
             self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = '201'
             self.transaction_message[self.TRANSACTION_SUCCESS_MESSAGE] = "Success"
             self.payment.status = PurchaseStatus.CAPTURED
+            self.payment.save()
 
 
