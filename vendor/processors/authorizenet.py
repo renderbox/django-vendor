@@ -5,7 +5,6 @@ import ast
 import logging
 
 from datetime import datetime
-from decimal import Decimal, ROUND_DOWN
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import IntegerChoices
@@ -425,9 +424,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if (response.messages.resultCode == "Ok"):
             self.transaction_submitted = True
 
-    def to_valid_decimal(self, number):
-        # TODO: Need to check currency to determin decimal places.
-        return Decimal(number).quantize(Decimal('.00'))
 
     ##########
     # Base Processor Transaction Implementations
