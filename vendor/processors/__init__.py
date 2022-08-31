@@ -3,6 +3,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from vendor.config import PaymentProcessorSiteConfig
 from vendor.processors.authorizenet import AuthorizeNetProcessor
+from vendor.processors.stripe import StripeProcessor
 from vendor.processors.base import PaymentProcessorBase
 from vendor.processors.dummy import DummyProcessor
 from siteconfigs.models import SiteConfigModel

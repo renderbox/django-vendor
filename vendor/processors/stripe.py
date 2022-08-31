@@ -33,15 +33,6 @@ class StripeProcessor(PaymentProcessorBase):
 
     products_mapping = {}
 
-    def get_checkout_context(self, request=None, context={}):
-        context = super().get_checkout_context(context=context)
-        # TODO need to figure out how we're building stripe form
-        """if 'credit_card_form' not in context:
-            context['credit_card_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
-        if 'billing_address_form' not in context:
-            context['billing_address_form'] = BillingAddressForm()"""
-        return context
-
     def processor_setup(self, site, source=None):
         self.credentials = StripeIntegration(site)
         self.stripe_source = source
@@ -54,7 +45,6 @@ class StripeProcessor(PaymentProcessorBase):
             logger.error("StripeProcessor missing keys in settings: STRIPE_PUBLIC_KEY")
             raise ValueError("StripeProcessor missing keys in settings: STRIPE_PUBLIC_KEY")
 
-        self.initialize_products()
 
     def initialize_products(self):
         """
@@ -94,11 +84,11 @@ class StripeProcessor(PaymentProcessorBase):
                     'metadata': product_details,
                     'default_price_data': {
                         'currency': self.invoice.currency,
-                        'unit_amount_decimal': total
-                    },
-                    'recurring': {
-                        'interval': interval,
-                        'interval_count': product_details['payment_occurrences']
+                        'unit_amount_decimal': total,
+                        'recurring': {
+                            'interval': interval,
+                            'interval_count': subscription.offer.get_payment_occurrences()
+                        }
                     }
                 })
                 if product:
@@ -121,33 +111,24 @@ class StripeProcessor(PaymentProcessorBase):
         try:
             return func(**func_args)
         except stripe.error.CardError as e:
-            # Since it's a decline, stripe.error.CardError will be caught
             logger.error(e.user_message)
             return None
         except stripe.error.RateLimitError as e:
-            # Too many requests made to the API too quickly
             logger.error(e.user_message)
             return None
         except stripe.error.InvalidRequestError as e:
-            # Invalid parameters were supplied to Stripe's API
             logger.error(e.user_message)
             return None
         except stripe.error.AuthenticationError as e:
-            # Authentication with Stripe's API failed
-            # (maybe you changed API keys recently)
             logger.error(e.user_message)
             return None
         except stripe.error.APIConnectionError as e:
-            # Network communication with Stripe failed
             logger.error(e.user_message)
             return None
         except stripe.error.StripeError as e:
-            # Display a very generic error to the user, and maybe send
-            # yourself an email
             logger.error(e.user_message)
             return None
         except Exception as e:
-            # Something else happened, completely unrelated to Stripe
             # TODO: Send email to self
             logger.error(e.user_message)
             return None
@@ -242,20 +223,36 @@ class StripeProcessor(PaymentProcessorBase):
             ],
             'expand': ["latest_invoice.payment_intent"],
             'transfer_data': {'destination': our_customer},
-            'application_fee': application_fee
+            'application_fee': application_fee,
+            'payment_behavior': 'error_if_incomplete',
+            'trial_period_days': offer.get_trial_days()
         })
         if subscription:
             return True, subscription
         return False, None
 
+    def process_payment_transaction_response(self):
+        """
+        Processes the transaction response from the stripe so it can be saved in the payment model
+        """
+        self.transaction_id = self.charge['id']
+
+        transaction_info = {}
+        transaction_info['raw'] = str(self.charge)
+        self.transaction_response = transaction_info
+
+
     def process_payment(self):
         self.transaction_submitted = False
         charge_status, charge = self.create_charge()
+        self.charge = charge
         if charge_status and charge["captured"]:
             self.transaction_submitted = True
             self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = '201'
             self.transaction_message[self.TRANSACTION_SUCCESS_MESSAGE] = "Success"
             self.payment.status = PurchaseStatus.CAPTURED
             self.payment.save()
+            self.update_invoice_status(InvoiceStatus.COMPLETE)
+            self.process_payment_transaction_response()
 
 
