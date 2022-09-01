@@ -13,6 +13,7 @@ class StripeObjects(TextChoices):
     DISCOUNT = ('discount', 'Discount')
     INVOICE  = ('invoice', 'Invoice')
     PRODUCT  = ('product', 'Product')
+    PRICE    = ('price', 'Price')
     SUBSCRIPTION = ('subscription', 'Subscription')
 
 
@@ -38,6 +39,8 @@ def get_stripe_object(object_name):
         return stripe.Discount
     elif object_name == StripeObjects.INVOICE:
         return stripe.Invoice
+    elif object_name == StripeObjects.PRICE:
+        return stripe.Price
     elif object_name == StripeObjects.PRODUCT:
         return stripe.Product
     elif object_name == StripeObjects.SUBSCRIPTION:
@@ -61,54 +64,20 @@ def execute_crud(crud_action, stripe_object, stripe_id=None, **kwargs):
     else:
         raise TypeError(f"CRUD action: {crud_action} is not valid")
 
+def object_data_has_site_in_metadata(object_data):
+    if 'metadata' not in object_data:
+        return False
+    
+    if 'site' not in object_data['metadata']:
+        return False
 
-def crud_stripe_object(crud_action, stripe_object_name, stripe_object_id=None, **kwrgs):
+    return True
+
+def crud_stripe_object(crud_action, stripe_object_name, stripe_object_id=None, **kwargs):
     stripe_object = get_stripe_object(stripe_object_name)
 
-    return execute_crud(crud_action, stripe_object, stripe_object_id, **kwrgs) 
+    if crud_action is not CRUDChoices.DELETE:
+        if not object_data_has_site_in_metadata(kwargs):
+            raise TypeError(f"Object data does not have site key value in metadata attribute")
 
-def create_customer(email, name, address=None, description=None, metadata=None):
-    return stripe.Customer.create(
-        email=email,
-        name=name,
-        address=address,
-        description=description,
-        metadata=metadata
-    )
-
-c1 = {
-    'name': "Norrin Radd",
-    'email': 'norrin@radd.com'
-}
-
-c2 = {
-    'name': "Norrin Radd",
-    'email': 'norrin@radd.com',
-    'address': {
-        'city': "na",
-        'country': "US",
-        'line1': "Salvatierra walk",
-        'postal_code': "90321",
-        'state': 'CA'
-    },
-}
-p1 = {
-    'name': "Monthly Subscription"
-}
-p2 = {
-    "name": "Annual Subscription",
-    'metadata': {
-        'site': 'Sound Collective'
-    }
-}
-
-customer_1 = crud_stripe_object(CRUDChoices.CREATE, StripeObjects.CUSTOMER, **c1)
-monthly_license = crud_stripe_object(CRUDChoices.CREATE, StripeObjects.PRODUCT, **p1)
-annual_license = crud_stripe_object(CRUDChoices.CREATE, StripeObjects.PRODUCT, **p2)
-
-print(customer_1)
-print(monthly_license)
-print(annual_license)
-
-
-print(f"customer 1 id: {customer_1.id}")
+    return execute_crud(crud_action, stripe_object, stripe_object_id, **kwargs) 

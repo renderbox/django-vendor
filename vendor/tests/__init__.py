@@ -1,6 +1,6 @@
 
 from .test_processor import *
-
+from .test_stripe import *
 
 
 

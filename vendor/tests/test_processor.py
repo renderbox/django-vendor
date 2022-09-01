@@ -1134,7 +1134,7 @@ class AuthorizeNetProcessorTests(TestCase):
         
 
 
-@skipIf((settings.STRIPE_TEST_SECRET_KEY or settings.STRIPE_TEST_PUBLIC_KEY) is None, "Strip enviornment variables not set, skipping tests")
+# @skipIf((settings.STRIPE_TEST_SECRET_KEY or settings.STRIPE_TEST_PUBLIC_KEY) is None, "Strip enviornment variables not set, skipping tests")
 class StripeProcessorTests(TestCase):
 
     def setUp(self):
