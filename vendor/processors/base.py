@@ -252,6 +252,11 @@ class PaymentProcessorBase(object):
         # TODO: Need to check currency to determin decimal places.
         return Decimal(number).quantize(Decimal('.00'))
 
+    def to_stripe_valid_unit(self, number):
+        if number > 0:
+            return int(number) * 100
+        return 0
+
     # -------------------
     # Process a Payment
     def authorize_payment(self):
