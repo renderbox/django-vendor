@@ -30,20 +30,21 @@ class StripeProcessor(PaymentProcessorBase):
     TRANSACTION_FAIL_CODE = 'error_code'
     TRANSACTION_RESPONSE_CODE = 'response_code'
     transaction_submitted = False
-
+    source = None
     products_mapping = {}
 
     def processor_setup(self, site, source=None):
         self.credentials = StripeIntegration(site)
-        self.stripe_source = source
+        self.source = source
         self.site = site
         if self.credentials.instance:
             stripe.api_key = self.credentials.instance.private_key
-        elif settings.STRIPE_API_KEY:
-            stripe.api_key = settings.STRIPE_PUBLIC_KEY
+        elif settings.STRIPE_SECRET_KEY:
+            stripe.api_key = settings.STRIPE_SECRET_KEY
         else:
             logger.error("StripeProcessor missing keys in settings: STRIPE_PUBLIC_KEY")
             raise ValueError("StripeProcessor missing keys in settings: STRIPE_PUBLIC_KEY")
+
 
 
     def initialize_products(self):
@@ -107,30 +108,55 @@ class StripeProcessor(PaymentProcessorBase):
                         'price_id': price_id
                     }
 
-    def stripe_call(self, func, **func_args):
+    def set_stripe_payment_source(self):
+        if not self.source:
+            if self.payment_info.is_valid():
+                card_number = self.payment_info.cleaned_data.get('card_number')
+                exp_month = self.payment_info.cleaned_data.get('expire_month')
+                exp_year = self.payment_info.cleaned_data.get('expire_year')
+                cvc = self.payment_info.cleaned_data.get('cvc_number')
+                card = {
+                   'number': card_number,
+                   'exp_month': exp_month,
+                   'exp_year': exp_year,
+                   'cvc': cvc
+                }
+                status, card = self.create_card_token(card)
+                if status and card:
+                    self.source = card['id']
+
+    def stripe_call(self, *args):
+        func, func_args = args
         try:
             return func(**func_args)
         except stripe.error.CardError as e:
+            print(e.user_message)
             logger.error(e.user_message)
             return None
         except stripe.error.RateLimitError as e:
+            print(e.user_message)
             logger.error(e.user_message)
             return None
         except stripe.error.InvalidRequestError as e:
+            print(e.user_message)
             logger.error(e.user_message)
             return None
         except stripe.error.AuthenticationError as e:
+            print(e.user_message)
             logger.error(e.user_message)
             return None
         except stripe.error.APIConnectionError as e:
+            print(e.user_message)
             logger.error(e.user_message)
             return None
         except stripe.error.StripeError as e:
+            print(e.user_message)
             logger.error(e.user_message)
             return None
         except Exception as e:
             # TODO: Send email to self
-            logger.error(e.user_message)
+            print(str(e))
+            logger.error(str(e))
             return None
 
     def check_product_does_exist(self, name):
@@ -167,16 +193,15 @@ class StripeProcessor(PaymentProcessorBase):
             return True, price['id']
         return False, None
 
-    def create_charge(self, source):
-        # TODO integrate vendor.models.Payment
-        charge = self.stripe_call(stripe.Charge.create, {
-            'amount': self.invoice.get_one_time_transaction_total(),
-            'currency': self.invoice.currency,
-            'source': source,
-            'customer': self.invoice.profile.user.pk
-        })
-        if charge:
-            return True, charge
+    def create_charge(self):
+        if self.source:
+            charge = self.stripe_call(stripe.Charge.create, {
+                'amount': self.to_stripe_valid_unit(self.invoice.get_one_time_transaction_total()),
+                'currency': self.invoice.currency,
+                'source': self.source,
+            })
+            if charge:
+                return True, charge
         return False, None
 
     def create_customer(self):
@@ -192,6 +217,14 @@ class StripeProcessor(PaymentProcessorBase):
         })
         if customer:
             return True, customer
+        return False, None
+
+    def create_card_token(self, card):
+        token = self.stripe_call(stripe.Token.create, {
+            'card': card
+        })
+        if token:
+            return True, token
         return False, None
 
     def create_payment_intent(self, customer):
