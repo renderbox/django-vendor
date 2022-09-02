@@ -130,32 +130,25 @@ class StripeProcessor(PaymentProcessorBase):
         try:
             return func(**func_args)
         except stripe.error.CardError as e:
-            print(e.user_message)
             logger.error(e.user_message)
             return None
         except stripe.error.RateLimitError as e:
-            print(e.user_message)
             logger.error(e.user_message)
             return None
         except stripe.error.InvalidRequestError as e:
-            print(e.user_message)
             logger.error(e.user_message)
             return None
         except stripe.error.AuthenticationError as e:
-            print(e.user_message)
             logger.error(e.user_message)
             return None
         except stripe.error.APIConnectionError as e:
-            print(e.user_message)
             logger.error(e.user_message)
             return None
         except stripe.error.StripeError as e:
-            print(e.user_message)
             logger.error(e.user_message)
             return None
         except Exception as e:
             # TODO: Send email to self
-            print(str(e))
             logger.error(str(e))
             return None
 
