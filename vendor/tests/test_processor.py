@@ -1256,6 +1256,120 @@ class StripeProcessorTests(TestCase):
         self.assertFalse(self.processor.transaction_submitted)
         self.assertEquals(InvoiceStatus.CART, self.processor.invoice.status)
 
+    def test_process_payment_fail_cvv_no_match(self):
+        """
+        Check incorrect cvc. Will fail with card number 4000000000000127
+        """
+        self.form_data['credit_card_form']['cvv_number'] = '901'
+        self.form_data['credit_card_form']['card_number'] = '4000000000000127'
+
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+
+        self.processor.invoice.total = randrange(1, 1000)
+        self.processor.authorize_payment()
+        self.assertFalse(self.processor.transaction_submitted)
+
+    def test_process_payment_generic_decline(self):
+        """
+        Check a failed transaction due to to generic decline
+        """
+        self.form_data['credit_card_form']['cvv_number'] = '902'
+        self.form_data['credit_card_form']['card_number'] = '4000000000000002'
+
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+
+        self.processor.invoice.total = randrange(1, 1000)
+        self.processor.authorize_payment()
+        self.assertFalse(self.processor.transaction_submitted)
+
+    def test_process_payment_fail_cvv_check_fails(self):
+        """
+        CVC number check fails for any cvv number passed
+        """
+        self.form_data['credit_card_form']['cvv_number'] = '903'
+        self.form_data['credit_card_form']['card_number'] = '4000000000000101'
+
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+
+        self.processor.invoice.total = randrange(1, 1000)
+        self.processor.authorize_payment()
+        self.assertFalse(self.processor.transaction_submitted)
+
+    def test_process_payment_fail_expired_card(self):
+        """
+        Payment fails because of expired card
+        """
+        self.form_data['credit_card_form']['cvv_number'] = '904'
+        self.form_data['credit_card_form']['card_number'] = '4000000000000069'
+
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+
+        self.processor.invoice.total = randrange(1, 1000)
+        self.processor.authorize_payment()
+        self.assertFalse(self.processor.transaction_submitted)
+
+    def test_process_payment_fail_fraud_always_blocked(self):
+        """
+        Fraud prevention fail: Always blocked
+        """
+        self.form_data['credit_card_form']['cvv_number'] = '903'
+        self.form_data['credit_card_form']['card_number'] = '4000000000000101'
+
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+
+        self.processor.invoice.total = randrange(1, 1000)
+        self.processor.authorize_payment()
+        self.assertFalse(self.processor.transaction_submitted)
+
+    def test_process_payment_fail_fraud_higest_risk(self):
+        """
+        Fraud prevention fail: Higest Risk
+        """
+        self.form_data['credit_card_form']['cvv_number'] = '903'
+        self.form_data['credit_card_form']['card_number'] = '4000000000004954'
+
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+
+        self.processor.invoice.total = randrange(1, 1000)
+        self.processor.authorize_payment()
+        self.assertFalse(self.processor.transaction_submitted)
+
+    def test_process_payment_fail_fraud_elevated_risk(self):
+        """
+        Fraud prevention fail : Elevated risk
+        """
+        self.form_data['credit_card_form']['cvv_number'] = '903'
+        self.form_data['credit_card_form']['card_number'] = '4000000000009235'
+
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+
+        self.processor.invoice.total = randrange(1, 1000)
+        self.processor.authorize_payment()
+        self.assertFalse(self.processor.transaction_submitted)
+
+    def test_process_payment_postal_code_check_fails(self):
+        """
+        Postal code check fails for any code given fo this card number
+        """
+
+        self.form_data['credit_card_form']['card_number'] = '4000000000000036'
+
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+
+        self.processor.invoice.total = randrange(1, 1000)
+        self.processor.authorize_payment()
+        self.assertFalse(self.processor.transaction_submitted)
+
+
+
 
 
 
