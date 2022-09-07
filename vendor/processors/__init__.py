@@ -8,9 +8,6 @@ from vendor.processors.base import PaymentProcessorBase
 from vendor.processors.dummy import DummyProcessor
 from siteconfigs.models import SiteConfigModel
 
-# todo: remove once finished testing stripe objects
-from vendor.processors.stripe_objects import *
-
 def get_site_payment_processor(site):
     site_processor = PaymentProcessorSiteConfig(site)
     return import_string(f"vendor.processors.{site_processor.get_key_value('payment_processor')}")
