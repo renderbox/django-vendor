@@ -118,16 +118,15 @@ class StripeProcessor(PaymentProcessorBase):
         return setup_intent
     
     @add_site_on_object_metadata
-    def create_payment_method(self, payment_method_data):
-        payment_method = self.stripe_call(stripe.PaymentMethod.create, payment_method_data)
-        
-        return payment_method
-    
-    @add_site_on_object_metadata
     def create_subscription(self, subscription_data):
         subscription = self.stripe_call(stripe.Subscription.create, subscription_data)
         
         return subscription
+    
+    def create_payment_method(self, payment_method_data):
+        payment_method = self.stripe_call(stripe.PaymentMethod.create, payment_method_data)
+        
+        return payment_method
 
     def initialize_products(self):
         """
