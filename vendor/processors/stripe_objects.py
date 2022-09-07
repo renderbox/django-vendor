@@ -10,11 +10,12 @@ stripe.api_key = "sk_test_51LYCNjJHHVfmV6EHPwkh9bogbRyTQFoiGV85yUrQyPFyur3BI2Rjt
 class StripeObjects(TextChoices):
     COUPON   = ('coupon', 'Coupon')
     CUSTOMER = ('customer', 'Customer')
-    DISCOUNT = ('discount', 'Discount')
     INVOICE  = ('invoice', 'Invoice')
     PRODUCT  = ('product', 'Product')
     PRICE    = ('price', 'Price')
     SUBSCRIPTION = ('subscription', 'Subscription')
+    SETUP_INTENT = ('setup_intent', 'Setup Intent')
+    PAYMENT_METHOD = ('payment_methond', 'Payment Method')
 
 
 class CRUDChoices(TextChoices):
@@ -23,6 +24,11 @@ class CRUDChoices(TextChoices):
     UPDATE  = ('update', 'update')
     DELETE  = ('delete', 'delete')
 
+
+IGNORE_META_DATA_VALIDATION = [
+    StripeObjects.PAYMENT_METHOD,
+    CRUDChoices.DELETE
+]
 
 def set_stripe_object_id(object_name, id):
     return {object_name: id}
@@ -35,14 +41,16 @@ def get_stripe_object(object_name):
         return stripe.Coupon
     elif object_name == StripeObjects.CUSTOMER:
         return stripe.Customer
-    elif object_name == StripeObjects.DISCOUNT:
-        return stripe.Discount
     elif object_name == StripeObjects.INVOICE:
         return stripe.Invoice
+    elif object_name == StripeObjects.PAYMENT_METHOD:
+        return stripe.PaymentMethod
     elif object_name == StripeObjects.PRICE:
         return stripe.Price
     elif object_name == StripeObjects.PRODUCT:
         return stripe.Product
+    elif object_name == StripeObjects.SETUP_INTENT:
+        return stripe.SetupIntent
     elif object_name == StripeObjects.SUBSCRIPTION:
         return stripe.Subscription
     else:
@@ -76,7 +84,7 @@ def object_data_has_site_in_metadata(object_data):
 def crud_stripe_object(crud_action, stripe_object_name, stripe_object_id=None, **kwargs):
     stripe_object = get_stripe_object(stripe_object_name)
 
-    if crud_action is not CRUDChoices.DELETE:
+    if not (crud_action in IGNORE_META_DATA_VALIDATION or stripe_object_name in IGNORE_META_DATA_VALIDATION):
         if not object_data_has_site_in_metadata(kwargs):
             raise TypeError(f"Object data does not have site key value in metadata attribute")
 
