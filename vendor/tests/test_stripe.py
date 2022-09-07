@@ -1,22 +1,25 @@
 import stripe
 
+from django.conf import settings
 from django.test import TestCase, Client, tag
+
 from vendor.processors.stripe_objects import *
 from vendor.processors import StripeProcessor
 
-# @skipIf((settings.STRIPE_TEST_SECRET_KEY or settings.STRIPE_TEST_PUBLIC_KEY) is None, "Strip enviornment variables not set, skipping tests")
-# class StripeProcessorTests(TestCase):
+@skipIf((settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None, "Strip enviornment variables not set, skipping tests")
+class StripeProcessorTests(TestCase):
 
-#     fixtures = ['user', 'unit_test']
+    fixtures = ['user', 'unit_test']
 
-#     def setUp(self):
-#         TEST_ACK = "acct_1LbUg3R6Vaz8QGf8"
-#         stripe.api_key = "sk_test_51LYCNjJHHVfmV6EHPwkh9bogbRyTQFoiGV85yUrQyPFyur3BI2Rjtkhi7XCCNIsPvzOlYTVjzOYmljHPe1X2caIr00uVSfVkmn"
+    def setUp(self):
+        TEST_ACK = "acct_1LbUg3R6Vaz8QGf8"
+        stripe.api_key = "sk_test_51LYCNjJHHVfmV6EHPwkh9bogbRyTQFoiGV85yUrQyPFyur3BI2Rjtkhi7XCCNIsPvzOlYTVjzOYmljHPe1X2caIr00uVSfVkmn"
 
-#     def test_stripe_connect(self):
-#         test_connect = stripe.Account.create(country="US", type="custom", capabilities={"card_payments": {"requested": True}, "transfers": {"requested": True}})
+    def test_stripe_connect(self):
+        test_connect = stripe.Account.create(country="US", type="custom", capabilities={"card_payments": {"requested": True}, "transfers": {"requested": True}})
         
 
+@skipIf((settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None, "Strip enviornment variables not set, skipping tests")
 class StripeCRUDObjectTests(TestCase):
 
     def init_test_objects(self):
@@ -48,7 +51,7 @@ class StripeCRUDObjectTests(TestCase):
             }
 
     def setUp(self):
-        stripe.api_key = "sk_test_51LYCNjJHHVfmV6EHPwkh9bogbRyTQFoiGV85yUrQyPFyur3BI2Rjtkhi7XCCNIsPvzOlYTVjzOYmljHPe1X2caIr00uVSfVkmn"
+        stripe.api_key = settings.STRIPE_PUBLIC_KEY
         self.init_test_objects()
 
     def test_create_customer_no_metadata_fail(self):
