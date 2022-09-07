@@ -28,6 +28,8 @@ def add_site_on_object_metadata(func):
         return func(*args, kwargs)
     
     return wrapper
+
+
 class StripeProcessor(PaymentProcessorBase):
     """ 
     Implementation of Stripe SDK
@@ -63,6 +65,7 @@ class StripeProcessor(PaymentProcessorBase):
         try:
             return func(**func_args)
         except stripe.error.CardError as e:
+            # TODO: save exception in the self.transaction_response.
             logger.error(e.user_message)
         except stripe.error.RateLimitError as e:
             logger.error(e.user_message)
@@ -76,7 +79,7 @@ class StripeProcessor(PaymentProcessorBase):
             logger.error(e.user_message)
         except Exception as e:
             logger.error(str(e))
-            
+
         self.transaction_submitted = False
         
 
@@ -171,13 +174,17 @@ class StripeProcessor(PaymentProcessorBase):
         
         return payment_method
 
-    def initialize_products(self):
+    def initialize_products(self, site):
         """
         Grab all subscription offers on invoice and either create or fetch Stripe products.
         Then using those products, create Stripe prices. Add all that to products_mapping
 
         Will be used in create_subscription
         """
+        # Create Customer loop through all site customer and save their id's
+        # Create Stripe product with site offers
+        ## Create Stripe Price from Offer.Prices
+        ## Create Coupons from Offer.term_details. 
         for subscription in self.invoice.get_recurring_order_items():
             product_name = subscription.offer.name
             product_name_full = f'{product_name} - site {self.site.pk}'
@@ -306,10 +313,7 @@ class StripeProcessor(PaymentProcessorBase):
         Processes the transaction response from the stripe so it can be saved in the payment model
         """
         self.transaction_id = self.charge['id']
-
-        transaction_info = {}
-        transaction_info['raw'] = str(self.charge)
-        self.transaction_response = transaction_info
+        self.transaction_response = {'raw': str(self.charge)}
 
 
     def process_payment(self):
