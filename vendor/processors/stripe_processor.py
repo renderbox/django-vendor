@@ -58,33 +58,26 @@ class StripeProcessor(PaymentProcessorBase):
     ##########
     # Stripe utils
     ##########
-
     def stripe_call(self, *args):
         func, func_args = args
         try:
             return func(**func_args)
         except stripe.error.CardError as e:
             logger.error(e.user_message)
-            return None
         except stripe.error.RateLimitError as e:
             logger.error(e.user_message)
-            return None
         except stripe.error.InvalidRequestError as e:
             logger.error(e.user_message)
-            return None
         except stripe.error.AuthenticationError as e:
             logger.error(e.user_message)
-            return None
         except stripe.error.APIConnectionError as e:
             logger.error(e.user_message)
-            return None
         except stripe.error.StripeError as e:
             logger.error(e.user_message)
-            return None
         except Exception as e:
-            # TODO: Send email to self
             logger.error(str(e))
-            return None
+        self.transaction_submitted = False
+        
 
     ##########
     # CRUD Stripe Object
@@ -254,8 +247,6 @@ class StripeProcessor(PaymentProcessorBase):
                 status, card = self.create_card_token(card)
                 if status and card:
                     self.source = card['id']
-
-
 
     def check_product_does_exist(self, name):
         search_data = self.stripe_call(stripe.Product.search, {'query': f'name~"{name}"'})

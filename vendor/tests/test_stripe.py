@@ -280,12 +280,11 @@ class StripeCRUDObjectTests(TestCase):
         self.init_test_objects()
         self.processor = StripeProcessor(self.site)
 
-    def test_create_customer_no_metadata_fail(self):
+    def test_create_stripe_object_with_site_metadata_success(self):
         del(self.cus_norrin_radd['metadata'])
 
-        with self.assertRaises(TypeError):
-            self.processor.create_customer(**self.cus_norrin_radd)
-            # crud_stripe_object(CRUDChoices.CREATE, StripeObjects.CUSTOMER, **self.cus_norrin_radd)
+        stripe_customer = self.processor.create_customer(**self.cus_norrin_radd)
+        self.assertIn('site', stripe_customer.metadata)
 
     ##########
     # Customer CRUD
@@ -320,8 +319,9 @@ class StripeCRUDObjectTests(TestCase):
     def test_create_product_no_name_fail(self):
         del(self.pro_monthly_license['name'])
 
-        with self.assertRaises(stripe.error.StripeError):
-            stripe_product = self.processor.create_product(**self.pro_monthly_license)
+        
+        stripe_product = self.processor.create_product(**self.pro_monthly_license)
+        self.assertFalse(self.processor.transaction_submitted)
             # crud_stripe_object(CRUDChoices.CREATE, StripeObjects.PRODUCT, **self.pro_monthly_license)
 
     ##########
@@ -348,8 +348,8 @@ class StripeCRUDObjectTests(TestCase):
     def test_create_price_invalid_field_fail(self):
         self.pri_monthly['type'] = "This is not a valid field"
 
-        with self.assertRaises(stripe.error.InvalidRequestError):
-            self.processor.create_price(**self.pri_monthly)
+        self.processor.create_price(**self.pri_monthly)
+        self.assertFalse(self.processor.transaction_submitted)
             # crud_stripe_object(CRUDChoices.CREATE, StripeObjects.PRICE, **self.pri_monthly)
 
     ##########
