@@ -193,7 +193,7 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
             logger.info(f"AuthorizeCaptureAPI post: updating payment for transaction detail: {transaction_detail}")
             update_payment(site, transaction_id, request_data.get('payload'))
         else:
-            logger.info(f"AuthorizeCaptureAPI post: savint subscription transaction: {transaction_detail}")
+            logger.info(f"AuthorizeCaptureAPI post: saving subscription transaction: {transaction_detail}")
             subscription_save_transaction(site, request_data.get('payload'), transaction_detail)
 
         return JsonResponse({"msg": "AuthorizeCaptureAPI post event finished"})
