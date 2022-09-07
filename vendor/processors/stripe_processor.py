@@ -18,6 +18,15 @@ from vendor.integrations import StripeIntegration
 
 logger = logging.getLogger(__name__)
 
+def add_site_on_object_metadata(func):
+    # Decorate that check if the stripe object data has a metadata field that has site field.
+    # If it does not have one it addas it to kwargs
+    def wrapper(*args, **kwargs):
+        if 'metadata' not in kwargs or 'site' not in kwargs['metadata']:
+            kwargs['metadata'] = {'site': self.site}
+
+        return wrapper
+
 class StripeProcessor(PaymentProcessorBase):
     """
     Implementation of Stripe SDK
@@ -45,7 +54,80 @@ class StripeProcessor(PaymentProcessorBase):
             logger.error("StripeProcessor missing keys in settings: STRIPE_PUBLIC_KEY")
             raise ValueError("StripeProcessor missing keys in settings: STRIPE_PUBLIC_KEY")
 
+    ##########
+    # Stripe utils
+    ##########
+    def stripe_call(self, *args):
+        func, func_args = args
+        try:
+            return func(**func_args)
+        except stripe.error.CardError as e:
+            logger.error(e.user_message)
+            return None
+        except stripe.error.RateLimitError as e:
+            logger.error(e.user_message)
+            return None
+        except stripe.error.InvalidRequestError as e:
+            logger.error(e.user_message)
+            return None
+        except stripe.error.AuthenticationError as e:
+            logger.error(e.user_message)
+            return None
+        except stripe.error.APIConnectionError as e:
+            logger.error(e.user_message)
+            return None
+        except stripe.error.StripeError as e:
+            logger.error(e.user_message)
+            return None
+        except Exception as e:
+            # TODO: Send email to self
+            logger.error(str(e))
+            return None
 
+    ##########
+    # CRUD Stripe Object
+    ##########
+    @add_site_on_object_metadata
+    def create_customer(self, customer_data):
+        customer = self.stripe_call(stripe.Customer.create, customer_data)
+
+        return customer
+    
+    @add_site_on_object_metadata
+    def create_product(self, product_data):
+        product = self.stripe_call(stripe.Product.create, product_data)
+        
+        return product
+    
+    @add_site_on_object_metadata
+    def create_price(self, price_data):
+        price = self.stripe_call(stripe.Price.create, price_data)
+        
+        return price
+    
+    @add_site_on_object_metadata
+    def create_coupon(self, coupon_data):
+        coupon = self.stripe_call(stripe.coupon.create, coupon_data)
+        
+        return coupon
+    
+    @add_site_on_object_metadata
+    def create_setup_intent(self, setup_intent_data):
+        setup_intent = self.stripe_call(stripe.SetupIntent.create, setup_intent_data)
+        
+        return setup_intent
+    
+    @add_site_on_object_metadata
+    def create_payment_method(self, payment_method_data):
+        payment_method = self.stripe_call(stripe.PaymentMethod.create, payment_method_data)
+        
+        return payment_method
+    
+    @add_site_on_object_metadata
+    def create_subscription(self, subscription_data):
+        subscription = self.stripe_call(stripe.Subscription.create, subscription_data)
+        
+        return subscription
 
     def initialize_products(self):
         """
@@ -125,32 +207,7 @@ class StripeProcessor(PaymentProcessorBase):
                 if status and card:
                     self.source = card['id']
 
-    def stripe_call(self, *args):
-        func, func_args = args
-        try:
-            return func(**func_args)
-        except stripe.error.CardError as e:
-            logger.error(e.user_message)
-            return None
-        except stripe.error.RateLimitError as e:
-            logger.error(e.user_message)
-            return None
-        except stripe.error.InvalidRequestError as e:
-            logger.error(e.user_message)
-            return None
-        except stripe.error.AuthenticationError as e:
-            logger.error(e.user_message)
-            return None
-        except stripe.error.APIConnectionError as e:
-            logger.error(e.user_message)
-            return None
-        except stripe.error.StripeError as e:
-            logger.error(e.user_message)
-            return None
-        except Exception as e:
-            # TODO: Send email to self
-            logger.error(str(e))
-            return None
+
 
     def check_product_does_exist(self, name):
         search_data = self.stripe_call(stripe.Product.search, {'query': f'name~"{name}"'})
@@ -237,25 +294,25 @@ class StripeProcessor(PaymentProcessorBase):
             return True, intent.client_secret
         return False, None
 
-    def create_subscription(self, offer, clients_customer, our_customer, application_fee=30.00):
-        """
-        Subscription pricing will be created in stripe dashboard
-        """
-        subscription = self.stripe_call(stripe.Subscription.create, {
-            'customer': clients_customer,
-            'currency': self.invoice.currency,
-            'items': [
-                {'price': self.products_mapping[offer.name]['price_id']}
-            ],
-            'expand': ["latest_invoice.payment_intent"],
-            'transfer_data': {'destination': our_customer},
-            'application_fee': application_fee,
-            'payment_behavior': 'error_if_incomplete',
-            'trial_period_days': offer.get_trial_days()
-        })
-        if subscription:
-            return True, subscription
-        return False, None
+    # def create_subscription(self, offer, clients_customer, our_customer, application_fee=30.00):
+    #     """
+    #     Subscription pricing will be created in stripe dashboard
+    #     """
+    #     subscription = self.stripe_call(stripe.Subscription.create, {
+    #         'customer': clients_customer,
+    #         'currency': self.invoice.currency,
+    #         'items': [
+    #             {'price': self.products_mapping[offer.name]['price_id']}
+    #         ],
+    #         'expand': ["latest_invoice.payment_intent"],
+    #         'transfer_data': {'destination': our_customer},
+    #         'application_fee': application_fee,
+    #         'payment_behavior': 'error_if_incomplete',
+    #         'trial_period_days': offer.get_trial_days()
+    #     })
+    #     if subscription:
+    #         return True, subscription
+    #     return False, None
 
     def process_payment_transaction_response(self):
         """
