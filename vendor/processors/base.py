@@ -19,15 +19,6 @@ vendor_post_authorization = django.dispatch.Signal()
 vendor_subscription_cancel = django.dispatch.Signal()
 
 
-# TODO: Create ticket to capture the following structure for transaction_response variable.
-# TODO: Deprecate transaction_message variable.
-{
-    'raw': "",
-    'errors': "",
-    'payment_method': '',
-    'messages': ''
-
-}
 
 #############
 # BASE CLASS
@@ -51,7 +42,7 @@ class PaymentProcessorBase(object):
     transaction_submitted = False
     transaction_message = {}
     transaction_response = {}
-# TODO: CREATE Ticket for metter transaction_response()
+
     def __init__(self, site, invoice=None):
         """
         This should not be overriden.  Override one of the methods it calls if you need to.

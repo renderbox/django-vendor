@@ -65,7 +65,6 @@ class StripeProcessor(PaymentProcessorBase):
         try:
             return func(**func_args)
         except stripe.error.CardError as e:
-            # TODO: save exception in the self.transaction_response.
             logger.error(e.user_message)
         except stripe.error.RateLimitError as e:
             logger.error(e.user_message)
