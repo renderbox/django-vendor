@@ -19,6 +19,7 @@ vendor_post_authorization = django.dispatch.Signal()
 vendor_subscription_cancel = django.dispatch.Signal()
 
 
+
 #############
 # BASE CLASS
 class PaymentProcessorBase(object):
