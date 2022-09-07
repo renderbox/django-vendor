@@ -169,6 +169,22 @@ class StripeProcessor(PaymentProcessorBase):
         
         return setup_intent
 
+    # def set_stripe_payment_source(self):
+    #     if not self.source:
+    #         if self.payment_info.is_valid():
+    #             card_number = self.payment_info.cleaned_data.get('card_number')
+    #             exp_month = self.payment_info.cleaned_data.get('expire_month')
+    #             exp_year = self.payment_info.cleaned_data.get('expire_year')
+    #             cvc = self.payment_info.cleaned_data.get('cvc_number')
+    #             card = {
+    #                'number': card_number,
+    #                'exp_month': exp_month,
+    #                'exp_year': exp_year,
+    #                'cvc': cvc
+    #             }
+    #             status, card = self.create_card_token(card)
+    #             if status and card:
+    #                 self.source = card['id']
     def create_payment_method(self, payment_method_data):
         payment_method = self.stripe_call(stripe.PaymentMethod.create, payment_method_data)
         
@@ -239,22 +255,6 @@ class StripeProcessor(PaymentProcessorBase):
                         'price_id': price_id
                     }
 
-    def set_stripe_payment_source(self):
-        if not self.source:
-            if self.payment_info.is_valid():
-                card_number = self.payment_info.cleaned_data.get('card_number')
-                exp_month = self.payment_info.cleaned_data.get('expire_month')
-                exp_year = self.payment_info.cleaned_data.get('expire_year')
-                cvc = self.payment_info.cleaned_data.get('cvc_number')
-                card = {
-                   'number': card_number,
-                   'exp_month': exp_month,
-                   'exp_year': exp_year,
-                   'cvc': cvc
-                }
-                status, card = self.create_card_token(card)
-                if status and card:
-                    self.source = card['id']
 
     def check_product_does_exist(self, name):
         search_data = self.stripe_call(stripe.Product.search, {'query': f'name~"{name}"'})
