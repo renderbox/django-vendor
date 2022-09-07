@@ -76,6 +76,7 @@ class StripeProcessor(PaymentProcessorBase):
             logger.error(e.user_message)
         except Exception as e:
             logger.error(str(e))
+            
         self.transaction_submitted = False
         
 
