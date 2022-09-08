@@ -254,6 +254,17 @@ class StripeProcessor(PaymentProcessorBase):
                         'price_id': price_id
                     }
 
+    # TODO: Unit test
+    def query_customers(self, query):
+        return self.stripe_call(stripe.Customer.search, query)
+
+    def update_customer(self, customer_data):
+        customer = self.stripe_call(stripe.Customer.modify, customer_data)
+
+        return customer
+
+    def delete_customer(self, customer_id):
+        return self.stripe_call(stripe.Customer.delete, customer_id)
 
     def check_product_does_exist(self, name):
         search_data = self.stripe_call(stripe.Product.search, {'query': f'name~"{name}"'})
