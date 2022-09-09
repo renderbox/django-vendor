@@ -63,7 +63,11 @@ class StripeProcessor(PaymentProcessorBase):
     def stripe_call(self, *args):
         func, func_args = args
         try:
+            if isinstance(func_args, str):
+                return func(func_args)
+
             return func(**func_args)
+
         except stripe.error.CardError as e:
             logger.error(e.user_message)
         except stripe.error.RateLimitError as e:
@@ -256,7 +260,9 @@ class StripeProcessor(PaymentProcessorBase):
 
     # TODO: Unit test
     def query_customers(self, query):
-        return self.stripe_call(stripe.Customer.search, query)
+        query_result = self.stripe_call(stripe.Customer.search, query)
+
+        return query_result
 
     def update_customer(self, customer_data):
         customer = self.stripe_call(stripe.Customer.modify, customer_data)
@@ -264,7 +270,9 @@ class StripeProcessor(PaymentProcessorBase):
         return customer
 
     def delete_customer(self, customer_id):
-        return self.stripe_call(stripe.Customer.delete, customer_id)
+        result = self.stripe_call(stripe.Customer.delete, customer_id)
+
+        return result
 
     def check_product_does_exist(self, name):
         search_data = self.stripe_call(stripe.Product.search, {'query': f'name~"{name}"'})
