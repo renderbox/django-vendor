@@ -1,14 +1,19 @@
 import stripe
-
+from random import randrange
 from django.conf import settings
 from django.test import TestCase, Client, tag
 from django.contrib.sites.models import Site
 from siteconfigs.models import SiteConfigModel
 from unittest import skipIf
+from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.processors import StripeProcessor
+from django.contrib.auth import get_user_model
+from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem, Subscription
+from core.models import Product
+User = get_user_model()
 
 
-@skipIf((settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None, "Strip enviornment variables not set, skipping tests")
+@skipIf((settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None, "Stripe enviornment variables not set, skipping tests")
 class StripeProcessorTests(TestCase):
     fixtures = ['user', 'unit_test']
 
@@ -86,7 +91,7 @@ class StripeProcessorTests(TestCase):
     def test_process_payment_transaction_success(self):
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
-        self.processor.set_stripe_payment_source()
+        #self.processor.set_stripe_payment_source()
         self.processor.invoice.total = randrange(1, 1000)
         for recurring_order_items in self.processor.invoice.get_recurring_order_items():
             self.processor.invoice.remove_offer(recurring_order_items.offer)
