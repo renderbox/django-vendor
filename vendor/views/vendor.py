@@ -75,6 +75,9 @@ class CartView(TemplateView):
 class AccountInformationView(LoginRequiredMixin, TemplateView):
     template_name = 'vendor/checkout.html'
 
+    def get_form_class(self):
+        return AccountInformationForm
+
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         clear_session_purchase_data(request)
@@ -88,18 +91,19 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
         existing_account_address = Address.objects.filter(profile__user=request.user, profile__site=get_site_from_request(request))
 
+        form_class = self.get_form_class()
         if existing_account_address:
             # TODO: In future the user will be able to select from multiple saved address
-            form = AccountInformationForm(initial={'email': request.user.email}, instance=existing_account_address[0])
+            form = form_class(initial={'email': request.user.email}, instance=existing_account_address[0])
         else:
-            form = AccountInformationForm(initial={'first_name': request.user.first_name, 'last_name': request.user.last_name, 'email': request.user.email})
+            form = form_class(initial={'first_name': request.user.first_name, 'last_name': request.user.last_name, 'email': request.user.email})
 
         context['form'] = form
         context['invoice'] = invoice
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
-        form = AccountInformationForm(request.POST)
+        form = self.get_form_class()(request.POST)
 
         if not form.is_valid():
             return render(request, self.template_name, {'form': form})
