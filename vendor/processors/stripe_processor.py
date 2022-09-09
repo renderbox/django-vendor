@@ -18,22 +18,22 @@ from vendor.integrations import StripeIntegration
 
 logger = logging.getLogger(__name__)
 
-def add_site_on_object_metadata(func):
-    # Decorate that check if the stripe object data has a metadata field that has site field.
-    # If it does not have one it addas it to kwargs
-    def wrapper(*args, **kwargs):
-        if 'metadata' not in kwargs or 'site' not in kwargs['metadata']:
-            kwargs['metadata'] = {'site': args[0].site}
+# def add_site_on_object_metadata(func):
+#     # Decorate that check if the stripe object data has a metadata field that has site field.
+#     # If it does not have one it addas it to kwargs
+#     def wrapper(*args, **kwargs):
+#         if 'metadata' not in kwargs or 'site' not in kwargs['metadata']:
+#             kwargs['metadata'] = {'site': args[0].site}
 
-        return func(*args, kwargs)
+#         return func(*args, kwargs)
     
-    return wrapper
+#     return wrapper
 
 
 class StripeProcessor(PaymentProcessorBase):
     """ 
     Implementation of Stripe SDK
-    https://stripe.com/docs/api/authentication?lang=python
+    https://self.stripe.com/docs/api/authentication?lang=python
     """
 
     TRANSACTION_SUCCESS_MESSAGE = 'message'
@@ -49,10 +49,11 @@ class StripeProcessor(PaymentProcessorBase):
         self.credentials = StripeIntegration(site)
         self.source = source
         self.site = site
+        self.stripe = stripe
         if self.credentials.instance:
-            stripe.api_key = self.credentials.instance.private_key
+            self.stripe.api_key = self.credentials.instance.private_key
         elif settings.STRIPE_SECRET_KEY:
-            stripe.api_key = settings.STRIPE_SECRET_KEY
+            self.stripe.api_key = settings.STRIPE_SECRET_KEY
         else:
             logger.error("StripeProcessor missing keys in settings: STRIPE_PUBLIC_KEY")
             raise ValueError("StripeProcessor missing keys in settings: STRIPE_PUBLIC_KEY")
@@ -63,18 +64,22 @@ class StripeProcessor(PaymentProcessorBase):
     def stripe_call(self, *args):
         func, func_args = args
         try:
+            if isinstance(func_args, str):
+                return func(func_args)
+
             return func(**func_args)
-        except stripe.error.CardError as e:
+
+        except self.stripe.error.CardError as e:
             logger.error(e.user_message)
-        except stripe.error.RateLimitError as e:
+        except self.stripe.error.RateLimitError as e:
             logger.error(e.user_message)
-        except stripe.error.InvalidRequestError as e:
+        except self.stripe.error.InvalidRequestError as e:
             logger.error(e.user_message)
-        except stripe.error.AuthenticationError as e:
+        except self.stripe.error.AuthenticationError as e:
             logger.error(e.user_message)
-        except stripe.error.APIConnectionError as e:
+        except self.stripe.error.APIConnectionError as e:
             logger.error(e.user_message)
-        except stripe.error.StripeError as e:
+        except self.stripe.error.StripeError as e:
             logger.error(e.user_message)
         except Exception as e:
             logger.error(str(e))
@@ -85,11 +90,25 @@ class StripeProcessor(PaymentProcessorBase):
     ##########
     # CRUD Stripe Object
     ##########
+    def stipe_create_object(self, stripe_object_class, object_data):
+        stripe_object = self.stripe_call(stripe_object_class.create, object_data)
+
+        return stripe_object
+
+    def stripe_query_object(self, stripe_object_class, query):
+        query_result = self.stripe_call(stripe_object_class.search, query)
+
+        return query_result
+
+    def stripe_delete_object(self, stripe_object_class, object_id):
+        delete_result = self.stripe_call(stripe_object_class.delete, object_id)
+
+        return delete_result
     # def create_customer(self):
     #     # If current user doesnt have a customer id stripe object, create one
     #     # TODO save this customer id on user/profile for later use
 
-    #     customer = self.stripe_call(stripe.Customer.create,{
+    #     customer = self.stripe_call(self.stripe.Customer.create,{
     #         'name': self.invoice.profile.user.get_full_name(),
     #         'email': self.invoice.profile.user.email,
     #         'metadata': {
@@ -99,19 +118,28 @@ class StripeProcessor(PaymentProcessorBase):
     #     if customer:
     #         return True, customer
     #     return False, None
-    @add_site_on_object_metadata
-    def create_customer(self, customer_data):
-        customer = self.stripe_call(stripe.Customer.create, customer_data)
-
+    def build_customer(self, customer_profile):
+        customer_data = {
+            'name': f"{customer_profile.user.first_name} {customer_profile.user.last_name}",
+            'email': customer_profile.user.email,
+            'metadata': {'site': customer_profile.site}
+        }
+        
+        customer = self.stipe_create_object(self.stripe.Customer, customer_data)
+        
         return customer
     
-    @add_site_on_object_metadata
-    def create_product(self, product_data):
-        product = self.stripe_call(stripe.Product.create, product_data)
+    def build_product(self, offer):
+        product_data = {
+            'name': offer.name,
+            'metadata': {'site': instance.site}
+        }
+
+        product = self.stripe_create_object(self.stripe.Product, product_data)
         
         return product
     # def create_price_with_product(self, product):
-        # price = self.stripe_call(stripe.Price.create, {
+        # price = self.stripe_call(self.stripe.Price.create, {
         #     'currency': self.invoice.currency,
         #     'product': product
         # })
@@ -119,15 +147,35 @@ class StripeProcessor(PaymentProcessorBase):
         # if price:
         #     return True, price['id']
         # return False, None
-    @add_site_on_object_metadata
-    def create_price(self, price_data):
-        price = self.stripe_call(stripe.Price.create, price_data)
+    def build_price(self, offer, price):
+        price_data = {
+            'currency': price.currency,
+            'unit_amount': price.cost,
+            'metadata': {'site': instance.site}
+        }
+        if offer.terms < TermType.PERPETUAL:
+            price_data['recurring'] = {
+                'interval': 'month' if offer.term_details['term_units'] == TermDetailUnits.MONTH else 'year',
+                'interval_count': offer.term_details['payment_occurrences'],
+                'usage_type': 'license'
+            }
+        price = self.stripe_create_object(self.stripe.Price, price_data)
         
         return price
     
-    @add_site_on_object_metadata
-    def create_coupon(self, coupon_data):
-        coupon = self.stripe_call(stripe.Coupon.create, coupon_data)
+    def build_coupon(self, offer, price):
+        coupon_data = {
+            'name': offer.name,
+            'currency': price.currency,
+            'amount_off': offer.discount,
+            'metadata': {'site': instance.site}
+        }
+
+        if offer.terms < TermType.PERPETUAL:
+            coupon_data['duration']: 'once' if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
+            coupon_data['duration_in_months']: None if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
+
+        coupon = self.stripe_call(self.stripe.Coupon, coupon_data)
         
         return coupon
     
@@ -135,7 +183,7 @@ class StripeProcessor(PaymentProcessorBase):
     #     """
     #     Subscription pricing will be created in stripe dashboard
     #     """
-    #     subscription = self.stripe_call(stripe.Subscription.create, {
+    #     subscription = self.stripe_call(self.stripe.Subscription.create, {
     #         'customer': clients_customer,
     #         'currency': self.invoice.currency,
     #         'items': [
@@ -150,13 +198,20 @@ class StripeProcessor(PaymentProcessorBase):
     #     if subscription:
     #         return True, subscription
     #     return False, None
-    @add_site_on_object_metadata
-    def create_subscription(self, subscription_data):
-        subscription = self.stripe_call(stripe.Subscription.create, subscription_data)
+    def build_subscription(self, customer_id, items, payment_id, offer):
+        subscription_data = {
+            'customer': customer_id,
+            'items':[{'price': item_id} for item in items],
+            'default_payment_method': payment_id,
+            'trial_period_days': None if offer.term_details['trial_days'] < 1 else offer.term_details['trial_days'],
+            'metadata': {'site': instance.site}
+        }
+
+        subscription = self.stripe_create_object(self.stripe.Subscription, subscription_data)
         
         return subscription
     # def create_card_token(self, card):
-        # token = self.stripe_call(stripe.Token.create, {
+        # token = self.stripe_call(self.stripe.Token.create, {
         #     'card': card
         # })
         # if token:
@@ -164,7 +219,7 @@ class StripeProcessor(PaymentProcessorBase):
         # return False, None
     
     def create_setup_intent(self, setup_intent_data):
-        setup_intent = self.stripe_call(stripe.SetupIntent.create, setup_intent_data)
+        setup_intent = self.stripe_call(self.stripe.SetupIntent.create, setup_intent_data)
         
         return setup_intent
 
@@ -185,7 +240,7 @@ class StripeProcessor(PaymentProcessorBase):
     #             if status and card:
     #                 self.source = card['id']
     def create_payment_method(self, payment_method_data):
-        payment_method = self.stripe_call(stripe.PaymentMethod.create, payment_method_data)
+        payment_method = self.stripe_call(self.stripe.PaymentMethod.create, payment_method_data)
         
         return payment_method
 
@@ -226,7 +281,7 @@ class StripeProcessor(PaymentProcessorBase):
 
             else:
                 # product doesnt exist, create it and related pricing obj
-                product = self.stripe_call(stripe.Product.create, {
+                product = self.stripe_call(self.stripe.Product.create, {
                     'name': product_name,
                     'metadata': product_details,
                     'default_price_data': {
@@ -256,32 +311,32 @@ class StripeProcessor(PaymentProcessorBase):
 
 
     def check_product_does_exist(self, name):
-        search_data = self.stripe_call(stripe.Product.search, {'query': f'name~"{name}"'})
+        search_data = self.stripe_call(self.stripe.Product.search, {'query': f'name~"{name}"'})
         if search_data:
             return True, search_data['data']
         return False, None
 
     def get_product_id_with_name(self, name):
-        search_data = self.stripe_call(stripe.Product.search, {'query': f'name~"{name}"'})
+        search_data = self.stripe_call(self.stripe.Product.search, {'query': f'name~"{name}"'})
         if search_data:
             return True, search_data['data'][0]['id']
         return False, None
 
     def check_price_does_exist(self, product):
-        search_data = self.stripe_call(stripe.Product.search, {'query': f'product:"{product}"'})
+        search_data = self.stripe_call(self.stripe.Product.search, {'query': f'product:"{product}"'})
         if search_data:
             return True, search_data['data']
         return False, None
 
     def get_price_id_with_product(self, product):
-        price = self.stripe_call(stripe.Price.retrieve, {'id': product})
+        price = self.stripe_call(self.stripe.Price.retrieve, {'id': product})
         if price:
             return True, price['id']
         return False, None
 
     def create_charge(self):
         if self.source:
-            charge = self.stripe_call(stripe.Charge.create, {
+            charge = self.stripe_call(self.stripe.Charge.create, {
                 'amount': self.to_stripe_valid_unit(self.invoice.get_one_time_transaction_total()),
                 'currency': self.invoice.currency,
                 'source': self.source,
@@ -294,7 +349,7 @@ class StripeProcessor(PaymentProcessorBase):
         # Will return client secret value to be returned to the front end to continue processing payment
         # TODO do something with result error strings below
 
-        intent = self.stripe_call(stripe.PaymentIntent.create, {
+        intent = self.stripe_call(self.stripe.PaymentIntent.create, {
             'customer': customer['id'],
             'setup_future_usage': 'off_session',
             'amount': self.invoice.get_one_time_transaction_total(),

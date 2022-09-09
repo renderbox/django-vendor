@@ -217,7 +217,12 @@ LOGGING = {
             'filename': 'vendor.log',
             'level': 'DEBUG',
             'formatter': 'verbose'
-        }
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'vendor': {
