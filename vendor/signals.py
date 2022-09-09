@@ -1,7 +1,7 @@
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
+from stripe import Customer
 from vendor.models import CustomerProfile, Offer
-
 from vendor.config import PaymentProcessorSiteConfig, SupportedPaymentProcessor
 from vendor.processors import StripeProcessor
 
@@ -19,18 +19,13 @@ def stripe_create_customer_signal(sender, instance, created, **kwargs):
     processor = StripeProcessor(instance.site)
 
     customer_query = {'query': f"email:'{instance.user.email}' AND metadata['site']:'{instance.site}'"}
-    query_result = processor.query_customers(customer_query)
+    query_result = processor.stripe_query(processor.stripe.Customer, customer_query)
 
     if not query_result.is_empty:
         # TODO: log that user can't be created it needs to be synced
         return None
-
-    # TODO: Nice to have stripe data builder
-    customer_data = {
-        'name': f"{instance.user.first_name} {instance.user.last_name}",
-        'email': instance.user.email,
-    }
-    customer = processor.create_customer(**customer_data)
+   
+    customer = processor.build_customer(instance)
 
     instance.meta['stripe_id'] = customer.id
     instance.save()
@@ -49,6 +44,6 @@ def stripe_delete_customer_signal(sender, instance, **kwargs):
 
     processor = StripeProcessor(instance.site)
 
-    processor.delete_customer(instance.meta['stripe_id'])
+    processor.stripe_delete(processor.stripe.Customer, instance.meta['stripe_id'])
     # TODO: logger info
     
