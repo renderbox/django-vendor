@@ -15,11 +15,11 @@ from vendor.config import DEFAULT_CURRENCY
 
 from vendor.models.base import get_product_model
 from vendor.models.choice import InvoiceStatus
+
+
 #####################
 # CUSTOMER PROFILE
 #####################
-
-
 class CustomerProfile(CreateUpdateModelBase):
     '''
     Additional customer information related to purchasing.

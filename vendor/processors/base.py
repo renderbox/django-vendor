@@ -10,14 +10,13 @@ from vendor.models import Payment, Invoice, Receipt, Subscription
 from vendor.models.choice import PurchaseStatus, SubscriptionStatus, TermType, InvoiceStatus
 from vendor.utils import get_payment_scheduled_end_date
 from decimal import Decimal, ROUND_DOWN
+
 ##########
 # SIGNALS
-
 vendor_pre_authorization = django.dispatch.Signal()
 vendor_process_payment = django.dispatch.Signal()
 vendor_post_authorization = django.dispatch.Signal()
 vendor_subscription_cancel = django.dispatch.Signal()
-
 
 
 #############
