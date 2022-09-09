@@ -19,7 +19,7 @@ def stripe_create_customer_signal(sender, instance, created, **kwargs):
     processor = StripeProcessor(instance.site)
 
     customer_query = {'query': f"email:'{instance.user.email}' AND metadata['site']:'{instance.site}'"}
-    query_result = processor.stripe_query(processor.stripe.Customer, customer_query)
+    query_result = processor.stripe_query_object(processor.stripe.Customer, customer_query)
 
     if not query_result.is_empty:
         # TODO: log that user can't be created it needs to be synced
@@ -44,6 +44,6 @@ def stripe_delete_customer_signal(sender, instance, **kwargs):
 
     processor = StripeProcessor(instance.site)
 
-    processor.stripe_delete(processor.stripe.Customer, instance.meta['stripe_id'])
+    processor.stripe_delete_object(processor.stripe.Customer, instance.meta['stripe_id'])
     # TODO: logger info
     

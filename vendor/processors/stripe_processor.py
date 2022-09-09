@@ -95,13 +95,13 @@ class StripeProcessor(PaymentProcessorBase):
 
         return stripe_object
 
-    def stripe_query(self, stripe_object_class, query):
+    def stripe_query_object(self, stripe_object_class, query):
         query_result = self.stripe_call(stripe_object_class.search, query)
 
         return query_result
 
     def stripe_delete_object(self, stripe_object_class, object_id):
-        delete_result = self.stripe_call(stripe_object_class, object_id)
+        delete_result = self.stripe_call(stripe_object_class.delete, object_id)
 
         return delete_result
     # def create_customer(self):
@@ -122,7 +122,7 @@ class StripeProcessor(PaymentProcessorBase):
         customer_data = {
             'name': f"{customer_profile.user.first_name} {customer_profile.user.last_name}",
             'email': customer_profile.user.email,
-            'metadata': {'site': instance.site}
+            'metadata': {'site': customer_profile.site}
         }
         
         customer = self.stipe_create_object(self.stripe.Customer, customer_data)
