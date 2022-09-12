@@ -86,6 +86,10 @@ class StripeProcessor(PaymentProcessorBase):
 
         self.transaction_submitted = False
         
+    def convert_decimal_to_integer(self, decimal):
+        integer_str_rep = str(decimal).split(".")
+
+        return int("".join(integer_str_rep))
 
     ##########
     # CRUD Stripe Object
@@ -104,20 +108,11 @@ class StripeProcessor(PaymentProcessorBase):
         delete_result = self.stripe_call(stripe_object_class.delete, object_id)
 
         return delete_result
-    # def create_customer(self):
-    #     # If current user doesnt have a customer id stripe object, create one
-    #     # TODO save this customer id on user/profile for later use
 
-    #     customer = self.stripe_call(self.stripe.Customer.create,{
-    #         'name': self.invoice.profile.user.get_full_name(),
-    #         'email': self.invoice.profile.user.email,
-    #         'metadata': {
-    #             'pk': self.invoice.profile.user.pk
-    #         }
-    #     })
-    #     if customer:
-    #         return True, customer
-    #     return False, None
+
+    ##########
+    # Stripe Object Builders
+    ##########
     def build_customer(self, customer_profile):
         customer_data = {
             'name': f"{customer_profile.user.first_name} {customer_profile.user.last_name}",
@@ -132,34 +127,31 @@ class StripeProcessor(PaymentProcessorBase):
     def build_product(self, offer):
         product_data = {
             'name': offer.name,
-            'metadata': {'site': instance.site}
+            'metadata': {'site': offer.site}
         }
 
-        product = self.stripe_create_object(self.stripe.Product, product_data)
+        product = self.stipe_create_object(self.stripe.Product, product_data)
         
         return product
-    # def create_price_with_product(self, product):
-        # price = self.stripe_call(self.stripe.Price.create, {
-        #     'currency': self.invoice.currency,
-        #     'product': product
-        # })
 
-        # if price:
-        #     return True, price['id']
-        # return False, None
     def build_price(self, offer, price):
+        if 'stripe' not in offer.meta or 'product_id' not in offer.meta['stripe']:
+            raise TypeError(f"Price cannot be created without a product_id on offer.meta['stripe'] field")
+
         price_data = {
+            'product': offer.meta['stripe']['product_id'],
             'currency': price.currency,
-            'unit_amount': price.cost,
-            'metadata': {'site': instance.site}
+            'unit_amount': self.convert_decimal_to_integer(price.cost),
+            'metadata': {'site': offer.site}
         }
+        
         if offer.terms < TermType.PERPETUAL:
             price_data['recurring'] = {
                 'interval': 'month' if offer.term_details['term_units'] == TermDetailUnits.MONTH else 'year',
                 'interval_count': offer.term_details['payment_occurrences'],
                 'usage_type': 'license'
             }
-        price = self.stripe_create_object(self.stripe.Price, price_data)
+        price = self.stipe_create_object(self.stripe.Price, price_data)
         
         return price
     
@@ -167,78 +159,36 @@ class StripeProcessor(PaymentProcessorBase):
         coupon_data = {
             'name': offer.name,
             'currency': price.currency,
-            'amount_off': offer.discount,
-            'metadata': {'site': instance.site}
+            'amount_off': self.convert_decimal_to_integer(offer.discount()),
+            'metadata': {'site': offer.site}
         }
 
         if offer.terms < TermType.PERPETUAL:
             coupon_data['duration']: 'once' if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
             coupon_data['duration_in_months']: None if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
 
-        coupon = self.stripe_call(self.stripe.Coupon, coupon_data)
+        coupon = self.stipe_create_object(self.stripe.Coupon, coupon_data)
         
         return coupon
     
-    # def create_subscription(self, offer, clients_customer, our_customer, application_fee=30.00):
-    #     """
-    #     Subscription pricing will be created in stripe dashboard
-    #     """
-    #     subscription = self.stripe_call(self.stripe.Subscription.create, {
-    #         'customer': clients_customer,
-    #         'currency': self.invoice.currency,
-    #         'items': [
-    #             {'price': self.products_mapping[offer.name]['price_id']}
-    #         ],
-    #         'expand': ["latest_invoice.payment_intent"],
-    #         'transfer_data': {'destination': our_customer},
-    #         'application_fee': application_fee,
-    #         'payment_behavior': 'error_if_incomplete',
-    #         'trial_period_days': offer.get_trial_days()
-    #     })
-    #     if subscription:
-    #         return True, subscription
-    #     return False, None
     def build_subscription(self, customer_id, items, payment_id, offer):
         subscription_data = {
             'customer': customer_id,
             'items':[{'price': item_id} for item in items],
             'default_payment_method': payment_id,
             'trial_period_days': None if offer.term_details['trial_days'] < 1 else offer.term_details['trial_days'],
-            'metadata': {'site': instance.site}
+            'metadata': {'site': offer.site}
         }
 
-        subscription = self.stripe_create_object(self.stripe.Subscription, subscription_data)
+        subscription = self.stipe_create_object(self.stripe.Subscription, subscription_data)
         
         return subscription
-    # def create_card_token(self, card):
-        # token = self.stripe_call(self.stripe.Token.create, {
-        #     'card': card
-        # })
-        # if token:
-        #     return True, token
-        # return False, None
     
     def create_setup_intent(self, setup_intent_data):
         setup_intent = self.stripe_call(self.stripe.SetupIntent.create, setup_intent_data)
         
         return setup_intent
 
-    # def set_stripe_payment_source(self):
-    #     if not self.source:
-    #         if self.payment_info.is_valid():
-    #             card_number = self.payment_info.cleaned_data.get('card_number')
-    #             exp_month = self.payment_info.cleaned_data.get('expire_month')
-    #             exp_year = self.payment_info.cleaned_data.get('expire_year')
-    #             cvc = self.payment_info.cleaned_data.get('cvc_number')
-    #             card = {
-    #                'number': card_number,
-    #                'exp_month': exp_month,
-    #                'exp_year': exp_year,
-    #                'cvc': cvc
-    #             }
-    #             status, card = self.create_card_token(card)
-    #             if status and card:
-    #                 self.source = card['id']
     def create_payment_method(self, payment_method_data):
         payment_method = self.stripe_call(self.stripe.PaymentMethod.create, payment_method_data)
         
@@ -308,7 +258,6 @@ class StripeProcessor(PaymentProcessorBase):
                         'product_id': product_id,
                         'price_id': price_id
                     }
-
 
     def check_product_does_exist(self, name):
         search_data = self.stripe_call(self.stripe.Product.search, {'query': f'name~"{name}"'})
