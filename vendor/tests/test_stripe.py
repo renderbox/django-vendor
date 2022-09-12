@@ -283,37 +283,38 @@ class StripeCRUDObjectTests(TestCase):
     def test_create_stripe_object_with_site_metadata_success(self):
         del(self.cus_norrin_radd['metadata'])
 
-        stripe_customer = self.processor.create_customer(**self.cus_norrin_radd)
+        stripe_customer = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
         self.assertIn('site', stripe_customer.metadata)
 
     ##########
     # Customer CRUD
     def test_create_customer_success(self):
-        stripe_customer = self.processor.create_customer(**self.cus_norrin_radd)
+        stripe_customer = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
         
         self.assertIsNotNone(stripe_customer.id)
-        self.processor.stripe_call(stripe.Customer.delete, stripe_customer.id)
+        self.processor.stripe_delete_object(self.processor.stripe.Customer, stripe_customer.id)
 
     def test_create_customer_with_address_success(self):
         self.cus_norrin_radd['address'] = self.valid_addr
 
-        stripe_customer = self.processor.create_customer(**self.cus_norrin_radd)
+        stripe_customer = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
         
         self.assertIsNotNone(stripe_customer.id)
-        self.processor.stripe_call(stripe.Customer.delete, stripe_customer.id)
+        self.processor.stripe_delete_object(self.processor.stripe.Customer, stripe_customer.id)
 
     ##########
     # Product CRUD
     def test_create_product_success(self):
-        stripe_product = self.processor.create_product(**self.pro_annual_license)
+        stripe_product = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
 
         self.assertIsNotNone(stripe_product.id)
         self.processor.stripe_call(stripe.Product.delete, stripe_product.id)
+        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_product.id)
 
     def test_create_product_no_name_fail(self):
         del(self.pro_monthly_license['name'])
         
-        stripe_product = self.processor.create_product(**self.pro_monthly_license)
+        stripe_product = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_monthly_license)
         self.assertFalse(self.processor.transaction_submitted)
 
     ##########
@@ -322,38 +323,40 @@ class StripeCRUDObjectTests(TestCase):
         del(self.pro_monthly_license['metadata'])
         self.pri_monthly['product_data'] = self.pro_monthly_license
 
-        stripe_price = self.processor.create_price(**self.pri_monthly)
+        stripe_price = self.processor.stripe_create_object(self.processor.stripe.Price, self.pri_monthly)
 
         self.assertIsNotNone(stripe_price.id)
 
     def test_create_price_product_id_success(self):
-        stripe_product = self.processor.create_product(**self.pro_annual_license)
+        stripe_product = self.processor.stripe_create_object(self.processor.stripe.Product, self.self.pro_annual_license)
         self.pri_monthly['product'] = stripe_product.id
 
-        stripe_price = self.processor.create_price(**self.pri_monthly)
+        stripe_price = self.processor.stripe_create_object(self.processor.stripe.Price, self.pri_monthly)
 
         self.assertIsNotNone(stripe_price.id)
 
     def test_create_price_invalid_field_fail(self):
         self.pri_monthly['type'] = "This is not a valid field"
 
-        self.processor.create_price(**self.pri_monthly)
+        stripe_price = self.processor.stripe_create_object(self.processor.stripe.Price, self.pri_monthly)
+        
         self.assertFalse(self.processor.transaction_submitted)
 
     ##########
     # Coupon CRUD
     def test_create_coupon_success(self):
-        stripe_coupon = self.processor.create_coupon(**self.cou_first_month_free)
+        stripe_coupon = self.processor.stripe_create_object(self.processor.stripe.Coupon, self.cou_first_month_free)
 
         self.assertIsNotNone(stripe_coupon.id)
-        self.processor.stripe_call(stripe.Coupon.delete, stripe_coupon.id)
+        stripe_coupon = self.processor.stripe_delete_object(self.processor.stripe.Coupon, stripe_coupon.id)
 
     ##########
     # Subscription CRUD
     def test_create_subscription_success(self):
-        stripe_cus_norrin_radd = self.processor.create_customer(**self.cus_norrin_radd)
+        stripe_cus_norrin_radd = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
         
-        stripe_payment_method = self.processor.create_payment_method(self.payment_method)
+        stripe_payment_method = self.processor.stripe_create_object(self.processor.stripe.PaymentMethod, self.payment_method)
+
         setup_intent_object = {
             'customer': stripe_cus_norrin_radd.id,
             'confirm': True,
@@ -361,11 +364,12 @@ class StripeCRUDObjectTests(TestCase):
             'payment_method': stripe_payment_method.id,
             'metadata': self.valid_metadata
         }
-        stripe_setup_intent = self.processor.create_setup_intent(setup_intent_object)
+        stripe_setup_intent = self.processor.stripe_create_object(self.processor.stripe.SetupIntent, setup_intent_object)
         
-        stripe_pro_monthly = self.processor.create_product(**self.pro_monthly_license)
+        stripe_pro_monthly = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_monthly_license)
+        
         self.pri_monthly['product'] = stripe_pro_monthly.id
-        stripe_price = self.processor.create_price(**self.pri_monthly)
+        stripe_price = self.processor.stripe_create_object(self.processor.stripe.Price, self.pri_monthly)
         
         subscription_obj = {
             'customer': stripe_cus_norrin_radd.id,
@@ -374,7 +378,7 @@ class StripeCRUDObjectTests(TestCase):
             'metadata': self.valid_metadata,
 
         }
-        stripe_subscription = self.processor.create_subscription(**subscription_obj)
+        stripe_subscription = self.processor.stripe_create_object(self.processor.stripe.Subscription, subscription_obj)
 
         self.assertIsNotNone(stripe_subscription.id)
 
@@ -415,8 +419,8 @@ class StripeCRUDObjectTests(TestCase):
     # Setup Intent CRUD
     def test_create_setup_intent_success(self):
 
-        stripe_cus_norrin_radd = self.processor.create_customer(**self.cus_norrin_radd)
-        stripe_payment_method = self.processor.create_payment_method(self.payment_method)
+        stripe_cus_norrin_radd = self.processor.stripe_create_object(self.processor.stripe.Customer, cus_norrin_radd)
+        stripe_payment_method = self.processor.stripe_create_object(self.processor.stripe.PaymentMethod, payment_method)
         
         setup_intent_object = {
             'customer': stripe_cus_norrin_radd.id,
@@ -425,6 +429,6 @@ class StripeCRUDObjectTests(TestCase):
             'payment_method': stripe_payment_method.id,
             'metadata': self.valid_metadata
         }
-        stripe_setup_intent = self.processor.create_setup_intent(setup_intent_object)
+        stripe_setup_intent = self.processor.stripe_create_object(self.processor.stripe.SetupIntent, setup_intent_object)
         
         self.assertIsNotNone(stripe_setup_intent.id)
