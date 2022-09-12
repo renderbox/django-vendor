@@ -148,11 +148,16 @@ class StripeProcessor(PaymentProcessorBase):
         #     return True, price['id']
         # return False, None
     def build_price(self, offer, price):
+        if 'stripe' not in offer.meta and 'product_id' not in offer.meta['stripe']:
+            raise TypeError(f"Price cannot be created without a product_id on offer.meta['stripe'] field")
+
         price_data = {
+            'product': offer.meta['stripe']['product_id'],
             'currency': price.currency,
             'unit_amount': price.cost,
             'metadata': {'site': instance.site}
         }
+        
         if offer.terms < TermType.PERPETUAL:
             price_data['recurring'] = {
                 'interval': 'month' if offer.term_details['term_units'] == TermDetailUnits.MONTH else 'year',

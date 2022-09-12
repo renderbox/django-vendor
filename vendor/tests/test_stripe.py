@@ -5,6 +5,7 @@ from django.test import TestCase, Client, tag
 from django.contrib.sites.models import Site
 from siteconfigs.models import SiteConfigModel
 from unittest import skipIf
+from vendor.models import CustomerProfile, Offer
 from vendor.processors import StripeProcessor
 
 
@@ -432,3 +433,61 @@ class StripeCRUDObjectTests(TestCase):
         stripe_setup_intent = self.processor.stripe_create_object(self.processor.stripe.SetupIntent, setup_intent_object)
         
         self.assertIsNotNone(stripe_setup_intent.id)
+
+    
+    class StripeBuildObjectTests(TestCase):
+
+        fixtures = ['user', 'unit_test']
+
+        def setUp(self):
+            stripe.api_key = settings.STRIPE_PUBLIC_KEY
+            self.site = Site.objects.get(pk=1)
+            self.processor = StripeProcessor(self.site)
+
+
+        def test_build_customer_success(self):
+            customer_profile = CustomerProfile.objects.all().first()
+
+            stripe_customer = self.processor.build_customer(customer_profile)
+            
+            self.assertIsNotNone(stripe_customer.id)
+            self.assertEqual(f"{customer_profile.user.first_name} {customer_profile.user.last_name}", stripe_customer.name)
+            self.assertEqual(customer_profile.user.email, stripe_customer.email)
+
+        def test_build_product_success(self):
+            offer = Offer.objects.all().first()
+
+            stripe_product = self.processor.build_product(offer)
+
+            self.assertIsNotNone(stripe_product.id)
+            self.assertEqual(offer.name, stripe_product.name)
+
+        def test_build_price_success(self):
+            offer = Offer.objects.all().first()
+
+            stripe_product = self.processor.build_product(offer)
+            price = offer.prices.first()
+            stripe_price = self.processor.build_price(offer, price)
+
+            self.assertIsNotNone(stripe_price.id)
+            self.assertEqual(price.cost, stripe_price.unit_amount)
+
+
+        def test_build_coupon_success(self):
+            offer = Offer.objects.all().first()
+            price = offer.prices.first()
+
+            stripe_coupon = self.processor.build_coupon(offer, price)
+            
+            self.assertIsNotNone(stripe_coupon.id)
+            self.assertEqual(stripe_coupon.amount_off, (offer.get_msrp(self) - price.cost))
+
+        def test_build_subscription_success(self):
+            pass
+
+        def test_build_payment_method_successs(self):
+            pass
+
+        def test_build_setup_intent_success(self):
+            pass
+
