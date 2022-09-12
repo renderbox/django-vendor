@@ -26,7 +26,7 @@ def stripe_create_customer_signal(sender, instance, created, **kwargs):
     customer_query = {'query': f"email:'{instance.user.email}' AND metadata['site']:'{instance.site}'"}
     query_result = processor.stripe_query_object(processor.stripe.Customer, customer_query)
 
-    if not query_result.is_empty:
+    if not query_result or not query_result.is_empty:
         logger.warning(f"stripe_create_customer_signal instance: {instance.pk} is already on stripe, may need to sync it.")
         return None
    
@@ -50,5 +50,5 @@ def stripe_delete_customer_signal(sender, instance, **kwargs):
     processor = StripeProcessor(instance.site)
 
     processor.stripe_delete_object(processor.stripe.Customer, instance.meta['stripe_id'])
-    logger.successs(f"stripe_delete_customer_signal instance: {instance.pk} was successfully deleted on Stripe")
+    logger.success(f"stripe_delete_customer_signal instance: {instance.pk} was successfully deleted on Stripe")
     
