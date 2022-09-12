@@ -11,7 +11,7 @@ from integrations.models import Credential
 
 from vendor.config import VENDOR_PRODUCT_MODEL
 from vendor.models import Address, Offer, Price, offer_term_details_default
-from vendor.models.choice import PaymentTypes, TermType, Country
+from vendor.models.choice import PaymentTypes, TermType, Country, StateChoices
 from vendor.utils import get_site_from_request
 
 
@@ -121,6 +121,7 @@ class AddressForm(forms.ModelForm):
 
 class AccountInformationForm(AddressForm):
     email = forms.EmailField(label=_('Email Address'), required=True)
+    select_state = forms.ChoiceField(label=_("State"), choices=StateChoices)
     prefix = "account_info"
 
     class Meta:
@@ -131,6 +132,7 @@ class AccountInformationForm(AddressForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['email'].widget.attrs.update({'placeholder': _('Enter Email Address')})
+        self.fields['select_state'].widget.attrs.update({'placeholder': _('Select State')})
 
 
 class BillingAddressForm(AddressForm):
