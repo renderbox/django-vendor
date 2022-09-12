@@ -121,7 +121,7 @@ class AddressForm(forms.ModelForm):
 
 class AccountInformationForm(AddressForm):
     email = forms.EmailField(label=_('Email Address'), required=True)
-    select_state = forms.ChoiceField(label=_("State"), choices=StateChoices)
+    select_state = forms.ChoiceField(label=_("State"), choices=StateChoices.choices, required=False)
     prefix = "account_info"
 
     class Meta:
