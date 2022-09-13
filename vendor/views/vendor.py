@@ -89,12 +89,12 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         invoice.status = InvoiceStatus.CHECKOUT
         invoice.save()
 
-        existing_account_address = Address.objects.filter(profile__user=request.user, profile__site=get_site_from_request(request))
+        existing_account_address = Address.objects.filter(profile__user=request.user, profile__site=get_site_from_request(request)).last()
 
         form_class = self.get_form_class()
         if existing_account_address:
             # TODO: In future the user will be able to select from multiple saved address
-            form = form_class(initial={'email': request.user.email}, instance=existing_account_address[0])
+            form = form_class(initial={'email': request.user.email}, instance=existing_account_address)
         else:
             form = form_class(initial={'first_name': request.user.first_name, 'last_name': request.user.last_name, 'email': request.user.email})
 
