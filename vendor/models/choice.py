@@ -309,7 +309,7 @@ class Country(models.IntegerChoices):
     ZW = 716, _("Zimbabwe")
 
 
-class StateChoices(models.TextChoices):
+class USAStateChoices(models.TextChoices):
     ALABAMA = "AL", _("Alabama")
     ALASKA = "AK", _("Alaska")
     ARIZONA = "AZ", _("Arizona")
