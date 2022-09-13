@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-09-09 21:05+0000\n"
+"POT-Creation-Date: 2022-09-12 23:44+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -127,7 +127,7 @@ msgstr "名を入力して"
 msgid "Enter Last Name"
 msgstr "姓を入力して"
 
-#: forms.py:108 forms.py:147
+#: forms.py:108 forms.py:149
 msgid "Billing Country/Region"
 msgstr "請求先の国/地域"
 
@@ -159,65 +159,73 @@ msgstr "郵便番号を入力"
 msgid "Email Address"
 msgstr "電子メールアドレス"
 
-#: forms.py:133
+#: forms.py:124 models/address.py:48
+msgid "State"
+msgstr "状態"
+
+#: forms.py:134
 msgid "Enter Email Address"
 msgstr "メールアドレスを入力して"
 
-#: forms.py:137
+#: forms.py:135
+msgid "Select State"
+msgstr "州を選択"
+
+#: forms.py:139
 msgid "Billing address is the same as shipping address"
 msgstr "請求先住所は配送先住所と同じです"
 
-#: forms.py:222
+#: forms.py:224
 msgid "The credit card number is invalid"
 msgstr "クレジットカード番号が無効です"
 
-#: forms.py:267
+#: forms.py:269
 msgid "Payment Type"
 msgstr "支払いタイプ"
 
-#: forms.py:271 models/payment.py:129
+#: forms.py:273 models/payment.py:129
 #: templates/vendor/manage/receipt_detail.html:82
 #: templates/vendor/manage/subscription_detail.html:100
 msgid "Name on Card"
 msgstr "カードの名前"
 
-#: forms.py:272
+#: forms.py:274
 msgid "Credit Card Number"
 msgstr "クレジットカード番号"
 
-#: forms.py:273
+#: forms.py:275
 msgid "Expiration Month"
 msgstr "有効期限月"
 
-#: forms.py:274
+#: forms.py:276
 msgid "Expiration Year"
 msgstr "有効期限"
 
-#: forms.py:275
+#: forms.py:277
 msgid "CVV Number"
 msgstr "CVV番号"
 
-#: forms.py:298
+#: forms.py:300
 msgid "You must select a valid expiration month"
 msgstr "有効な有効期限を選択する必要があります"
 
-#: forms.py:306
+#: forms.py:308
 msgid "You must select a valid expiration year"
 msgstr "有効な有効期限を選択する必要があります"
 
-#: forms.py:314
+#: forms.py:316
 msgid "CVV must be all digits"
 msgstr "CVVはすべて数字である必要があります"
 
-#: forms.py:327
+#: forms.py:329
 msgid "The expiration date you entered is in the past."
 msgstr "入力した有効期限は過去のものです。"
 
-#: forms.py:328
+#: forms.py:330
 msgid "Check expiration"
 msgstr "有効期限を確認してください"
 
-#: forms.py:334 forms.py:349 models/offer.py:50 models/price.py:15
+#: forms.py:336 forms.py:351 models/offer.py:50 models/price.py:15
 #: models/receipt.py:21 templates/vendor/manage/offers.html:20
 #: templates/vendor/manage/profile_detail.html:274
 #: templates/vendor/manage/receipt_list.html:21
@@ -225,7 +233,7 @@ msgstr "有効期限を確認してください"
 msgid "Start Date"
 msgstr "開始日"
 
-#: forms.py:335 forms.py:350 models/offer.py:51 models/price.py:16
+#: forms.py:337 forms.py:352 models/offer.py:51 models/price.py:16
 #: models/receipt.py:22 templates/vendor/manage/offers.html:21
 #: templates/vendor/manage/profile_detail.html:275
 #: templates/vendor/manage/receipt_list.html:22
@@ -233,19 +241,19 @@ msgstr "開始日"
 msgid "End Date"
 msgstr "終了日"
 
-#: forms.py:343 forms.py:358
+#: forms.py:345 forms.py:360
 msgid "End Date cannot be before Start Date"
 msgstr "あなたはわれあなたのつにこのできました。"
 
-#: forms.py:385
+#: forms.py:387
 msgid "API ID"
 msgstr "API ID"
 
-#: forms.py:386
+#: forms.py:388
 msgid "Transaction Key"
 msgstr "トランザクションキー"
 
-#: forms.py:387
+#: forms.py:389
 msgid "Signature ID"
 msgstr "署名ID"
 
@@ -282,10 +290,6 @@ msgstr "アドレス2（オプション）"
 #: models/address.py:47
 msgid "City"
 msgstr "市"
-
-#: models/address.py:48
-msgid "State"
-msgstr "状態"
 
 #: models/address.py:49
 msgid "Country/Region"
@@ -776,7 +780,7 @@ msgstr "イギリス"
 msgid "Grenada"
 msgstr "グレナダ"
 
-#: models/choice.py:148
+#: models/choice.py:148 models/choice.py:323
 msgid "Georgia"
 msgstr "ジョージア"
 
@@ -1423,6 +1427,206 @@ msgstr "ザンビア"
 #: models/choice.py:309
 msgid "Zimbabwe"
 msgstr "ジンバブエ"
+
+#: models/choice.py:313
+msgid "Alabama"
+msgstr "アラバマ州"
+
+#: models/choice.py:314
+msgid "Alaska"
+msgstr "アラスカ"
+
+#: models/choice.py:315
+msgid "Arizona"
+msgstr "アリゾナ"
+
+#: models/choice.py:316
+msgid "Arkansas"
+msgstr "アーカンソー"
+
+#: models/choice.py:317
+msgid "California"
+msgstr "カリフォルニア"
+
+#: models/choice.py:318
+msgid "Colorado"
+msgstr "コロラド"
+
+#: models/choice.py:319
+msgid "Connecticut"
+msgstr "コネチカット"
+
+#: models/choice.py:320
+msgid "Delaware"
+msgstr "デラウェア"
+
+#: models/choice.py:321
+msgid "District of Columbia"
+msgstr "コロンビア特別区"
+
+#: models/choice.py:322
+msgid "Florida"
+msgstr "フロリダ"
+
+#: models/choice.py:324
+msgid "Hawaii"
+msgstr "ハワイ"
+
+#: models/choice.py:325
+msgid "Idaho"
+msgstr "アイダホ"
+
+#: models/choice.py:326
+msgid "Illinois"
+msgstr "イリノイ州"
+
+#: models/choice.py:327
+msgid "Indiana"
+msgstr "インディアナ"
+
+#: models/choice.py:328
+msgid "Iowa"
+msgstr "アイオワ"
+
+#: models/choice.py:329
+msgid "Kansas"
+msgstr "カンザス"
+
+#: models/choice.py:330
+msgid "Kentucky"
+msgstr "ケンタッキー"
+
+#: models/choice.py:331
+msgid "Louisiana"
+msgstr "ルイジアナ"
+
+#: models/choice.py:332
+msgid "Maine"
+msgstr "メイン州"
+
+#: models/choice.py:333
+msgid "Maryland"
+msgstr "メリーランド州"
+
+#: models/choice.py:334
+msgid "Massachusetts"
+msgstr "マサチューセッツ州"
+
+#: models/choice.py:335
+msgid "Michigan"
+msgstr "ミシガン州"
+
+#: models/choice.py:336
+msgid "Minnesota"
+msgstr "ミネソタ州"
+
+#: models/choice.py:337
+msgid "Mississippi"
+msgstr "ミシシッピ"
+
+#: models/choice.py:338
+msgid "Missouri"
+msgstr "ミズーリ"
+
+#: models/choice.py:339
+msgid "Montana"
+msgstr "モンタナ"
+
+#: models/choice.py:340
+msgid "Nebraska"
+msgstr "ネブラスカ"
+
+#: models/choice.py:341
+msgid "Nevada"
+msgstr "ネバダ"
+
+#: models/choice.py:342
+msgid "New Hampshire"
+msgstr "ニューハンプシャー"
+
+#: models/choice.py:343
+msgid "New Jersey"
+msgstr "ニュージャージー"
+
+#: models/choice.py:344
+msgid "New Mexico"
+msgstr "ニューメキシコ州"
+
+#: models/choice.py:345
+msgid "New York"
+msgstr "ニューヨーク"
+
+#: models/choice.py:346
+msgid "North Carolina"
+msgstr "ノースカロライナ州"
+
+#: models/choice.py:347
+msgid "North Dakota"
+msgstr "ノースダコタ州"
+
+#: models/choice.py:348
+msgid "Ohio"
+msgstr "オハイオ州"
+
+#: models/choice.py:349
+msgid "Oklahoma"
+msgstr "オクラホマ"
+
+#: models/choice.py:350
+msgid "Oregon"
+msgstr "オレゴン"
+
+#: models/choice.py:351
+msgid "Pennsylvania"
+msgstr "ペンシルバニア"
+
+#: models/choice.py:352
+msgid "Rhode Island"
+msgstr "ロードアイランド"
+
+#: models/choice.py:353
+msgid "South Carolina"
+msgstr "サウスカロライナ州"
+
+#: models/choice.py:354
+msgid "South Dakota"
+msgstr "サウス・ダコタ"
+
+#: models/choice.py:355
+msgid "Tennessee"
+msgstr "テネシー"
+
+#: models/choice.py:356
+msgid "Texas"
+msgstr "テキサス州"
+
+#: models/choice.py:357
+msgid "Utah"
+msgstr "ユタ州"
+
+#: models/choice.py:358
+msgid "Vermont"
+msgstr "バーモント州"
+
+#: models/choice.py:359
+msgid "Virginia"
+msgstr "バージニア州"
+
+#: models/choice.py:360
+msgid "Washington"
+msgstr "ワシントン"
+
+#: models/choice.py:361
+msgid "West Virginia"
+msgstr "ウェストバージニア州"
+
+#: models/choice.py:362
+msgid "Wisconsin"
+msgstr "ウィスコンシン"
+
+#: models/choice.py:363
+msgid "Wyoming"
+msgstr "ワイオミング"
 
 #: models/invoice.py:32 models/payment.py:131 models/subscription.py:39
 #: templates/vendor/invoice_list.html:20
@@ -2536,42 +2740,42 @@ msgstr "日付"
 msgid "Please add to your cart"
 msgstr "カートに追加してください"
 
-#: views/vendor.py:112 views/vendor.py:153 views/vendor.py:204
+#: views/vendor.py:116 views/vendor.py:157 views/vendor.py:208
 msgid "Cart changed while in checkout process"
 msgstr "チェックアウトプロセス中にカートが変更されました"
 
-#: views/vendor.py:219
+#: views/vendor.py:223
 msgid "The payment gateway did not authorize payment."
 msgstr "支払いゲートウェイは支払いを承認しませんでした。"
 
-#: views/vendor.py:290
+#: views/vendor.py:294
 msgid "Not Found"
 msgstr "見つかりません"
 
-#: views/vendor.py:306
+#: views/vendor.py:310
 msgid "Invalid Card"
 msgstr "無効なカード"
 
-#: views/vendor.py:314
+#: views/vendor.py:318
 msgid ""
 "Payment gateway error: {processor.transaction_message.get('message', '')}"
 msgstr ""
 "支払いゲートウェイエラー：{processor.transaction_message.get('message', '')}"
 
-#: views/vendor.py:317
+#: views/vendor.py:321
 msgid "Success: Payment Updated"
 msgstr "成功：支払いが更新されました"
 
-#: views/vendor.py:329
+#: views/vendor.py:333
 #, python-brace-format
 msgid "Failed: {address_form.errors}"
 msgstr "失敗：{address_form.errors}"
 
-#: views/vendor.py:331
+#: views/vendor.py:335
 msgid "Success: Address Updated"
 msgstr "成功：アドレスが更新されました"
 
-#: views/vendor.py:354
+#: views/vendor.py:358
 msgid "Shipping Address Updated"
 msgstr "配送先住所が更新されました"
 
