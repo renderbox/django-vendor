@@ -94,7 +94,7 @@ class StripeProcessor(PaymentProcessorBase):
     ##########
     # CRUD Stripe Object
     ##########
-    def stipe_create_object(self, stripe_object_class, object_data):
+    def stripe_create_object(self, stripe_object_class, object_data):
         stripe_object = self.stripe_call(stripe_object_class.create, object_data)
 
         return stripe_object
@@ -120,7 +120,7 @@ class StripeProcessor(PaymentProcessorBase):
             'metadata': {'site': customer_profile.site}
         }
         
-        customer = self.stipe_create_object(self.stripe.Customer, customer_data)
+        customer = self.stripe_create_object(self.stripe.Customer, customer_data)
         
         return customer
     
@@ -130,7 +130,7 @@ class StripeProcessor(PaymentProcessorBase):
             'metadata': {'site': offer.site}
         }
 
-        product = self.stipe_create_object(self.stripe.Product, product_data)
+        product = self.stripe_create_object(self.stripe.Product, product_data)
         
         return product
 
@@ -151,7 +151,7 @@ class StripeProcessor(PaymentProcessorBase):
                 'interval_count': offer.term_details['payment_occurrences'],
                 'usage_type': 'license'
             }
-        price = self.stipe_create_object(self.stripe.Price, price_data)
+        price = self.stripe_create_object(self.stripe.Price, price_data)
         
         return price
     
@@ -167,7 +167,7 @@ class StripeProcessor(PaymentProcessorBase):
             coupon_data['duration']: 'once' if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
             coupon_data['duration_in_months']: None if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
 
-        coupon = self.stipe_create_object(self.stripe.Coupon, coupon_data)
+        coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
         
         return coupon
     
@@ -180,7 +180,7 @@ class StripeProcessor(PaymentProcessorBase):
             'metadata': {'site': offer.site}
         }
 
-        subscription = self.stipe_create_object(self.stripe.Subscription, subscription_data)
+        subscription = self.stripe_create_object(self.stripe.Subscription, subscription_data)
         
         return subscription
     
@@ -318,6 +318,18 @@ class StripeProcessor(PaymentProcessorBase):
         self.transaction_id = self.charge['id']
         self.transaction_response = {'raw': str(self.charge)}
 
+    ##########
+    # Base Processor Transaction Implementations
+    ##########
+    def authorize_payment(self):
+        # Given that stripe need customer, product, price to process payment we need to check
+        # that vendor object have those keys.
+        # if 'stripe_id' not in invoice.profile.meta:
+        #     raise ValueError()
+
+        # if 'stripe' not in invoice:
+        #     pass 
+        super().autshorize_payment()
 
     def process_payment(self):
         self.transaction_submitted = False
@@ -331,5 +343,49 @@ class StripeProcessor(PaymentProcessorBase):
             self.payment.save()
             self.update_invoice_status(InvoiceStatus.COMPLETE)
             self.process_payment_transaction_response()
+
+    def subscription_payment(self, subscription):
+        payment_method_data = {
+            'type': 'card',
+            'card': {
+                'number': '',
+                'exp_month': '',
+                'exp_year': '',
+                'cvc': '',
+            },
+            'billing_details': {
+                'address': {
+                    'line1': '',
+                    'line2': '',
+                    'city': '',
+                    'state': '',
+                    'country': '',
+                    'postal_code': ''
+                },
+                'email': '',
+                'name': ''
+            }
+        }
+
+        stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod(), payment_method_data)
+        
+        setup_intent_object = {
+            'customer': self.invoice.profile.meta['stripe_id'],
+            'confirm': True,
+            'payment_method_types': ['card'],
+            'payment_method': stripe_payment_method.id,
+            'metadata': {'site': self.invoice.site}
+        }
+
+        stripe_setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_object)
+
+        subscription_obj = {
+            'customer': self.invoice.profile.meta['stripe_id'],
+            'items': [{'price': subscription.meta['stripe']['price_id']}],
+            'default_payment_method': stripe_payment_method.id,
+            'metadata': {'site': self.invoice.site},
+
+        }
+        stripe_subscription = self.processor.stripe_create_object(self.processor.stripe.Subscription, subscription_obj)
 
 
