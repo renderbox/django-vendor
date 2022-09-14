@@ -345,7 +345,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         # if 'stripe' not in invoice:
         #     pass 
-        super().autshorize_payment()
+        super().authorize_payment()
 
     def process_payment(self):
         self.transaction_submitted = False
