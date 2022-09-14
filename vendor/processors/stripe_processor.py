@@ -128,7 +128,7 @@ class StripeProcessor(PaymentProcessorBase):
             'metadata': {'site': customer_profile.site}
         }
         
-        customer = self.stipe_create_object(self.stripe.Customer, customer_data)
+        customer = self.stripe_create_object(self.stripe.Customer, customer_data)
         
         return customer
     
@@ -139,7 +139,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         }
 
-        product = self.stipe_create_object(self.stripe.Product, product_data)
+        product = self.stripe_create_object(self.stripe.Product, product_data)
         
         return product
 
@@ -160,7 +160,7 @@ class StripeProcessor(PaymentProcessorBase):
                 'interval_count': offer.term_details['payment_occurrences'],
                 'usage_type': 'license'
             }
-        price = self.stipe_create_object(self.stripe.Price, price_data)
+        price = self.stripe_create_object(self.stripe.Price, price_data)
         
         return price
     
@@ -176,7 +176,7 @@ class StripeProcessor(PaymentProcessorBase):
             coupon_data['duration'] = 'once' if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
             coupon_data['duration_in_months'] = None if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
 
-        coupon = self.stipe_create_object(self.stripe.Coupon, coupon_data)
+        coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
         
         return coupon
     
@@ -190,7 +190,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         }
 
-        subscription = self.stipe_create_object(self.stripe.Subscription, subscription_data)
+        subscription = self.stripe_create_object(self.stripe.Subscription, subscription_data)
         
         return subscription
 
@@ -235,14 +235,6 @@ class StripeProcessor(PaymentProcessorBase):
             if offer_save_needed:
                 offer.save()
 
-
-    # def create_card_token(self, card):
-        # token = self.stripe_call(self.stripe.Token.create, {
-        #     'card': card
-        # })
-        # if token:
-        #     return True, token
-        # return False, None
     
     def create_setup_intent(self, setup_intent_data):
         setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_data)
@@ -266,23 +258,26 @@ class StripeProcessor(PaymentProcessorBase):
 
         return payment_intent
 
-
-    # def set_stripe_payment_source(self):
-    #     if not self.source:
-    #         if self.payment_info.is_valid():
-    #             card_number = self.payment_info.cleaned_data.get('card_number')
-    #             exp_month = self.payment_info.cleaned_data.get('expire_month')
-    #             exp_year = self.payment_info.cleaned_data.get('expire_year')
-    #             cvc = self.payment_info.cleaned_data.get('cvc_number')
-    #             card = {
-    #                'number': card_number,
-    #                'exp_month': exp_month,
-    #                'exp_year': exp_year,
-    #                'cvc': cvc
-    #             }
-    #             status, card = self.create_card_token(card)
-    #             if status and card:
-    #                 self.source = card['id']
+    def set_stripe_payment_source(self):
+        """
+        This is needed for the charge api due to this error message:
+        'You cannot create a charge with a PaymentMethod. Use the Payment Intents API instead'
+        """
+        if not self.source:
+            if self.payment_info.is_valid():
+                card_number = self.payment_info.cleaned_data.get('card_number')
+                exp_month = self.payment_info.cleaned_data.get('expire_month')
+                exp_year = self.payment_info.cleaned_data.get('expire_year')
+                cvc = self.payment_info.cleaned_data.get('cvc_number')
+                card = {
+                    'number': card_number,
+                    'exp_month': exp_month,
+                    'exp_year': exp_year,
+                    'cvc': cvc
+                 }
+                card = self.stripe_create_object(self.stripe.Token, {'card':card})
+                if card:
+                    self.source = card['id']
 
     def create_payment_method(self, payment_method_data):
         payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
@@ -473,15 +468,14 @@ class StripeProcessor(PaymentProcessorBase):
         return False, None
 
     def create_charge(self):
-        if self.source:
-            charge_data = {
-                'amount': self.to_stripe_valid_unit(self.invoice.get_one_time_transaction_total()),
-                'currency': self.invoice.currency,
-                'source': self.source,
-            }
-            charge = self.stripe_create_object(self.stripe.Charge, charge_data)
-            if charge:
-                return charge
+        charge_data = {
+            'amount': self.to_stripe_valid_unit(self.invoice.get_one_time_transaction_total()),
+            'currency': self.invoice.currency,
+            'source': self.source,
+        }
+        charge = self.stripe_create_object(self.stripe.Charge, charge_data)
+        if charge:
+            return charge
         return None
 
 
