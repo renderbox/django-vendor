@@ -170,6 +170,37 @@ class StripeProcessor(PaymentProcessorBase):
         coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
         
         return coupon
+
+    def build_payment_method(self):
+        return {
+            'type': 'card',
+            'card': {
+                'number': self.payment_info.data.get('card_number'),
+                'exp_month': self.payment_info.data.get('expire_month'),
+                'exp_year': self.payment_info.data.get('expire_year'),
+                'cvc': self.payment_info.data.get('cvv_number'),
+            },
+            'billing_details': {
+                'address': {
+                    'line1': self.billing_address.data.get('billing-address_1', None),
+                    'line2': self.billing_address.data.get('billing-address_2', None),
+                    'city': self.billing_address.data.get("billing-locality", ""),
+                    'state': self.billing_address.data.get("billing-state", ""),
+                    'country': self.billing_address.data.get("billing-country"),
+                    'postal_code': self.billing_address.data.get("billing-postal_code")
+                },
+                'name': self.payment_info.data.get('full_name', None)
+            }
+        }
+
+    def build_setup_intent(self, payment_method_id):
+        return {
+            'customer': self.invoice.profile.meta['stripe_id'],
+            'confirm': True,
+            'payment_method_types': ['card'],
+            'payment_method': payment_method_id,
+            'metadata': {'site': self.invoice.site}
+        }
     
     def build_subscription(self, customer_id, items, payment_id, offer):
         subscription_data = {
@@ -345,37 +376,10 @@ class StripeProcessor(PaymentProcessorBase):
             self.process_payment_transaction_response()
 
     def subscription_payment(self, subscription):
-        payment_method_data = {
-            'type': 'card',
-            'card': {
-                'number': '',
-                'exp_month': '',
-                'exp_year': '',
-                'cvc': '',
-            },
-            'billing_details': {
-                'address': {
-                    'line1': '',
-                    'line2': '',
-                    'city': '',
-                    'state': '',
-                    'country': '',
-                    'postal_code': ''
-                },
-                'email': '',
-                'name': ''
-            }
-        }
-
+        payment_method_data = self.build_payment_method()
         stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod(), payment_method_data)
         
-        setup_intent_object = {
-            'customer': self.invoice.profile.meta['stripe_id'],
-            'confirm': True,
-            'payment_method_types': ['card'],
-            'payment_method': stripe_payment_method.id,
-            'metadata': {'site': self.invoice.site}
-        }
+        setup_intent_object = self.build_setup_intent(stripe_payment_method.id)
 
         stripe_setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_object)
 
