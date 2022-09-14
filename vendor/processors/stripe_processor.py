@@ -202,28 +202,13 @@ class StripeProcessor(PaymentProcessorBase):
             'metadata': {'site': self.invoice.site}
         }
     
-    def build_subscription(self, customer_id, items, payment_id, offer):
-        subscription_data = {
-            'customer': customer_id,
-            'items':[{'price': item_id} for item in items],
-            'default_payment_method': payment_id,
-            'trial_period_days': None if offer.term_details['trial_days'] < 1 else offer.term_details['trial_days'],
-            'metadata': {'site': offer.site}
+    def build_subscription(self, subscription, payment_method_id):
+        return {
+            'customer': self.invoice.profile.meta['stripe_id'],
+            'items': [{'price': subscription.meta['stripe']['price_id']}],
+            'default_payment_method': payment_method_id,
+            'metadata': {'site': self.invoice.site}
         }
-
-        subscription = self.stripe_create_object(self.stripe.Subscription, subscription_data)
-        
-        return subscription
-    
-    def create_setup_intent(self, setup_intent_data):
-        setup_intent = self.stripe_call(self.stripe.SetupIntent.create, setup_intent_data)
-        
-        return setup_intent
-
-    def create_payment_method(self, payment_method_data):
-        payment_method = self.stripe_call(self.stripe.PaymentMethod.create, payment_method_data)
-        
-        return payment_method
 
     def initialize_products(self, site):
         """
@@ -380,16 +365,9 @@ class StripeProcessor(PaymentProcessorBase):
         stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod(), payment_method_data)
         
         setup_intent_object = self.build_setup_intent(stripe_payment_method.id)
-
         stripe_setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_object)
 
-        subscription_obj = {
-            'customer': self.invoice.profile.meta['stripe_id'],
-            'items': [{'price': subscription.meta['stripe']['price_id']}],
-            'default_payment_method': stripe_payment_method.id,
-            'metadata': {'site': self.invoice.site},
-
-        }
+        subscription_obj = self.build_subscription(subscription, stripe_payment_method.id)
         stripe_subscription = self.processor.stripe_create_object(self.processor.stripe.Subscription, subscription_obj)
 
 
