@@ -94,7 +94,7 @@ class StripeProcessor(PaymentProcessorBase):
     ##########
     # CRUD Stripe Object
     ##########
-    def stipe_create_object(self, stripe_object_class, object_data):
+    def stripe_create_object(self, stripe_object_class, object_data):
         stripe_object = self.stripe_call(stripe_object_class.create, object_data)
 
         return stripe_object
@@ -114,25 +114,17 @@ class StripeProcessor(PaymentProcessorBase):
     # Stripe Object Builders
     ##########
     def build_customer(self, customer_profile):
-        customer_data = {
+        return {
             'name': f"{customer_profile.user.first_name} {customer_profile.user.last_name}",
             'email': customer_profile.user.email,
             'metadata': {'site': customer_profile.site}
         }
-        
-        customer = self.stipe_create_object(self.stripe.Customer, customer_data)
-        
-        return customer
     
     def build_product(self, offer):
-        product_data = {
+        return {
             'name': offer.name,
             'metadata': {'site': offer.site}
         }
-
-        product = self.stipe_create_object(self.stripe.Product, product_data)
-        
-        return product
 
     def build_price(self, offer, price):
         if 'stripe' not in offer.meta or 'product_id' not in offer.meta['stripe']:
@@ -151,7 +143,6 @@ class StripeProcessor(PaymentProcessorBase):
                 'interval_count': offer.term_details['payment_occurrences'],
                 'usage_type': 'license'
             }
-        price = self.stipe_create_object(self.stripe.Price, price_data)
         
         return price
     
@@ -166,33 +157,47 @@ class StripeProcessor(PaymentProcessorBase):
         if offer.terms < TermType.PERPETUAL:
             coupon_data['duration']: 'once' if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
             coupon_data['duration_in_months']: None if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
-
-        coupon = self.stipe_create_object(self.stripe.Coupon, coupon_data)
         
         return coupon
-    
-    def build_subscription(self, customer_id, items, payment_id, offer):
-        subscription_data = {
-            'customer': customer_id,
-            'items':[{'price': item_id} for item in items],
-            'default_payment_method': payment_id,
-            'trial_period_days': None if offer.term_details['trial_days'] < 1 else offer.term_details['trial_days'],
-            'metadata': {'site': offer.site}
+
+    def build_payment_method(self):
+        return {
+            'type': 'card',
+            'card': {
+                'number': self.payment_info.data.get('card_number'),
+                'exp_month': self.payment_info.data.get('expire_month'),
+                'exp_year': self.payment_info.data.get('expire_year'),
+                'cvc': self.payment_info.data.get('cvv_number'),
+            },
+            'billing_details': {
+                'address': {
+                    'line1': self.billing_address.data.get('billing-address_1', None),
+                    'line2': self.billing_address.data.get('billing-address_2', None),
+                    'city': self.billing_address.data.get("billing-locality", ""),
+                    'state': self.billing_address.data.get("billing-state", ""),
+                    'country': self.billing_address.data.get("billing-country"),
+                    'postal_code': self.billing_address.data.get("billing-postal_code")
+                },
+                'name': self.payment_info.data.get('full_name', None)
+            }
         }
 
-        subscription = self.stipe_create_object(self.stripe.Subscription, subscription_data)
-        
-        return subscription
+    def build_setup_intent(self, payment_method_id):
+        return {
+            'customer': self.invoice.profile.meta['stripe_id'],
+            'confirm': True,
+            'payment_method_types': ['card'],
+            'payment_method': payment_method_id,
+            'metadata': {'site': self.invoice.site}
+        }
     
-    def create_setup_intent(self, setup_intent_data):
-        setup_intent = self.stripe_call(self.stripe.SetupIntent.create, setup_intent_data)
-        
-        return setup_intent
-
-    def create_payment_method(self, payment_method_data):
-        payment_method = self.stripe_call(self.stripe.PaymentMethod.create, payment_method_data)
-        
-        return payment_method
+    def build_subscription(self, subscription, payment_method_id):
+        return {
+            'customer': self.invoice.profile.meta['stripe_id'],
+            'items': [{'price': subscription.meta['stripe']['price_id']}],
+            'default_payment_method': payment_method_id,
+            'metadata': {'site': self.invoice.site}
+        }
 
     def initialize_products(self, site):
         """
@@ -318,6 +323,14 @@ class StripeProcessor(PaymentProcessorBase):
         self.transaction_id = self.charge['id']
         self.transaction_response = {'raw': str(self.charge)}
 
+    ##########
+    # Base Processor Transaction Implementations
+    ##########
+    def pre_authorization(self):
+        """
+        Called before the authorization begins.
+        """
+        pass
 
     def process_payment(self):
         self.transaction_submitted = False
@@ -331,5 +344,15 @@ class StripeProcessor(PaymentProcessorBase):
             self.payment.save()
             self.update_invoice_status(InvoiceStatus.COMPLETE)
             self.process_payment_transaction_response()
+
+    def subscription_payment(self, subscription):
+        payment_method_data = self.build_payment_method()
+        stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
+        
+        setup_intent_object = self.build_setup_intent(stripe_payment_method.id)
+        stripe_setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_object)
+
+        subscription_obj = self.build_subscription(subscription, stripe_payment_method.id)
+        stripe_subscription = self.processor.stripe_create_object(self.processor.stripe.Subscription, subscription_obj)
 
 
