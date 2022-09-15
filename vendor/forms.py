@@ -11,7 +11,7 @@ from integrations.models import Credential
 
 from vendor.config import VENDOR_PRODUCT_MODEL
 from vendor.models import Address, Offer, Price, offer_term_details_default
-from vendor.models.choice import PaymentTypes, TermType, Country
+from vendor.models.choice import PaymentTypes, TermType, Country, USAStateChoices
 from vendor.utils import get_site_from_request
 
 
@@ -103,9 +103,15 @@ class AddressForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(AddressForm, self).__init__(*args, **kwargs)
         self.fields['name'].hidden = True
+        self.fields['first_name'].widget.attrs.update({'placeholder': _('Enter First Name')})
+        self.fields['last_name'].widget.attrs.update({'placeholder': _('Enter Last Name')})
+        self.fields['country'].label = _("Billing Country/Region")
         self.fields['address_1'].widget.attrs.update({'placeholder': _('Enter Address')})
-        self.fields['address_2'].widget.attrs.update({'placeholder': _('Enter Apt, Suite, Unit, Building, Floor, etc')})
+        self.fields['address_2'].widget.attrs.update({'placeholder': _('Enter Apt, Suite, Unit, Building, Floor, etc.')})
+        self.fields['state'].widget.attrs.update({'placeholder': _('Enter State')})
         self.fields['locality'].widget.attrs.update({'placeholder': _('Enter City')})
+        self.fields['postal_code'].label = _("Zip Code")
+        self.fields['postal_code'].widget.attrs.update({'placeholder': _('Enter Zip')})
         self.fields['country'].choices = get_available_country_choices()
         if 'instance' in kwargs:
             self.initial['country'] = kwargs['instance'].country
@@ -115,6 +121,7 @@ class AddressForm(forms.ModelForm):
 
 class AccountInformationForm(AddressForm):
     email = forms.EmailField(label=_('Email Address'), required=True)
+    select_state = forms.ChoiceField(label=_("State"), choices=USAStateChoices.choices, required=False)
     prefix = "account_info"
 
     class Meta:
@@ -122,19 +129,21 @@ class AccountInformationForm(AddressForm):
         fields = ['name', 'first_name', 'last_name', 'email', 'country',
                   'address_1', 'address_2', 'locality', 'state', 'postal_code']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs.update({'placeholder': _('Enter Email Address')})
+        self.fields['select_state'].widget.attrs.update({'placeholder': _('Select State')})
+
 
 class BillingAddressForm(AddressForm):
     same_as_shipping = forms.BooleanField(label=_("Billing address is the same as shipping address"), required=False, initial=True)
+    select_state = forms.ChoiceField(label=_("State"), choices=USAStateChoices.choices, required=False)
     prefix = "billing"
 
     class Meta:
         model = Address
         fields = ['same_as_shipping', 'name', 'first_name', 'last_name',
                   'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
-
-    def __init__(self, *args, **kwargs):
-        super(BillingAddressForm, self).__init__(*args, **kwargs)
-        self.fields['country'].label = _('Billing Country/Region')
 
 
 class CreditCardField(forms.CharField):
@@ -262,13 +271,14 @@ class CreditCardForm(PaymentFrom):
     card_number = CreditCardField(label=_("Credit Card Number"), placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)
     expire_month = forms.ChoiceField(required=True, label=_("Expiration Month"), choices=[(x, f'{x:02d}') for x in range(1, 13)])
     expire_year = forms.ChoiceField(required=True, label=_("Expiration Year"))
-    cvv_number = forms.CharField(required=True, label=_("CVV Number"), max_length=4, min_length=3, widget=forms.TextInput(attrs={'size': '4'}))
+    cvv_number = forms.CharField(required=True, label=_("CVV Number"), max_length=4, min_length=3, widget=forms.TextInput(attrs={'size': '4', 'placeholder': _('Enter CVV')}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         today = datetime.now()
         self.fields['expire_year'].choices = [(x, x) for x in range(today.year - 1, today.year + 15)]
         self.fields['expire_year'].initial = (today.year, today.year)
+        self.fields['full_name'].widget.attrs.update({'placeholder': _('Enter Name on Card')})
 
     def clean(self):
         cleaned_data = super(CreditCardForm, self).clean()
