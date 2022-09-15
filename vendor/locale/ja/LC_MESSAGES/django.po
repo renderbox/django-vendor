@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-09-12 23:44+0000\n"
+"POT-Creation-Date: 2022-09-15 20:37+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -127,7 +127,7 @@ msgstr "名を入力して"
 msgid "Enter Last Name"
 msgstr "姓を入力して"
 
-#: forms.py:108 forms.py:149
+#: forms.py:108
 msgid "Billing Country/Region"
 msgstr "請求先の国/地域"
 
@@ -159,7 +159,7 @@ msgstr "郵便番号を入力"
 msgid "Email Address"
 msgstr "電子メールアドレス"
 
-#: forms.py:124 models/address.py:48
+#: forms.py:124 forms.py:140 models/address.py:48
 msgid "State"
 msgstr "状態"
 
@@ -175,57 +175,65 @@ msgstr "州を選択"
 msgid "Billing address is the same as shipping address"
 msgstr "請求先住所は配送先住所と同じです"
 
-#: forms.py:224
+#: forms.py:221
 msgid "The credit card number is invalid"
 msgstr "クレジットカード番号が無効です"
 
-#: forms.py:269
+#: forms.py:266
 msgid "Payment Type"
 msgstr "支払いタイプ"
 
-#: forms.py:273 models/payment.py:129
+#: forms.py:270 models/payment.py:129
 #: templates/vendor/manage/receipt_detail.html:82
 #: templates/vendor/manage/subscription_detail.html:100
 msgid "Name on Card"
 msgstr "カードの名前"
 
-#: forms.py:274
+#: forms.py:271
 msgid "Credit Card Number"
 msgstr "クレジットカード番号"
 
-#: forms.py:275
+#: forms.py:272
 msgid "Expiration Month"
 msgstr "有効期限月"
 
-#: forms.py:276
+#: forms.py:273
 msgid "Expiration Year"
 msgstr "有効期限"
 
-#: forms.py:277
+#: forms.py:274
 msgid "CVV Number"
 msgstr "CVV番号"
 
-#: forms.py:300
+#: forms.py:274
+msgid "Enter CVV"
+msgstr "CVVを入力して"
+
+#: forms.py:281
+msgid "Enter Name on Card"
+msgstr "カードに名前を入力"
+
+#: forms.py:298
 msgid "You must select a valid expiration month"
 msgstr "有効な有効期限を選択する必要があります"
 
-#: forms.py:308
+#: forms.py:306
 msgid "You must select a valid expiration year"
 msgstr "有効な有効期限を選択する必要があります"
 
-#: forms.py:316
+#: forms.py:314
 msgid "CVV must be all digits"
 msgstr "CVVはすべて数字である必要があります"
 
-#: forms.py:329
+#: forms.py:327
 msgid "The expiration date you entered is in the past."
 msgstr "入力した有効期限は過去のものです。"
 
-#: forms.py:330
+#: forms.py:328
 msgid "Check expiration"
 msgstr "有効期限を確認してください"
 
-#: forms.py:336 forms.py:351 models/offer.py:50 models/price.py:15
+#: forms.py:334 forms.py:349 models/offer.py:50 models/price.py:15
 #: models/receipt.py:21 templates/vendor/manage/offers.html:20
 #: templates/vendor/manage/profile_detail.html:274
 #: templates/vendor/manage/receipt_list.html:21
@@ -233,7 +241,7 @@ msgstr "有効期限を確認してください"
 msgid "Start Date"
 msgstr "開始日"
 
-#: forms.py:337 forms.py:352 models/offer.py:51 models/price.py:16
+#: forms.py:335 forms.py:350 models/offer.py:51 models/price.py:16
 #: models/receipt.py:22 templates/vendor/manage/offers.html:21
 #: templates/vendor/manage/profile_detail.html:275
 #: templates/vendor/manage/receipt_list.html:22
@@ -241,19 +249,19 @@ msgstr "開始日"
 msgid "End Date"
 msgstr "終了日"
 
-#: forms.py:345 forms.py:360
+#: forms.py:343 forms.py:358
 msgid "End Date cannot be before Start Date"
 msgstr "あなたはわれあなたのつにこのできました。"
 
-#: forms.py:387
+#: forms.py:385
 msgid "API ID"
 msgstr "API ID"
 
-#: forms.py:388
+#: forms.py:386
 msgid "Transaction Key"
 msgstr "トランザクションキー"
 
-#: forms.py:389
+#: forms.py:387
 msgid "Signature ID"
 msgstr "署名ID"
 
