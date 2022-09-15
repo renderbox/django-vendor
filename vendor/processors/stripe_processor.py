@@ -114,25 +114,17 @@ class StripeProcessor(PaymentProcessorBase):
     # Stripe Object Builders
     ##########
     def build_customer(self, customer_profile):
-        customer_data = {
+        return {
             'name': f"{customer_profile.user.first_name} {customer_profile.user.last_name}",
             'email': customer_profile.user.email,
             'metadata': {'site': customer_profile.site}
         }
-        
-        customer = self.stripe_create_object(self.stripe.Customer, customer_data)
-        
-        return customer
     
     def build_product(self, offer):
-        product_data = {
+        return {
             'name': offer.name,
             'metadata': {'site': offer.site}
         }
-
-        product = self.stripe_create_object(self.stripe.Product, product_data)
-        
-        return product
 
     def build_price(self, offer, price):
         if 'stripe' not in offer.meta or 'product_id' not in offer.meta['stripe']:

@@ -441,7 +441,8 @@ class StripeBuildObjectTests(TestCase):
     def test_build_customer_success(self):
         customer_profile = CustomerProfile.objects.all().first()
 
-        stripe_customer = self.processor.build_customer(customer_profile)
+        customer_data = self.processor.build_customer(customer_profile)
+        stripe_customer = self.stripe_create_object(self.stripe.Customer, customer_data)
         
         self.assertIsNotNone(stripe_customer.id)
         self.assertEqual(f"{customer_profile.user.first_name} {customer_profile.user.last_name}", stripe_customer.name)
@@ -450,7 +451,8 @@ class StripeBuildObjectTests(TestCase):
     def test_build_product_success(self):
         offer = Offer.objects.all().first()
 
-        stripe_product = self.processor.build_product(offer)
+        product_data = self.processor.build_product(offer)
+        stripe_product = self.stripe_create_object(self.stripe.Product, product_data)
 
         self.assertIsNotNone(stripe_product.id)
         self.assertEqual(offer.name, stripe_product.name)
@@ -458,13 +460,17 @@ class StripeBuildObjectTests(TestCase):
     def test_build_price_success(self):
         offer = Offer.objects.all().first()
 
-        stripe_product = self.processor.build_product(offer)
+        product_data = self.processor.build_product(offer)
+        stripe_product = self.stripe_create_object(self.stripe.Product, product_data)
+
         offer.meta['stripe'] = {
             'product_id': stripe_product.id
         }
         offer.save()
         price = offer.prices.first()
-        stripe_price = self.processor.build_price(offer, price)
+
+        price_data = self.processor.build_price(offer, price)
+        stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
 
         self.assertIsNotNone(stripe_price.id)
         self.assertEqual(price.cost, stripe_price.unit_amount)
@@ -473,7 +479,8 @@ class StripeBuildObjectTests(TestCase):
         offer = Offer.objects.all().first()
         price = offer.prices.first()
 
-        stripe_coupon = self.processor.build_coupon(offer, price)
+        coupon_data = self.processor.build_coupon(offer, price)
+        stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
         
         self.assertIsNotNone(stripe_coupon.id)
         self.assertEqual("".join([str(stripe_coupon.amount_off)[:-2], ".", str(stripe_coupon.amount_off)[-2:]]), str((offer.get_msrp() - price.cost)))
