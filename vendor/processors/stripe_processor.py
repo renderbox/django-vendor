@@ -143,7 +143,6 @@ class StripeProcessor(PaymentProcessorBase):
                 'interval_count': offer.term_details['payment_occurrences'],
                 'usage_type': 'license'
             }
-        price = self.stripe_create_object(self.stripe.Price, price_data)
         
         return price
     
@@ -158,8 +157,6 @@ class StripeProcessor(PaymentProcessorBase):
         if offer.terms < TermType.PERPETUAL:
             coupon_data['duration']: 'once' if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
             coupon_data['duration_in_months']: None if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
-
-        coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
         
         return coupon
 
@@ -329,15 +326,11 @@ class StripeProcessor(PaymentProcessorBase):
     ##########
     # Base Processor Transaction Implementations
     ##########
-    def authorize_payment(self):
-        # Given that stripe need customer, product, price to process payment we need to check
-        # that vendor object have those keys.
-        # if 'stripe_id' not in invoice.profile.meta:
-        #     raise ValueError()
-
-        # if 'stripe' not in invoice:
-        #     pass 
-        super().authorize_payment()
+    def pre_authorization(self):
+        """
+        Called before the authorization begins.
+        """
+        pass
 
     def process_payment(self):
         self.transaction_submitted = False
@@ -354,7 +347,7 @@ class StripeProcessor(PaymentProcessorBase):
 
     def subscription_payment(self, subscription):
         payment_method_data = self.build_payment_method()
-        stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod(), payment_method_data)
+        stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
         
         setup_intent_object = self.build_setup_intent(stripe_payment_method.id)
         stripe_setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_object)
