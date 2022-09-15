@@ -137,16 +137,13 @@ class AccountInformationForm(AddressForm):
 
 class BillingAddressForm(AddressForm):
     same_as_shipping = forms.BooleanField(label=_("Billing address is the same as shipping address"), required=False, initial=True)
+    select_state = forms.ChoiceField(label=_("State"), choices=USAStateChoices.choices, required=False)
     prefix = "billing"
 
     class Meta:
         model = Address
         fields = ['same_as_shipping', 'name', 'first_name', 'last_name',
                   'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
-
-    def __init__(self, *args, **kwargs):
-        super(BillingAddressForm, self).__init__(*args, **kwargs)
-        self.fields['country'].label = _('Billing Country/Region')
 
 
 class CreditCardField(forms.CharField):
@@ -274,13 +271,14 @@ class CreditCardForm(PaymentFrom):
     card_number = CreditCardField(label=_("Credit Card Number"), placeholder=u'0000 0000 0000 0000', min_length=12, max_length=19)
     expire_month = forms.ChoiceField(required=True, label=_("Expiration Month"), choices=[(x, f'{x:02d}') for x in range(1, 13)])
     expire_year = forms.ChoiceField(required=True, label=_("Expiration Year"))
-    cvv_number = forms.CharField(required=True, label=_("CVV Number"), max_length=4, min_length=3, widget=forms.TextInput(attrs={'size': '4'}))
+    cvv_number = forms.CharField(required=True, label=_("CVV Number"), max_length=4, min_length=3, widget=forms.TextInput(attrs={'size': '4', 'placeholder': _('Enter CVV')}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         today = datetime.now()
         self.fields['expire_year'].choices = [(x, x) for x in range(today.year - 1, today.year + 15)]
         self.fields['expire_year'].initial = (today.year, today.year)
+        self.fields['full_name'].widget.attrs.update({'placeholder': _('Enter Name on Card')})
 
     def clean(self):
         cleaned_data = super(CreditCardForm, self).clean()
