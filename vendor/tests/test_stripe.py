@@ -1,15 +1,23 @@
 import stripe
-
+from random import randrange
 from django.conf import settings
 from django.test import TestCase, Client, tag
 from django.contrib.sites.models import Site
+from django.utils import timezone
 from siteconfigs.models import SiteConfigModel
 from unittest import skipIf
-from vendor.models import CustomerProfile, Offer
+from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.processors import StripeProcessor
+from django.contrib.auth import get_user_model
+from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem, Subscription
+from core.models import Product
+from vendor.models.choice import InvoiceStatus
 
 
-@skipIf((settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None, "Strip enviornment variables not set, skipping tests")
+User = get_user_model()
+
+
+@skipIf((settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None, "Stripe enviornment variables not set, skipping tests")
 class StripeProcessorTests(TestCase):
     fixtures = ['user', 'unit_test']
 
@@ -87,11 +95,11 @@ class StripeProcessorTests(TestCase):
     def test_process_payment_transaction_success(self):
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
-        self.processor.set_stripe_payment_source()
         self.processor.invoice.total = randrange(1, 1000)
         for recurring_order_items in self.processor.invoice.get_recurring_order_items():
             self.processor.invoice.remove_offer(recurring_order_items.offer)
 
+        self.processor.set_stripe_payment_source()
         self.processor.authorize_payment()
         self.assertIsNotNone(self.processor.payment)
         self.assertTrue(self.processor.payment.success)
@@ -242,6 +250,32 @@ class StripeProcessorTests(TestCase):
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
         self.assertFalse(self.processor.transaction_submitted)
+
+    def test_build_search_query(self):
+        """
+        Check our query string for stripe searches are valid
+        """
+        valid_query = 'name~"Johns Offer" AND metadata["site"]: "site4"'
+        search = [
+            {
+                'key_name': 'name',
+                'key_value': 'Johns Offer',
+                'field_type': 'name'
+            },
+            {
+                'key_name': 'site',
+                'key_value': 'site4',
+                'field_type': 'metadata'
+            },
+
+        ]
+        query = self.processor.build_search_query(search)
+        self.assertEquals(valid_query, query)
+
+    def test_on_demand_sync_pass(self):
+        pass
+
+
 
 
 @skipIf((settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None, "Strip enviornment variables not set, skipping tests")
