@@ -104,13 +104,12 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         form = self.get_form_class()(request.POST)
+        invoice = get_purchase_invoice(request.user, get_site_from_request(request))
 
         if not form.is_valid():
-            return render(request, self.template_name, {'form': form})
+            return render(request, self.template_name, {'form': form, 'invoice': invoice})
 
         shipping_address = form.save(commit=False)
-
-        invoice = get_purchase_invoice(request.user, get_site_from_request(request))
 
         if not invoice.order_items.count() or invoice.status == InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))

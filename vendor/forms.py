@@ -106,10 +106,13 @@ class AddressForm(forms.ModelForm):
         self.fields['first_name'].widget.attrs.update({'placeholder': _('Enter First Name')})
         self.fields['last_name'].widget.attrs.update({'placeholder': _('Enter Last Name')})
         self.fields['country'].label = _("Billing Country/Region")
+
         self.fields['address_1'].widget.attrs.update({'placeholder': _('Enter Address')})
         self.fields['address_2'].widget.attrs.update({'placeholder': _('Enter Apt, Suite, Unit, Building, Floor, etc.')})
         self.fields['state'].widget.attrs.update({'placeholder': _('Enter State')})
         self.fields['locality'].widget.attrs.update({'placeholder': _('Enter City')})
+
+        self.fields['postal_code'].required = True
         self.fields['postal_code'].label = _("Zip Code")
         self.fields['postal_code'].widget.attrs.update({'placeholder': _('Enter Zip')})
         self.fields['country'].choices = get_available_country_choices()
@@ -132,7 +135,17 @@ class AccountInformationForm(AddressForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['email'].widget.attrs.update({'placeholder': _('Enter Email Address')})
-        self.fields['select_state'].widget.attrs.update({'placeholder': _('Select State')})
+        self.fields['select_state'].choices = [("", _("Select State"))] + self.fields['select_state'].choices
+
+    def clean(self):
+        cleaned_data = super().clean()
+        state = cleaned_data.get('state')
+        select_state = cleaned_data.get('select_state')
+
+        if not (state or select_state):
+            self.add_error('select_state', _('This field is required.'))
+
+        return cleaned_data
 
 
 class BillingAddressForm(AddressForm):
@@ -144,6 +157,20 @@ class BillingAddressForm(AddressForm):
         model = Address
         fields = ['same_as_shipping', 'name', 'first_name', 'last_name',
                   'country', 'address_1', 'address_2', 'locality', 'state', 'postal_code']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['select_state'].choices = [("", _("Select State"))] + self.fields['select_state'].choices
+
+    def clean(self):
+        cleaned_data = super().clean()
+        state = cleaned_data.get('state')
+        select_state = cleaned_data.get('select_state')
+
+        if not (state or select_state):
+            self.add_error('select_state', _('This field is required.'))
+
+        return cleaned_data
 
 
 class CreditCardField(forms.CharField):
