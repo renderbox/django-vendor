@@ -2,6 +2,7 @@
 Payment processor for Stripe.
 """
 import logging
+import uuid
 import stripe
 from django.conf import settings
 from .base import PaymentProcessorBase
@@ -192,7 +193,7 @@ class StripeProcessor(PaymentProcessorBase):
     def build_product(self, offer):
         return {
             'name': offer.name,
-            'metadata': {'site': offer.site.domain}
+            'metadata': {'site': offer.site.domain, 'pk': offer.pk}
 
         }
 
@@ -204,7 +205,7 @@ class StripeProcessor(PaymentProcessorBase):
             'product': offer.meta['stripe']['product_id'],
             'currency': price.currency,
             'unit_amount': self.convert_decimal_to_integer(price.cost),
-            'metadata': {'site': offer.site.domain}
+            'metadata': {'site': offer.site.domain, 'pk': price.pk}
         }
         
         if offer.terms < TermType.PERPETUAL:
@@ -274,13 +275,13 @@ class StripeProcessor(PaymentProcessorBase):
     # Stripe & Vendor Objects Synchronization
     ##########
 
-    def get_stripe_customers(self):
+    def get_stripe_customers(self, site):
         """
         Returns all Stripe created customers
         """
         query = self.build_search_query([{
             'key_name': 'site',
-            'key_value': self.site.domain,
+            'key_value': site.domain,
             'field_type': 'metadata'
         }])
         customer_search = self.stripe_query_object(self.stripe.Customer, {'query': query})
@@ -290,32 +291,29 @@ class StripeProcessor(PaymentProcessorBase):
 
         return None
 
-    def get_stripe_customers_in_vendor(self, customers):
+    def get_stripe_customers_in_vendor(self, customer_email_list, site):
         """
         Returns all vendor customers who have been created as Stripe customers
         """
-        email_list = [customer_obj['email'] for customer_obj in customers]
-        stripe_users = CustomerProfile.objects.filter(
-            user__email__iregex=r'(' + '|'.join(email_list) + ')',  # iregex used for case insensitive list match
-            site=self.site
+        users = CustomerProfile.objects.filter(
+            user__email__iregex=r'(' + '|'.join(customer_email_list) + ')',  # iregex used for case insensitive list match
+            site=site
         )
 
-        return stripe_users
+        return users
 
-    def get_stripe_customers_not_in_vendor(self, customers):
+    def get_stripe_customers_not_in_vendor(self, customer_email_list, site):
         """
         Returns all vendor customers who have not been created as Stripe customers
         """
-        email_list = [customer_obj['email'] for customer_obj in customers]
-        stripe_users = CustomerProfile.objects.exclude(
-            user__email__iregex=r'(' + '|'.join(email_list) + ')',  # iregex used for case insensitive list match
-            site=self.site
+        users = CustomerProfile.objects.exclude(
+            user__email__iregex=r'(' + '|'.join(customer_email_list) + ')',  # iregex used for case insensitive list match
+            site=site
         )
 
-        return stripe_users
+        return users
 
-    def create_stripe_customer_not_in_vendor(self, customers):
-        # Create customer objs for Vendor customers not in Stripe
+    def create_stripe_customers(self, customers):
         for profile in customers:
             profile_data = self.build_customer(profile)
             new_stripe_customer = self.stripe_create_object(self.stripe.Customer, profile_data)
@@ -324,8 +322,7 @@ class StripeProcessor(PaymentProcessorBase):
                 profile.meta['stripe_id'] = new_stripe_customer['id']
                 profile.save()
 
-    def update_stripe_customer_in_vendor(self, customers):
-        # Update existing stripe customers info with vendor data
+    def update_stripe_customers(self, customers):
         for profile in customers:
             customer_id = profile.meta['id']
             profile_data = self.build_customer(profile)
@@ -335,79 +332,155 @@ class StripeProcessor(PaymentProcessorBase):
                 profile.meta['stripe_id'] = existing_stripe_customer['id']
                 profile.save()
 
-    def sync_customers(self):
-        stripe_customers = self.get_stripe_customers()
-        stripe_customers_in_vendor = self.get_stripe_customers_in_vendor(stripe_customers)
-        stripe_customers_not_in_vendor = self.get_stripe_customers_not_in_vendor(stripe_customers)
+    def sync_customers(self, site):
+        stripe_customers = self.get_stripe_customers(site)
+        stripe_customers_emails = [customer_obj['email'] for customer_obj in stripe_customers]
+        stripe_customers_in_vendor = self.get_stripe_customers_in_vendor(stripe_customers_emails)
+        stripe_customers_not_in_vendor = self.get_stripe_customers_not_in_vendor(stripe_customers_emails)
 
-        self.create_stripe_customer_not_in_vendor(stripe_customers_not_in_vendor)
-        self.update_stripe_customer_in_vendor(stripe_customers_in_vendor)
+        self.create_stripe_customers(stripe_customers_not_in_vendor)
+        self.update_stripe_customers(stripe_customers_in_vendor)
 
-    def sync_offers(self):
-        for offer in Offer.objects.filter(site=self.site):
-            meta = offer.meta
-            # Check if meta has this offer stripe product and add if not
-            stripe_product_id = meta.get('stripe', {}).get('product_id', {})
-            stripe_price_id = meta.get('stripe', {}).get('price_id', {})
-            stripe_coupon_id = meta.get('stripe', {}).get('coupon_id', {})
+    def get_site_offers(self, site):
+        """
+        Returns all Stripe created Products
+        """
+        query = self.build_search_query([{
+            'key_name': 'site',
+            'key_value': site.domain,
+            'field_type': 'metadata'
+        }])
+        product_search = self.stripe_query_object(self.stripe.Product, {'query': query})
+
+        if product_search:
+            return product_search['data']
+
+        return None
+
+    def get_price_with_pk(self, price_pk):
+        """
+        Returns stripe Price based on metadata pk value
+        """
+        query = self.build_search_query([{
+            'key_name': 'pk',
+            'key_value': price_pk,
+            'field_type': 'metadata'
+        }])
+        price_search = self.stripe_query_object(self.stripe.Price, {'query': query})
+
+        if price_search:
+            return price_search['data']
+
+        return None
+
+    def get_coupon_with_name(self, name):
+        """
+        Returns stripe Coupon based on name
+        """
+        query = self.build_search_query([{
+            'key_name': 'uuid',
+            'key_value': 'uuid_value',
+            'field_type': 'metadata'
+        }])
+        coupon_search = self.stripe_query_object(self.stripe.Coupon, {'query': query})
+
+        if coupon_search:
+            return coupon_search['data']
+
+        return None
+
+
+    def get_offers_in_vendor(self, offer_pk_list, site):
+        offers = Offer.objects.filter(site=site, pk__in=offer_pk_list)
+        return offers
+
+    def get_offers_not_in_vendor(self, offer_pk_list, site):
+        offers = Offer.objects.exclude(site=site, pk__in=offer_pk_list)
+        return offers
+
+    def create_offers(self, offers):
+        for offer in offers:
             product_data = self.build_product(offer)
             price_data = self.build_price(offer, offer.current_price_object())
             coupon_data = self.build_coupon(offer, offer.current_price_object())
 
-            if not stripe_product_id:
-                product = self.stripe_create_object(self.stripe.Product, product_data)
+            new_stripe_product = self.stripe_create_object(self.stripe.Product, product_data)
+            new_stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
+            new_stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
 
-                if meta.get('stripe', None):
-                    meta['stripe']['product_id'] = product['id']
+            if new_stripe_product:
+                if offer.meta.get('stripe'):
+                    offer.meta['stripe']['product_id'] = new_stripe_product['id']
                 else:
-                    meta['stripe'] = {'product_id': product['id']}
-            else:
-                # if it does, sync the vendor version
-                existing_product = self.stripe_update_object(self.stripe.Product, stripe_product_id, product_data)
+                    offer.meta['stripe'] = {'product_id': new_stripe_product['id']}
 
-                if existing_product:
-                    if meta.get('stripe', None):
-                        meta['stripe']['product_id'] = existing_product['id']
-                    else:
-                        meta['stripe'] = {'product_id': existing_product['id']}
-
-            # Check if meta has this offer stripe price and add if not
-            if not stripe_price_id:
-                price = self.stripe_create_object(self.stripe.Price, price_data)
-
-                if meta.get('stripe', None):
-                    meta['stripe']['price_id'] = price['id']
+            if new_stripe_price:
+                if offer.meta.get('stripe'):
+                    offer.meta['stripe']['price_id'] = new_stripe_price['id']
                 else:
-                    meta['stripe'] = {'price_id': price['id']}
-            else:
-                # if it does, sync the vendor version
-                existing_price = self.stripe_update_object(self.stripe.Price, stripe_price_id, price_data)
+                    offer.meta['stripe'] = {'price_id': new_stripe_price['id']}
 
-                if existing_price:
-                    if meta.get('stripe', None):
-                        meta['stripe']['price_id'] = existing_price['id']
-                    else:
-                        meta['stripe'] = {'price_id': existing_price['id']}
-
-            # Check if meta has this offer stripe coupon and add if not
-            if not stripe_coupon_id:
-                coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
-
-                if meta.get('stripe', None):
-                    meta['stripe']['coupon_id'] = coupon['id']
+            if new_stripe_coupon:
+                if offer.meta.get('stripe'):
+                    offer.meta['stripe']['coupon_id'] = new_stripe_coupon['id']
                 else:
-                    meta['stripe'] = {'coupon_id': coupon['id']}
-            else:
-                # if it does, sync the vendor version
-                existing_coupon = self.stripe_update_object(self.stripe.Coupon, stripe_coupon_id, coupon_data)
-
-                if existing_coupon:
-                    if meta.get('stripe', None):
-                        meta['stripe']['coupon_id'] = existing_coupon['id']
-                    else:
-                        meta['stripe'] = {'coupon_id': existing_coupon['id']}
+                    offer.meta['stripe'] = {'coupon_id': new_stripe_coupon['id']}
 
             offer.save()
+
+    def update_offers(self, offers):
+        for offer in offers:
+
+            # Handle product
+            product_id = offer.meta['stripe']['product_id']
+            product_data = self.build_product(offer)
+            existing_stripe_product = self.stripe_update_object(self.stripe.Product, product_id, product_data)
+            if existing_stripe_product:
+                if offer.meta.get('stripe'):
+                    offer.meta['stripe']['product_id'] = existing_stripe_product['id']
+                else:
+                    offer.meta['stripe'] = {'product_id': existing_stripe_product['id']}
+
+            # Handle Price
+            price = offer.current_price_object()
+            price_data = self.build_price(offer, price)
+            stripe_price_obj = self.get_price_with_pk(price.pk)
+
+            if stripe_price_obj:
+                stripe_price = self.stripe_update_object(self.stripe.Price, stripe_price_obj['id'], price_data)
+            else:
+                stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
+
+            if offer.meta.get('stripe'):
+                offer.meta['stripe']['price_id'] = stripe_price['id']
+            else:
+                offer.meta['stripe'] = {'price_id': stripe_price['id']}
+
+            # Handle Coupon
+            ## TODO coupon doesnt have search so need to list and do manual search?
+            coupon_data = self.build_coupon(offer, price)
+            stripe_coupon_obj = self.get_coupon_with_name(offer.name)
+
+            if stripe_coupon_obj:
+                stripe_coupon = self.stripe_update_object(self.stripe.Coupon, stripe_coupon_obj['id'], coupon_data)
+            else:
+                stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
+
+            if offer.meta.get('stripe'):
+                offer.meta['stripe']['coupon_id'] = stripe_coupon['id']
+            else:
+                offer.meta['stripe'] = {'coupon_id': stripe_coupon['id']}
+
+            offer.save()
+
+    def sync_offers(self, site):
+        products = self.get_site_offers(site)
+        offer_pk_list = [product['metadata']['pk'] for product in products]
+        offers_in_vendor = self.get_offers_in_vendor(offer_pk_list, site)
+        offers_not_in_vendor = self.get_offers_not_in_vendor(offer_pk_list, site)
+
+        self.create_offers(offers_not_in_vendor)
+        self.update_offers(offers_in_vendor)
 
     def sync_stripe_vendor_objects(self):
         """
