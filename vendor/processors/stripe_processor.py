@@ -17,6 +17,7 @@ from vendor.models.choice import (
 )
 from vendor.integrations import StripeIntegration
 from vendor.models import Offer, CustomerProfile
+from django.contrib.sites.models import Site
 
 logger = logging.getLogger(__name__)
 
@@ -484,11 +485,11 @@ class StripeProcessor(PaymentProcessorBase):
 
     def sync_stripe_vendor_objects(self):
         """
-        Sync up vendor customers on this site who have stripe customer objs created and ones that dont
-        Sync up all the offers on the current site to products on stripe
+        Sync up all the CustomerProfiles, Offers, Prices, and Coupons for all of the sites
         """
-        self.sync_customers()
-        self.sync_offers()
+        for site in Site.objects.all():
+            self.sync_customers(site)
+            self.sync_offers(site)
 
     
     def create_setup_intent(self, setup_intent_data):
