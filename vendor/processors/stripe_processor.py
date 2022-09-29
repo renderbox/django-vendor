@@ -178,6 +178,11 @@ class StripeProcessor(PaymentProcessorBase):
 
         return stripe_object
 
+    def stripe_list_objects(self, stripe_object_class, limit=10, starting_after=None):
+        stripe_objects = self.stripe_call(stripe_object_class.list, limit=limit, starting_after=None)
+
+        return stripe_objects
+
 
 
 
@@ -228,7 +233,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         if offer.terms < TermType.PERPETUAL:
             coupon_data['duration']: 'once' if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
-            coupon_data['duration_in_months']: None if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
+            coupon_data['duration_in_months']: offer.get_trial_duration_in_months()
         
         return coupon_data
 
@@ -370,26 +375,40 @@ class StripeProcessor(PaymentProcessorBase):
         price_search = self.stripe_query_object(self.stripe.Price, {'query': query})
 
         if price_search:
-            return price_search['data']
+            return price_search['data'][0]
 
         return None
 
-    def get_coupon_with_name(self, name):
+    def match_coupons(self, coupons, offer):
+        matches = []
+        amount_off = self.convert_decimal_to_integer(offer.discount())
+        duration = offer.get_trial_duration_in_months()
+        for coupon in coupons:
+            if coupon['metadata']['site'] == offer.site.domain and coupon['amount_off'] == amount_off\
+                    and coupon['duration_in_months'] == duration:
+                matches.append(coupon)
+        return matches
+
+    def get_coupons(self, offer):
         """
-        Returns stripe Coupon based on name
+        Returns the matching stripe Coupons on Offer by iterating all coupons
+        and matching on site, amount_off, and duration_in_months.
+
+        This is needed since there is no search method on Coupon. Will make multiple stripe calls until the
+        list is exhausted
         """
-        query = self.build_search_query([{
-            'key_name': 'uuid',
-            'key_value': 'uuid_value',
-            'field_type': 'metadata'
-        }])
-        coupon_search = self.stripe_query_object(self.stripe.Coupon, {'query': query})
+        coupon_matches = []
+        starting_after = None
+        while 1:
+            coupons = self.stripe_list_objects(self.stripe.Coupon, limit=100, starting_after=starting_after)
+            matches = self.match_coupons(coupons, offer)
+            coupon_matches.extend(matches)
+            if coupons['has_more']:
+                starting_after = coupons['data'][-1]['id']
+            else:
+                break
 
-        if coupon_search:
-            return coupon_search['data']
-
-        return None
-
+        return coupon_matches
 
     def get_offers_in_vendor(self, offer_pk_list, site):
         offers = Offer.objects.filter(site=site, pk__in=offer_pk_list)
@@ -458,19 +477,26 @@ class StripeProcessor(PaymentProcessorBase):
                 offer.meta['stripe'] = {'price_id': stripe_price['id']}
 
             # Handle Coupon
-            ## TODO coupon doesnt have search so need to list and do manual search?
             coupon_data = self.build_coupon(offer, price)
-            stripe_coupon_obj = self.get_coupon_with_name(offer.name)
+            discount = self.convert_decimal_to_integer(offer.discount())
 
-            if stripe_coupon_obj:
-                stripe_coupon = self.stripe_update_object(self.stripe.Coupon, stripe_coupon_obj['id'], coupon_data)
-            else:
-                stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
+            # If this offer has a discount check if its on stripe to create, update, delete
+            if discount:
+                stripe_coupon_matches = self.get_coupons(offer)
 
-            if offer.meta.get('stripe'):
-                offer.meta['stripe']['coupon_id'] = stripe_coupon['id']
-            else:
-                offer.meta['stripe'] = {'coupon_id': stripe_coupon['id']}
+                if not stripe_coupon_matches:
+                    stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
+                elif len(stripe_coupon_matches) == 1:
+                    coupon_id = stripe_coupon_matches[0]['id']
+                    stripe_coupon = self.stripe_update_object(self.stripe.Coupon, coupon_id, coupon_data)
+                else:
+                    # TODO what to do for multiple coupon matches?
+                    pass
+
+                if offer.meta.get('stripe'):
+                    offer.meta['stripe']['coupon_id'] = stripe_coupon['id']
+                else:
+                    offer.meta['stripe'] = {'coupon_id': stripe_coupon['id']}
 
             offer.save()
 

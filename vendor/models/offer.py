@@ -1,5 +1,5 @@
 import uuid
-
+import math
 from autoslug import AutoSlugField
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
@@ -178,6 +178,15 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
             return 0
 
         return self.term_details.get('trial_amount', 0)
+
+    def get_trial_duration_in_months(self):
+        duration = self.term_details.get('trial_days', 0)
+
+        if duration <= 0:
+            return 0
+
+        return math.ceil(duration/31)
+
 
     def has_trial_occurrences(self):
         if self.term_details.get('trial_occurrences', 0) > 0:
