@@ -389,7 +389,11 @@ class StripeProcessor(PaymentProcessorBase):
                 matches.append(coupon)
         return matches
 
-    def get_coupons(self, offer):
+    def delete_coupon(self, coupon_id):
+        deleted_coupon = self.stripe_delete_object(self.stripe.Coupon, coupon_id)
+        return deleted_coupon['deleted']
+
+    def get_coupons(self):
         """
         Returns the matching stripe Coupons on Offer by iterating all coupons
         and matching on site, amount_off, and duration_in_months.
@@ -397,18 +401,17 @@ class StripeProcessor(PaymentProcessorBase):
         This is needed since there is no search method on Coupon. Will make multiple stripe calls until the
         list is exhausted
         """
-        coupon_matches = []
+        coupons_list = []
         starting_after = None
         while 1:
             coupons = self.stripe_list_objects(self.stripe.Coupon, limit=100, starting_after=starting_after)
-            matches = self.match_coupons(coupons, offer)
-            coupon_matches.extend(matches)
+            coupons_list.extend(coupons)
             if coupons['has_more']:
                 starting_after = coupons['data'][-1]['id']
             else:
                 break
 
-        return coupon_matches
+        return coupons_list
 
     def get_offers_in_vendor(self, offer_pk_list, site):
         offers = Offer.objects.filter(site=site, pk__in=offer_pk_list)
@@ -449,6 +452,8 @@ class StripeProcessor(PaymentProcessorBase):
             offer.save()
 
     def update_offers(self, offers):
+        coupons = self.get_coupons()
+
         for offer in offers:
 
             # Handle product
@@ -482,16 +487,20 @@ class StripeProcessor(PaymentProcessorBase):
 
             # If this offer has a discount check if its on stripe to create, update, delete
             if discount:
-                stripe_coupon_matches = self.get_coupons(offer)
-
+                stripe_coupon_matches = self.match_coupons(coupons, offer)
                 if not stripe_coupon_matches:
                     stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
                 elif len(stripe_coupon_matches) == 1:
                     coupon_id = stripe_coupon_matches[0]['id']
                     stripe_coupon = self.stripe_update_object(self.stripe.Coupon, coupon_id, coupon_data)
                 else:
-                    # TODO what to do for multiple coupon matches?
-                    pass
+                    # Duplicates, so delete all but one and update it
+                    for coupon_data in stripe_coupon_matches[1:]:
+                        self.delete_coupon(coupon_data['id'])
+
+                    # update the only one we have remaining
+                    stripe_coupon = self.stripe_update_object(self.stripe.Coupon, stripe_coupon_matches[0]['id'], coupon_data)
+
 
                 if offer.meta.get('stripe'):
                     offer.meta['stripe']['coupon_id'] = stripe_coupon['id']
@@ -509,15 +518,14 @@ class StripeProcessor(PaymentProcessorBase):
         self.create_offers(offers_not_in_vendor)
         self.update_offers(offers_in_vendor)
 
-    def sync_stripe_vendor_objects(self):
+    def sync_stripe_vendor_objects(self, site):
         """
         Sync up all the CustomerProfiles, Offers, Prices, and Coupons for all of the sites
         """
-        for site in Site.objects.all():
-            self.sync_customers(site)
-            self.sync_offers(site)
 
-    
+        self.sync_customers(site)
+        self.sync_offers(site)
+
     def create_setup_intent(self, setup_intent_data):
         setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_data)
 
