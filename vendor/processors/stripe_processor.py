@@ -389,21 +389,16 @@ class StripeProcessor(PaymentProcessorBase):
                 matches.append(coupon)
         return matches
 
-    def delete_coupon(self, coupon_id):
-        deleted_coupon = self.stripe_delete_object(self.stripe.Coupon, coupon_id)
-        return deleted_coupon['deleted']
-
     def get_coupons(self):
         """
-        Returns the matching stripe Coupons on Offer by iterating all coupons
-        and matching on site, amount_off, and duration_in_months.
+        Returns all stripe Coupons
 
         This is needed since there is no search method on Coupon. Will make multiple stripe calls until the
         list is exhausted
         """
         coupons_list = []
         starting_after = None
-        while 1:
+        while True:
             coupons = self.stripe_list_objects(self.stripe.Coupon, limit=100, starting_after=starting_after)
             coupons_list.extend(coupons)
             if coupons['has_more']:
@@ -484,9 +479,10 @@ class StripeProcessor(PaymentProcessorBase):
             # Handle Coupon
             coupon_data = self.build_coupon(offer, price)
             discount = self.convert_decimal_to_integer(offer.discount())
+            trial_days = offer.get('trial_days', 0)
 
             # If this offer has a discount check if its on stripe to create, update, delete
-            if discount:
+            if discount or trial_days:
                 stripe_coupon_matches = self.match_coupons(coupons, offer)
                 if not stripe_coupon_matches:
                     stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
@@ -496,7 +492,7 @@ class StripeProcessor(PaymentProcessorBase):
                 else:
                     # Duplicates, so delete all but one and update it
                     for coupon_data in stripe_coupon_matches[1:]:
-                        self.delete_coupon(coupon_data['id'])
+                        self.stripe_delete_object(self.stripe.Coupon, coupon_data['id'])
 
                     # update the only one we have remaining
                     stripe_coupon = self.stripe_update_object(self.stripe.Coupon, stripe_coupon_matches[0]['id'], coupon_data)
