@@ -823,6 +823,40 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         else:
             return []
 
+def save_transaction():
+    ...
+
+def sync_subscriptions(site):
+    logger.info("sync_subscriptions Starting Subscription Migration")
+    # Get all subscriptions
+
+    ## Create a subscription with status.
+    ## Get transactions for subscription.
+
+    ### Get the Customer
+    #### If Customer does not exists create one.
+
+    ### Get Offer by Name.
+    #### If offer does not exists
+    ##### Create one with deleted to true.
+
+    ### Create Invoice
+    #### Set:
+    #### profile, site, offer, currency, order date, and total.
+    #### Save Invoice
+
+    ### Create Payment.
+    #### Set:
+    #### Invoice, submitted_date, transaction, amount, profile, result, success, payee_full_name, status, subscription.
+    #### Save Payment
+
+    ### Create Receipt.
+    #### Set:
+    #### profile, order_item (from invoice), start date, end date, transaction, subscription
+    #### Save Receipt
+    
+    ### Save Invoice
+    ...
 
 
 def sync_subscriptions_and_create_missing_receipts(site):
@@ -910,8 +944,6 @@ def sync_subscriptions_and_create_missing_receipts(site):
                 receipt.end_date = get_payment_scheduled_end_date(offer, start_date=receipt.start_date)
                 receipt.subscription = subscription
                 receipt.save()
-    
-
 
 def create_subscription_model_form_past_receipts(site):
     logger.info("create_subscription_model_form_past_receipts Starting Subscription Migration")

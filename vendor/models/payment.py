@@ -101,9 +101,6 @@ class PaymentReportModelManager(models.Manager):
         return organized_data
 
 
-
-
-
 ##########
 # PAYMENT
 ##########
@@ -120,7 +117,7 @@ class Payment(SoftDeleteModelBase):
     created = models.DateTimeField(_("Date Created"), auto_now_add=True)
     submitted_date = models.DateTimeField(_("Payment Date"), default=None, blank=True, null=True)
     transaction = models.CharField(_("Transaction ID"), max_length=80, blank=True, null=True)
-    provider = models.CharField(_("Payment Provider"), max_length=30)
+    provider = models.CharField(_("Payment Provider"), max_length=30, blank=True, null=True)
     amount = models.FloatField(_("Amount"))
     profile = models.ForeignKey("vendor.CustomerProfile", verbose_name=_("Purchase Profile"), blank=True, on_delete=models.CASCADE, related_name="payments")
     billing_address = models.ForeignKey("vendor.Address", verbose_name=_("Billing Address"), on_delete=models.CASCADE, blank=True, null=True)
