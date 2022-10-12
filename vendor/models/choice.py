@@ -35,6 +35,7 @@ class PurchaseStatus(models.IntegerChoices):
     CANCELED = 30, _("Canceled")
     REFUNDED = 35, _("Refunded")
     DECLINED = 40, _("Declined")
+    ERROR = 45, _("Error")
     VOID = 50, _('Void')
 
 class SubscriptionStatus(models.IntegerChoices):

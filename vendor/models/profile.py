@@ -99,11 +99,13 @@ class CustomerProfile(CreateUpdateModelBase):
         # Queryset or List of model records
         if isinstance(products, QuerySet) or isinstance(products, list):
             return self.receipts.filter(Q(products__in=products),
+                                        Q(deleted=False),
                                         Q(start_date__lte=now) | Q(start_date=None),
                                         Q(end_date__gte=now) | Q(end_date=None))
 
         # Single model record
         return self.receipts.filter(Q(products=products),
+                                    Q(deleted=False),
                                     Q(start_date__lte=now) | Q(start_date=None),
                                     Q(end_date__gte=now) | Q(end_date=None))
 
@@ -169,7 +171,7 @@ class CustomerProfile(CreateUpdateModelBase):
         """
         Returns a tuple product and offer tuple that are related to the active receipt
         """
-        return [(receipt.products.first(), receipt.order_item.offer) for receipt in self.receipts.filter(Q(end_date__gte=timezone.now()) | Q(end_date=None))]
+        return [(receipt.products.first(), receipt.order_item.offer) for receipt in self.receipts.filter(Q(deleted=False), Q(end_date__gte=timezone.now()) | Q(end_date=None))]
 
     def get_subscriptions(self):
         return self.subscriptions.all()
@@ -198,10 +200,10 @@ class CustomerProfile(CreateUpdateModelBase):
         return sorted(last_payment_dates)[-1]
 
     def get_payment_counts(self):
-        return self.payments.filter(status=PurchaseStatus.SETTLED).count()
+        return self.payments.filter(deleted=False, status=PurchaseStatus.SETTLED).count()
 
     def get_payment_sum(self):
-        return self.payments.filter(status=PurchaseStatus.SETTLED).aggregate(Sum('amount'))
+        return self.payments.filter(deleted=False, status=PurchaseStatus.SETTLED).aggregate(Sum('amount'))
 
     def get_settled_payments(self):
-        return self.payments.filter(status=PurchaseStatus.SETTLED).order_by('amount', 'submitted_date')
+        return self.payments.filter(deleted=False, status=PurchaseStatus.SETTLED).order_by('amount', 'submitted_date')
