@@ -311,6 +311,20 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     ##########
     # Django-Vendor to Authoriaze.net data exchange functions
     ##########
+    def get_vendor_subscription_status(subscription_status):
+        if subscription_status == 'active':
+            return SubscriptionStatus.ACTIVE
+        elif subscription_status == 'expired':
+            return SubscriptionStatus.EXPIRED
+        elif subscription_status == 'suspended':
+            return SubscriptionStatus.SUSPENDED
+        elif subscription_status == 'canceled':
+            return SubscriptionStatus.CANCELED
+        elif subscription_status == 'terminated':
+            return SubscriptionStatus.SUSPENDED
+        else:
+            raise TypeError(f"{subscription_status} status is not valid, take a look at Authorize.Net documentation")
+
     def get_transaction_raw_response(self):
         """
         Returns a dictionary with raw information about the current transaction
@@ -828,7 +842,15 @@ def save_transaction():
 
 def sync_subscriptions(site):
     logger.info("sync_subscriptions Starting Subscription Migration")
+    processor = AuthorizeNetProcessor(site)
     # Get all subscriptions
+    subscriptions = processor.get_list_of_subscriptions(1000)
+    subscription_ids = [ subscription.id.text for subscription in subscriptions ]
+    
+    for subscription_id in subscriptions_ids:
+        subscription_info = processor.subscription_info(subscription_id)
+        subscription, created = Subscription.objects.get_or_create(gateway_id=subscription_id, site=site)
+
 
     ## Create a subscription with status.
     ## Get transactions for subscription.

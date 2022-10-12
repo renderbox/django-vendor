@@ -42,6 +42,7 @@ class SubscriptionStatus(models.IntegerChoices):
     ACTIVE = 20, _('Active')
     CANCELED = 30, _('Canceled')
     SUSPENDED = 40, _('Suspended')
+    EXPIRED = 50, _('Expired')
 
 
 class PaymentTypes(models.IntegerChoices):
