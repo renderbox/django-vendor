@@ -259,26 +259,52 @@ class StripeProcessorTests(TestCase):
         self.processor.authorize_payment()
         self.assertFalse(self.processor.transaction_submitted)
 
-    def test_build_search_query(self):
+    def test_build_search_query_name(self):
         """
         Check our query string for stripe searches are valid
         """
-        valid_query = 'name~"Johns Offer" AND metadata["site"]: "site4"'
-        search = [
-            {
-                'key_name': 'name',
-                'key_value': 'Johns Offer',
-                'field_type': 'name'
-            },
-            {
-                'key_name': 'site',
-                'key_value': 'site4',
-                'field_type': 'metadata'
-            },
+        valid_query = 'name:"Johns Offer"'
 
-        ]
-        query = self.processor.build_search_query(search)
+        name_clause = self.processor.query_builder.make_clause_template()
+        name_clause['field'] = 'name'
+        name_clause['value'] = 'Johns Offer'
+        name_clause['operator'] = self.processor.query_builder.EXACT_MATCH
+
+        query = self.processor.query_builder.build_search_query(self.processor.stripe.Product, [name_clause])
         self.assertEquals(valid_query, query)
+
+    def test_build_search_query_name_and_metadata(self):
+        """
+        Check our query string for stripe searches are valid
+        """
+        valid_query = 'name:"Johns Offer" AND metadata["site"]:"site4"'
+
+        name_clause = self.processor.query_builder.make_clause_template()
+        name_clause['field'] = 'name'
+        name_clause['value'] = 'Johns Offer'
+        name_clause['operator'] = self.processor.query_builder.EXACT_MATCH
+        name_clause['next_operator'] = self.processor.query_builder.AND
+
+        metadata_clause = self.processor.query_builder.make_clause_template()
+        metadata_clause['field'] = 'metadata'
+        metadata_clause['key'] = 'site'
+        metadata_clause['value'] = 'site4'
+        metadata_clause['operator'] = self.processor.query_builder.EXACT_MATCH
+
+        query = self.processor.query_builder.build_search_query(self.processor.stripe.Product, [name_clause, metadata_clause])
+        self.assertEquals(valid_query, query)
+
+    def test_build_search_query_metadata_fail(self):
+        """
+        Check metadata doesnt create query without key
+        """
+        metadata_clause = self.processor.query_builder.make_clause_template()
+        metadata_clause['field'] = 'metadata'
+        metadata_clause['value'] = 'site4'
+        metadata_clause['operator'] = self.processor.query_builder.EXACT_MATCH
+
+        query = self.processor.query_builder.build_search_query(self.processor.stripe.Product, [metadata_clause])
+        self.assertEquals(query, "")
 
     def test_get_stripe_offers(self):
         stripe_product = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
@@ -419,9 +445,9 @@ class StripeProcessorTests(TestCase):
     def test_check_product_does_exist(self):
         stripe_product = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
         metadata = {
-                'key_name': 'site',
-                'key_value': 'site4',
-                'field_type': 'metadata'
+                'key': 'site',
+                'value': 'site4',
+                'field': 'metadata'
         }
         product = self.processor.check_product_does_exist(self.pro_annual_license['name'], metadata=metadata)
 
@@ -432,9 +458,9 @@ class StripeProcessorTests(TestCase):
     def test_get_product_id_with_name(self):
         stripe_product = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
         metadata = {
-            'key_name': 'site',
-            'key_value': 'site4',
-            'field_type': 'metadata'
+            'key': 'site',
+            'value': 'site4',
+            'field': 'metadata'
         }
         product_id = self.processor.get_product_id_with_name(self.pro_annual_license['name'], metadata=metadata)
 
@@ -448,9 +474,9 @@ class StripeProcessorTests(TestCase):
         stripe_price = self.processor.stripe_create_object(self.processor.stripe.Price, self.pri_monthly)
 
         metadata = {
-            'key_name': 'site',
-            'key_value': 'site4',
-            'field_type': 'metadata'
+            'key': 'site',
+            'value': 'site4',
+            'field': 'metadata'
         }
         price = self.processor.check_price_does_exist(self.pri_monthly['product'], metadata=metadata)
 

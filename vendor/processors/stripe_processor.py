@@ -6,6 +6,7 @@ import uuid
 import stripe
 from django.conf import settings
 from .base import PaymentProcessorBase
+from .stripe_processor_utils import StripeQueryBuilder
 from vendor.models.choice import (
     SubscriptionStatus,
     TransactionTypes,
@@ -53,6 +54,7 @@ class StripeProcessor(PaymentProcessorBase):
         self.source = source
         self.site = site
         self.stripe = stripe
+        self.query_builder = StripeQueryBuilder()
         if self.credentials.instance:
             self.stripe.api_key = self.credentials.instance.private_key
         elif settings.STRIPE_SECRET_KEY:
@@ -94,59 +96,6 @@ class StripeProcessor(PaymentProcessorBase):
 
         return int("".join(integer_str_rep))
 
-    def build_search_query(self, params):
-        """
-        TODO unit test this
-        TODO search is limited to name, metadata, and product. Expand if needed
-        All search methods for all resources are here https://stripe.com/docs/search
-
-
-        List of search values and their Stripe field types to build out search query
-        [{
-            'key_name': 'name',
-            'key_value': 'product123',
-            'field_type': 'name'
-        },
-        {
-            'key_name': 'site',
-            'key_value': 'site4',
-            'field_type': 'metadata'
-        },
-        ]
-
-
-        """
-        if not isinstance(params, list):
-            logger.info(f'Passed in params {params} is not a list of dicts')
-            return None
-
-        if not len(params) > 0:
-            logger.info(f'Passed in params {params} cannot be empty')
-            return None
-
-        query = ""
-        count = 0
-        for query_obj in params:
-            key = query_obj['key_name']
-            value = query_obj['key_value']
-            field = query_obj['field_type']
-            if count != 0:
-                if field == 'name':
-                    query = f'{query} AND {key}~"{value}"'
-                elif field == 'metadata':
-                    query = f'{query} AND metadata["{key}"]: "{value}"'
-                elif field == 'product':
-                    query = f'{query} AND {key}:"{value}"'
-            else:
-                if field == 'name':
-                    query = f'{key}~"{value}"'
-                elif field == 'metadata':
-                    query = f'metadata["{key}"]: "{value}"'
-                elif field == 'product':
-                    query = f'{key}:"{value}"'
-            count += 1
-
-        return query
 
 
     ##########
@@ -285,11 +234,14 @@ class StripeProcessor(PaymentProcessorBase):
         """
         Returns all Stripe created customers
         """
-        query = self.build_search_query([{
-            'key_name': 'site',
-            'key_value': site.domain,
-            'field_type': 'metadata'
-        }])
+
+        clause = self.query_builder.make_clause_template()
+        clause['field'] = 'metadata'
+        clause['key'] = 'site'
+        clause['value'] = site.domain
+        clause['operator'] = self.query_builder.EXACT_MATCH
+        query = self.query_builder.build_search_query(self.stripe.Customer, [clause])
+
         customer_search = self.stripe_query_object(self.stripe.Customer, {'query': query})
 
         if customer_search:
@@ -351,11 +303,14 @@ class StripeProcessor(PaymentProcessorBase):
         """
         Returns all Stripe created Products
         """
-        query = self.build_search_query([{
-            'key_name': 'site',
-            'key_value': site.domain,
-            'field_type': 'metadata'
-        }])
+
+        clause = self.query_builder.make_clause_template()
+        clause['field'] = 'metadata'
+        clause['key'] = 'site'
+        clause['value'] = site.domain
+        clause['operator'] = self.query_builder.EXACT_MATCH
+        query = self.query_builder.build_search_query(self.stripe.Product, [clause])
+
         product_search = self.stripe_query_object(self.stripe.Product, {'query': query})
 
         if product_search:
@@ -367,11 +322,13 @@ class StripeProcessor(PaymentProcessorBase):
         """
         Returns stripe Price based on metadata pk value
         """
-        query = self.build_search_query([{
-            'key_name': 'pk',
-            'key_value': price_pk,
-            'field_type': 'metadata'
-        }])
+        clause = self.query_builder.make_clause_template()
+        clause['field'] = 'metadata'
+        clause['key'] = 'pk'
+        clause['value'] = price_pk
+        clause['operator'] = self.query_builder.EXACT_MATCH
+        query = self.query_builder.build_search_query(self.stripe.Price, [clause])
+
         price_search = self.stripe_query_object(self.stripe.Price, {'query': query})
 
         if price_search:
@@ -588,9 +545,9 @@ class StripeProcessor(PaymentProcessorBase):
             total = self.to_valid_decimal(subscription.total - subscription.discounts)
             interval = "month" if product_details['term_units'] == TermDetailUnits.MONTH else "year"
             metadata = {
-                'key_name': 'site',
-                'key_value': 'site4',
-                'field_type': 'metadata'
+                'key': 'site',
+                'value': 'site4',
+                'field': 'metadata'
             }
             product_response = self.check_product_does_exist(product_name_full, metadata=metadata)
             if product_response:
@@ -640,61 +597,64 @@ class StripeProcessor(PaymentProcessorBase):
                         'price_id': price_id
                     }
 
+    def check_product_does_exist(self, name, metadata):
+        name_clause = self.query_builder.make_clause_template()
+        name_clause['field'] = 'name'
+        name_clause['value'] = name
+        name_clause['operator'] = self.query_builder.EXACT_MATCH
+        name_clause['next_operator'] = self.query_builder.AND
 
-    def check_product_does_exist(self, name, metadata=None):
-        search = [{
-            'key_name': 'name',
-            'key_value': name,
-            'field_type': 'name'
-        }]
-        if metadata:
-            search.append({
-                'key_name': metadata['key_name'],
-                'key_value': metadata['key_value'],
-                'field_type': 'metadata'
-            })
+        metadata_clause = self.query_builder.make_clause_template()
+        metadata_clause['field'] = 'metadata'
+        metadata_clause['key'] = metadata['key']
+        metadata_clause['value'] = metadata['value']
+        metadata_clause['operator'] = self.query_builder.EXACT_MATCH
 
-        query = self.build_search_query(search)
+        query = self.query_builder.build_search_query(self.stripe.Product, [name_clause, metadata_clause])
+
         search_data = self.stripe_query_object(self.stripe.Product, {'query': query})
         if search_data:
             return search_data['data']
         return None
 
-    def get_product_id_with_name(self, name, metadata=None):
-        search = [{
-            'key_name': 'name',
-            'key_value': name,
-            'field_type': 'name'
-        }]
-        if metadata:
-            search.append({
-                'key_name': metadata['key_name'],
-                'key_value': metadata['key_value'],
-                'field_type': 'metadata'
-            })
+    def get_product_id_with_name(self, name, metadata):
+        name_clause = self.query_builder.make_clause_template()
+        name_clause['field'] = 'name'
+        name_clause['value'] = name
+        name_clause['operator'] = self.query_builder.EXACT_MATCH
+        name_clause['next_operator'] = self.query_builder.AND
 
-        query = self.build_search_query(search)
+        metadata_clause = self.query_builder.make_clause_template()
+        metadata_clause['field'] = 'metadata'
+        metadata_clause['key'] = metadata['key']
+        metadata_clause['value'] = metadata['value']
+        metadata_clause['operator'] = self.query_builder.EXACT_MATCH
+
+        query = self.query_builder.build_search_query(self.stripe.Product, [name_clause, metadata_clause])
 
         search_data = self.stripe_query_object(self.stripe.Product, {'query': query})
+
         if search_data:
             return search_data['data'][0]['id']
         return None
 
-    def check_price_does_exist(self, product, metadata=None):
-        search = [{
-            'key_name': 'product',
-            'key_value': product,
-            'field_type': 'product'
-        }]
-        if metadata:
-            search.append({
-                'key_name': metadata['key_name'],
-                'key_value': metadata['key_value'],
-                'field_type': 'metadata'
-            })
+    def check_price_does_exist(self, product, metadata):
+        product_clause = self.query_builder.make_clause_template()
+        product_clause['field'] = 'product'
+        product_clause['value'] = product
+        product_clause['operator'] = self.query_builder.EXACT_MATCH
+        product_clause['next_operator'] = self.query_builder.AND
 
-        query = self.build_search_query(search)
+        metadata_clause = self.query_builder.make_clause_template()
+        metadata_clause['field'] = 'metadata'
+        metadata_clause['key'] = metadata['key']
+        metadata_clause['value'] = metadata['value']
+        metadata_clause['operator'] = self.query_builder.EXACT_MATCH
+
+        query = self.query_builder.build_search_query(self.stripe.Price, [product_clause, metadata_clause])
+
         search_data = self.stripe_query_object(self.stripe.Price, {'query': query})
+
         if search_data:
             return search_data['data']
         return None
