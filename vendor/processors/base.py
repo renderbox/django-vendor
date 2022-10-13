@@ -402,25 +402,23 @@ class PaymentProcessorBase(object):
         """
         pass
 
-    def renew_subscription(self, transaction_id, payment_info):
+    def renew_subscription(self, transaction_id, payment_info, payment_status, payment_success):
         """
         Function to renew already paid subscriptions form the payment gateway provider.
         """
-        self.payment = Payment(profile=self.invoice.profile,
-                               amount=self.invoice.total,
-                               invoice=self.invoice,
-                               created=timezone.now())
+        self.payment = Payment()
+        self.payment.profile = self.invoice.profile
+        self.payment.invoice = self.invoice
+        self.payment.subscription = self.subscription
+        self.payment.amount = self.invoice.total
+        self.payment.submitted_date = self.invoice.ordered_date
+        self.payment.status = payment_status
+        self.payment.success = payment_success
         self.payment.result = payment_info
-
-        self.transaction_submitted = True
-
-        self.payment.success = True
-        self.payment.status = PurchaseStatus.CAPTURED
         self.payment.transaction = transaction_id
         self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
-
         self.payment.save()
-
+        
         self.update_invoice_status(InvoiceStatus.COMPLETE)
 
         self.create_receipts(self.invoice.order_items.all())
