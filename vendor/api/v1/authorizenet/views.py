@@ -176,7 +176,7 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
 
         if not request_data.get('payload').get('id'):
             logger.error(f"AuthorizeCaptureAPI post: No transaction id request data: {request_data}")
-            return True
+            return False
             
         return True
 

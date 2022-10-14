@@ -13,7 +13,6 @@ from vendor.models.choice import PurchaseStatus
 from vendor.utils import get_display_decimal
 
 
-
 class PaymentReportModelManager(models.Manager):
     def get_total_settled_purchases(self, start_date=None, end_date=None):
         qs = super().get_queryset()
