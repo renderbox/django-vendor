@@ -16,7 +16,7 @@ from vendor.forms import DateTimeRangeForm
 from vendor.integrations import AuthorizeNetIntegration
 from vendor.models import Receipt, Invoice, Subscription, Payment
 from vendor.models.choice import InvoiceStatus, PurchaseStatus
-from vendor.processors.authorizenet import AuthorizeNetProcessor, create_subscription_model_form_past_receipts, sync_subscriptions
+from vendor.processors.authorizenet import AuthorizeNetProcessor, sync_subscriptions
 from vendor.utils import get_site_from_request
 
 logger = logging.getLogger(__name__)
@@ -105,9 +105,7 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
         processor = AuthorizeNetProcessor(site, invoice)
         processor.subscription = subscription
         processor.renew_subscription(subscription.gateway_id, payment_info, payment_status, payment_success)
-        
         logger.info(f"AuthorizeCaptureAPI subscription_save_transaction creating new payment and receipt for subscription, for {subscription_id}")
-        subscription_save_renewal(site, subscription, transaction_detail, payment_info)
         
         return None # No need to continue to create receipt as it is done in the above function
 

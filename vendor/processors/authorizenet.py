@@ -291,8 +291,14 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         payment_schedule.interval.length = subscription.offer.get_period_length()
         payment_schedule.totalOccurrences = subscription.offer.get_payment_occurrences()
-        payment_schedule.startDate = CustomDate(get_future_date_days(timezone.now(), subscription.offer.get_trial_days()))
-        payment_schedule.trialOccurrences = subscription.offer.get_trial_occurrences()
+
+        if subscription.profile.has_owned_product(subscription.offer.products.all()):
+            payment_schedule.startDate = CustomDate(timezone.now())
+            payment_schedule.trialOccurrences = 0
+        else:
+            payment_schedule.startDate = CustomDate(get_future_date_days(timezone.now(), subscription.offer.get_trial_days()))
+            payment_schedule.trialOccurrences = subscription.offer.get_trial_occurrences()
+                
         return payment_schedule
 
     def create_transaction_order_information(self, invoice_number, description):
@@ -829,7 +835,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             except ObjectDoesNotExist as exce:
                 logger.error(f"update_payments_to_settled payment for transaction: {settled_transaction.transId.text} was not found for site: {site}")
 
-        
 
     ##########
     # Reporting API, for transaction retrieval information
@@ -916,9 +921,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         return subscription_transactions
 
-
-def save_transaction():
-    ...
 
 def sync_subscriptions(site):
     logger.info("sync_subscriptions Starting Subscription Migration")
@@ -1052,22 +1054,11 @@ def sync_subscriptions(site):
                                 receipt.save()
 
             except ObjectDoesNotExist as exce:
-                print(f"{exce}")
+                logger.error(f"sync_subscriptions exception: {exce}")
             except MultipleObjectsReturned as exce:
-                print(f"{exce}")
+                logger.error(f"sync_subscriptions exception: {exce}")
             except Exception as exce:
-                pr
-                int(f"{exce}")
-
-
-
-    #### Set:
-    #### profile, order_item (from invoice), start date, end date, transaction, subscription
-    #### Save Receipt
-    
-    ### Save Invoice
-    ...
-
+                logger.error(f"sync_subscriptions exception: {exce}")
 
 def sync_subscriptions_and_create_missing_receipts(site):
     logger.info("sync_subscriptions_and_create_missing_receipts Starting Subscription Migration")
@@ -1154,175 +1145,3 @@ def sync_subscriptions_and_create_missing_receipts(site):
                 receipt.end_date = get_payment_scheduled_end_date(offer, start_date=receipt.start_date)
                 receipt.subscription = subscription
                 receipt.save()
-
-def create_subscription_model_form_past_receipts(site):
-    logger.info("create_subscription_model_form_past_receipts Starting Subscription Migration")
-    processor = AuthorizeNetProcessor(site)
-
-    subscriptions = processor.get_list_of_subscriptions(1000)
-    active_subscriptions = [ s for s in subscriptions if s['status'] == 'active' ]
-    
-    create_subscriptions = [sub.id.text for sub in active_subscriptions if not Subscription.objects.filter(profile__site=site, gateway_id=sub.id.text).count() ]
-    logger.info(f"create_subscription_model_form_past_receipts Create Subscriptions: {[sub for sub in create_subscriptions]}")
-
-    for sub_detail in create_subscriptions:
-        logger.info(f"create_subscription_model_form_past_receipts Starting Migration for Subscription: {sub_detail}")
-        subscription_id = sub_detail
-        past_receipt = Receipt.objects.filter(transaction=subscription_id).first()
-        
-        if past_receipt:
-            logger.info(f"create_subscription_model_form_past_receipts Deleting Receipts: {Receipt.objects.filter(transaction=subscription_id)}")
-            Receipt.objects.filter(transaction=subscription_id).update(deleted=True)
-            logger.info(f"create_subscription_model_form_past_receipts Deleting Payments: {Payment.objects.filter(transaction=subscription_id)}")
-            Payment.objects.filter(transaction=subscription_id).update(deleted=True)
-            logger.info(f"create_subscription_model_form_past_receipts Deleting Invoices: {Invoice.objects.filter(payments__in=Payment.objects.filter(transaction=subscription_id))}")
-            Invoice.objects.filter(payments__in=Payment.objects.filter(transaction=subscription_id)).update(deleted=True)
-            
-            subscription, created = Subscription.objects.get_or_create(
-                gateway_id=subscription_id,
-                profile=past_receipt.profile
-            )
-            subscription.status = SubscriptionStatus.ACTIVE
-            subscription.auto_renew = True
-            subscription.save()
-            logger.info(f"create_subscription_model_form_past_receipts Created subscription: {subscription}")
-            
-            subscription_info = processor.subscription_info(subscription_id)
-
-            for transaction in subscription_info.subscription.arbTransactions.arbTransaction:
-                logger.info(f"create_subscription_model_form_past_receipts Processing transaction {transaction}")
-                try:
-                    transaction_id = transaction.transId.text
-
-                    trans_processor = AuthorizeNetProcessor(site)
-
-                    trans_detail = trans_processor.get_transaction_detail(transaction_id)
-                    submitted_datetime = datetime.strptime(trans_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S.%f%z')
-
-                    invoice = Invoice.objects.create(
-                        status=InvoiceStatus.COMPLETE,
-                        site=past_receipt.profile.site,
-                        profile=past_receipt.profile,
-                        ordered_date=submitted_datetime,
-                        total=trans_detail.settleAmount.pyval
-                    )
-                    invoice.add_offer(past_receipt.order_item.offer)
-                    invoice.save()
-
-                    payment_info = {
-                        'account_number': trans_detail.payment.creditCard.cardNumber.text[-4:],
-                        'account_type': trans_detail.payment.creditCard.cardType.text,
-                        'full_name': " ".join([trans_detail.billTo.firstName.text, trans_detail.billTo.lastName.text]),
-                        'transaction_id': transaction_id,
-                        'subscription_id': trans_detail.subscription.id.text,
-                        'payment_number': trans_detail.subscription.payNum.text
-                    }
-
-                    # Create Payment
-                    payment = Payment(profile=invoice.profile,
-                                amount=invoice.total,
-                                invoice=invoice,
-                                created=submitted_datetime)
-                    payment.result = payment_info
-                    payment.subscription = subscription
-                    payment.success = True
-                    payment.status = PurchaseStatus.SETTLED
-                    payment.transaction = transaction_id
-                    payment.payee_full_name = payment_info['full_name']
-                    payment.amount = trans_detail.settleAmount.pyval
-                    payment.submitted_date = trans_detail.submitTimeUTC.pyval
-                    payment.save()
-
-                    # Create Receipt
-                    receipt = Receipt()
-                    receipt.profile = invoice.profile
-                    receipt.order_item = past_receipt.order_item
-                    receipt.transaction = payment.transaction
-                    receipt.meta.update(payment.result)
-                    receipt.meta['payment_amount'] = payment.amount
-                    receipt.start_date = submitted_datetime
-                    receipt.save()
-
-                    receipt.products.add(past_receipt.products.first())
-                    receipt.end_date = get_payment_scheduled_end_date(past_receipt.order_item.offer, start_date=receipt.start_date)
-                    receipt.subscription = subscription
-                    receipt.save()
-                except Exception as exce:
-                    logger.info(f"create_subscription_model_form_past_receipts Invalid Transaction: {exce}")
-
-        else:
-            subscription_info = processor.subscription_info(subscription_id)
-
-            try:
-                profile = CustomerProfile.objects.get(site=site, user__email=subscription_info.subscription.profile.email.text)
-                offer = Offer.objects.get(site=site, name=subscription_info.subscription.name)
-
-
-                subscription, created = Subscription.objects.get_or_create(
-                    gateway_id=subscription_id,
-                    profile=profile
-                )
-                if subscription_info.subscription.status.text == 'active':
-                    subscription.status = SubscriptionStatus.ACTIVE
-                subscription.auto_renew = True
-                subscription.save()
-            
-                for transaction in subscription_info.subscription.arbTransactions.arbTransaction:
-                    logger.info(f"create_subscription_model_form_past_receipts Processing transaction {transaction}")
-                    transaction_id = transaction.transId.text
-
-                    trans_processor = AuthorizeNetProcessor(site)
-
-                    trans_detail = trans_processor.get_transaction_detail(transaction_id)
-                    submitted_datetime = datetime.strptime(trans_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S.%f%z')
-
-                    invoice = Invoice.objects.create(
-                        status=InvoiceStatus.COMPLETE,
-                        site=site,
-                        profile=profile,
-                        ordered_date=submitted_datetime,
-                        total=trans_detail.settleAmount.pyval
-                    )
-                    invoice.add_offer(offer)
-                    invoice.save()
-
-                    payment_info = {
-                        'account_number': trans_detail.payment.creditCard.cardNumber.text[-4:],
-                        'account_type': trans_detail.payment.creditCard.cardType.text,
-                        'full_name': " ".join([trans_detail.billTo.firstName.text, trans_detail.billTo.lastName.text]),
-                        'transaction_id': transaction_id,
-                        'subscription_id': trans_detail.subscription.id.text,
-                        'payment_number': trans_detail.subscription.payNum.text
-                    }
-
-                    # Create Payment
-                    payment = Payment(profile=invoice.profile,
-                                amount=invoice.total,
-                                invoice=invoice,
-                                created=submitted_datetime)
-                    payment.result = payment_info
-                    payment.subscription = subscription
-                    payment.success = True
-                    payment.status = PurchaseStatus.SETTLED
-                    payment.transaction = transaction_id
-                    payment.payee_full_name = payment_info['full_name']
-                    payment.amount = trans_detail.settleAmount.pyval
-                    payment.submitted_date = trans_detail.submitTimeUTC.pyval
-                    payment.save()
-
-                    # Create Receipt
-                    receipt = Receipt()
-                    receipt.profile = invoice.profile
-                    receipt.order_item = invoice.order_items.first()
-                    receipt.transaction = payment.transaction
-                    receipt.meta.update(payment.result)
-                    receipt.meta['payment_amount'] = payment.amount
-                    receipt.start_date = submitted_datetime
-                    receipt.save()
-
-                    receipt.products.add(offer.products.first())
-                    receipt.end_date = get_payment_scheduled_end_date(offer, start_date=receipt.start_date)
-                    receipt.subscription = subscription
-                    receipt.save()
-            except Exception as exce:
-                logger.info(f"create_subscription_model_form_past_receipts Invalid Transaction: {exce} subscription id: {subscription_id}")

@@ -5,13 +5,14 @@ import django.dispatch
 
 from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from vendor import config
 from vendor.models import Payment, Invoice, Receipt, Subscription
 from vendor.models.choice import PurchaseStatus, SubscriptionStatus, TermType, InvoiceStatus
 from vendor.utils import get_payment_scheduled_end_date
+
 ##########
 # SIGNALS
-
 vendor_pre_authorization = django.dispatch.Signal()
 vendor_process_payment = django.dispatch.Signal()
 vendor_post_authorization = django.dispatch.Signal()
@@ -393,6 +394,10 @@ class PaymentProcessorBase(object):
         pass
 
     def subscription_cancel(self, subscription):
+        
+        if not subscription.payments.filter(status=PurchaseStatus.SETTLED).count():
+            raise Exception(_("In order to cancel a subscription at least it needs one settled purchase"))
+
         subscription.cancel()
         vendor_subscription_cancel.send(sender=self.__class__, subscription=subscription)
 
