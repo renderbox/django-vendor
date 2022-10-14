@@ -265,10 +265,11 @@ class StripeProcessorTests(TestCase):
         """
         valid_query = 'name:"Johns Offer"'
 
-        name_clause = self.processor.query_builder.make_clause_template()
-        name_clause['field'] = 'name'
-        name_clause['value'] = 'Johns Offer'
-        name_clause['operator'] = self.processor.query_builder.EXACT_MATCH
+        name_clause = self.processor.query_builder.make_clause_template(
+            field='name',
+            value='Johns Offer',
+            operator=self.processor.query_builder.EXACT_MATCH
+        )
 
         query = self.processor.query_builder.build_search_query(self.processor.stripe.Product, [name_clause])
         self.assertEquals(valid_query, query)
@@ -279,29 +280,48 @@ class StripeProcessorTests(TestCase):
         """
         valid_query = 'name:"Johns Offer" AND metadata["site"]:"site4"'
 
-        name_clause = self.processor.query_builder.make_clause_template()
-        name_clause['field'] = 'name'
-        name_clause['value'] = 'Johns Offer'
-        name_clause['operator'] = self.processor.query_builder.EXACT_MATCH
-        name_clause['next_operator'] = self.processor.query_builder.AND
-
-        metadata_clause = self.processor.query_builder.make_clause_template()
-        metadata_clause['field'] = 'metadata'
-        metadata_clause['key'] = 'site'
-        metadata_clause['value'] = 'site4'
-        metadata_clause['operator'] = self.processor.query_builder.EXACT_MATCH
+        name_clause = self.processor.query_builder.make_clause_template(
+            field='name',
+            value='Johns Offer',
+            operator=self.processor.query_builder.EXACT_MATCH,
+            next_operator=self.processor.query_builder.AND
+        )
+        metadata_clause = self.processor.query_builder.make_clause_template(
+            field='metadata',
+            key='site',
+            value='site4',
+            operator=self.processor.query_builder.EXACT_MATCH
+        )
 
         query = self.processor.query_builder.build_search_query(self.processor.stripe.Product, [name_clause, metadata_clause])
+        self.assertEquals(valid_query, query)
+
+    def test_build_search_query_metadata(self):
+        """
+        Check our query string for stripe searches are valid
+        """
+        valid_query = 'metadata["pk"]:4'
+
+        metadata_clause = self.processor.query_builder.make_clause_template(
+            field='metadata',
+            key='pk',
+            value=4,
+            operator=self.processor.query_builder.EXACT_MATCH
+        )
+
+        query = self.processor.query_builder.build_search_query(self.processor.stripe.Product, [metadata_clause])
         self.assertEquals(valid_query, query)
 
     def test_build_search_query_metadata_fail(self):
         """
         Check metadata doesnt create query without key
         """
-        metadata_clause = self.processor.query_builder.make_clause_template()
-        metadata_clause['field'] = 'metadata'
-        metadata_clause['value'] = 'site4'
-        metadata_clause['operator'] = self.processor.query_builder.EXACT_MATCH
+
+        metadata_clause = self.processor.query_builder.make_clause_template(
+            field='metadata',
+            value='site4',
+            operator=self.processor.query_builder.EXACT_MATCH
+        )
 
         query = self.processor.query_builder.build_search_query(self.processor.stripe.Product, [metadata_clause])
         self.assertEquals(query, "")

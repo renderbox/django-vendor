@@ -235,11 +235,13 @@ class StripeProcessor(PaymentProcessorBase):
         Returns all Stripe created customers
         """
 
-        clause = self.query_builder.make_clause_template()
-        clause['field'] = 'metadata'
-        clause['key'] = 'site'
-        clause['value'] = site.domain
-        clause['operator'] = self.query_builder.EXACT_MATCH
+        clause = self.query_builder.make_clause_template(
+            field='metadata',
+            key='site',
+            value=site.domain,
+            operator=self.query_builder.EXACT_MATCH
+        )
+
         query = self.query_builder.build_search_query(self.stripe.Customer, [clause])
 
         customer_search = self.stripe_query_object(self.stripe.Customer, {'query': query})
@@ -304,11 +306,13 @@ class StripeProcessor(PaymentProcessorBase):
         Returns all Stripe created Products
         """
 
-        clause = self.query_builder.make_clause_template()
-        clause['field'] = 'metadata'
-        clause['key'] = 'site'
-        clause['value'] = site.domain
-        clause['operator'] = self.query_builder.EXACT_MATCH
+        clause = self.query_builder.make_clause_template(
+            field='metadata',
+            key='site',
+            value=site.domain,
+            operator=self.query_builder.EXACT_MATCH
+        )
+
         query = self.query_builder.build_search_query(self.stripe.Product, [clause])
 
         product_search = self.stripe_query_object(self.stripe.Product, {'query': query})
@@ -322,11 +326,14 @@ class StripeProcessor(PaymentProcessorBase):
         """
         Returns stripe Price based on metadata pk value
         """
-        clause = self.query_builder.make_clause_template()
-        clause['field'] = 'metadata'
-        clause['key'] = 'pk'
-        clause['value'] = price_pk
-        clause['operator'] = self.query_builder.EXACT_MATCH
+
+        clause = self.query_builder.make_clause_template(
+            field='metadata',
+            key='pk',
+            value=price_pk,
+            operator=self.query_builder.EXACT_MATCH
+        )
+
         query = self.query_builder.build_search_query(self.stripe.Price, [clause])
 
         price_search = self.stripe_query_object(self.stripe.Price, {'query': query})
@@ -598,17 +605,18 @@ class StripeProcessor(PaymentProcessorBase):
                     }
 
     def check_product_does_exist(self, name, metadata):
-        name_clause = self.query_builder.make_clause_template()
-        name_clause['field'] = 'name'
-        name_clause['value'] = name
-        name_clause['operator'] = self.query_builder.EXACT_MATCH
-        name_clause['next_operator'] = self.query_builder.AND
-
-        metadata_clause = self.query_builder.make_clause_template()
-        metadata_clause['field'] = 'metadata'
-        metadata_clause['key'] = metadata['key']
-        metadata_clause['value'] = metadata['value']
-        metadata_clause['operator'] = self.query_builder.EXACT_MATCH
+        name_clause = self.query_builder.make_clause_template(
+            field='name',
+            value=name,
+            operator=self.query_builder.EXACT_MATCH,
+            next_operator=self.query_builder.AND
+        )
+        metadata_clause = self.query_builder.make_clause_template(
+            field='metadata',
+            key=metadata['key'],
+            value=metadata['value'],
+            operator=self.query_builder.EXACT_MATCH
+        )
 
         query = self.query_builder.build_search_query(self.stripe.Product, [name_clause, metadata_clause])
 
@@ -618,17 +626,18 @@ class StripeProcessor(PaymentProcessorBase):
         return None
 
     def get_product_id_with_name(self, name, metadata):
-        name_clause = self.query_builder.make_clause_template()
-        name_clause['field'] = 'name'
-        name_clause['value'] = name
-        name_clause['operator'] = self.query_builder.EXACT_MATCH
-        name_clause['next_operator'] = self.query_builder.AND
-
-        metadata_clause = self.query_builder.make_clause_template()
-        metadata_clause['field'] = 'metadata'
-        metadata_clause['key'] = metadata['key']
-        metadata_clause['value'] = metadata['value']
-        metadata_clause['operator'] = self.query_builder.EXACT_MATCH
+        name_clause = self.query_builder.make_clause_template(
+            field='name',
+            value=name,
+            operator=self.query_builder.EXACT_MATCH,
+            next_operator=self.query_builder.AND
+        )
+        metadata_clause = self.query_builder.make_clause_template(
+            field='metadata',
+            key=metadata['key'],
+            value=metadata['value'],
+            operator=self.query_builder.EXACT_MATCH
+        )
 
         query = self.query_builder.build_search_query(self.stripe.Product, [name_clause, metadata_clause])
 
@@ -639,17 +648,18 @@ class StripeProcessor(PaymentProcessorBase):
         return None
 
     def check_price_does_exist(self, product, metadata):
-        product_clause = self.query_builder.make_clause_template()
-        product_clause['field'] = 'product'
-        product_clause['value'] = product
-        product_clause['operator'] = self.query_builder.EXACT_MATCH
-        product_clause['next_operator'] = self.query_builder.AND
-
-        metadata_clause = self.query_builder.make_clause_template()
-        metadata_clause['field'] = 'metadata'
-        metadata_clause['key'] = metadata['key']
-        metadata_clause['value'] = metadata['value']
-        metadata_clause['operator'] = self.query_builder.EXACT_MATCH
+        product_clause = self.query_builder.make_clause_template(
+            field='product',
+            value=product,
+            operator=self.query_builder.EXACT_MATCH,
+            next_operator=self.query_builder.AND
+        )
+        metadata_clause = self.query_builder.make_clause_template(
+            field='metadata',
+            key=metadata['key'],
+            value=metadata['value'],
+            operator=self.query_builder.EXACT_MATCH
+        )
 
         query = self.query_builder.build_search_query(self.stripe.Price, [product_clause, metadata_clause])
 

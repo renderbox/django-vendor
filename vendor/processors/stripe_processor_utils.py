@@ -108,13 +108,13 @@ class StripeQueryBuilder:
         ],
     }
 
-    def make_clause_template(self):
+    def make_clause_template(self, field=None, operator=None, key=None, value=None, next_operator=None):
         return {
-            'field': None,
-            'operator': None,
-            'key': None,
-            'value': None,
-            'next_operator': None
+            'field': field,
+            'operator': operator,
+            'key': key,
+            'value': value,
+            'next_operator': next_operator
         }
 
     def is_valid_field(self, stripe_object_class, field):
@@ -132,7 +132,6 @@ class StripeQueryBuilder:
         return True
 
     def build_search_query(self, stripe_object_class, search_clauses):
-
         if not isinstance(search_clauses, list):
             logger.info(f'Passed in params {search_clauses} is not a list of dicts')
             return None
@@ -150,6 +149,7 @@ class StripeQueryBuilder:
             next_operator = query_obj.get('next_operator', None)
 
             if not self.search_clause_checks_pass(query_obj):
+                logger.error(f'StripeQueryBuilder.build_search_query: search clause {query_obj} is not valid')
                 return query
 
             if self.is_valid_field(stripe_object_class, field):
