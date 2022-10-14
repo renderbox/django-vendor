@@ -129,6 +129,8 @@ class StripeQueryBuilder:
                 logger.error(f'StripeQueryBuilder.search_clause_checks_pass: metadata searches need a key field')
                 return False
 
+        # TODO add more checks
+
         return True
 
     def build_search_query(self, stripe_object_class, search_clauses):
