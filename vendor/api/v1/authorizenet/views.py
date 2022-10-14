@@ -170,7 +170,7 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
             logger.warning("AuthorizeCaptureAPI post: Webhook event has no body")
             return False
 
-        if not request_data.get('payload').get('id'):
+        if not request_data.get('payload', {}).get('id'):
             logger.error(f"AuthorizeCaptureAPI post: No transaction id request data: {request_data}")
             return False
             
