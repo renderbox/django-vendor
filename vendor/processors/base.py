@@ -5,7 +5,6 @@ import django.dispatch
 
 from django.conf import settings
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 from vendor import config
 from vendor.models import Payment, Invoice, Receipt, Subscription
 from vendor.models.choice import PurchaseStatus, SubscriptionStatus, TermType, InvoiceStatus
@@ -397,7 +396,7 @@ class PaymentProcessorBase(object):
         settled_payments = subscription.payments.filter(status=PurchaseStatus.SETTLED).count()
         
         if not (settled_payments or subscription.is_on_trial()):
-            raise Exception(_("In order to cancel a subscription at least it needs one settled purchase"))
+            raise Exception("Need to be on trial or have a settled payment")
 
         subscription.cancel()
         vendor_subscription_cancel.send(sender=self.__class__, subscription=subscription)
