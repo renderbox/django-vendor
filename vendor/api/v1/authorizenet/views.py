@@ -166,17 +166,18 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
     If there is a subscription tied to the transaction, it will renew such subscription
     """
     def is_request_valid(self, site, request_data):
-        if not self.request.body:
+        if not request_data:
             logger.warning("AuthorizeCaptureAPI post: Webhook event has no body")
-            return False
-
-        if not self.is_valid_post(site):
-            logger.error(f"AuthorizeCaptureAPI post: Request was denied: {self.request}")
             return False
 
         if not request_data.get('payload').get('id'):
             logger.error(f"AuthorizeCaptureAPI post: No transaction id request data: {request_data}")
             return False
+            
+        if not self.is_valid_post(site):
+            logger.error(f"AuthorizeCaptureAPI post: Request was denied: {self.request}")
+            return False
+
             
         return True
 
