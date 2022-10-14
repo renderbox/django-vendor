@@ -134,15 +134,16 @@ class StripeQueryBuilder:
         return True
 
     def build_search_query(self, stripe_object_class, search_clauses):
+        query = ""
+
         if not isinstance(search_clauses, list):
-            logger.info(f'Passed in params {search_clauses} is not a list of dicts')
-            return None
+            logger.error(f'Passed in params {search_clauses} is not a list of search clauses (dicts)')
+            return query
 
         if not len(search_clauses) > 0:
-            logger.info(f'Passed in params {search_clauses} cannot be empty')
-            return None
+            logger.error(f'Passed in search clauses {search_clauses} cannot be empty')
+            return query
 
-        query = ""
         for index, query_obj in enumerate(search_clauses):
             field = query_obj.get('field', None)
             operator = query_obj.get('operator', None)
