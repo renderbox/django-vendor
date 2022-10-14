@@ -275,6 +275,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def create_payment_scheduale_interval_type(self, subscription, subscription_type):
         """
+        subscription: Type: OrderItem
         Create an interval schedule with fixed months as units for period length.
         It calculates that start date depending on the term_units and trial_occurrences defined in the term_details.
         term_units can either be by day or by month. Start date is the first billing date of the subscriptions.
@@ -292,7 +293,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         payment_schedule.interval.length = subscription.offer.get_period_length()
         payment_schedule.totalOccurrences = subscription.offer.get_payment_occurrences()
 
-        if subscription.profile.has_owned_product(subscription.offer.products.all()):
+        if self.invoice.profile.has_owned_product(subscription.offer.products.all()):
             payment_schedule.startDate = CustomDate(timezone.now())
             payment_schedule.trialOccurrences = 0
         else:
