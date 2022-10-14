@@ -2,11 +2,32 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class StripeQueryBuilderError(Exception):
-    pass
-
 
 class StripeQueryBuilder:
+    """
+    Query builder that adheres to Stripe search rules found here https://stripe.com/docs/search
+
+    Ex:
+    To generate a query like 'name:"Johns Offer" AND metadata["site"]:"site4"'
+
+    query_builder = StripeQueryBuilder()
+
+    name_clause = query_builder.make_clause_template()
+    name_clause['field'] = 'name'
+    name_clause['value'] = 'Johns Offer'
+    name_clause['operator'] = query_builder.EXACT_MATCH
+    name_clause['next_operator'] = query_builder.AND
+
+    metadata_clause = query_builder.make_clause_template()
+    metadata_clause['field'] = 'metadata'
+    metadata_clause['key'] = 'site'
+    metadata_clause['value'] = 'site4'
+    metadata_clause['operator'] = query_builder.EXACT_MATCH
+
+    query = query_builder.build_search_query(processor.stripe.Product, [name_clause, metadata_clause])
+
+
+    """
 
     # Search syntax
     EXACT_MATCH = ':'
@@ -111,29 +132,7 @@ class StripeQueryBuilder:
         return True
 
     def build_search_query(self, stripe_object_class, search_clauses):
-        """
-        TODO unit test this
-        All search methods for all resources are here https://stripe.com/docs/search
 
-        List of search values and their Stripe field types to build out search query
-        [{
-            'field': 'name'
-            'operator': query_builder.EXACT_MATCH,
-            'key': None
-            'value': 'product123',
-            'next_operator': query_builder.AND
-        },
-        {
-            'field': 'metadata'
-            'operator': query_builder.EXACT_MATCH,
-            'key': 'site'
-            'value': 'product123',
-            'next_operator': None
-        },
-        ]
-
-
-        """
         if not isinstance(search_clauses, list):
             logger.info(f'Passed in params {search_clauses} is not a list of dicts')
             return None
