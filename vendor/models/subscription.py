@@ -98,10 +98,10 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
         return payment.get_receipt().start_date
         
     def is_on_trial(self):
-        if not self.receipts.all().count():
+        if not self.receipts.count():
             return False
 
-        receipt = self.receipts.all().order_by('start_date').first()
+        receipt = self.receipts.order_by('start_date').first()
         trial_end_date = receipt.start_date + timedelta(days=add_days)
 
         if timezone.now() > trial_end_date:
