@@ -144,7 +144,7 @@ class StripeQueryBuilder:
             logger.error(f'Passed in search clauses {search_clauses} cannot be empty')
             return query
 
-        for index, query_obj in enumerate(search_clauses):
+        for query_obj in search_clauses:
             field = query_obj.get('field', None)
             operator = query_obj.get('operator', None)
             key = query_obj.get('key', None)
