@@ -598,7 +598,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = str(receipt.transaction)
+        self.transaction.subscriptionId = str(receipt.subscription.gateway_id)
         self.transaction.subscription = self.transaction_type
 
         self.controller = ARBUpdateSubscriptionController(self.transaction)
@@ -612,7 +612,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         receipt.meta[f"payment-update-{timezone.now():%Y-%m-%d %H:%M}"] = {'raw': str({**self.transaction_message, **response})}
         receipt.save()
 
-        subscription_info = self.subscription_info(receipt.transaction)
+        subscription_info = self.subscription_info(receipt.subscription.gateway_id)
 
         account_number = getattr(subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'], 'cardNumber', None)
         if account_number:
@@ -741,7 +741,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = str(receipt.transaction)
+        self.transaction.subscriptionId = str(receipt.subscription.gateway_id)
         self.transaction.subscription = self.transaction_type
 
         self.controller = ARBUpdateSubscriptionController(self.transaction)
