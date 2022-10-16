@@ -469,7 +469,7 @@ class StripeProcessorTests(TestCase):
                 'value': 'site4',
                 'field': 'metadata'
         }
-        product = self.processor.check_product_does_exist(self.pro_annual_license['name'], metadata=metadata)
+        product = self.processor.does_product_exist(self.pro_annual_license['name'], metadata=metadata)
 
         self.assertIsNotNone(product)
 
@@ -498,7 +498,7 @@ class StripeProcessorTests(TestCase):
             'value': 'site4',
             'field': 'metadata'
         }
-        price = self.processor.check_price_does_exist(self.pri_monthly['product'], metadata=metadata)
+        price = self.processor.does_price_exist(self.pri_monthly['product'], metadata=metadata)
 
         self.assertIsNotNone(price)
 
