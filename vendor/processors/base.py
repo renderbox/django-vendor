@@ -9,9 +9,9 @@ from vendor import config
 from vendor.models import Payment, Invoice, Receipt, Subscription
 from vendor.models.choice import PurchaseStatus, SubscriptionStatus, TermType, InvoiceStatus
 from vendor.utils import get_payment_scheduled_end_date
+
 ##########
 # SIGNALS
-
 vendor_pre_authorization = django.dispatch.Signal()
 vendor_process_payment = django.dispatch.Signal()
 vendor_post_authorization = django.dispatch.Signal()
@@ -393,6 +393,11 @@ class PaymentProcessorBase(object):
         pass
 
     def subscription_cancel(self, subscription):
+        settled_payments = subscription.payments.filter(status=PurchaseStatus.SETTLED).count()
+        
+        if not (settled_payments or subscription.is_on_trial()):
+            raise Exception("Need to be on trial or have a settled payment")
+
         subscription.cancel()
         vendor_subscription_cancel.send(sender=self.__class__, subscription=subscription)
 
@@ -402,25 +407,23 @@ class PaymentProcessorBase(object):
         """
         pass
 
-    def renew_subscription(self, transaction_id, payment_info):
+    def renew_subscription(self, transaction_id, payment_info, payment_status, payment_success):
         """
         Function to renew already paid subscriptions form the payment gateway provider.
         """
-        self.payment = Payment(profile=self.invoice.profile,
-                               amount=self.invoice.total,
-                               invoice=self.invoice,
-                               created=timezone.now())
+        self.payment = Payment()
+        self.payment.profile = self.invoice.profile
+        self.payment.invoice = self.invoice
+        self.payment.subscription = self.subscription
+        self.payment.amount = self.invoice.total
+        self.payment.submitted_date = self.invoice.ordered_date
+        self.payment.status = payment_status
+        self.payment.success = payment_success
         self.payment.result = payment_info
-
-        self.transaction_submitted = True
-
-        self.payment.success = True
-        self.payment.status = PurchaseStatus.CAPTURED
         self.payment.transaction = transaction_id
         self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
-
         self.payment.save()
-
+        
         self.update_invoice_status(InvoiceStatus.COMPLETE)
 
         self.create_receipts(self.invoice.order_items.all())

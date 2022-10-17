@@ -16,20 +16,27 @@ from vendor.forms import DateTimeRangeForm
 from vendor.integrations import AuthorizeNetIntegration
 from vendor.models import Receipt, Invoice, Subscription, Payment
 from vendor.models.choice import InvoiceStatus, PurchaseStatus
-from vendor.processors.authorizenet import AuthorizeNetProcessor, create_subscription_model_form_past_receipts
+from vendor.processors.authorizenet import AuthorizeNetProcessor, sync_subscriptions
 from vendor.utils import get_site_from_request
 
 logger = logging.getLogger(__name__)
 
 
-def update_payment(site, transaction_id, json_data):
+def update_payment(site, transaction_id, transaction_detail):
+    processor = AuthorizeNetProcessor(site)
+
+    submitted_datetime = datetime.strptime(transaction_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S.%f%z')
+    payment_info = processor.get_payment_info(transaction_detail)
+    payment_status = processor.get_payment_status(transaction_detail.transactionStatus.text)
+    payment_success = processor.get_payment_success(transaction_detail.responseCode.text)
+
     try:
-        logger.info(f"AuthorizeCaptureAPI update_payment transaction id {transaction_id}")
         payment = Payment.objects.get(profile__site=site, transaction=transaction_id, status__lt=PurchaseStatus.VOID)
-        payment.status = PurchaseStatus.CAPTURED
-        payment.result[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = json_data
+        payment.submitted_date = submitted_datetime
+        payment.result[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = payment_info
+        payment.status = payment_status
+        payment.success = payment_success
         payment.save()
-    
     except MultipleObjectsReturned as exce:
         logger.error(f"AuthorizeCaptureAPI update_payment multiple payments for transaction: {transaction_id} error: {exce}")
 
@@ -38,37 +45,18 @@ def update_payment(site, transaction_id, json_data):
 
     except Exception as exce:
         logger.error(f"AuthorizeCaptureAPI update_payment error: {exce}")
+        
 
-def subscription_save_renewal(site, subscription, transaction_detail, payment_info):
-    invoice = Invoice.objects.create(
-        status=InvoiceStatus.CHECKOUT,
-        site=site,
-        profile=subscription.profile,
-        ordered_date=timezone.now(),
-        total=transaction_detail.authAmount.pyval
-    )
-    invoice.add_offer(subscription.receipts.all().order_by('created').last().order_item.offer)
-    invoice.save()
+def subscription_save_transaction(site, transaction_id, transaction_detail):
+    processor = AuthorizeNetProcessor(site)
 
-    processor = AuthorizeNetProcessor(site, invoice)
-    processor.subscription = subscription
-    processor.renew_subscription(subscription.gateway_id, payment_info)
-    logger.info(f"AuthorizeCaptureAPI renew_subscription_task subscription {subscription.pk} renewed")
-
-def subscription_save_transaction(site, json_data, transaction_detail):
-    transaction_id = json_data['payload']['id']
     subscription_id = transaction_detail.subscription.id.text
     logger.info(f"AuthorizeCaptureAPI subscription_save_transaction saving subscription transaction: {transaction_id} for subscription {subscription_id}")
 
-    payment_info = {
-        'account_number': transaction_detail.payment.creditCard.cardNumber.text[-4:],
-        'account_type': transaction_detail.payment.creditCard.cardType.text,
-        'full_name': " ".join([transaction_detail.billTo.firstName.text, transaction_detail.billTo.lastName.text]),
-        'raw': str(json_data),
-        'transaction_id': transaction_id,
-        'subscription_id': subscription_id,
-        'payment_number': transaction_detail.subscription.payNum.text
-    }
+    submitted_datetime = datetime.strptime(transaction_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S.%f%z')
+    payment_info = processor.get_payment_info(transaction_detail)
+    payment_status = processor.get_payment_status(transaction_detail.transactionStatus.text)
+    payment_success = processor.get_payment_success(transaction_detail.responseCode.text)
 
     try:
         subscription = Subscription.objects.get(gateway_id=subscription_id, profile__site=site)
@@ -84,16 +72,18 @@ def subscription_save_transaction(site, json_data, transaction_detail):
     try:
         payment = subscription.payments.get(transaction=None, status=PurchaseStatus.QUEUED)
         payment.transaction = transaction_id
-        payment.status = PurchaseStatus.CAPTURED
-        payment.result = {}
-        payment.result['raw'] = json_data
+        payment.submitted_date = submitted_datetime
+        payment.result[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = payment_info
+        payment.status = payment_status
+        payment.success = payment_success
         payment.save()
         logger.info(f"AuthorizeCaptureAPI subscription_save_transaction: payment {payment.pk} updated")
         
-        processor = AuthorizeNetProcessor(site, payment.invoice)
-        processor.payment = payment
-        processor.create_receipts(payment.invoice.order_items.all())
-        logger.info(f"AuthorizeCaptureAPI subscription_save_transaction: subscription renewed {subscription.pk}")
+        if payment_status == PurchaseStatus.SETTLED:
+            processor = AuthorizeNetProcessor(site, payment.invoice)
+            processor.payment = payment
+            processor.create_receipts(payment.invoice.order_items.all())
+            logger.info(f"AuthorizeCaptureAPI subscription_save_transaction: subscription renewed {subscription.pk}")
 
     except MultipleObjectsReturned as exce:
         # There should be none or only one payment with transaction None and status in Queue
@@ -101,10 +91,23 @@ def subscription_save_transaction(site, json_data, transaction_detail):
         return None
 
     except ObjectDoesNotExist as exce:
-        logger.info(f"AuthorizeCaptureAPI subscription_save_transaction creating new payment and receipt for subscription, for {subscription_id}")
-        subscription_save_renewal(site, subscription, transaction_detail, payment_info)
-        return None # No need to continue to create receipt as it is done in the above function
+        logger.info(f"AuthorizeCaptureAPI renew_subscription_task subscription {subscription.pk} renewed")
+        invoice = Invoice.objects.create(
+            profile=customer_profile,
+            site=site,
+            ordered_date=submitted_datetime,
+            total=transaction_detail.settleAmount.pyval,
+            status=InvoiceStatus.COMPLETE
+        )
+        invoice.add_offer(offer)
+        invoice.save()
 
+        processor = AuthorizeNetProcessor(site, invoice)
+        processor.subscription = subscription
+        processor.renew_subscription(subscription.gateway_id, payment_info, payment_status, payment_success)
+        logger.info(f"AuthorizeCaptureAPI subscription_save_transaction creating new payment and receipt for subscription, for {subscription_id}")
+        
+        return None # No need to continue to create receipt as it is done in the above function
 
 def settle_authorizenet_transactions(site, start_date, end_date):
     processor = AuthorizeNetProcessor(site)
@@ -162,38 +165,46 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
     API endpoint to get event notifications from authorizenet when a authcaputre is created.
     If there is a subscription tied to the transaction, it will renew such subscription
     """
+    def is_request_valid(self, site, request_data):
+        if not request_data:
+            logger.warning("AuthorizeCaptureAPI post: Webhook event has no body")
+            return False
+
+        if not request_data.get('payload', {}).get('id'):
+            logger.error(f"AuthorizeCaptureAPI post: No transaction id request data: {request_data}")
+            return False
+            
+        if not self.is_valid_post(site):
+            logger.error(f"AuthorizeCaptureAPI post: Request was denied: {self.request}")
+            return False
+
+            
+        return True
 
     def post(self, *args, **kwargs):
         logger.info(f"AuthorizeCaptureAPI post: Event webhook: {self.request.body}")
+
         site = get_site_from_request(self.request)
         logger.info(f"AuthorizeCaptureAPI post: site: {site}")
-
-        if not self.request.body:
-            logger.warning("AuthorizeCaptureAPI post: Webhook event has no body")
-            return JsonResponse({"msg": "AuthorizeCaptureAPI post: Webhook event has no body"})
-
-        if not self.is_valid_post(site):
-            logger.error(f"AuthorizeCaptureAPI post: Request was denied: {self.request}")
-            raise PermissionDenied()
 
         request_data = json.loads(self.request.body)
         logger.info(f"AuthorizeCaptureAPI post: request data: {request_data}")
 
-        if not request_data.get('payload').get('id'):
-            logger.error(f"AuthorizeCaptureAPI post: No transaction id request data: {request_data}")
-            return JsonResponse({"msg": "AuthorizeCaptureAPI post: No transaction id"})
+        if not self.is_request_valid(site, request_data):
+            return JsonResponse({"msg": "AuthorizeCaptureAPI post: Request is invalid"})
 
         transaction_id = request_data.get('payload').get('id')
         logger.info(f"AuthorizeCaptureAPI post: Getting transaction detail for id: {transaction_id}")
-        
+
         processor = AuthorizeNetProcessor(site)
         transaction_detail = processor.get_transaction_detail(transaction_id)
 
         if not hasattr(transaction_detail, 'subscription'):
             logger.info(f"AuthorizeCaptureAPI post: updating payment for transaction detail: {transaction_detail}")
-            update_payment(site, transaction_id, request_data.get('payload'))
+            update_payment(site, transaction_id, transaction_detail)
+
         else:
-            logger.info(f"AuthorizeCaptureAPI post: savint subscription transaction: {transaction_detail}")
+            logger.info(f"AuthorizeCaptureAPI post: saving subscription transaction: {transaction_detail}")
             subscription_save_transaction(site, request_data.get('payload'), transaction_detail)
 
         return JsonResponse({"msg": "AuthorizeCaptureAPI post event finished"})
@@ -231,8 +242,8 @@ class SyncSubscriptionsView(View):
 
     def get(self, *args, **kwargs):
         site = get_site_from_request(self.request)
-        create_subscription_model_form_past_receipts(site)
-        return JsonResponse({'msg': 'one more time'})
+        sync_subscriptions(site)
+        return JsonResponse({'msg': 'Sync Subscriptions Finished'})
 
 
 class GetSettledTransactionsView(FormMixin, View):
