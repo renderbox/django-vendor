@@ -82,7 +82,7 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
         self.save()
 
     def get_next_billing_date(self):
-        receipts = self.receipts.filter(Q(end_date__gte=timezone.now()) | Q(end_date=None)).order_by('end_date')
+        receipts = self.receipts.filter(Q(deleted=False), Q(end_date__gte=timezone.now()) | Q(end_date=None)).order_by('end_date')
         
         if not receipts.count():
             return None
@@ -90,11 +90,23 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
         return receipts.first().end_date
         
     def get_last_payment_date(self):
-        payment = self.payments.filter(status__lte=PurchaseStatus.SETTLED).order_by('-created').first()
+        payment = self.payments.filter(deleted=False, status__lte=PurchaseStatus.SETTLED).order_by('-created').first()
 
         if not payment:
             return None
 
         return payment.get_receipt().start_date
         
+    def is_on_trial(self):
+        if not self.receipts.filter(deleted=False).count():
+            return False
+
+        receipt = self.receipts.filter(deleted=False).order_by('start_date').first()
+        trial_end_date = receipt.start_date + timedelta(days=self.order_item.offer.get_trial_days())
+
+        if timezone.now() > trial_end_date:
+            return False
+        
+        return True
+
 
