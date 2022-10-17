@@ -881,7 +881,10 @@ class StripeProcessor(PaymentProcessorBase):
         Processes the transaction response from the stripe so it can be saved in the payment model
         """
         self.transaction_id = self.charge['id']
-        self.transaction_response = {'raw': str(self.charge)}
+        self.transaction_response = self.make_transaction_response(
+            raw=str(self.charge),
+            messages=f'trans id is {self.transaction_id}'
+        )
 
     ##########
     # Base Processor Transaction Implementations

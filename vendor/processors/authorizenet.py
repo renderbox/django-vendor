@@ -330,11 +330,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         self.transaction_id = str(getattr(self.transaction_response, 'transId', 'failed_payment'))
 
-        transaction_info = {}
-        transaction_info['raw'] = self.get_transaction_raw_response()
-        transaction_info['account_type'] = ast.literal_eval(transaction_info['raw']).get('accountType')
+        # TODO add payment_method
+        self.transaction_response = self.make_transaction_response(
+            raw=self.get_transaction_raw_response(),
+            messages=f'trans id is {self.transaction_id}'
 
-        self.transaction_response = transaction_info
+        )
 
     def save_payment_subscription(self):
         """
@@ -343,10 +344,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         self.transaction_id = self.transaction_message.get("subscription_id", 'failed_payement')
 
-        transaction_info = {}
-        transaction_info['raw'] = self.get_transaction_raw_response()
-
-        self.transaction_response = transaction_info
+        self.transaction_response = self.make_transaction_response(
+            raw=self.get_transaction_raw_response(),
+            messages=f'trans id is {self.transaction_id}'
+        )
 
     def save_subscription_result(self):
         """
@@ -355,16 +356,16 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         self.transaction_id = self.transaction_message.get("subscription_id", 'failed_subscription')
 
-        transaction_info = {}
-        transaction_info['raw'] = self.get_transaction_raw_response()
-
-        self.transaction_response = transaction_info
+        self.transaction_response = self.make_transaction_response(
+            raw=self.get_transaction_raw_response(),
+            messages=f'trans id is {self.transaction_id}'
+        )
 
     def check_response(self, response):
         """
         Checks the transaction response and set the transaction_submitted and transaction_response variables
         """
-        self.transaction_response = response.transactionResponse
+        self.transaction_response = response.transactionResponse  # TODO use make_transaction_response
         self.transaction_message = {}
         self.transaction_submitted = False
         self.transaction_message['msg'] = ""
@@ -401,7 +402,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             self.transaction_message['msg'] = 'Null Response.'
 
     def check_subscription_response(self, response):
-        self.transaction_response = response
+        self.transaction_response = response # TODO use make_transaction_response
         self.transaction_message = {}
         self.transaction_submitted = False
         self.transaction_message['msg'] = ""
@@ -417,7 +418,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         logger.info(f"AuthorizeNetProcessor check_subscription_response submitted: {self.transaction_submitted} msg: {self.transaction_message}")
 
     def check_customer_list_response(self, response):
-        self.transaction_response = response
+        self.transaction_response = response # TODO use make_transaction_response
         self.transaction_message = {}
         self.transaction_submitted = False
         self.transaction_message['msg'] = ""

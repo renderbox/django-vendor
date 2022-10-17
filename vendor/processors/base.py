@@ -116,6 +116,14 @@ class PaymentProcessorBase(object):
         self.payment.result['raw'] = result_info.get('raw', "")
         self.payment.save()
 
+    def make_transaction_response(self, raw='', errors='', payment_method='', messages=''):
+        return {
+            'raw': raw,
+            'errors': errors,
+            'payment_method': payment_method,
+            'messages': messages
+        }
+
     def save_subscription_transaction_result(self, subscription_success, transaction_id, result_info):
         """
         Saves the result output of any transaction.
