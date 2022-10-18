@@ -8,7 +8,7 @@ from django.utils import timezone
 from vendor import config
 from vendor.models import Payment, Invoice, Receipt, Subscription
 from vendor.models.choice import PurchaseStatus, SubscriptionStatus, TermType, InvoiceStatus
-from vendor.utils import get_payment_scheduled_end_date
+from vendor.utils import get_payment_scheduled_end_date, get_subscription_start_date, get_future_date_days
 
 ##########
 # SIGNALS
@@ -155,14 +155,46 @@ class PaymentProcessorBase(object):
         self.receipt.transaction = self.payment.transaction
         self.receipt.meta.update(self.payment.result)
         self.receipt.meta['payment_amount'] = self.payment.amount
-        self.receipt.start_date = today
+        self.receipt.start_date = get_subscription_start_date(order_item.offer, self.invoice.profile, today)
         self.receipt.save()
 
         if term_type < TermType.PERPETUAL:
-            self.receipt.end_date = get_payment_scheduled_end_date(order_item.offer)
+            self.receipt.end_date = get_payment_scheduled_end_date(order_item.offer, self.receipt.start_date)
             self.receipt.subscription = self.subscription
             
         self.receipt.save()
+
+    def create_trial_receipt_payment(self, order_item):
+        if self.invoice.profile.has_owned_product(order_item.offer.products.all()):
+            return None  # Trial receipts are only created if the user has not owned the product previously 
+
+        if not order_item.offer.get_trial_days():
+            return None
+
+        today = timezone.now()
+
+        self.payment = Payment.objects.create(
+            profile=self.invoice.profile,
+            amount=0,
+            provider=self.provider,
+            invoice=self.invoice,
+            submitted_date=today,
+            success=True,
+            status=PurchaseStatus.SETTLED,
+            payee_full_name=" ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+        )
+        
+        self.payment.transaction = f"{self.payment.uuid}-trial"
+        self.payment.save()
+
+        self.receipt = Receipt.objects.create(
+            profile=self.invoice.profile,
+            order_item=order_item,
+            transaction=self.payment.transaction,
+            start_date=today,
+            end_date=get_future_date_days(today, order_item.offer.get_trial_days()),
+            subscription=self.subscription
+        )
 
     def create_order_item_receipt(self, order_item):
         """
@@ -171,6 +203,7 @@ class PaymentProcessorBase(object):
         """
         for product in order_item.offer.products.all():
             self.create_receipt_by_term_type(order_item, order_item.offer.terms)
+            self.create_trial_receipt_payment(order_item)
             self.receipt.products.add(product)
 
     def create_receipts(self, order_items):
@@ -353,8 +386,8 @@ class PaymentProcessorBase(object):
         Process/subscribies recurring payments throught the payement gateway and creates a payment model for each subscription.
         If a payment is completed it will create a receipt for the subscription
         """
-        if not self.is_card_valid():
-            return None
+        # if not self.is_card_valid():
+        #     return None
 
         for subscription in self.invoice.get_recurring_order_items():
             self.create_payment_model()
