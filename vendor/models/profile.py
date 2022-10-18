@@ -159,7 +159,7 @@ class CustomerProfile(CreateUpdateModelBase):
          return set([receipt.products.first()  for receipt in self.get_active_receipts()])
 
     def get_active_offer_receipts(self, offer):
-        return self.receipts.filter(Q(order_item__offer=offer), Q(end_date__gte=timezone.now()) | Q(end_date=None))
+        return self.receipts.filter(Q(deleted=False), Q(order_item__offer=offer), Q(end_date__gte=timezone.now()) | Q(end_date=None))
 
     def get_active_receipts(self):
         return self.receipts.filter(Q(end_date__gte=timezone.now()) | Q(end_date=None))
@@ -207,3 +207,12 @@ class CustomerProfile(CreateUpdateModelBase):
 
     def get_settled_payments(self):
         return self.payments.filter(deleted=False, status=PurchaseStatus.SETTLED).order_by('amount', 'submitted_date')
+
+    def is_on_trial(self, offer):
+
+        on_trial_receipt = [receipt for receipt in self.get_active_offer_receipts(offer) if 'trial' in receipt.uuid]
+
+        if on_trial_receipt:
+            return True
+
+        return False
