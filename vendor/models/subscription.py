@@ -113,11 +113,10 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
         return self.receipts.first().order_item.total
 
     def save_payment_info(self, payment_info):
-        if 'payment_info' in self.meta:
+        if 'payment_info' not in self.meta:
             self.meta['payment_info'] = {}
         
         self.meta.update({'payment_info': payment_info})
-        
         self.save()
 
 
