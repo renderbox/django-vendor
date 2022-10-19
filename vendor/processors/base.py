@@ -386,8 +386,8 @@ class PaymentProcessorBase(object):
         Process/subscribies recurring payments throught the payement gateway and creates a payment model for each subscription.
         If a payment is completed it will create a receipt for the subscription
         """
-        # if not self.is_card_valid():
-        #     return None
+        if not self.is_card_valid():
+            return None
 
         for subscription in self.invoice.get_recurring_order_items():
             self.create_payment_model()
