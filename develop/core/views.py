@@ -8,7 +8,7 @@ from django.views.generic.list import ListView
 
 from vendor.models import Offer
 from vendor.forms import CreditCardForm
-from vendor.models.choice import PaymentTypes
+from vendor.models.choice import PaymentTypes, SubscriptionStatus
 from vendor.utils import get_site_from_request
 from vendor.views.mixin import ProductRequiredMixin
 
@@ -49,7 +49,7 @@ class AccountView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         
         customer_profile, created = request.user.customer_profile.get_or_create(site=get_site_from_request(request))
-        subscriptions = customer_profile.get_recurring_receipts()
+        subscriptions = customer_profile.subscriptions.filter(status=SubscriptionStatus.ACTIVE)
 
         context['payments'] = customer_profile.payments.filter(success=True)
         context["offers"] = Offer.objects.filter(site=get_site_from_request(request), available=True).order_by('terms')
