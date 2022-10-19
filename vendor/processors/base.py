@@ -440,33 +440,38 @@ class PaymentProcessorBase(object):
         """
         pass
 
-    def renew_subscription(self, transaction_id, payment_info, payment_status, payment_success):
+    def renew_subscription(self, subscription, payment_transaction_id="", payment_status=PurchaseStatus.QUEUED, payment_success=True):
         """
         Function to renew already paid subscriptions form the payment gateway provider.
         """
-        self.payment = Payment()
-        self.payment.profile = self.invoice.profile
-        self.payment.invoice = self.invoice
-        self.payment.subscription = self.subscription
-        self.payment.amount = self.invoice.total
-        self.payment.submitted_date = self.invoice.ordered_date
-        self.payment.status = payment_status
-        self.payment.success = payment_success
-        self.payment.result = payment_info
-        self.payment.transaction = transaction_id
-        self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
-        self.payment.save()
-        
-        self.update_invoice_status(InvoiceStatus.COMPLETE)
+        self.subscription = subscription
+        submitted_date = timezone.now()
+
+        self.payment = Payment.objects.create(
+            profile=subscription.profile,
+            invoice=self.invoice,
+            transaction=payment_transaction_id,
+            submitted_date=submitted_date,
+            subscription=subscription,
+            amount=self.invoice.total,
+            success=payment_success,
+            status=payment_status,
+            payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+        )
 
         self.create_receipts(self.invoice.order_items.all())
 
-    def subscription_update_price(self, receipt, new_price, user):
+    def subscription_update_price(self, subscription, new_price, user):
         """
         Call to handle when a new subscription price needs to be approved.
         """
-        receipt.vendor_notes['price_update'] = f'Price update ({new_price}) accepted by user: {user.username} on {timezone.now()}'
-        receipt.save()
+        now = timezone.now().strftime("%Y-%m-%d_%H:%M:%S")
+
+        subscription.meta['price_update'] = {
+            now: f'Price update ({new_price}) accepted by user: {user.username} on {now}'
+        }
+
+        subscription.save()
     
     # -------------------
     # Refund a Payment
