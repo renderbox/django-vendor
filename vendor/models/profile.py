@@ -210,7 +210,7 @@ class CustomerProfile(CreateUpdateModelBase):
 
     def is_on_trial(self, offer):
 
-        on_trial_receipt = [receipt for receipt in self.get_active_offer_receipts(offer) if receipt.transaction and 'trial' in receipt.transaction]
+        on_trial_receipt = next((receipt for receipt in self.get_active_offer_receipts(offer) if receipt.transaction and 'trial' in receipt.transaction), None)
 
         if on_trial_receipt:
             return True
