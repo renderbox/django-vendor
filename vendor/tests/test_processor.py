@@ -1001,10 +1001,6 @@ class AuthorizeNetProcessorTests(TestCase):
             return
 
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
-        dummy_receipt = Receipt(order_item=OrderItem.objects.get(pk=2))
-        dummy_receipt.profile = CustomerProfile.objects.get(pk=1)
-        dummy_receipt.transaction = active_subscriptions[0].id.pyval
-
         dummy_subscription = Subscription.objects.create(
             gateway_id=active_subscriptions[0].id.pyval,
             profile=CustomerProfile.objects.get(pk=1),
