@@ -55,12 +55,12 @@
                 <div class="font-weight-bold mt-3 w-100">{% trans 'Subscription Plan' %}</div>
                 {% if subscription %}
                 <div class="d-flex mt-2">
-                    <div class="text-primary text-left">{{ subscription.order_item.name }}</div>
+                    <div class="text-primary text-left">{{ subscription.name }}</div>
                     <a class="edit-name-button btn text-primary p-0 ml-auto bg-success" style="width: 1rem;" data-toggle="modal"
                         data-target="#update_subscription"><i class="w-100 fas fa-pen"></i></a>
                 </div>
                 <div class="text-left">
-                    {% blocktrans with terms=subscription.order_item.offer.get_terms_display total=subscription.order_item.total end_date=subscription.end_date|date:"M d, Y" %}
+                    {% blocktrans with terms=subscription.receipts.first.order_item.offer.get_terms_display total=subscription.get_total end_date=subscription.get_next_billing_date|date:"M d, Y" %}
                     Your {{ terms }} plan for ${{ total }} will renew on {{ end_date }}
                     {% endblocktrans %}
                 </div>
@@ -123,6 +123,7 @@
                 <hr class="m-0" />
                 <div class='d-flex flex-row w-100 align-items-center my-3'>
                     {% comment %}
+                    <!-- TODO: Functionalty still needed -->
                     <form id="changeSubscription" class="align-itmes-center" method="post"
                         action="{% url 'vendor:customer-subscription-change-plan' subscription.uuid %}">
                         {% csrf_token %}

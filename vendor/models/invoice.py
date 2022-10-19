@@ -68,6 +68,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
     def add_offer(self, offer, quantity=1):
 
         order_item, created = self.order_items.get_or_create(offer=offer)
+        
         # make sure the invoice pk is also in the OriderItem
         if not created and order_item.offer.allow_multiple:
             order_item.quantity += quantity
@@ -75,6 +76,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
 
         self.update_totals()
         self.save()
+
         return order_item
 
     def remove_offer(self, offer, clear=False):
