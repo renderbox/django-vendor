@@ -13,9 +13,8 @@ from random import randrange, choice
 from siteconfigs.models import SiteConfigModel
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem, Subscription
-from vendor.models.choice import PurchaseStatus, InvoiceStatus
+from vendor.models.choice import PurchaseStatus, InvoiceStatus, SubscriptionStatus
 from vendor.processors import PaymentProcessorBase, AuthorizeNetProcessor, StripeProcessor
-from vendor.processors.authorizenet import create_subscription_model_form_past_receipts
 ###############################
 # Test constants
 ###############################
@@ -215,29 +214,36 @@ class BaseProcessorTests(TestCase):
         self.assertTrue(customer.receipts.count())
 
     def test_renew_subscription(self):
-        customer = CustomerProfile.objects.get(pk=2)
-        invoice = Invoice(profile=customer)
+        subscription = Subscription.objects.get(pk=1)
+        submitted_datetime = timezone.now()
+
+        invoice = Invoice.objects.create(
+            profile=subscription.profile,
+            site=subscription.profile.site,
+            ordered_date=submitted_datetime,
+            status=InvoiceStatus.COMPLETE
+        )
+        invoice.add_offer(subscription.receipts.first().order_item.offer)
         invoice.save()
-        invoice.add_offer(Offer.objects.get(pk=5))
-        past_receipt = Receipt.objects.get(pk=1)
+
+        transaction_id = timezone.now().strftime("%Y-%m-%d_%H-%M-%S-Manual-Renewal")
 
         base_processor = PaymentProcessorBase(invoice.site, invoice)
-        payment_info = {
-            'account_number': '0002',
-        }
-        base_processor.renew_subscription(past_receipt.transaction, payment_info)
+        base_processor.renew_subscription(subscription, transaction_id, PurchaseStatus.CAPTURED)
+
+        self.assertTrue(subscription.profile.has_product(subscription.receipts.last().products.all()))
 
     def test_subscription_price_update_success(self):
-        receipt = Receipt.objects.get(pk=3)
+        subscription = Subscription.objects.get(pk=1)
         offer = Offer.objects.get(pk=4)
         price = Price.objects.create(offer=offer, cost=89.99, currency='usd', start_date=timezone.now())
         offer.prices.add(price)
 
-        processor = PaymentProcessorBase(receipt.order_item.invoice.site, receipt.order_item.invoice)
-        processor.subscription_update_price(receipt, price, self.user)
+        processor = PaymentProcessorBase(subscription.profile.site)
+        processor.subscription_update_price(subscription, price, self.user)
 
-        receipt.refresh_from_db()
-        self.assertIn('price_update', receipt.vendor_notes.keys())
+        subscription.refresh_from_db()
+        self.assertIn('price_update', subscription.meta)
 
     # def test_get_header_javascript_success(self):
     #     raise NotImplementedError()

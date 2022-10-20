@@ -61,6 +61,15 @@ def get_payment_scheduled_end_date(offer, start_date=timezone.now()):
     elif units == TermDetailUnits.DAY:
         return get_future_date_days(start_date, offer.get_period_length())
 
+def get_subscription_start_date(offer, profile, start_date=timezone.now()):
+    if profile.is_on_trial(offer):
+        return start_date + timedelta(days=offer.get_trial_days())
+    
+    if not profile.has_owned_product(offer.products.all()):
+        return start_date + timedelta(days=offer.get_trial_days())
+
+    return start_date
+        
 
 def get_display_decimal(amount):
     return Decimal(amount).quantize(Decimal('.00'), rounding=ROUND_UP)

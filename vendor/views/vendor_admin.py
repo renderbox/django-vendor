@@ -9,13 +9,14 @@ from django.views.generic import View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, FormView
 from django.views.generic.list import ListView
+from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from vendor.config import VENDOR_PRODUCT_MODEL, PaymentProcessorSiteConfig, PaymentProcessorSiteSelectSiteConfig, PaymentProcessorForm, PaymentProcessorSiteSelectForm
 from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm, AuthorizeNetIntegrationForm
 from vendor.integrations import AuthorizeNetIntegration
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment, Subscription
-from vendor.models.choice import TermType, PaymentTypes, InvoiceStatus
+from vendor.models.choice import TermType, PaymentTypes, InvoiceStatus, PurchaseStatus
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
 from vendor.processors import get_site_payment_processor
 
@@ -305,24 +306,27 @@ class AdminProfileDetailView(LoginRequiredMixin, DetailView):
 
 class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
     success_url = reverse_lazy('vendor_admin:manage-profiles')
-    model = Receipt
+    model = Subscription
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
 
     def post(self, request, *args, **kwargs):
-        past_receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
+        subscription = Subscription.objects.get(uuid=self.kwargs["uuid"])
+        submitted_datetime = timezone.now()
 
-        payment_info = {
-            'msg': 'renewed manually'
-        }
-
-        invoice = Invoice(status=InvoiceStatus.CHECKOUT, site=past_receipt.order_item.invoice.site)
-        invoice.profile = past_receipt.profile
+        invoice = Invoice.objects.create(
+            profile=customer_profile,
+            site=site,
+            ordered_date=submitted_datetime,
+            status=InvoiceStatus.COMPLETE
+        )
+        invoice.add_offer(offer)
         invoice.save()
-        invoice.add_offer(past_receipt.order_item.offer)
+
+        transaction_id = timezone.now().strftime("%Y-%m-%d_%H-%M-%S-Manual-Renewal")
 
         processor = get_site_payment_processor(invoice.site)(invoice.site, invoice)
-        processor.renew_subscription(past_receipt.transaction, payment_info)
+        processor.renew_subscription(subscription, transaction_id, PurchaseStatus.CAPTURED)
 
         messages.info(request, _("Subscription Renewed"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))

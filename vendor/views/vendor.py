@@ -13,7 +13,7 @@ from django.views.generic.list import ListView
 
 
 from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm, AddressForm
-from vendor.models import Offer, Invoice, Address, OrderItem, Receipt
+from vendor.models import Offer, Invoice, Address, OrderItem, Receipt, Subscription
 from vendor.models.choice import TermType, PurchaseStatus, InvoiceStatus
 from vendor.processors import get_site_payment_processor
 from vendor.utils import get_site_from_request, get_or_create_session_cart, clear_session_purchase_data
@@ -74,6 +74,9 @@ class CartView(TemplateView):
 class AccountInformationView(LoginRequiredMixin, TemplateView):
     template_name = 'vendor/checkout.html'
 
+    def get_form_class(self):
+        return AccountInformationForm
+
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         clear_session_purchase_data(request)
@@ -86,13 +89,14 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         invoice.status = InvoiceStatus.CHECKOUT
         invoice.save()
 
-        existing_account_address = Address.objects.filter(profile__user=request.user, profile__site=get_site_from_request(request))
+        existing_account_address = Address.objects.filter(profile__user=request.user, profile__site=get_site_from_request(request)).last()
 
+        form_class = self.get_form_class()
         if existing_account_address:
             # TODO: In future the user will be able to select from multiple saved address
-            form = AccountInformationForm(initial={'email': request.user.email}, instance=existing_account_address[0])
+            form = form_class(initial={'email': request.user.email}, instance=existing_account_address)
         else:
-            form = AccountInformationForm(initial={'first_name': request.user.first_name, 'last_name': request.user.last_name, 'email': request.user.email})
+            form = form_class(initial={'first_name': request.user.first_name, 'last_name': request.user.last_name, 'email': request.user.email})
 
         context['form'] = form
         context['invoice'] = invoice
@@ -100,14 +104,13 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
-        form = AccountInformationForm(request.POST)
+        form = self.get_form_class()(request.POST)
+        invoice = get_purchase_invoice(request.user, get_site_from_request(request))
 
         if not form.is_valid():
-            return render(request, self.template_name, {'form': form})
+            return render(request, self.template_name, {'form': form, 'invoice': invoice})
 
         shipping_address = form.save(commit=False)
-
-        invoice = get_purchase_invoice(request.user, get_site_from_request(request))
 
         if not invoice.order_items.count() or invoice.status == InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
@@ -302,16 +305,16 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy('vendor:customer-subscriptions')
 
     def post(self, request, *args, **kwargs):
-        receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
+        subscription = Subscription.objects.get(uuid=self.kwargs["uuid"])
         payment_form = CreditCardForm(request.POST)
 
         if not payment_form.is_valid():
             messages.info(request, _("Invalid Card"))
             return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
-        processor = get_site_payment_processor(receipt.order_item.invoice.site)(receipt.order_item.invoice.site, receipt.order_item.invoice)
+        processor = get_site_payment_processor(subscription.profile.site)(subscription.profile.site)
         processor.set_payment_info_form_data(request.POST, CreditCardForm)
-        processor.subscription_update_payment(receipt)
+        processor.subscription_update_payment(subscription)
 
         if not processor.transaction_submitted:
             messages.info(request, _(f"Payment gateway error: {processor.transaction_message.get('message', '')}"))
