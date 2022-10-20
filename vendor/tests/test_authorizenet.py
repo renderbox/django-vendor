@@ -13,12 +13,11 @@ from random import randrange, choice
 from siteconfigs.models import SiteConfigModel
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem, Subscription
-from vendor.models.choice import PurchaseStatus, InvoiceStatus
+from vendor.models.choice import PurchaseStatus, InvoiceStatus, SubscriptionStatus
 from vendor.processors import PaymentProcessorBase, AuthorizeNetProcessor
-from vendor.processors.authorizenet import create_subscription_model_form_past_receipts
 
+User = get_user_model()
 
-# @skipIf(True, "Webhook tests are highly dependent on data in Authroizenet and local data.")
 @tag('external')
 @skipIf((settings.AUTHORIZE_NET_API_ID is None) or (settings.AUTHORIZE_NET_TRANSACTION_KEY is None), "Authorize.Net enviornment variables not set, skipping tests")
 class AuthorizeNetProcessorTests(TestCase):
