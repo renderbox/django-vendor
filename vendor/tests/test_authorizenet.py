@@ -643,50 +643,77 @@ class AuthorizeNetProcessorTests(TestCase):
 
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
 
-        dummy_receipt = Receipt(order_item=OrderItem.objects.get(pk=2))
-        dummy_receipt.profile = CustomerProfile.objects.get(pk=1)
-        dummy_receipt.transaction = active_subscriptions[-1].id.pyval
-        dummy_payment = Payment.objects.create(invoice=self.existing_invoice,
-                                               transaction=dummy_receipt.transaction,
-                                               profile=dummy_receipt.profile,
-                                               success=True,
-                                               amount=dummy_receipt.order_item.invoice.total)
-        dummy_payment.result['account_number'] = ""
-        dummy_payment.result['account_type'] = ""
-        dummy_payment.profile = CustomerProfile.objects.get(pk=1)
-        dummy_payment.save()
+        subscription = Subscription.objects.get(pk=1)
+        subscription.gateway_id = active_subscriptions[-1].id.text
+        subscription.save()
 
         if active_subscriptions:
             self.processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
-            self.processor.subscription_update_payment(dummy_receipt)
-            dummy_payment.refresh_from_db()
-            print(f'\ntest_subscription_update_payment\nMessage: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}\nSubscription ID: {dummy_receipt.transaction}\n')
+            self.processor.subscription_update_payment(subscription)
+            subscription.refresh_from_db()
+            print(f'\ntest_subscription_update_payment\nMessage: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}\nSubscription ID: {subscription.gateway_id}\n')
             print(f"Update Card number: {self.form_data['credit_card_form']['card_number'][-4:]}")
             if 'E00027' in str(self.processor.transaction_message):
                 print("Merchant does not accept this card. Skipping test")
             else:
                 self.assertTrue(self.processor.transaction_submitted)
-                self.assertEquals(dummy_payment.result['account_number'][-4:], self.form_data['credit_card_form']['card_number'][-4:])
+                self.assertEquals(subscription.meta['payment_info']['account_number'][-4:], self.form_data['credit_card_form']['card_number'][-4:])
         else:
             print("No active Subscriptions, Skipping Test")
 
     def test_cancel_subscription_success(self):
         subscription_list = self.processor.get_list_of_subscriptions()
+        subscription = Subscription.objects.get(pk=1)
+        now = timezone.now()
+
         if not len(subscription_list):
             print("No subscriptions, Skipping Test")
             return
-        active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
-        dummy_receipt = Receipt(order_item=OrderItem.objects.get(pk=2))
-        dummy_receipt.profile = CustomerProfile.objects.get(pk=1)
-        dummy_receipt.transaction = active_subscriptions[0].id.pyval
 
+        active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
+        subscription.gateway_id = active_subscriptions[0].id.pyval
+        subscription.save()
+        customer_profile = CustomerProfile.objects.get(pk=1)
+
+        dummy_receipt = Receipt.objects.create(
+            order_item=OrderItem.objects.get(pk=2),
+            profile=customer_profile,
+            start_date=now - timedelta(days=-2),
+            end_date=now + timedelta(days=5),
+            subscription=subscription
+            )
+        
+        dummy_payment = Payment.objects.create(
+            invoice=dummy_receipt.order_item.invoice,
+            profile=customer_profile,
+            success=True,
+            status=PurchaseStatus.SETTLED,
+            amount=dummy_receipt.order_item.invoice.total,
+            subscription=subscription
+        )
+
+        if active_subscriptions:
+            self.processor.subscription_cancel(subscription)
+            self.assertTrue(self.processor.transaction_submitted)
+            self.assertTrue(subscription.status==SubscriptionStatus.CANCELED)
+        else:
+            print("No active Subscriptions, Skipping Test")
+
+    def test_cancel_subscription_fail(self):
+        subscription_list = self.processor.get_list_of_subscriptions()
+        if not len(subscription_list):
+            print("No subscriptions, Skipping Test")
+            return
+
+        active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         dummy_subscription = Subscription.objects.create(
             gateway_id=active_subscriptions[0].id.pyval,
             profile=CustomerProfile.objects.get(pk=1),
         )
+
         if active_subscriptions:
-            self.processor.subscription_cancel(dummy_subscription)
-            self.assertTrue(self.processor.transaction_submitted)
+            with self.assertRaises(Exception):
+                self.processor.subscription_cancel(dummy_subscription)
         else:
             print("No active Subscriptions, Skipping Test")
 
@@ -739,26 +766,27 @@ class AuthorizeNetProcessorTests(TestCase):
 
     def test_subscription_price_update_success(self):
         subscription_list = self.processor.get_list_of_subscriptions()
+        subscription = Subscription.objects.get(pk=1)
+
         if not len(subscription_list):
             print("No subscriptions, Skipping Test")
             return None
+
         active_subscriptions = [ s for s in subscription_list if s['status'] == 'active' ]
         subscription_id = active_subscriptions[-1].id.pyval
         new_price = randrange(1, 1000)
-        receipt = Receipt.objects.all().last()
-        receipt.transaction = subscription_id
-        receipt.save()
+
+        subscription.gateway_id = subscription_id
+        subscription.save()
+
         if active_subscriptions:
-            self.processor.subscription_update_price(receipt, new_price, self.user)
-            print(f'\test_subscription_update_price\nMessage: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}\nSubscription ID: {receipt.transaction}\n')
-            response = self.processor.subscription_info(receipt.transaction)
+            self.processor.subscription_update_price(subscription, new_price, self.user)
+            print(f'\test_subscription_update_price\nMessage: {self.processor.transaction_message}\nResponse: {self.processor.transaction_response}\nSubscription ID: {subscription.gateway_id}\n')
+            response = self.processor.subscription_info(subscription.gateway_id)
             self.assertTrue(self.processor.transaction_submitted)
             self.assertEqual(new_price, response.subscription.amount.pyval)
         else:
             print("No active Subscriptions, Skipping Test")
-
-    # def test_create_subscription_model_form_past_receipts(self):
-    #     create_subscription_model_form_past_receipts(self.site)
 
     ##########
     # Report details
@@ -843,4 +871,3 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertTrue(emails)
         
-
