@@ -116,9 +116,14 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
         subscription = get_object_or_404(Subscription, uuid=self.kwargs["uuid"])
 
         processor = get_site_payment_processor(subscription.profile.site)(subscription.profile.site)
-        processor.subscription_cancel(subscription)
+        
+        try: 
+            processor.subscription_cancel(subscription)
 
-        messages.info(self.request, _("Subscription Cancelled"))
+            messages.info(self.request, _("Subscription Cancelled"))
+
+        except Exception as exce:
+            messages.warning(self.request, _("You can only cancel subscription if you are on trial or there has been at least one settled payment."))
 
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
@@ -178,11 +183,11 @@ class SubscriptionPriceUpdateView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         site = get_site_from_request(request)
-        receipt = get_object_or_404(Receipt, profile__site=site, uuid=self.request.POST.get('receipt_uuid'))
+        subscription = get_object_or_404(Subscription, profile__site=site, uuid=self.request.POST.get('subscription_uuid'))
         offer = get_object_or_404(Offer, site=site, uuid=self.request.POST.get('offer_uuid'))
 
-        processor = get_site_payment_processor(site)(site, receipt.order_item.invoice)
-        processor.subscription_update_price(receipt, offer.current_price(), request.user)
+        processor = get_site_payment_processor(site)(site)
+        processor.subscription_update_price(subscription, offer.current_price(), request.user)
         
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 

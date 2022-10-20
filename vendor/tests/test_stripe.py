@@ -16,7 +16,6 @@ from vendor.models.choice import InvoiceStatus
 
 User = get_user_model()
 
-
 @skipIf((settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None, "Stripe enviornment variables not set, skipping tests")
 class StripeProcessorTests(TestCase):
     fixtures = ['user', 'unit_test']
@@ -513,14 +512,6 @@ class StripeProcessorTests(TestCase):
         pass
 
 
-
-
-
-
-
-
-
-
 @skipIf((settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None, "Strip enviornment variables not set, skipping tests")
 class StripeCRUDObjectTests(TestCase):
 
@@ -729,7 +720,8 @@ class StripeCRUDObjectTests(TestCase):
         
         self.assertIsNotNone(stripe_setup_intent.id)
 
-    
+
+@skipIf((settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None, "Strip enviornment variables not set, skipping tests")
 class StripeBuildObjectTests(TestCase):
 
     fixtures = ['user', 'unit_test']

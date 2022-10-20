@@ -6,7 +6,7 @@ import logging
 
 from datetime import datetime
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import IntegerChoices
 from django.utils import timezone
 from math import ceil
@@ -277,6 +277,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
     def create_payment_scheduale_interval_type(self, subscription, subscription_type):
         """
+        subscription: Type: OrderItem
         Create an interval schedule with fixed months as units for period length.
         It calculates that start date depending on the term_units and trial_occurrences defined in the term_details.
         term_units can either be by day or by month. Start date is the first billing date of the subscriptions.
@@ -293,8 +294,14 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         payment_schedule.interval.length = subscription.offer.get_period_length()
         payment_schedule.totalOccurrences = subscription.offer.get_payment_occurrences()
-        payment_schedule.startDate = CustomDate(get_future_date_days(timezone.now(), subscription.offer.get_trial_days()))
-        payment_schedule.trialOccurrences = subscription.offer.get_trial_occurrences()
+
+        if self.invoice.profile.has_owned_product(subscription.offer.products.all()):
+            payment_schedule.startDate = CustomDate(timezone.now())
+            payment_schedule.trialOccurrences = 0
+        else:
+            payment_schedule.startDate = CustomDate(get_future_date_days(timezone.now(), subscription.offer.get_trial_days()))
+            payment_schedule.trialOccurrences = subscription.offer.get_trial_occurrences()
+                
         return payment_schedule
 
     def create_transaction_order_information(self, invoice_number, description):
@@ -313,6 +320,87 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     ##########
     # Django-Vendor to Authoriaze.net data exchange functions
     ##########
+    def get_payment_success(self, response_code):
+        if response_code == "1":
+            return True
+        
+        return False
+
+    def get_payment_status(self, transaction_status):
+        if transaction_status == 'authorizedPendingCapture':
+            return PurchaseStatus.AUTHORIZED
+        elif transaction_status == 'capturedPendingSettlement':
+            return PurchaseStatus.CAPTURED
+        elif transaction_status == 'communicationError':
+            return PurchaseStatus.ERROR
+        elif transaction_status == 'refundSettledSuccessfully':
+            return PurchaseStatus.REFUNDED
+        elif transaction_status == 'approvedReview':
+            return PurchaseStatus.AUTHORIZED
+        elif transaction_status == 'declined':
+            return PurchaseStatus.DECLINED
+        elif transaction_status == 'couldNotVoid':
+            return PurchaseStatus.ERROR
+        elif transaction_status == 'expired':
+            return PurchaseStatus.DECLINED
+        elif transaction_status == 'generalError':
+            return PurchaseStatus.ERROR
+        elif transaction_status == 'failedReview':
+            return PurchaseStatus.ERROR
+        elif transaction_status == 'settledSuccessfully':
+            return PurchaseStatus.SETTLED
+        elif transaction_status == 'settlementError':
+            return PurchaseStatus.ERROR
+        elif transaction_status == 'underReview':
+            return PurchaseStatus.ERROR
+        elif transaction_status == 'voided':
+            return PurchaseStatus.VOID
+        elif transaction_status == 'FDSPendingReview':
+            return PurchaseStatus.ERROR
+        elif transaction_status == 'FDSAuthorizedPendingReview':
+            return PurchaseStatus.ERROR
+        elif transaction_status == 'returnedItem':
+            return PurchaseStatus.REFUNDED
+        else:
+            raise TypeError(f"{transaction_status} is not supported, check Authorize.Net docs for transactionStatus field choices")
+
+    def get_payment_info(self, transaction):
+        return {
+            'account_number': transaction.payment.creditCard.cardNumber.text[-4:],
+            'account_type': transaction.payment.creditCard.cardType.text,
+            'full_name': " ".join([transaction.billTo.firstName.text, transaction.billTo.lastName.text]),
+            'transaction_id': transaction.transId.text,
+            'subscription_id': transaction.subscription.id.text if hasattr(transaction, 'subscription') else "-",
+            'payment_number': transaction.subscription.payNum.text,
+            'status': transaction.transactionStatus.text
+        }
+
+    def subscription_info_to_dict(self, subscription_info):
+        return {
+            'name': subscription_info.subscription.name.text,
+            'interval': subscription_info.subscription.paymentSchedule.interval.length.text,
+            'unit': subscription_info.subscription.paymentSchedule.interval.unit.text,
+            'start_date': subscription_info.subscription.paymentSchedule.startDate.text,
+            'total_occurrences': subscription_info.subscription.paymentSchedule.totalOccurrences.text,
+            'trial_occurrences': subscription_info.subscription.paymentSchedule.trialOccurrences.text,
+            'amount': subscription_info.subscription.amount.text,
+            'trial_amount': subscription_info.subscription.trialAmount.text,
+        }
+
+    def get_vendor_subscription_status(self, subscription_status):
+        if subscription_status == 'active':
+            return SubscriptionStatus.ACTIVE
+        elif subscription_status == 'expired':
+            return SubscriptionStatus.EXPIRED
+        elif subscription_status == 'suspended':
+            return SubscriptionStatus.SUSPENDED
+        elif subscription_status == 'canceled':
+            return SubscriptionStatus.CANCELED
+        elif subscription_status == 'terminated':
+            return SubscriptionStatus.SUSPENDED
+        else:
+            raise TypeError(f"{subscription_status} status is not valid, take a look at Authorize.Net documentation")
+
     def get_transaction_raw_response(self):
         """
         Returns a dictionary with raw information about the current transaction
@@ -511,19 +599,17 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.save_subscription_result()
 
-    def subscription_update_payment(self, receipt):
+    def subscription_update_payment(self, subscription):
         """
         Updates the credit card information for the subscriptions in authorize.net
         and updates the payment record associated with the receipt.
         """
-        self.payment = Payment.objects.get(success=True, transaction=receipt.transaction, invoice=receipt.order_item.invoice)
-
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.payment = self.create_authorize_payment()
 
         self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = str(receipt.transaction)
+        self.transaction.subscriptionId = subscription.gateway_id
         self.transaction.subscription = self.transaction_type
 
         self.controller = ARBUpdateSubscriptionController(self.transaction)
@@ -533,20 +619,19 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_response = self.controller.getresponse()
         self.parse_response(subscription=True)
 
-        receipt.meta[f"payment-update-{timezone.now():%Y-%m-%d %H:%M}"] = {'raw': str({**self.transaction_message, **response})}
-        receipt.save()
+        subscription_info = self.subscription_info(subscription.gateway_id)
 
-        subscription_info = self.subscription_info(receipt.transaction)
-
+        payment_info = {}
         account_number = getattr(subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'], 'cardNumber', None)
-        if account_number:
-            self.payment.result['account_number'] = account_number.text
-
         account_type = getattr(subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'], 'accountType', None)
-        if account_type:
-            self.payment.result['account_type'] = account_type.text
 
-        self.payment.save()
+        if account_number:
+            payment_info['account_number'] = account_number.text
+
+        if account_type:
+            payment_info['account_type'] = account_type.text
+
+        subscription.save_payment_info(payment_info)
 
     def subscription_cancel(self, subscription):
         """
@@ -554,6 +639,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         transaction for it. Otherwise it will cancel the subscription on the Gateway
         and if successfull it will cancel it on the receipt.
         """
+        super().subscription_cancel(subscription)
+        
         self.transaction = apicontractsv1.ARBCancelSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.subscriptionId = str(subscription.gateway_id)
@@ -566,8 +653,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_response = self.controller.getresponse()
         self.parse_response(subscription=True)
 
-        if self.transaction_submitted:
-            super().subscription_cancel(subscription)
 
     def subscription_info(self, subscription_id):
         self.transaction = apicontractsv1.ARBGetSubscriptionRequest()
@@ -657,13 +742,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             return True
         return False
 
-    def subscription_update_price(self, receipt, new_price, user):
+    def subscription_update_price(self, subscription, new_price, user):
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.amount = self.to_valid_decimal(new_price)
 
         self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = str(receipt.transaction)
+        self.transaction.subscriptionId = str(subscription.gateway_id)
         self.transaction.subscription = self.transaction_type
 
         self.controller = ARBUpdateSubscriptionController(self.transaction)
@@ -674,7 +759,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.parse_response()
 
         if self.transaction_submitted:
-            super().subscription_update_price(receipt, new_price, user)
+            super().subscription_update_price(subscription, new_price, user)
 
     def get_customer_id_for_expiring_cards(self, month):
         paging = apicontractsv1.Paging()
@@ -757,7 +842,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             except ObjectDoesNotExist as exce:
                 logger.error(f"update_payments_to_settled payment for transaction: {settled_transaction.transId.text} was not found for site: {site}")
 
-        
 
     ##########
     # Reporting API, for transaction retrieval information
@@ -812,10 +896,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
             return response.transaction
 
-    def get_list_of_subscriptions(self, limit=1000, offset=1):
+    def get_list_of_subscriptions(self, limit=1000, offset=1, search_type=apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionActive):
         self.transaction = apicontractsv1.ARBGetSubscriptionListRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.searchType = apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionActive
+        self.transaction.searchType = search_type
         self.transaction.paging = self.create_paging(limit, offset)
 
         self.controller = ARBGetSubscriptionListController(self.transaction)
@@ -831,7 +915,156 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         else:
             return []
 
+    def get_subscription_transactions(self, subscription_info):
+        subscription_transactions = []
+        if not hasattr(subscription_info.subscription, 'arbTransactions'):
+            return []
 
+        for transaction in subscription_info.subscription.arbTransactions.arbTransaction:
+            if hasattr(transaction, 'transId'):
+                transaction_detail = self.get_transaction_detail(transaction.transId.text)
+                subscription_transactions.append(transaction_detail)
+
+        return subscription_transactions
+
+
+def sync_subscriptions(site):
+    logger.info("sync_subscriptions Starting Subscription Migration")
+    processor = AuthorizeNetProcessor(site)
+
+    active_subscriptions = processor.get_list_of_subscriptions()
+    subscription_ids = [ subscription.id.text for subscription in active_subscriptions ]
+
+    inactive_subscriptions = processor.get_list_of_subscriptions(search_type=apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionInactive)
+    subscription_ids.extend([ subscription.id.text for subscription in inactive_subscriptions ])
+    
+    for subscription_id in subscription_ids:
+        subscription_info = processor.subscription_info(subscription_id)
+
+        if hasattr(subscription_info.subscription.profile, 'email'):
+            email = subscription_info.subscription.profile.email.text
+
+            try:
+                customer_profile = CustomerProfile.objects.get(site=site, user__email__iexact=email)
+                offers = Offer.objects.filter(site=site, name=subscription_info.subscription.name)
+
+                if not offers.count():
+                    raise ObjectDoesNotExist()
+                
+                offer = offers.first()
+
+                ## Create a subscription with status.
+                subscription, _ = Subscription.objects.get_or_create(gateway_id=subscription_id, profile=customer_profile)
+                subscription.status = processor.get_vendor_subscription_status(subscription_info.subscription.status.text)
+                subscription.meta = processor.subscription_info_to_dict(subscription_info)
+                subscription.save()
+
+                ## Get transactions for subscription.
+                subscription_transactions = processor.get_subscription_transactions(subscription_info)
+
+                for transaction in subscription_transactions:
+                    transaction_id = transaction.transId.text
+                    transaction_detail = processor.get_transaction_detail(transaction_id)
+                    
+                    submitted_datetime = datetime.strptime(transaction_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S.%f%z')
+                    payment_info = processor.get_payment_info(transaction_detail)
+                    payment_status = processor.get_payment_status(transaction_detail.transactionStatus.text)
+                    payment_success = processor.get_payment_success(transaction_detail.responseCode.text)
+
+                    if not subscription.payments.filter(transaction=transaction_id).count():
+                        ### Create Invoice
+                        invoice = Invoice.objects.create(
+                            profile=customer_profile,
+                            site=site,
+                            ordered_date=submitted_datetime,
+                            total=transaction_detail.settleAmount.pyval,
+                            status=InvoiceStatus.COMPLETE
+                        )
+                        invoice.add_offer(offer)
+                        invoice.save()
+
+                        ### Create Payment
+                        payment = Payment()
+                        payment.profile = customer_profile
+                        payment.invoice = invoice
+                        payment.subscription = subscription
+                        payment.amount = transaction_detail.settleAmount.pyval
+                        payment.submitted_date = submitted_datetime
+                        payment.status = payment_status
+                        payment.success = payment_success
+                        payment.result = payment_info
+                        payment.transaction = transaction_id
+                        payment.payee_full_name = payment_info['full_name']
+                        payment.save()
+
+                        if payment_status == PurchaseStatus.SETTLED:
+                            ### Create Receipt.
+                            receipt = Receipt()
+                            receipt.profile = customer_profile
+                            receipt.order_item = invoice.order_items.first()
+                            receipt.start_date = submitted_datetime
+                            receipt.end_date = get_payment_scheduled_end_date(offer, start_date=submitted_datetime)
+                            receipt.transaction = payment.transaction
+                            receipt.subscription = subscription
+                            receipt.meta.update(payment.result)
+                            receipt.meta['payment_amount'] = payment.amount
+                            receipt.save()
+                            
+                            receipt.products.add(offer.products.first())
+
+                    else:
+                        # Update the Payment
+                        payment = subscription.payments.get(transaction=transaction_id)
+                        payment.amount = transaction_detail.settleAmount.pyval
+                        payment.submitted_date = submitted_datetime
+                        payment.status = payment_status
+                        payment.success = payment_success
+                        payment.result = payment_info
+                        payment.payee_full_name = payment_info['full_name']
+                        payment.save()
+
+                        if not payment.invoice:                        ### Create Invoice
+                            invoice = Invoice.objects.create(
+                                profile=customer_profile,
+                                site=site,
+                                ordered_date=submitted_datetime,
+                                total=transaction_detail.settleAmount.pyval,
+                                status=InvoiceStatus.COMPLETE
+                            )
+                            invoice.add_offer(offer)
+                            invoice.save()
+                            
+                            payment.invoice = invoice
+                            payment.save()
+                        else:
+                            invoice = payment.invoice
+
+                        if Receipt.objects.filter(deleted=False, transaction=transaction_id, profile=customer_profile).count():
+                            receipt = Receipt.objects.get(deleted=False, transaction=transaction_id, profile=customer_profile)
+                            
+                            if payment.status == PurchaseStatus.SETTLED:
+                                receipt.profile = customer_profile
+                                receipt.order_item = invoice.order_items.first()
+                                receipt.start_date = submitted_datetime
+                                receipt.end_date = get_payment_scheduled_end_date(offer, start_date=submitted_datetime)
+                                receipt.transaction = payment.transaction
+                                receipt.subscription = subscription
+                                receipt.meta.update(payment.result)
+                                receipt.meta['payment_amount'] = payment.amount
+                                receipt.save()
+                                
+                                receipt.products.add(offer.products.first())
+                            else:
+                                # Only receipts for settled transactions should exists
+                                receipt.deleted = True
+                                receipt.save()
+
+            except ObjectDoesNotExist as exce:
+                logger.error(f"sync_subscriptions exception: {exce}")
+            except MultipleObjectsReturned as exce:
+                logger.error(f"sync_subscriptions exception: {exce}")
+            except Exception as exce:
+                logger.error(f"sync_subscriptions exception: {exce}")
 
 def sync_subscriptions_and_create_missing_receipts(site):
     logger.info("sync_subscriptions_and_create_missing_receipts Starting Subscription Migration")
@@ -892,8 +1125,8 @@ def sync_subscriptions_and_create_missing_receipts(site):
                 # Create Payment
                 payment = Payment(profile=invoice.profile,
                             amount=invoice.total,
-                            invoice=invoice,
-                            created=submitted_datetime)
+                            invoice=invoice
+                            )
                 payment.result = payment_info
                 payment.subscription = subscription
                 payment.success = True
@@ -918,177 +1151,3 @@ def sync_subscriptions_and_create_missing_receipts(site):
                 receipt.end_date = get_payment_scheduled_end_date(offer, start_date=receipt.start_date)
                 receipt.subscription = subscription
                 receipt.save()
-    
-
-
-def create_subscription_model_form_past_receipts(site):
-    logger.info("create_subscription_model_form_past_receipts Starting Subscription Migration")
-    processor = AuthorizeNetProcessor(site)
-
-    subscriptions = processor.get_list_of_subscriptions(1000)
-    active_subscriptions = [ s for s in subscriptions if s['status'] == 'active' ]
-    
-    create_subscriptions = [sub.id.text for sub in active_subscriptions if not Subscription.objects.filter(profile__site=site, gateway_id=sub.id.text).count() ]
-    logger.info(f"create_subscription_model_form_past_receipts Create Subscriptions: {[sub for sub in create_subscriptions]}")
-
-    for sub_detail in create_subscriptions:
-        logger.info(f"create_subscription_model_form_past_receipts Starting Migration for Subscription: {sub_detail}")
-        subscription_id = sub_detail
-        past_receipt = Receipt.objects.filter(transaction=subscription_id).first()
-        
-        if past_receipt:
-            logger.info(f"create_subscription_model_form_past_receipts Deleting Receipts: {Receipt.objects.filter(transaction=subscription_id)}")
-            Receipt.objects.filter(transaction=subscription_id).update(deleted=True)
-            logger.info(f"create_subscription_model_form_past_receipts Deleting Payments: {Payment.objects.filter(transaction=subscription_id)}")
-            Payment.objects.filter(transaction=subscription_id).update(deleted=True)
-            logger.info(f"create_subscription_model_form_past_receipts Deleting Invoices: {Invoice.objects.filter(payments__in=Payment.objects.filter(transaction=subscription_id))}")
-            Invoice.objects.filter(payments__in=Payment.objects.filter(transaction=subscription_id)).update(deleted=True)
-            
-            subscription, created = Subscription.objects.get_or_create(
-                gateway_id=subscription_id,
-                profile=past_receipt.profile
-            )
-            subscription.status = SubscriptionStatus.ACTIVE
-            subscription.auto_renew = True
-            subscription.save()
-            logger.info(f"create_subscription_model_form_past_receipts Created subscription: {subscription}")
-            
-            subscription_info = processor.subscription_info(subscription_id)
-
-            for transaction in subscription_info.subscription.arbTransactions.arbTransaction:
-                logger.info(f"create_subscription_model_form_past_receipts Processing transaction {transaction}")
-                try:
-                    transaction_id = transaction.transId.text
-
-                    trans_processor = AuthorizeNetProcessor(site)
-
-                    trans_detail = trans_processor.get_transaction_detail(transaction_id)
-                    submitted_datetime = datetime.strptime(trans_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S.%f%z')
-
-                    invoice = Invoice.objects.create(
-                        status=InvoiceStatus.COMPLETE,
-                        site=past_receipt.profile.site,
-                        profile=past_receipt.profile,
-                        ordered_date=submitted_datetime,
-                        total=trans_detail.settleAmount.pyval
-                    )
-                    invoice.add_offer(past_receipt.order_item.offer)
-                    invoice.save()
-
-                    payment_info = {
-                        'account_number': trans_detail.payment.creditCard.cardNumber.text[-4:],
-                        'account_type': trans_detail.payment.creditCard.cardType.text,
-                        'full_name': " ".join([trans_detail.billTo.firstName.text, trans_detail.billTo.lastName.text]),
-                        'transaction_id': transaction_id,
-                        'subscription_id': trans_detail.subscription.id.text,
-                        'payment_number': trans_detail.subscription.payNum.text
-                    }
-
-                    # Create Payment
-                    payment = Payment(profile=invoice.profile,
-                                amount=invoice.total,
-                                invoice=invoice,
-                                created=submitted_datetime)
-                    payment.result = payment_info
-                    payment.subscription = subscription
-                    payment.success = True
-                    payment.status = PurchaseStatus.SETTLED
-                    payment.transaction = transaction_id
-                    payment.payee_full_name = payment_info['full_name']
-                    payment.amount = trans_detail.settleAmount.pyval
-                    payment.submitted_date = trans_detail.submitTimeUTC.pyval
-                    payment.save()
-
-                    # Create Receipt
-                    receipt = Receipt()
-                    receipt.profile = invoice.profile
-                    receipt.order_item = past_receipt.order_item
-                    receipt.transaction = payment.transaction
-                    receipt.meta.update(payment.result)
-                    receipt.meta['payment_amount'] = payment.amount
-                    receipt.start_date = submitted_datetime
-                    receipt.save()
-
-                    receipt.products.add(past_receipt.products.first())
-                    receipt.end_date = get_payment_scheduled_end_date(past_receipt.order_item.offer, start_date=receipt.start_date)
-                    receipt.subscription = subscription
-                    receipt.save()
-                except Exception as exce:
-                    logger.info(f"create_subscription_model_form_past_receipts Invalid Transaction: {exce}")
-
-        else:
-            subscription_info = processor.subscription_info(subscription_id)
-
-            try:
-                profile = CustomerProfile.objects.get(site=site, user__email=subscription_info.subscription.profile.email.text)
-                offer = Offer.objects.get(site=site, name=subscription_info.subscription.name)
-
-
-                subscription, created = Subscription.objects.get_or_create(
-                    gateway_id=subscription_id,
-                    profile=profile
-                )
-                if subscription_info.subscription.status.text == 'active':
-                    subscription.status = SubscriptionStatus.ACTIVE
-                subscription.auto_renew = True
-                subscription.save()
-            
-                for transaction in subscription_info.subscription.arbTransactions.arbTransaction:
-                    logger.info(f"create_subscription_model_form_past_receipts Processing transaction {transaction}")
-                    transaction_id = transaction.transId.text
-
-                    trans_processor = AuthorizeNetProcessor(site)
-
-                    trans_detail = trans_processor.get_transaction_detail(transaction_id)
-                    submitted_datetime = datetime.strptime(trans_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S.%f%z')
-
-                    invoice = Invoice.objects.create(
-                        status=InvoiceStatus.COMPLETE,
-                        site=site,
-                        profile=profile,
-                        ordered_date=submitted_datetime,
-                        total=trans_detail.settleAmount.pyval
-                    )
-                    invoice.add_offer(offer)
-                    invoice.save()
-
-                    payment_info = {
-                        'account_number': trans_detail.payment.creditCard.cardNumber.text[-4:],
-                        'account_type': trans_detail.payment.creditCard.cardType.text,
-                        'full_name': " ".join([trans_detail.billTo.firstName.text, trans_detail.billTo.lastName.text]),
-                        'transaction_id': transaction_id,
-                        'subscription_id': trans_detail.subscription.id.text,
-                        'payment_number': trans_detail.subscription.payNum.text
-                    }
-
-                    # Create Payment
-                    payment = Payment(profile=invoice.profile,
-                                amount=invoice.total,
-                                invoice=invoice,
-                                created=submitted_datetime)
-                    payment.result = payment_info
-                    payment.subscription = subscription
-                    payment.success = True
-                    payment.status = PurchaseStatus.SETTLED
-                    payment.transaction = transaction_id
-                    payment.payee_full_name = payment_info['full_name']
-                    payment.amount = trans_detail.settleAmount.pyval
-                    payment.submitted_date = trans_detail.submitTimeUTC.pyval
-                    payment.save()
-
-                    # Create Receipt
-                    receipt = Receipt()
-                    receipt.profile = invoice.profile
-                    receipt.order_item = invoice.order_items.first()
-                    receipt.transaction = payment.transaction
-                    receipt.meta.update(payment.result)
-                    receipt.meta['payment_amount'] = payment.amount
-                    receipt.start_date = submitted_datetime
-                    receipt.save()
-
-                    receipt.products.add(offer.products.first())
-                    receipt.end_date = get_payment_scheduled_end_date(offer, start_date=receipt.start_date)
-                    receipt.subscription = subscription
-                    receipt.save()
-            except Exception as exce:
-                logger.info(f"create_subscription_model_form_past_receipts Invalid Transaction: {exce} subscription id: {subscription_id}")

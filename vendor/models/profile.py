@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
-from django.db.models import Q, QuerySet, Count
+from django.db.models import Q, QuerySet, Count, Sum
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from .base import CreateUpdateModelBase
@@ -101,11 +101,13 @@ class CustomerProfile(CreateUpdateModelBase):
         # Queryset or List of model records
         if isinstance(products, QuerySet) or isinstance(products, list):
             return self.receipts.filter(Q(products__in=products),
+                                        Q(deleted=False),
                                         Q(start_date__lte=now) | Q(start_date=None),
                                         Q(end_date__gte=now) | Q(end_date=None))
 
         # Single model record
         return self.receipts.filter(Q(products=products),
+                                    Q(deleted=False),
                                     Q(start_date__lte=now) | Q(start_date=None),
                                     Q(end_date__gte=now) | Q(end_date=None))
 
@@ -159,7 +161,7 @@ class CustomerProfile(CreateUpdateModelBase):
          return set([receipt.products.first()  for receipt in self.get_active_receipts()])
 
     def get_active_offer_receipts(self, offer):
-        return self.receipts.filter(Q(order_item__offer=offer), Q(end_date__gte=timezone.now()) | Q(end_date=None))
+        return self.receipts.filter(Q(deleted=False), Q(order_item__offer=offer), Q(end_date__gte=timezone.now()) | Q(end_date=None))
 
     def get_active_receipts(self):
         return self.receipts.filter(Q(end_date__gte=timezone.now()) | Q(end_date=None))
@@ -171,7 +173,7 @@ class CustomerProfile(CreateUpdateModelBase):
         """
         Returns a tuple product and offer tuple that are related to the active receipt
         """
-        return [(receipt.products.first(), receipt.order_item.offer) for receipt in self.receipts.filter(Q(end_date__gte=timezone.now()) | Q(end_date=None))]
+        return [(receipt.products.first(), receipt.order_item.offer) for receipt in self.receipts.filter(Q(deleted=False), Q(end_date__gte=timezone.now()) | Q(end_date=None))]
 
     def get_subscriptions(self):
         return self.subscriptions.all()
@@ -198,3 +200,21 @@ class CustomerProfile(CreateUpdateModelBase):
         last_payment_dates = [subscription.get_last_payment_date() for subscription in self.subscriptions.all()]
 
         return sorted(last_payment_dates)[-1]
+
+    def get_payment_counts(self):
+        return self.payments.filter(deleted=False, status=PurchaseStatus.SETTLED).count()
+
+    def get_payment_sum(self):
+        return self.payments.filter(deleted=False, status=PurchaseStatus.SETTLED).aggregate(Sum('amount'))
+
+    def get_settled_payments(self):
+        return self.payments.filter(deleted=False, status=PurchaseStatus.SETTLED).order_by('amount', 'submitted_date')
+
+    def is_on_trial(self, offer):
+
+        on_trial_receipt = next((receipt for receipt in self.get_active_offer_receipts(offer) if receipt.transaction and 'trial' in receipt.transaction), None)
+
+        if on_trial_receipt:
+            return True
+
+        return False

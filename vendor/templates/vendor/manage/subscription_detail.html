@@ -12,7 +12,7 @@
       </div>
       <div class='card-body'>
         <h4>{{ object.gateway_id}}</h4>
-        <h4>{{ object.receipts.first.order_item.name}}</h4>
+        <h4>{{ object.name}}</h4>
         <p>{{ object.receipts.first.order_item.offer.offer_description|default_if_none:"" }}</p>
         <div class='row'>
           <div class='d-flex flex-column w-50 px-3 py-2'>
