@@ -432,6 +432,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         )
 
     def parse_success(self, subscription=True):
+        self.transaction_submitted = False
         if self.transaction_response:
             if not subscription:
                 if self.transaction_response.messages.resultCode == "Ok":
@@ -440,6 +441,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             else:
                 if self.transaction_response.messages.resultCode == "Ok":
                     self.transaction_submitted = True
+
 
     def save_payment_subscription(self):
         """
