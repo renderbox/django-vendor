@@ -89,9 +89,13 @@ class PaymentProcessorBase(object):
                                provider=self.provider,
                                invoice=self.invoice,
                                created=timezone.now()
-                            )
-        self.payment.result['account_number'] = self.payment_info.cleaned_data.get('card_number')[-4:]
-        self.payment.result['first'] = True
+                               )
+
+        payment_info = self.make_payment_info(
+            account_number=self.payment_info.cleaned_data.get('card_number')[-4:],
+            full_name=self.payment_info.cleaned_data.get('full_name')
+        )
+        self.payment.result = payment_info
         self.payment.payee_full_name = self.payment_info.cleaned_data.get('full_name')
         self.payment.payee_company = self.billing_address.cleaned_data.get('company')
         self.payment.status = PurchaseStatus.QUEUED
@@ -116,6 +120,12 @@ class PaymentProcessorBase(object):
         self.payment.result['raw'] = result_info.get('raw', "")
         self.payment.save()
 
+    def make_payment_info(self, account_number='', full_name=''):
+        return {
+            'account_number': account_number,
+            'full_name': full_name
+        }
+
     def make_transaction_response(self, raw='', errors='', payment_method='', messages=''):
         return {
             'raw': raw,
@@ -123,6 +133,14 @@ class PaymentProcessorBase(object):
             'payment_method': payment_method,
             'messages': messages
         }
+
+    def parse_response(self, subscription=True):
+        # implement in processor
+        pass
+
+    def parse_success(self, subscription=True):
+        # implement in processor
+        pass
 
     def save_subscription_transaction_result(self, subscription_success, transaction_id, result_info):
         """
@@ -377,6 +395,8 @@ class PaymentProcessorBase(object):
         for subscription in self.invoice.get_recurring_order_items():
             self.create_payment_model()
             self.subscription_payment(subscription)
+            self.parse_response(subscription=True)
+            self.parse_success(subscription=True)
             self.update_invoice_status(InvoiceStatus.COMPLETE)
             self.create_subscription_model()
             
