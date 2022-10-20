@@ -1,18 +1,20 @@
 import itertools
 import uuid
 
+from allauth.account.signals import user_logged_in
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
 from django.dispatch import receiver
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
-from allauth.account.signals import user_logged_in
 
 from vendor.models.utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
-from vendor.utils import get_site_from_request
+from vendor.utils import get_site_from_request, get_subscription_start_date
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES, TermType, InvoiceStatus
 from .offer import Offer
@@ -66,6 +68,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
     def add_offer(self, offer, quantity=1):
 
         order_item, created = self.order_items.get_or_create(offer=offer)
+        
         # make sure the invoice pk is also in the OriderItem
         if not created and order_item.offer.allow_multiple:
             order_item.quantity += quantity
@@ -73,6 +76,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
 
         self.update_totals()
         self.save()
+
         return order_item
 
     def remove_offer(self, offer, clear=False):
@@ -193,19 +197,39 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         the upcoming one.
         """
         recurring_offers = self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)
+
         if not recurring_offers.count():
             return None
+
         next_billing_dates = [order_item.offer.get_next_billing_date() for order_item in recurring_offers]
 
         next_billing_dates.sort()
 
         return next_billing_dates[0]
+    
+    def get_billing_dates_and_prices(self):
+        now = timezone.now()
+        payments_info = {now: self.get_one_time_transaction_total()}
+        
+        for recurring_order_item in self.get_recurring_order_items():
+            offer_total = (recurring_order_item.total - recurring_order_item.discounts)
+            subscription_start_date = get_subscription_start_date(recurring_order_item.offer, self.profile, now)
+
+            if subscription_start_date in payments_info:
+                payments_info.update({subscription_start_date: payments_info[subscription_start_date] + offer_total})
+            else:
+                payments_info[subscription_start_date] = offer_total
+
+        sorted_payments = {key: payments_info[key] for key in sorted(payments_info.keys()) }
+        
+        return sorted_payments
 
     def get_next_billing_price(self):
         """
         Returns the price corresponding to the upcoming billing date.
         """
         recurring_offers = self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)
+
         if not recurring_offers.count():
             return None
 

@@ -104,7 +104,8 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
 
         processor = AuthorizeNetProcessor(site, invoice)
         processor.subscription = subscription
-        processor.renew_subscription(subscription.gateway_id, payment_info, payment_status, payment_success)
+        
+        processor.renew_subscription(subscription, transaction_id, payment_status, payment_success)
         logger.info(f"AuthorizeCaptureAPI subscription_save_transaction creating new payment and receipt for subscription, for {subscription_id}")
         
         return None # No need to continue to create receipt as it is done in the above function

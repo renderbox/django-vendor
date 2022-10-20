@@ -59,13 +59,13 @@
                                         </td>
                                 </tr>
                                 {% endif %}
-                                {% if object.status == 20 %}
+                                {% if object.subscription %}
                                 <tr>
                                         <th>{% trans 'Actions' %}</th>
                                         <td>
                                                 {% if object.order_item.offer.terms < 200 %}
                                                 <form method="post" class="ml-auto"
-                                                        action="{% url 'vendor_api:customer-subscription-cancel' object.uuid %}">
+                                                        action="{% url 'vendor_api:customer-subscription-cancel' object.subscription.uuid %}">
                                                         {% csrf_token %}
                                                         <button class="btn btn-sm btn-danger rounded"
                                                                 type="submit">{% trans 'Cancel Subscription' %}</button>

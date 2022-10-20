@@ -13,7 +13,7 @@ from django.views.generic.list import ListView
 
 
 from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm, AddressForm
-from vendor.models import Offer, Invoice, Address, OrderItem, Receipt
+from vendor.models import Offer, Invoice, Address, OrderItem, Receipt, Subscription
 from vendor.models.choice import TermType, PurchaseStatus, InvoiceStatus
 from vendor.processors import get_site_payment_processor
 from vendor.utils import get_site_from_request, get_or_create_session_cart, clear_session_purchase_data
@@ -302,16 +302,16 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy('vendor:customer-subscriptions')
 
     def post(self, request, *args, **kwargs):
-        receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
+        subscription = Subscription.objects.get(uuid=self.kwargs["uuid"])
         payment_form = CreditCardForm(request.POST)
 
         if not payment_form.is_valid():
             messages.info(request, _("Invalid Card"))
             return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
-        processor = get_site_payment_processor(receipt.order_item.invoice.site)(receipt.order_item.invoice.site, receipt.order_item.invoice)
+        processor = get_site_payment_processor(subscription.profile.site)(subscription.profile.site)
         processor.set_payment_info_form_data(request.POST, CreditCardForm)
-        processor.subscription_update_payment(receipt)
+        processor.subscription_update_payment(subscription)
 
         if not processor.transaction_submitted:
             messages.info(request, _(f"Payment gateway error: {processor.transaction_message.get('message', '')}"))

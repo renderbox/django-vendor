@@ -586,19 +586,17 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.save_subscription_result()
 
-    def subscription_update_payment(self, receipt):
+    def subscription_update_payment(self, subscription):
         """
         Updates the credit card information for the subscriptions in authorize.net
         and updates the payment record associated with the receipt.
         """
-        self.payment = Payment.objects.get(success=True, transaction=receipt.transaction, invoice=receipt.order_item.invoice)
-
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.payment = self.create_authorize_payment()
 
         self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = str(receipt.subscription.gateway_id)
+        self.transaction.subscriptionId = subscription.gateway_id
         self.transaction.subscription = self.transaction_type
 
         self.controller = ARBUpdateSubscriptionController(self.transaction)
@@ -609,20 +607,19 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.check_subscription_response(response)
 
-        receipt.meta[f"payment-update-{timezone.now():%Y-%m-%d %H:%M}"] = {'raw': str({**self.transaction_message, **response})}
-        receipt.save()
+        subscription_info = self.subscription_info(subscription.gateway_id)
 
-        subscription_info = self.subscription_info(receipt.subscription.gateway_id)
-
+        payment_info = {}
         account_number = getattr(subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'], 'cardNumber', None)
-        if account_number:
-            self.payment.result['account_number'] = account_number.text
-
         account_type = getattr(subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'], 'accountType', None)
-        if account_type:
-            self.payment.result['account_type'] = account_type.text
 
-        self.payment.save()
+        if account_number:
+            payment_info['account_number'] = account_number.text
+
+        if account_type:
+            payment_info['account_type'] = account_type.text
+
+        subscription.save_payment_info(payment_info)
 
     def subscription_cancel(self, subscription):
         """
@@ -735,13 +732,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             return True
         return False
 
-    def subscription_update_price(self, receipt, new_price, user):
+    def subscription_update_price(self, subscription, new_price, user):
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.amount = self.to_valid_decimal(new_price)
 
         self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = str(receipt.subscription.gateway_id)
+        self.transaction.subscriptionId = str(subscription.gateway_id)
         self.transaction.subscription = self.transaction_type
 
         self.controller = ARBUpdateSubscriptionController(self.transaction)
@@ -753,7 +750,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.check_subscription_response(response)
 
         if self.transaction_submitted:
-            super().subscription_update_price(receipt, new_price, user)
+            super().subscription_update_price(subscription, new_price, user)
 
     def get_customer_id_for_expiring_cards(self, month):
         paging = apicontractsv1.Paging()
@@ -1120,8 +1117,8 @@ def sync_subscriptions_and_create_missing_receipts(site):
                 # Create Payment
                 payment = Payment(profile=invoice.profile,
                             amount=invoice.total,
-                            invoice=invoice,
-                            created=submitted_datetime)
+                            invoice=invoice
+                            )
                 payment.result = payment_info
                 payment.subscription = subscription
                 payment.success = True
