@@ -134,11 +134,11 @@ class PaymentProcessorBase(object):
             'messages': messages
         }
 
-    def parse_response(self, subscription=True):
+    def parse_response(self):
         # implement in processor
         pass
 
-    def parse_success(self, subscription=True):
+    def parse_success(self):
         # implement in processor
         pass
 
@@ -428,8 +428,6 @@ class PaymentProcessorBase(object):
         for subscription in self.invoice.get_recurring_order_items():
             self.create_payment_model()
             self.subscription_payment(subscription)
-            self.parse_response(subscription=True)
-            self.parse_success(subscription=True)
             self.update_invoice_status(InvoiceStatus.COMPLETE)
             self.create_subscription_model()
             
