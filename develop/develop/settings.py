@@ -180,8 +180,8 @@ AUTHORIZE_NET_KEY = os.getenv("AUTHORIZE_NET_KEY")
 AUTHORIZE_NET_TRANSACTION_TYPE_DEFAULT = os.getenv("AUTHORIZE_NET_TRANSACTION_TYPE_DEFAULT")
 
 # Stripe Settings
-STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY")
-STRIPE_TEST_PUBLIC_KEY = os.getenv("STRIPE_TEST_PUBLIC_KEY")
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY")
 STRIPE_LIVE_MODE = False
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -217,7 +217,12 @@ LOGGING = {
             'filename': 'vendor.log',
             'level': 'DEBUG',
             'formatter': 'verbose'
-        }
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'vendor': {

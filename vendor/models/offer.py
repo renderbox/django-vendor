@@ -1,5 +1,5 @@
 import uuid
-
+import math
 from autoslug import AutoSlugField
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
@@ -88,7 +88,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         currency = self.get_best_currency(currency)
         return sum([product.get_msrp(currency) for product in self.products.all()])
 
-    def current_price(self, currency=DEFAULT_CURRENCY):
+    def current_price_object(self, currency=DEFAULT_CURRENCY):
         '''
         Finds the highest priority active price and returns that, otherwise returns msrp total.
         '''
@@ -102,7 +102,14 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         elif price.cost is None:
             return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price".
 
-        return price.cost
+        return price
+
+    def current_price(self, currency=DEFAULT_CURRENCY):
+        price = self.current_price_object(currency=currency)
+        if isinstance(price, (int, float)):
+            return price
+        else:
+            return price.cost
 
     def add_to_cart_link(self):
         return reverse("vendor_api:add-to-cart", kwargs={"slug": self.slug})
@@ -171,6 +178,15 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
             return 0
 
         return self.term_details.get('trial_amount', 0)
+
+    def get_trial_duration_in_months(self):
+        duration = self.term_details.get('trial_days', 0)
+
+        if duration <= 0:
+            return 0
+
+        return math.ceil(duration/31)
+
 
     def has_trial_occurrences(self):
         if self.term_details.get('trial_occurrences', 0) > 0:

@@ -3,6 +3,7 @@ Base Payment processor used by all derived processors.
 """
 import django.dispatch
 
+from decimal import Decimal, ROUND_DOWN
 from django.conf import settings
 from django.utils import timezone
 from vendor import config
@@ -279,6 +280,15 @@ class PaymentProcessorBase(object):
         Unique partial template for the processor
         """
         pass
+
+    def to_valid_decimal(self, number):
+        # TODO: Need to check currency to determin decimal places.
+        return Decimal(number).quantize(Decimal('.00'))
+
+    def to_stripe_valid_unit(self, number):
+        if number > 0:
+            return int(number) * 100
+        return 0
 
     # -------------------
     # Process a Payment

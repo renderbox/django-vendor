@@ -71,7 +71,6 @@ class CartView(TemplateView):
         return render(request, self.template_name, context)
 
 
-
 class AccountInformationView(LoginRequiredMixin, TemplateView):
     template_name = 'vendor/checkout.html'
 
@@ -83,6 +82,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         clear_session_purchase_data(request)
 
         invoice = get_purchase_invoice(request.user, get_site_from_request(request))
+        
         if not invoice.order_items.count():
             return redirect('vendor:cart')
 
@@ -100,6 +100,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
         context['form'] = form
         context['invoice'] = invoice
+
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -119,6 +120,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
         # TODO: Need to add a drop down to select existing address
         shipping_address, created = invoice.profile.get_or_create_address(shipping_address)
+
         if created:
             shipping_address.profile = invoice.profile
             shipping_address.save()
@@ -126,7 +128,6 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         invoice.save()
 
         return redirect('vendor:checkout-payment')
-
 
 
 class PaymentView(LoginRequiredMixin, TemplateView):
@@ -137,6 +138,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         invoice = get_purchase_invoice(request.user, get_site_from_request(request))
+
         if not invoice.order_items.count():
             return redirect('vendor:cart')
 
@@ -157,6 +159,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
             return redirect('vendor:cart')
 
         credit_card_form = CreditCardForm(request.POST)
+        
         if request.POST.get('billing-same_as_shipping') == 'on':
             billing_address_form = BillingAddressForm(instance=invoice.shipping_address)
             billing_address_form.data = {f'billing-{key}': value for key, value in billing_address_form.initial.items()}

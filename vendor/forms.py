@@ -419,3 +419,19 @@ class AuthorizeNetIntegrationForm(forms.ModelForm):
         self.fields['client_id'].required = True
         self.fields['public_key'].required = True
         self.fields['private_key'].required = True
+
+
+class StripeIntegrationForm(forms.ModelForm):
+
+    class Meta:
+        model = Credential
+        fields = ['public_key', 'private_key']
+        labels = {
+            'public_key': _("Publishable Client Key"),
+            'private_key': _("Secret Server Key")
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['public_key'].required = True
+        self.fields['private_key'].required = True

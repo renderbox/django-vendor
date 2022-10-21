@@ -15,11 +15,11 @@ from vendor.config import DEFAULT_CURRENCY
 
 from vendor.models.base import get_product_model
 from vendor.models.choice import InvoiceStatus
+
+
 #####################
 # CUSTOMER PROFILE
 #####################
-
-
 class CustomerProfile(CreateUpdateModelBase):
     '''
     Additional customer information related to purchasing.
@@ -29,7 +29,8 @@ class CustomerProfile(CreateUpdateModelBase):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), on_delete=models.CASCADE, related_name="customer_profile")
     currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY)      # User's default currency
     site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="customer_profile")                      # For multi-site support
-
+    meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)
+        
     objects = models.Manager()
     on_site = CurrentSiteManager()
 
@@ -57,6 +58,7 @@ class CustomerProfile(CreateUpdateModelBase):
     def get_cart(self):
         if self.has_invoice_in_checkout():
             self.revert_invoice_to_cart()
+    
         cart, created = self.invoices.get_or_create(status=InvoiceStatus.CART)
         return cart
 
