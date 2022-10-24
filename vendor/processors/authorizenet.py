@@ -71,6 +71,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     transaction = None
     merchant_auth = None
     transaction_type = None
+    subscription_details = []
 
     def __str__(self):
         return 'Authorize.Net'
@@ -441,6 +442,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             else:
                 if self.transaction_response.messages.resultCode == "Ok":
                     self.transaction_submitted = True
+                    self.subscription_details = self.transaction_response.subscriptionDetails
 
 
     def save_payment_subscription(self):
@@ -559,8 +561,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         response = self.controller.getresponse()
         self.transaction_response = response
         self.parse_response(subscription=False)
-
-        self.process_payment_transaction_response()
 
         if self.transaction_submitted:
             self.payment.status = PurchaseStatus.CAPTURED
@@ -915,7 +915,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.parse_response()
 
         if self.transaction_submitted:
-            return self.transaction_response.subscriptionDetails.subscriptionDetail
+            return self.subscription_details
         else:
             return []
 
