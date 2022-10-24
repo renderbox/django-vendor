@@ -412,17 +412,36 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             response.pop('messages')
         return str({**self.transaction_message, **response})
 
-    def process_payment_transaction_response(self):
+    def parse_response(self, subscription=True):
         """
-        Processes the transaction reponse from the gateway so it can be saved in the payment model
+        Processes the transaction response from the gateway so it can be saved in the payment model
         """
         self.transaction_id = str(getattr(self.transaction_response, 'transId', 'failed_payment'))
 
-        transaction_info = {}
-        transaction_info['raw'] = self.get_transaction_raw_response()
-        transaction_info['account_type'] = ast.literal_eval(transaction_info['raw']).get('accountType')
+        if not subscription:
+            self.check_response()
+        else:
+            self.check_subscription_response()
 
-        self.transaction_response = transaction_info
+        self.parse_success(subscription=subscription)
+
+        self.transaction_response = self.make_transaction_response(
+            raw=self.get_transaction_raw_response(),
+            messages=f'trans id is {self.transaction_id}'
+
+        )
+
+    def parse_success(self, subscription=True):
+        self.transaction_submitted = False
+        if self.transaction_response:
+            if not subscription:
+                if self.transaction_response.messages.resultCode == "Ok":
+                    if hasattr(self.transaction_response.transactionResponse, 'messages') is True:
+                        self.transaction_submitted = True
+            else:
+                if self.transaction_response.messages.resultCode == "Ok":
+                    self.transaction_submitted = True
+
 
     def save_payment_subscription(self):
         """
@@ -431,10 +450,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         self.transaction_id = self.transaction_message.get("subscription_id", 'failed_payement')
 
-        transaction_info = {}
-        transaction_info['raw'] = self.get_transaction_raw_response()
-
-        self.transaction_response = transaction_info
+        self.transaction_response = self.make_transaction_response(
+            raw=self.get_transaction_raw_response(),
+            messages=f'trans id is {self.transaction_id}'
+        )
 
     def save_subscription_result(self):
         """
@@ -443,69 +462,67 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         self.transaction_id = self.transaction_message.get("subscription_id", 'failed_subscription')
 
-        transaction_info = {}
-        transaction_info['raw'] = self.get_transaction_raw_response()
+        self.transaction_response = self.make_transaction_response(
+            raw=self.get_transaction_raw_response(),
+            messages=f'trans id is {self.transaction_id}'
+        )
 
-        self.transaction_response = transaction_info
-
-    def check_response(self, response):
+    def check_response(self):
         """
         Checks the transaction response and set the transaction_submitted and transaction_response variables
         """
-        self.transaction_response = response.transactionResponse
         self.transaction_message = {}
         self.transaction_submitted = False
         self.transaction_message['msg'] = ""
-        if response is not None:
+        if self.transaction_response is not None:
             # Check to see if the API request was successfully received and acted upon
-            if response.messages.resultCode == "Ok":
+            if self.transaction_response.messages.resultCode == "Ok":
                 # Since the API request was successful, look for a transaction response
                 # and parse it to display the results of authorizing the card
-                if hasattr(response.transactionResponse, 'messages') is True:
-                    self.transaction_submitted = True
+                if hasattr(self.transaction_response.transactionResponse, 'messages') is True:
+                    #self.transaction_submitted = True
                     self.transaction_message['msg'] = "Payment Complete"
-                    self.transaction_message['trans_id'] = response.transactionResponse.transId
-                    self.transaction_message['response_code'] = response.transactionResponse.responseCode
-                    self.transaction_message['code'] = response.transactionResponse.messages.message[0].code
-                    self.transaction_message['message'] = response.transactionResponse.messages.message[0].description
+                    self.transaction_message['trans_id'] = self.transaction_response.transactionResponse.transId
+                    self.transaction_message['response_code'] = self.transaction_response.transactionResponse.responseCode
+                    self.transaction_message['code'] = self.transaction_response.transactionResponse.messages.message[0].code
+                    self.transaction_message['message'] = self.transaction_response.transactionResponse.messages.message[0].description
                 else:
                     self.transaction_message['msg'] = 'Failed Transaction.'
-                    if hasattr(response.transactionResponse, 'errors') is True:
-                        self.transaction_message['error_code'] = response.transactionResponse.errors.error[0].errorCode
-                        self.transaction_message['error_text'] = response.transactionResponse.errors.error[0].errorText
+                    if hasattr(self.transaction_response.transactionResponse, 'errors') is True:
+                        self.transaction_message['error_code'] = self.transaction_response.transactionResponse.errors.error[0].errorCode
+                        self.transaction_message['error_text'] = self.transaction_response.transactionResponse.errors.error[0].errorText
                         logger.info(f"AuthorizeNetProcessor check_response Failed Transaction: code {self.transaction_message['error_code']}, msg: {self.transaction_message['error_text']}")
             # Or, print errors if the API request wasn't successful
             else:
                 self.transaction_message['msg'] = 'Failed Transaction.'
-                if hasattr(response, 'transactionResponse') is True and hasattr(response.transactionResponse, 'errors') is True:
-                    self.transaction_message['error_code'] = response.transactionResponse.errors.error[0].errorCode
-                    self.transaction_message['error_text'] = response.transactionResponse.errors.error[0].errorText
+                if hasattr(self.transaction_response, 'transactionResponse') is True and hasattr(self.transaction_response.transactionResponse, 'errors') is True:
+                    self.transaction_message['error_code'] = self.transaction_response.transactionResponse.errors.error[0].errorCode
+                    self.transaction_message['error_text'] = self.transaction_response.transactionResponse.errors.error[0].errorText
                 else:
-                    self.transaction_message['error_code'] = response.messages.message[0]['code'].text
-                    self.transaction_message['error_text'] = response.messages.message[0]['text'].text
+                    self.transaction_message['error_code'] = self.transaction_response.messages.message[0]['code'].text
+                    self.transaction_message['error_text'] = self.transaction_response.messages.message[0]['text'].text
                 logger.info(f"AuthorizeNetProcessor check_response Failed Transaction: code {self.transaction_message['error_code']}, msg: {self.transaction_message['error_text']}")
         else:
             logger.info("AuthorizeNetProcessor check_response Null Response")
             self.transaction_message['msg'] = 'Null Response.'
 
-    def check_subscription_response(self, response):
-        self.transaction_response = response
+    def check_subscription_response(self):
         self.transaction_message = {}
         self.transaction_submitted = False
         self.transaction_message['msg'] = ""
-        self.transaction_message['code'] = response.messages.message[0]['code'].text
-        self.transaction_message['message'] = response.messages.message[0]['text'].text
+        self.transaction_message['code'] = self.transaction_response.messages.message[0]['code'].text
+        self.transaction_message['message'] = self.transaction_response.messages.message[0]['text'].text
 
-        if (response.messages.resultCode == "Ok"):
-            self.transaction_submitted = True
+        if (self.transaction_response.messages.resultCode == "Ok"):
+            #self.transaction_submitted = True
             self.transaction_message['msg'] = "Subscription Tansaction Complete"
-            if 'subscriptionId' in response.__dict__:
-                self.transaction_message['subscription_id'] = response.subscriptionId.text
+            if 'subscriptionId' in self.transaction_response.__dict__:
+                self.transaction_message['subscription_id'] = self.transaction_response.subscriptionId.text
         
         logger.info(f"AuthorizeNetProcessor check_subscription_response submitted: {self.transaction_submitted} msg: {self.transaction_message}")
 
     def check_customer_list_response(self, response):
-        self.transaction_response = response
+        self.transaction_response = response # TODO use make_transaction_response
         self.transaction_message = {}
         self.transaction_submitted = False
         self.transaction_message['msg'] = ""
@@ -540,7 +557,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         # You execute and get the response
         response = self.controller.getresponse()
-        self.check_response(response)
+        self.transaction_response = response
+        self.parse_response(subscription=False)
 
         self.process_payment_transaction_response()
 
@@ -580,8 +598,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.controller.execute()
 
         # Getting the response
-        response = self.controller.getresponse()
-        self.check_subscription_response(response)
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(subscription=True)
 
         self.save_subscription_result()
 
@@ -602,9 +620,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.set_controller_api_endpoint()
         self.controller.execute()
 
-        response = self.controller.getresponse()
-
-        self.check_subscription_response(response)
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(subscription=True)
 
         subscription_info = self.subscription_info(subscription.gateway_id)
 
@@ -637,9 +654,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.set_controller_api_endpoint()
         self.controller.execute()
 
-        response = self.controller.getresponse()
-
-        self.check_subscription_response(response)
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(subscription=True)
 
 
     def subscription_info(self, subscription_id):
@@ -677,8 +693,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.set_controller_api_endpoint()
         self.controller.execute()
 
-        response = self.controller.getresponse()
-        self.check_response(response)
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(subscription=False)
 
         if self.transaction_submitted:
             payment.status = PurchaseStatus.REFUNDED
@@ -695,9 +711,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.set_controller_api_endpoint()
         self.controller.execute()
 
-        response = self.controller.getresponse()
-
-        self.check_response(response)
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(subscription=False)
 
         super().void_payment()
 
@@ -721,8 +736,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.controller.execute()
 
         # You execute and get the response
-        response = self.controller.getresponse()
-        self.check_response(response)
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(subscription=False)
 
         if self.transaction_submitted:
             self.payment.transaction = self.transaction_message['trans_id'].text
@@ -744,9 +759,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.set_controller_api_endpoint()
         self.controller.execute()
 
-        response = self.controller.getresponse()
-
-        self.check_subscription_response(response)
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response()
 
         if self.transaction_submitted:
             super().subscription_update_price(subscription, new_price, user)
@@ -897,9 +911,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.controller.execute()
 
         # Work on the response
-        response = self.controller.getresponse()
-
-        self.check_subscription_response(response)
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response()
 
         if self.transaction_submitted:
             return self.transaction_response.subscriptionDetails.subscriptionDetail

@@ -110,3 +110,5 @@ develop.json
 # VS Code
 .vscode/
 
+# Pycharm
+.idea
