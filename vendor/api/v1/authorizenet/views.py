@@ -46,7 +46,6 @@ def update_payment(site, transaction_id, transaction_detail):
     except Exception as exce:
         logger.error(f"AuthorizeCaptureAPI update_payment error: {exce}")
         
-
 def subscription_save_transaction(site, transaction_id, transaction_detail):
     processor = AuthorizeNetProcessor(site)
 
