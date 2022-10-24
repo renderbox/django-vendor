@@ -39,7 +39,7 @@ class PaymentProcessorBase(object):
     transaction_token = None
     transaction_id = ""
     transaction_submitted = False
-    transaction_message = {}
+    transaction_info = {}
     transaction_response = {}
 
     def __init__(self, site, invoice=None):
@@ -126,19 +126,19 @@ class PaymentProcessorBase(object):
             'full_name': full_name
         }
 
-    def make_transaction_response(self, raw='', errors='', payment_method='', messages=''):
+    def make_transaction_response(self, raw='', errors='', payment_method='', data=''):
         return {
             'raw': raw,
             'errors': errors,
             'payment_method': payment_method,
-            'messages': messages
+            'data': data
         }
 
-    def parse_response(self):
+    def parse_response(self, *args, **kwargs):
         # implement in processor
         pass
 
-    def parse_success(self):
+    def parse_success(self, *args, **kwargs):
         # implement in processor
         pass
 
@@ -315,6 +315,12 @@ class PaymentProcessorBase(object):
         if number > 0:
             return int(number) * 100
         return 0
+
+
+    def process_transaction_response(self, *args, **kwargs):
+        self.parse_response(*args, **kwargs)
+        self.parse_success(*args, **kwargs)
+        ...
 
     # -------------------
     # Process a Payment
