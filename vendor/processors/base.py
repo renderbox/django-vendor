@@ -123,17 +123,16 @@ class PaymentProcessorBase(object):
         self.payment.result.update(self.transaction_info)
         self.payment.save()
 
-    def get_payment_info(self):
+    def get_payment_info(self, account_number=None, full_name=None):
         """
         Each processor should implement their own method, but they should
         all return at least the account_number and full_name as a dictionary.
         eg:
+        """
         return {
             'account_number': account_number,
             'full_name': full_name
         }
-        """
-        ...
 
 
     def get_transaction_info(self, raw='', errors='', payment_method='', data=''):

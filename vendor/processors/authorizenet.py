@@ -368,15 +368,18 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             raise TypeError(f"{transaction_status} is not supported, check Authorize.Net docs for transactionStatus field choices")
 
     def get_payment_info(self, transaction):
-        return {
-            'account_number': transaction.payment.creditCard.cardNumber.text[-4:],
+        account_number = transaction.payment.creditCard.cardNumber.text[-4:]
+        full_name = " ".join([transaction.billTo.firstName.text, transaction.billTo.lastName.text])
+
+        payment_info = super().get_payment_info(account_number, full_name)
+        
+        return payment_info.update({
             'account_type': transaction.payment.creditCard.cardType.text,
-            'full_name': " ".join([transaction.billTo.firstName.text, transaction.billTo.lastName.text]),
             'transaction_id': transaction.transId.text,
             'subscription_id': transaction.subscription.id.text if hasattr(transaction, 'subscription') else "-",
             'payment_number': transaction.subscription.payNum.text,
             'status': transaction.transactionStatus.text
-        }
+        })
 
     def subscription_info_to_dict(self, subscription_info):
         return {
