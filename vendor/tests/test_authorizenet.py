@@ -190,7 +190,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         results = [f"{key}: {value}" for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'data' in p.result for key, value in p.result.get('data').items()]
-        if 'The merchant does not accept this type of credit card' in results:
+        errors = " ".join([f"{key}: {value}" for e in self.processor.transaction_info['errors'] for key, value in e.items()])
+
+        if 'E00027' in errors or\
+           'E00012' in errors:
             print(f'Skipping test test_process_payment_fail_cvv_no_match because merchant does not accept card')
         else:
             self.assertTrue('avsResultCode: N' in results)
@@ -210,7 +213,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         results = [f"{key}: {value}" for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'data' in p.result for key, value in p.result.get('data').items()]
-        if 'The merchant does not accept this type of credit card' in results:
+        errors = " ".join([f"{key}: {value}" for e in self.processor.transaction_info['errors'] for key, value in e.items()])
+
+        if 'E00027' in errors or\
+           'E00012' in errors:
             print(f'Skipping test test_process_payment_fail_cvv_should_not_be_on_card because merchant does not accept card')
         else:
             self.assertTrue('avsResultCode: S' in results)
@@ -231,7 +237,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         results = [f"{key}: {value}" for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'data' in p.result for key, value in p.result.get('data').items()]
-        if 'The merchant does not accept this type of credit card' in results:
+        errors = " ".join([f"{key}: {value}" for e in self.processor.transaction_info['errors'] for key, value in e.items()])
+
+        if 'E00027' in errors or\
+           'E00012' in errors:
             print(f'Skipping test test_process_payment_fail_cvv_not_certified because merchant does not accept card')
         else:
             self.assertTrue('avsResultCode: U' in results)
@@ -250,7 +259,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
         results = [f"{key}: {value}" for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'data' in p.result for key, value in p.result.get('data').items()]
-        if 'The merchant does not accept this type of credit card' in results:
+        errors = " ".join([f"{key}: {value}" for e in self.processor.transaction_info['errors'] for key, value in e.items()])
+
+        if 'E00027' in errors or\
+           'E00012' in errors:
             print(f'Skipping test test_process_payment_fail_cvv_not_processed because merchant does not accept card')
         else:
             self.assertTrue('avsResultCode: P' in results)
@@ -290,7 +302,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
+        errors = " ".join([f"{key}: {value}" for e in self.processor.transaction_info['errors'] for key, value in e.items()])
+
+        if 'E00027' in errors or\
+           'E00012' in errors:
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
             self.assertTrue('avsResultCode: E' in [f"{key}: {value}" for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'data' in p.result for key, value in p.result.get('data').items()])
@@ -310,7 +325,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
+        errors = " ".join([f"{key}: {value}" for e in self.processor.transaction_info['errors'] for key, value in e.items()])
+
+        if 'E00027' in errors or\
+           'E00012' in errors:
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
             self.assertTrue('avsResultCode: G' in [f"{key}: {value}" for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'data' in p.result for key, value in p.result.get('data').items()])
@@ -331,7 +349,10 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertIsNotNone(self.processor.payment)
 
-        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
+        errors = " ".join([f"{key}: {value}" for e in self.processor.transaction_info['errors'] for key, value in e.items()])
+
+        if 'E00027' in errors or\
+           'E00012' in errors:
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
             self.assertTrue('avsResultCode: N' in [f"{key}: {value}" for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'data' in p.result for key, value in p.result.get('data').items()])
@@ -351,7 +372,10 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
+        errors = " ".join([f"{key}: {value}" for e in self.processor.transaction_info['errors'] for key, value in e.items()])
+
+        if 'E00027' in errors or\
+           'E00012' in errors:
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
             self.assertTrue('avsResultCode: R' in [f"{key}: {value}" for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'data' in p.result for key, value in p.result.get('data').items()])
@@ -371,7 +395,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
+        
+        errors = " ".join([f"{key}: {value}" for e in self.processor.transaction_info['errors'] for key, value in e.items()])
+
+        if 'E00027' in errors or\
+           'E00012' in errors:
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
             self.assertTrue('avsResultCode: S' in [f"{key}: {value}" for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'data' in p.result for key, value in p.result.get('data').items()])
@@ -391,7 +419,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
+        
+        errors = " ".join([f"{key}: {value}" for e in self.processor.transaction_info['errors'] for key, value in e.items()])
+
+        if 'E00027' in errors or\
+           'E00012' in errors:
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
             self.assertTrue('avsResultCode: U' in [f"{key}: {value}" for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'data' in p.result for key, value in p.result.get('data').items()])
@@ -411,7 +443,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
+        
+        errors = " ".join([f"{key}: {value}" for e in self.processor.transaction_info['errors'] for key, value in e.items()])
+
+        if 'E00027' in errors or\
+           'E00012' in errors:
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
             self.assertTrue('avsResultCode: W' in [f"{key}: {value}" for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'data' in p.result for key, value in p.result.get('data').items()])
@@ -431,7 +467,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
+        
+        errors = " ".join([f"{key}: {value}" for e in self.processor.transaction_info['errors'] for key, value in e.items()])
+
+        if 'E00027' in errors or\
+           'E00012' in errors:
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
             self.assertTrue('avsResultCode: X' in [f"{key}: {value}" for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'data' in p.result for key, value in p.result.get('data').items()])
@@ -451,7 +491,11 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
-        if 'duplicate' in Payment.objects.filter(invoice=self.existing_invoice).first().result.get("raw", ""):
+        
+        errors = " ".join([f"{key}: {value}" for e in self.processor.transaction_info['errors'] for key, value in e.items()])
+
+        if 'E00027' in errors or\
+           'E00012' in errors:
             print("Duplicate transaction registered by Payment Gateway Skipping Tests")
         else:
             self.assertTrue('avsResultCode: Z' in [f"{key}: {value}" for p in Payment.objects.filter(invoice=self.existing_invoice, subscription=None) if 'data' in p.result for key, value in p.result.get('data').items()])
@@ -489,7 +533,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.amount = 0.01
         payment.invoice = self.existing_invoice
         payment.transaction = successfull_transactions[random_index].transId.text
-        payment.result["raw"] = str({ 'accountNumber': successfull_transactions[random_index].accountNumber.text})
+        payment.result["payment_info"] = str({ 'account_number': successfull_transactions[random_index].accountNumber.text})
         payment.profile = CustomerProfile.objects.get(pk=1)
         payment.save()
         self.processor.payment = payment
@@ -521,7 +565,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.invoice = self.existing_invoice
         payment.amount = 0.01
         payment.transaction = transaction_list[-1].transId.text
-        payment.result["raw"] = str({ 'accountNumber': '6699'})
+        payment.result["payment_info"] = str({ 'account_number': '6699'})
         payment.profile = CustomerProfile.objects.get(pk=1)
         payment.save()
         self.processor.payment = payment
@@ -549,7 +593,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.invoice = self.existing_invoice
         payment.amount = 1000000.00
         payment.transaction = transaction_list[-1].transId.text
-        payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+        payment.result["payment_info"] = str({ 'account_number': transaction_list[-1].accountNumber.text})
         payment.profile = CustomerProfile.objects.get(pk=1)
         payment.save()
         self.processor.payment = payment
@@ -578,7 +622,7 @@ class AuthorizeNetProcessorTests(TestCase):
         payment.invoice = self.existing_invoice
         payment.amount = 0.01
         payment.transaction = '111222333412'
-        payment.result["raw"] = str({ 'accountNumber': transaction_list[-1].accountNumber.text})
+        payment.result["payment_info"] = str({ 'account_number': transaction_list[-1].accountNumber.text})
         payment.profile = CustomerProfile.objects.get(pk=1)
         payment.save()
         self.processor.payment = payment
