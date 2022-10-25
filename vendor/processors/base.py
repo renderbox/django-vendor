@@ -323,12 +323,6 @@ class PaymentProcessorBase(object):
             return int(number) * 100
         return 0
 
-
-    def process_transaction_response(self, *args, **kwargs):
-        self.parse_response(*args, **kwargs)
-        self.parse_success(*args, **kwargs)
-        ...
-
     # -------------------
     # Process a Payment
     def authorize_payment(self):
