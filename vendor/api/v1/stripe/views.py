@@ -1,9 +1,12 @@
 import stripe
 
+from django.conf import settings
+from django.http.response import HttpResponse
 from django.views import View
-from django.views.decorators.edit import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt
 
 from vendor.integrations import StripeIntegration
+from vendor.utils import get_site_from_request
 
 
 class StripeBaseAPI(View):
@@ -19,10 +22,10 @@ class StripeBaseAPI(View):
 
     def is_valid_post(self, site):
         try:
-            self.credentials = StripeIntegration(site)
+            credentials = StripeIntegration(site)
 
-            if self.credentials.instance.private_key:
-                self.event = stripe.Event.construct_from(json.loads(payload), self.credentials.instance.private_key)
+            if credentials.instance and credentials.instance.private_key:
+                self.event = stripe.Event.construct_from(json.loads(payload), credentials.instance.private_key)
             elif settings.STRIPE_PUBLIC_KEY:
                 self.event = stripe.Event.construct_from(json.loads(payload), settings.STRIPE_PUBLIC_KEY)
             else:
@@ -34,3 +37,13 @@ class StripeBaseAPI(View):
             return False
 
         return True
+
+class StripeSubscriptionPayment(StripeBaseAPI):
+
+    def post(self, request, *args, **kwargs):
+        site = get_site_from_request(self.request)
+
+        if not self.is_valid_post(site):
+            return HttpResponse(status=400)
+
+        return HttpResponse(status=200)
