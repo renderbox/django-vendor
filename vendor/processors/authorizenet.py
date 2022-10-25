@@ -658,7 +658,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_type.refTransId = payment.transaction
 
         creditCard = apicontractsv1.creditCardType()
-        creditCard.cardNumber = ast.literal_eval(payment.result['raw']).get('accountNumber')[-4:]
+        creditCard.cardNumber = ast.literal_eval(payment.result['payment_info']).get('account_number')[-4:]
         creditCard.expirationDate = "XXXX"
 
         payment_type = apicontractsv1.paymentType()
@@ -987,7 +987,8 @@ def sync_subscriptions(site):
                         payment.submitted_date = submitted_datetime
                         payment.status = payment_status
                         payment.success = payment_success
-                        payment.result = payment_info
+                        payment.result = {}
+                        payment.result['payment_info'] = payment_info
                         payment.transaction = transaction_id
                         payment.payee_full_name = payment_info['full_name']
                         payment.save()
@@ -1014,7 +1015,8 @@ def sync_subscriptions(site):
                         payment.submitted_date = submitted_datetime
                         payment.status = payment_status
                         payment.success = payment_success
-                        payment.result = payment_info
+                        payment.result = {}
+                        payment.result['payment_info'] = payment_info
                         payment.payee_full_name = payment_info['full_name']
                         payment.save()
 
@@ -1122,7 +1124,8 @@ def sync_subscriptions_and_create_missing_receipts(site):
                             amount=invoice.total,
                             invoice=invoice
                             )
-                payment.result = payment_info
+                payment.result = {}
+                payment.result['payment_info'] = payment_info
                 payment.subscription = subscription
                 payment.success = True
                 payment.status = PurchaseStatus.SETTLED

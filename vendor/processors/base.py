@@ -92,15 +92,13 @@ class PaymentProcessorBase(object):
                                created=timezone.now()
                                )
 
-        payment_info = self.make_payment_info(
-            account_number=self.payment_info.cleaned_data.get('card_number')[-4:],
-            full_name=self.payment_info.cleaned_data.get('full_name')
-        )
-
         if not self.payment.result:
             self.payment.result = {}
         
-        self.payment.result['payment_info'] = payment_info
+        self.payment.result['payment_info'] = {
+            'account_number': self.payment_info.cleaned_data.get('card_number')[-4:],
+            'full_name': self.payment_info.cleaned_data.get('full_name')
+        }
         self.payment.payee_full_name = self.payment_info.cleaned_data.get('full_name')
         self.payment.payee_company = self.billing_address.cleaned_data.get('company')
         self.payment.status = PurchaseStatus.QUEUED
@@ -125,11 +123,18 @@ class PaymentProcessorBase(object):
         self.payment.result.update(self.transaction_info)
         self.payment.save()
 
-    def make_payment_info(self, account_number='', full_name=''):
+    def get_payment_info(self):
+        """
+        Each processor should implement their own method, but they should
+        all return at least the account_number and full_name as a dictionary.
+        eg:
         return {
             'account_number': account_number,
             'full_name': full_name
         }
+        """
+        ...
+
 
     def get_transaction_info(self, raw='', errors='', payment_method='', data=''):
         return {
