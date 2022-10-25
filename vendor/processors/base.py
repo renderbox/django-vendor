@@ -33,14 +33,15 @@ class PaymentProcessorBase(object):
     # TODO: Change payment to a list as an invoice can have multiple payment. EG: 1 for 1 type purchases and n for any amount of subscriptions. 
     payment = None
     subscription = None
+    subscription_id = None
     receipt = None
     payment_info = {}
     billing_address = {}
     transaction_token = None
     transaction_id = ""
-    transaction_submitted = False
-    transaction_message = {}
-    transaction_response = {}
+    transaction_succeded = False
+    transaction_info = {}
+    transaction_response = None
 
     def __init__(self, site, invoice=None):
         """
@@ -89,9 +90,15 @@ class PaymentProcessorBase(object):
                                provider=self.provider,
                                invoice=self.invoice,
                                created=timezone.now()
-                            )
-        self.payment.result['account_number'] = self.payment_info.cleaned_data.get('card_number')[-4:]
-        self.payment.result['first'] = True
+                               )
+
+        if not self.payment.result:
+            self.payment.result = {}
+        
+        self.payment.result['payment_info'] = {
+            'account_number': self.payment_info.cleaned_data.get('card_number')[-4:],
+            'full_name': self.payment_info.cleaned_data.get('full_name')
+        }
         self.payment.payee_full_name = self.payment_info.cleaned_data.get('full_name')
         self.payment.payee_company = self.billing_address.cleaned_data.get('company')
         self.payment.status = PurchaseStatus.QUEUED
@@ -107,24 +114,52 @@ class PaymentProcessorBase(object):
         self.payment.billing_address = billing_address
         self.payment.save()
 
-    def save_payment_transaction_result(self, payment_success, transaction_id, result_info):
+    def save_payment_transaction_result(self):
         """
         Saves the result output of any transaction.
         """
-        self.payment.success = payment_success
-        self.payment.transaction = transaction_id
-        self.payment.result['raw'] = result_info.get('raw', "")
+        self.payment.success = self.transaction_succeded
+        self.payment.transaction = self.transaction_id
+        self.payment.result.update(self.transaction_info)
         self.payment.save()
 
-    def save_subscription_transaction_result(self, subscription_success, transaction_id, result_info):
+    def get_payment_info(self, account_number=None, full_name=None):
+        """
+        Each processor should implement their own method, but they should
+        all return at least the account_number and full_name as a dictionary.
+        eg:
+        """
+        return {
+            'account_number': account_number,
+            'full_name': full_name
+        }
+
+
+    def get_transaction_info(self, raw='', errors='', payment_method='', data=''):
+        return {
+            'raw': raw,
+            'errors': errors,
+            'payment_method': payment_method,
+            'data': data
+        }
+
+    def parse_response(self, *args, **kwargs):
+        # implement in processor
+        pass
+
+    def parse_success(self, *args, **kwargs):
+        # implement in processor
+        pass
+
+    def save_subscription_transaction_result(self):
         """
         Saves the result output of any transaction.
         """
-        if subscription_success:
+        if self.transaction_succeded:
             self.subscription.status = SubscriptionStatus.ACTIVE
+            self.subscription.gateway_id = self.transaction
             
-        self.subscription.gateway_id = transaction_id
-        self.subscription.meta[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = result_info.get('raw', "")
+        self.subscription.meta[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = self.transaction_info
         self.subscription.save()
 
     def update_invoice_status(self, new_status):
@@ -133,10 +168,11 @@ class PaymentProcessorBase(object):
         Otherwise it returns the invoice to the Cart. The error is saved in
         the payment for the transaction.
         """
-        if self.transaction_submitted:
+        if self.transaction_succeded:
             self.invoice.status = new_status
         else:
             self.invoice.status = InvoiceStatus.CART
+
         self.invoice.save()
 
     def is_transaction_and_invoice_complete(self):
@@ -144,8 +180,9 @@ class PaymentProcessorBase(object):
         If payment was successful and invoice status is complete returns True. Otherwise
         false and no receipts should be created.
         """
-        if self.transaction_submitted and self.invoice.status == InvoiceStatus.COMPLETE:
+        if self.transaction_succeded and self.invoice.status == InvoiceStatus.COMPLETE:
             return True
+
         return False
 
     def create_receipt_by_term_type(self, order_item, term_type):
@@ -317,7 +354,7 @@ class PaymentProcessorBase(object):
         if self.invoice.get_one_time_transaction_order_items():
             self.create_payment_model()
             self.process_payment()
-            self.save_payment_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
+            self.save_payment_transaction_result()
             self.update_invoice_status(InvoiceStatus.COMPLETE)
             if self.is_transaction_and_invoice_complete():
                 self.invoice.save_discounts_vendor_notes()
@@ -358,12 +395,12 @@ class PaymentProcessorBase(object):
                                created=timezone.now()
                                )
         self.payment.save()
-        self.transaction_submitted = True
+        self.transaction_succeded = True
         self.payment.success = True
         self.payment.status = PurchaseStatus.SETTLED
         self.payment.transaction = f"{self.payment.uuid}-free"
         self.payment.payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
-        self.payment.result = {'first': True}
+        self.payment.result.update({'first': True})
         self.payment.save()
 
         self.update_invoice_status(InvoiceStatus.COMPLETE)
@@ -403,13 +440,11 @@ class PaymentProcessorBase(object):
             self.create_payment_model()
             self.subscription_payment(subscription)
             self.update_invoice_status(InvoiceStatus.COMPLETE)
-            self.create_subscription_model()
             
             if self.is_transaction_and_invoice_complete():
+                self.create_subscription_model()
                 self.invoice.save_discounts_vendor_notes()
                 self.create_order_item_receipt(subscription)
-
-            self.save_subscription_transaction_result(self.transaction_submitted, self.transaction_id, self.transaction_response)
 
     def subscription_payment(self, subscription):
         """
@@ -420,11 +455,11 @@ class PaymentProcessorBase(object):
 
     def create_subscription_model(self):
         self.subscription = Subscription.objects.create(
-            gateway_id=self.transaction_id,
+            gateway_id=self.subscription_id,
             profile=self.invoice.profile,
             auto_renew=True,
         )
-        self.subscription.meta['response'] = self.transaction_response.get('raw', "")
+        self.subscription.meta['response'] = self.transaction_info
         self.subscription.save()
         self.payment.subscription = self.subscription
         self.payment.save()
