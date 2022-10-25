@@ -41,11 +41,11 @@
                                 </tr>
                                 <tr>
                                         <th>{% trans 'Account Ending' %}</th>
-                                        <td>{{ payment.result.account_number }}</td>
+                                        <td>{{ payment.result.payment_info.account_number }}</td>
                                 </tr>
                                 <tr>
                                         <th>{% trans 'Account Type' %}</th>
-                                        <td>{{ payment.result.account_type }}</td>
+                                        <td>{{ payment.result.payment_info.account_type }}</td>
                                 </tr>
                                 <tr>
                                         <th>{% trans 'Billing Address' %}</th>

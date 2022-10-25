@@ -217,10 +217,10 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 
         processor.authorize_payment()
 
-        if processor.transaction_submitted:
+        if processor.transaction_succeded:
             return redirect('vendor:purchase-summary', uuid=invoice.uuid)
         else:
-            logger.warning(f"Payment gateway did not authorize payment {processor.transaction_message}")
+            logger.warning(f"Payment gateway did not authorize payment {processor.transaction_info}")
             # TODO: Make message configurable for the site in the settings
             messages.info(self.request, _("The payment gateway did not authorize payment."))
             return redirect('vendor:checkout-account')
@@ -316,8 +316,8 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
         processor.set_payment_info_form_data(request.POST, CreditCardForm)
         processor.subscription_update_payment(subscription)
 
-        if not processor.transaction_submitted:
-            messages.info(request, _(f"Payment gateway error: {processor.transaction_message.get('message', '')}"))
+        if not processor.transaction_succeded:
+            messages.info(request, _(f"Payment gateway error: {processor.transaction_info.get('errors', '')}"))
             return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
         messages.info(request, _("Success: Payment Updated"))

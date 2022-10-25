@@ -41,8 +41,8 @@
         <h3>{% trans 'Payment Method' %}</h3>
         <p>
         {% trans 'Credit Card' as card %}
-        {% firstof payment.result.account_type card as account_type %}
-        {% blocktrans with account_number=payment.result.account_number %}
+        {% firstof payment.result.payment_info.account_type card as account_type %}
+        {% blocktrans with account_number=payment.payment_info.result.account_number %}
             {{ account_type }} ending in {{ account_number }} 
         {% endblocktrans %}
         </p>

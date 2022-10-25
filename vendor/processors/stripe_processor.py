@@ -220,7 +220,6 @@ class StripeProcessor(PaymentProcessorBase):
     TRANSACTION_FAIL_MESSAGE = 'error_text'
     TRANSACTION_FAIL_CODE = 'error_code'
     TRANSACTION_RESPONSE_CODE = 'response_code'
-    transaction_submitted = False
     source = None
     products_mapping = {}
 
@@ -270,7 +269,7 @@ class StripeProcessor(PaymentProcessorBase):
         except Exception as e:
             logger.error(str(e))
 
-        self.transaction_submitted = False
+        self.transaction_succeded = False
 
     def convert_decimal_to_integer(self, decimal):
         integer_str_rep = str(decimal).split(".")
@@ -890,6 +889,7 @@ class StripeProcessor(PaymentProcessorBase):
         transaction_id = ''
         raw_data = ''
         messages = ''
+        
         if not subscription:
             transaction_id = self.charge['id']
             raw_data = str(self.charge)
@@ -909,10 +909,10 @@ class StripeProcessor(PaymentProcessorBase):
     def parse_success(self, subscription=True):
         if not subscription:
             if self.charge.get('id'):
-                self.transaction_submitted = True
+                self.transaction_succeded = True
         else:
             if self.stripe_subscription.get('id'):
-                self.transaction_submitted = True
+                self.transaction_succeded = True
 
     ##########
     # Base Processor Transaction Implementations
@@ -924,10 +924,10 @@ class StripeProcessor(PaymentProcessorBase):
         pass
 
     def process_payment(self):
-        self.transaction_submitted = False
+        self.transaction_succeded = False
         self.charge = self.create_charge()
         if self.charge and self.charge["captured"]:
-            self.transaction_submitted = True
+            self.transaction_succeded = True
             self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = '201'
             self.transaction_message[self.TRANSACTION_SUCCESS_MESSAGE] = "Success"
             self.payment.status = PurchaseStatus.CAPTURED
