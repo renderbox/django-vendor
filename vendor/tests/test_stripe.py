@@ -125,7 +125,7 @@ class StripeProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNone(self.processor.payment)
-        self.assertFalse(self.processor.transaction_submitted)
+        self.assertFalse(self.processor.transaction_succeded)
         self.assertEquals(InvoiceStatus.CART, self.processor.invoice.status)
 
     def test_process_payment_transaction_fail_invalid_expiration(self):
@@ -143,7 +143,7 @@ class StripeProcessorTests(TestCase):
         self.processor.authorize_payment()
 
         self.assertIsNone(self.processor.payment)
-        self.assertFalse(self.processor.transaction_submitted)
+        self.assertFalse(self.processor.transaction_succeded)
         self.assertEquals(InvoiceStatus.CART, self.processor.invoice.status)
 
     def test_process_payment_fail_cvv_no_match(self):
@@ -158,7 +158,7 @@ class StripeProcessorTests(TestCase):
 
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
-        self.assertFalse(self.processor.transaction_submitted)
+        self.assertFalse(self.processor.transaction_succeded)
 
     def test_process_payment_generic_decline(self):
         """
@@ -172,7 +172,7 @@ class StripeProcessorTests(TestCase):
 
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
-        self.assertFalse(self.processor.transaction_submitted)
+        self.assertFalse(self.processor.transaction_succeded)
 
     def test_process_payment_fail_cvv_check_fails(self):
         """
@@ -186,7 +186,7 @@ class StripeProcessorTests(TestCase):
 
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
-        self.assertFalse(self.processor.transaction_submitted)
+        self.assertFalse(self.processor.transaction_succeded)
 
     def test_process_payment_fail_expired_card(self):
         """
@@ -200,7 +200,7 @@ class StripeProcessorTests(TestCase):
 
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
-        self.assertFalse(self.processor.transaction_submitted)
+        self.assertFalse(self.processor.transaction_succeded)
 
     def test_process_payment_fail_fraud_always_blocked(self):
         """
@@ -214,7 +214,7 @@ class StripeProcessorTests(TestCase):
 
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
-        self.assertFalse(self.processor.transaction_submitted)
+        self.assertFalse(self.processor.transaction_succeded)
 
     def test_process_payment_fail_fraud_higest_risk(self):
         """
@@ -228,7 +228,7 @@ class StripeProcessorTests(TestCase):
 
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
-        self.assertFalse(self.processor.transaction_submitted)
+        self.assertFalse(self.processor.transaction_succeded)
 
     def test_process_payment_fail_fraud_elevated_risk(self):
         """
@@ -242,7 +242,7 @@ class StripeProcessorTests(TestCase):
 
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
-        self.assertFalse(self.processor.transaction_submitted)
+        self.assertFalse(self.processor.transaction_succeded)
 
     def test_process_payment_postal_code_check_fails(self):
         """
@@ -256,7 +256,7 @@ class StripeProcessorTests(TestCase):
 
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
-        self.assertFalse(self.processor.transaction_submitted)
+        self.assertFalse(self.processor.transaction_succeded)
 
     def test_build_search_query_name(self):
         """
@@ -579,7 +579,7 @@ class StripeCRUDObjectTests(TestCase):
         del(self.pro_monthly_license['name'])
         
         stripe_product = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_monthly_license)
-        self.assertFalse(self.processor.transaction_submitted)
+        self.assertFalse(self.processor.transaction_succeded)
 
     def test_get_product_success(self):
         stripe_product = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
@@ -627,7 +627,7 @@ class StripeCRUDObjectTests(TestCase):
 
         stripe_price = self.processor.stripe_create_object(self.processor.stripe.Price, self.pri_monthly)
         
-        self.assertFalse(self.processor.transaction_submitted)
+        self.assertFalse(self.processor.transaction_succeded)
 
     ##########
     # Coupon CRUD

@@ -83,7 +83,7 @@ class BaseProcessorTests(TestCase):
         self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
         self.base_processor.is_data_valid()
         self.base_processor.create_payment_model()
-        self.base_processor.save_payment_transaction_result(payment_success, transaction_id, result_info)
+        self.base_processor.save_payment_transaction_result()
 
         self.assertIsNotNone(self.base_processor.payment)
         self.base_processor.payment.refresh_from_db()
@@ -93,7 +93,7 @@ class BaseProcessorTests(TestCase):
         self.assertEquals(self.base_processor.payment.result['raw'], result_info['raw'])
 
     def test_update_invoice_status_success(self):
-        self.base_processor.transaction_submitted = True
+        self.base_processor.transaction_succeded = True
         self.base_processor.update_invoice_status(InvoiceStatus.COMPLETE)
 
         self.assertEquals(InvoiceStatus.COMPLETE, self.base_processor.invoice.status)
