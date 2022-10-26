@@ -26,6 +26,7 @@ urlpatterns = [
     path("processor/siteconfig/", admin_views.PaymentProcessorFormView.as_view(), name="vendor-processor"),
     path("processor/siteconfig/<int:pk>/site/", admin_views.PaymentProcessorSiteSelectFormView.as_view(), name="vendor-processor-site"),
     path("authorizenet/integration/", admin_views.AuthorizeNetIntegrationView.as_view(), name="authorizenet-integration"),
+    path("stripe/integration/", admin_views.StripeIntegrationView.as_view(), name="stripe-integration"),
 
     # reports
     path('reports/receipts/download/', report_views.ReceiptListCSV.as_view(), name="manager-receipt-download"),

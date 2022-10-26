@@ -13,8 +13,8 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from vendor.config import VENDOR_PRODUCT_MODEL, PaymentProcessorSiteConfig, PaymentProcessorSiteSelectSiteConfig, PaymentProcessorForm, PaymentProcessorSiteSelectForm
-from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm, AuthorizeNetIntegrationForm
-from vendor.integrations import AuthorizeNetIntegration
+from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm, AuthorizeNetIntegrationForm, StripeIntegrationForm
+from vendor.integrations import AuthorizeNetIntegration, StripeIntegration
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment, Subscription
 from vendor.models.choice import TermType, PaymentTypes, InvoiceStatus, PurchaseStatus
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
@@ -23,6 +23,7 @@ from vendor.processors import get_site_payment_processor
 from siteconfigs.models import SiteConfigModel
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
+
 #############
 # Admin Views
 class AdminDashboardView(LoginRequiredMixin, SiteOnRequestFilterMixin, ListView):
@@ -426,3 +427,24 @@ class AuthorizeNetIntegrationView(FormView):
         authorizenet_integration = AuthorizeNetIntegration(get_site_from_request(self.request))
         authorizenet_integration.save(form.cleaned_data)
         return super().form_valid(form)
+
+
+class StripeIntegrationView(FormView):
+    template_name = "vendor/stripe_integration.html"
+    form_class = StripeIntegrationForm
+    success_url = reverse_lazy('stripe-integration')
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        stripe_integration = StripeIntegration(get_site_from_request(self.request))
+        if stripe_integration.instance:
+            context['form'] = StripeIntegrationForm(instance=stripe_integration.instance)
+        else:
+            context['form'] = StripeIntegrationForm()
+        return context
+    
+    def form_valid(self, form):
+        stripe_integration = StripeIntegration(get_site_from_request(self.request))
+        stripe_integration.save(form.cleaned_data)
+        return super().form_valid(form)
+

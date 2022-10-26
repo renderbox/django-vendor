@@ -10,7 +10,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from vendor.integrations import StripeIntegration
 from vendor.utils import get_site_from_request
-
+from vendor.models import CustomerProfile, Subscription
+from vendor.processors import StripeProcessor
 
 class StripeEvents(TextChoices):
     INVOICE_CREATED = 'invoice.created', _('Invoice Created')
@@ -59,6 +60,17 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
 
         if self.event.data.object.billing_reason != 'subscription_cycle':
             return HttpResponse(status=400)
+
+        subscription_id = self.event.data.object.subscription
+        customer_id = self.event.data.object.customer
+        customer_email = self.event.data.object.customer_email
+        customer_profile = CustomerProfile.objects.get(site=site, user__email__iequals=customer_email)
+
+        if 'stripe_id' not in customer_profile.meta:
+            customer_profile.meta['stripe_id'] = customer_id
+            customer_profile.save()
+
+        subscription = Subscription.objects.get(meta__stripe_id=subscription_id)
 
         return HttpResponse(status=200)
 
