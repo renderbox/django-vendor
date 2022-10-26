@@ -220,7 +220,6 @@ class StripeProcessor(PaymentProcessorBase):
     TRANSACTION_FAIL_MESSAGE = 'error_text'
     TRANSACTION_FAIL_CODE = 'error_code'
     TRANSACTION_RESPONSE_CODE = 'response_code'
-    transaction_submitted = False
     source = None
     products_mapping = {}
 
@@ -238,6 +237,11 @@ class StripeProcessor(PaymentProcessorBase):
         else:
             logger.error("StripeProcessor missing keys in settings: STRIPE_PUBLIC_KEY")
             raise ValueError("StripeProcessor missing keys in settings: STRIPE_PUBLIC_KEY")
+
+        # TODO handle this better, but needed to get passed this error message
+        # Search is not supported on api version 2016-07-06. Update your API version, or set the API Version of this request to 2020-08-27 or greater.
+        # https://stripe.com/docs/libraries/set-version
+        self.stripe.api_version = '2022-08-01'
 
     ##########
     # Stripe utils
@@ -265,7 +269,7 @@ class StripeProcessor(PaymentProcessorBase):
         except Exception as e:
             logger.error(str(e))
 
-        self.transaction_submitted = False
+        self.transaction_succeded = False
 
     def convert_decimal_to_integer(self, decimal):
         integer_str_rep = str(decimal).split(".")
@@ -294,17 +298,22 @@ class StripeProcessor(PaymentProcessorBase):
         return delete_result
 
     def stripe_get_object(self, stripe_object_class, object_id):
-        stripe_object = self.stripe_call(stripe_object_class.retreive, object_id)
+        stripe_object = self.stripe_call(stripe_object_class.retrieve, object_id)
 
         return stripe_object
 
     def stripe_update_object(self, stripe_object_class, object_id, object_data):
-        stripe_object = self.stripe_call(stripe_object_class.modify, object_id, **object_data)
+        object_data['sid'] = object_id
+        stripe_object = self.stripe_call(stripe_object_class.modify, object_data)
 
         return stripe_object
 
     def stripe_list_objects(self, stripe_object_class, limit=10, starting_after=None):
-        stripe_objects = self.stripe_call(stripe_object_class.list, limit=limit, starting_after=None)
+        object_data = {
+            'limit': limit,
+            'starting_after': starting_after
+        }
+        stripe_objects = self.stripe_call(stripe_object_class.list, object_data)
 
         return stripe_objects
 
@@ -460,7 +469,7 @@ class StripeProcessor(PaymentProcessorBase):
 
     def update_stripe_customers(self, customers):
         for profile in customers:
-            customer_id = profile.meta['id']
+            customer_id = profile.meta['stripe_id']
             profile_data = self.build_customer(profile)
             existing_stripe_customer = self.stripe_update_object(self.stripe.Customer, customer_id, profile_data)
 
@@ -750,7 +759,6 @@ class StripeProcessor(PaymentProcessorBase):
 
         search_data = self.stripe_query_object(self.stripe.Price, {'query': query})
 
-        return search_data.get()
         if search_data:
             if search_data.get('data', False):
                 return True
@@ -841,7 +849,6 @@ class StripeProcessor(PaymentProcessorBase):
         )
 
         query = self.query_builder.build_search_query(self.stripe.Product, [name_clause, metadata_clause])
-
         search_data = self.stripe_query_object(self.stripe.Product, {'query': query})
 
         if search_data:
@@ -875,13 +882,37 @@ class StripeProcessor(PaymentProcessorBase):
             return charge
         return None
 
+    def parse_response(self, subscription=True):
+        """
+        Processes the transaction response
+        """
+        transaction_id = ''
+        raw_data = ''
+        messages = ''
+        
+        if not subscription:
+            transaction_id = self.charge['id']
+            raw_data = str(self.charge)
+            messages = f'trans id is {transaction_id}'
+        else:
+            if self.stripe_subscription.get('id'):
+                transaction_id = self.stripe_subscription['id']
+                raw_data = str(self.stripe_subscription)
+                messages = f'trans id is {transaction_id}'
 
-    def process_payment_transaction_response(self):
-        """
-        Processes the transaction response from the stripe so it can be saved in the payment model
-        """
-        self.transaction_id = self.charge['id']
-        self.transaction_response = {'raw': str(self.charge)}
+        self.transaction_id = transaction_id
+        self.transaction_response = self.make_transaction_response(
+            raw=raw_data,
+            messages=messages
+        )
+
+    def parse_success(self, subscription=True):
+        if not subscription:
+            if self.charge.get('id'):
+                self.transaction_succeded = True
+        else:
+            if self.stripe_subscription.get('id'):
+                self.transaction_succeded = True
 
     ##########
     # Base Processor Transaction Implementations
@@ -893,16 +924,16 @@ class StripeProcessor(PaymentProcessorBase):
         pass
 
     def process_payment(self):
-        self.transaction_submitted = False
+        self.transaction_succeded = False
         self.charge = self.create_charge()
         if self.charge and self.charge["captured"]:
-            self.transaction_submitted = True
+            self.transaction_succeded = True
             self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = '201'
             self.transaction_message[self.TRANSACTION_SUCCESS_MESSAGE] = "Success"
             self.payment.status = PurchaseStatus.CAPTURED
             self.payment.save()
             self.update_invoice_status(InvoiceStatus.COMPLETE)
-            self.process_payment_transaction_response()
+            self.parse_response(subscription=False)
 
     def subscription_payment(self, subscription):
         payment_method_data = self.build_payment_method()
@@ -912,6 +943,7 @@ class StripeProcessor(PaymentProcessorBase):
         stripe_setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_object)
 
         subscription_obj = self.build_subscription(subscription, stripe_payment_method.id)
-        stripe_subscription = self.processor.stripe_create_object(self.processor.stripe.Subscription, subscription_obj)
+        self.stripe_subscription = self.processor.stripe_create_object(self.processor.stripe.Subscription, subscription_obj)
+
 
 

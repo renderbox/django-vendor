@@ -77,23 +77,24 @@ class BaseProcessorTests(TestCase):
     def test_save_payment_transaction_success(self):
         payment_success = True
         transaction_id = '1423wasd'
-        result_info = {'raw': "raw response"}
 
         self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
         self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
         self.base_processor.is_data_valid()
         self.base_processor.create_payment_model()
-        self.base_processor.save_payment_transaction_result(payment_success, transaction_id, result_info)
+        self.base_processor.transaction_succeded = payment_success
+        self.base_processor.transaction_id = transaction_id
+        self.base_processor.save_payment_transaction_result()
 
         self.assertIsNotNone(self.base_processor.payment)
         self.base_processor.payment.refresh_from_db()
 
         self.assertTrue(self.base_processor.payment.success)
         self.assertEquals(self.base_processor.payment.transaction, transaction_id)
-        self.assertEquals(self.base_processor.payment.result['raw'], result_info['raw'])
+        self.assertIn('payment_info', self.base_processor.payment.result)
 
     def test_update_invoice_status_success(self):
-        self.base_processor.transaction_submitted = True
+        self.base_processor.transaction_succeded = True
         self.base_processor.update_invoice_status(InvoiceStatus.COMPLETE)
 
         self.assertEquals(InvoiceStatus.COMPLETE, self.base_processor.invoice.status)
@@ -110,9 +111,9 @@ class BaseProcessorTests(TestCase):
         order_item_subscription = self.base_processor.invoice.order_items.get(offer__pk=4)
         self.base_processor.payment = Payment.objects.get(pk=1)
         
+        self.base_processor.subscription_id = "123"
         self.base_processor.create_subscription_model()
         self.base_processor.create_receipt_by_term_type(order_item_subscription, order_item_subscription.offer.terms)
-
 
         self.assertIsNotNone(self.base_processor.subscription)
         self.assertIsNotNone(self.base_processor.receipt.subscription)
