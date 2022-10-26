@@ -21,5 +21,6 @@ urlpatterns = [
     path('authorizenet/sync/subscriptions/', authorizenet_views.SyncSubscriptionsView.as_view(), name='api-authorizenet-sync-subscriptions'),
     path('authorizenet/settled/transactions/', authorizenet_views.GetSettledTransactionsView.as_view(), name='api-authorizenet-settled-transactions'),
     # Stripe
-    path('stripe/subscription/payment/', stripe_views.StripeSubscriptionPayment.as_view(), name='api-stripe-subscription-payment'),
+    path('stripe/subscription/invoice/created/', stripe_views.StripeSubscriptionInvoiceCreated.as_view(), name='api-stripe-subscription-invoice-created'),
+    path('stripe/subscription/invoice/paid/', stripe_views.StripeSubscriptionInvoicePaid.as_view(), name='api-stripe-subscription-invoice-paid'),
 ]

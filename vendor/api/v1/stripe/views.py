@@ -13,6 +13,7 @@ from vendor.utils import get_site_from_request
 
 
 class StripeEvents(TextChoices):
+    INVOICE_CREATED = 'invoice.created', _('Invoice Created')
     INVOICE_PAID = 'invoice.paid', _('Invoice Paid')
     INVOICE_PAYMENT_FAILED = 'invoice.payment_failed', _('Invoice Payment Failed')
 
@@ -45,7 +46,7 @@ class StripeBaseAPI(View):
 
         return True
 
-class StripeSubscriptionPayment(StripeBaseAPI):
+class StripeSubscriptionInvoicePaid(StripeBaseAPI):
 
     def post(self, request, *args, **kwargs):
         site = get_site_from_request(self.request)
@@ -53,7 +54,23 @@ class StripeSubscriptionPayment(StripeBaseAPI):
         if not self.is_valid_post(site):
             return HttpResponse(status=400)
 
-        if self.event.type != StripeEvents.INVOICE_PAID and self.event.data.object.billing_reason != 'subscription_cycle':
+        if self.event.type != StripeEvents.INVOICE_PAID:
+            return HttpResponse(status=400)
+
+        if self.event.data.object.billing_reason != 'subscription_cycle':
+            return HttpResponse(status=400)
+
+        return HttpResponse(status=200)
+
+class StripeSubscriptionInvoiceCreated(StripeBaseAPI):
+
+    def post(self, request, *args, **kwargs):
+        site = get_site_from_request(self.request)
+
+        if not self.is_valid_post(site):
+            return HttpResponse(status=400)
+
+        if self.event.type != StripeEvents.INVOICE_CREATED:
             return HttpResponse(status=400)
 
         if self.event.data.object.billing_reason != 'subscription_cycle':
@@ -79,7 +96,12 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
 ## self.event.data.object.subscription
 ## self.event.data.object.status = 'paid'
 ## self.event.data.object.customer_email
+# Monthly subscription on the Acadamy side. 
+# How and when should we do the transition. Enterprise to Market. 
+# Pre Purchase the Monthly certificate. 
 
+# 1. Way Promo codes. 
+#  - Who to say they will actuall do it. 
 # invoice.payment_succeded
 
 # invoice.draft
