@@ -410,17 +410,20 @@ class PaymentProcessorSiteSelectFormView(FormView):
 
 
 class AuthorizeNetIntegrationView(FormView):
-    template_name = "vendor/authorizenet_integration.html"
+    template_name = "vendor/integration_form.html"
     form_class = AuthorizeNetIntegrationForm
     success_url = reverse_lazy('authorizenet-integration')
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         authorizenet_integration = AuthorizeNetIntegration(get_site_from_request(self.request))
+        context['integration_name'] = _("AuthorizeNet Integration")
+
         if authorizenet_integration.instance:
             context['form'] = AuthorizeNetIntegrationForm(instance=authorizenet_integration.instance)
         else:
             context['form'] = AuthorizeNetIntegrationForm()
+
         return context
     
     def form_valid(self, form):
@@ -430,21 +433,25 @@ class AuthorizeNetIntegrationView(FormView):
 
 
 class StripeIntegrationView(FormView):
-    template_name = "vendor/stripe_integration.html"
+    template_name = "vendor/integration_form.html"
     form_class = StripeIntegrationForm
     success_url = reverse_lazy('stripe-integration')
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         stripe_integration = StripeIntegration(get_site_from_request(self.request))
+        context['integration_name'] = _("Stripe Integration")
+
         if stripe_integration.instance:
             context['form'] = StripeIntegrationForm(instance=stripe_integration.instance)
         else:
             context['form'] = StripeIntegrationForm()
+
         return context
     
     def form_valid(self, form):
         stripe_integration = StripeIntegration(get_site_from_request(self.request))
         stripe_integration.save(form.cleaned_data)
+
         return super().form_valid(form)
 

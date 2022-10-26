@@ -926,6 +926,7 @@ class StripeProcessor(PaymentProcessorBase):
     def process_payment(self):
         self.transaction_succeded = False
         self.charge = self.create_charge()
+        
         if self.charge and self.charge["captured"]:
             self.transaction_succeded = True
             self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = '201'
