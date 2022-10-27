@@ -479,12 +479,19 @@ class StripeProcessor(PaymentProcessorBase):
 
     def sync_customers(self, site):
         stripe_customers = self.get_stripe_customers(site)
-        stripe_customers_emails = [customer_obj['email'] for customer_obj in stripe_customers]
-        vendor_customers_in_stripe = self.get_vendor_customers_in_stripe(stripe_customers_emails)
-        vendor_customers_not_in_stripe = self.get_vendor_customers_not_in_stripe(stripe_customers_emails)
+        stripe_customers_emails = []
 
-        self.create_stripe_customers(vendor_customers_not_in_stripe)
-        self.update_stripe_customers(vendor_customers_in_stripe)
+        if stripe_customers:
+            stripe_customers_emails = [customer_obj['email'] for customer_obj in stripe_customers]
+
+        vendor_customers_in_stripe = self.get_vendor_customers_in_stripe(stripe_customers_emails, site)
+        vendor_customers_not_in_stripe = self.get_vendor_customers_not_in_stripe(stripe_customers_emails, site)
+
+        if vendor_customers_not_in_stripe:
+            self.create_stripe_customers(vendor_customers_not_in_stripe)
+
+        if vendor_customers_in_stripe:
+            self.update_stripe_customers(vendor_customers_in_stripe)
 
     def get_site_offers(self, site):
         """
@@ -656,12 +663,19 @@ class StripeProcessor(PaymentProcessorBase):
 
     def sync_offers(self, site):
         products = self.get_site_offers(site)
-        offer_pk_list = [product['metadata']['pk'] for product in products]
+        offer_pk_list = []
+
+        if products:
+            offer_pk_list = [product['metadata']['pk'] for product in products]
+
         offers_in_vendor = self.get_vendor_offers_in_stripe(offer_pk_list, site)
         offers_not_in_vendor = self.get_vendor_offers_not_in_stripe(offer_pk_list, site)
 
-        self.create_offers(offers_not_in_vendor)
-        self.update_offers(offers_in_vendor)
+        if offers_not_in_vendor:
+            self.create_offers(offers_not_in_vendor)
+
+        if offers_in_vendor:
+            self.update_offers(offers_in_vendor)
 
     def sync_stripe_vendor_objects(self, site):
         """
