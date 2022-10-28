@@ -432,10 +432,7 @@ class AuthorizeNetIntegrationView(FormView):
         authorizenet_integration = AuthorizeNetIntegration(get_site_from_request(self.request))
         context['integration_name'] = _("AuthorizeNet Integration")
 
-        if authorizenet_integration.instance:
-            context['form'] = AuthorizeNetIntegrationForm(instance=authorizenet_integration.instance)
-        else:
-            context['form'] = AuthorizeNetIntegrationForm()
+        context['form'] = AuthorizeNetIntegrationForm(instance=authorizenet_integration.instance)
 
         return context
     
@@ -456,10 +453,7 @@ class StripeIntegrationView(FormView):
         stripe_integration = StripeIntegration(get_site_from_request(self.request))
         context['integration_name'] = _("Stripe Integration")
 
-        if stripe_integration.instance:
-            context['form'] = StripeIntegrationForm(instance=stripe_integration.instance)
-        else:
-            context['form'] = StripeIntegrationForm()
+        context['form'] = StripeIntegrationForm(instance=stripe_integration.instance)
 
         return context
     
