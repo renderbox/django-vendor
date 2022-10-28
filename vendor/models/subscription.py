@@ -120,9 +120,11 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
         self.save()
 
     def get_offer(self):
-        if not self.receipts.count():
+        receipt = self.receipts.first()
+        
+        if not receipt:
             return None
         
-        return self.receipts.first().order_item.offer
+        return receipt.order_item.offer
 
 
