@@ -3,6 +3,7 @@ from random import randrange
 from django.conf import settings
 from django.test import TestCase, Client, tag
 from django.contrib.sites.models import Site
+from django.db.models import signals
 from django.utils import timezone
 from siteconfigs.models import SiteConfigModel
 from unittest import skipIf
@@ -518,72 +519,38 @@ class StripeProcessorTests(TestCase):
 
     def test_sync_customers(self):
         # Vendor objects not in stripe so create them there
-        user1 = User.objects.create(email='test_email@aol.com', first_name='test name', last_name='last',
-                                    username='test1')
-        customer1 = CustomerProfile.objects.create(site=self.site, user=user1)
-        user2 = User.objects.create(email='test_email2@aol.com', first_name='test name2', last_name='last',
-                                    username='test2')
-        customer2 = CustomerProfile.objects.create(site=self.site, user=user2)
+        signals.post_save.disconnect(receiver=signals.post_save, sender=CustomerProfile)
+        user = User.objects.get(pk=1)
+        customer = CustomerProfile.objects.create(site=self.site, user=user)
 
-        self.processor.sync_customers(self.site)
+        self.processor.sync_customers(customer.site)
 
-        customer1.refresh_from_db()
-        customer2.refresh_from_db()
+        customer.refresh_from_db()
 
-        self.assertTrue(customer1.meta['stripe_id'])
-        self.assertTrue(customer2.meta['stripe_id'])
+        stripe_id = customer.meta.get('stripe_id')
 
-        # Now we know they're in stripe, lets update and sync again
-        update_first_name1 = 'Mary'
-        update_first_name2 = 'Sue'
-
-        customer1.user.first_name = update_first_name1
-        customer2.user.first_name = update_first_name2
-        customer1.save()
-        customer2.save()
-
-        self.processor.sync_customers(self.site)
-
-        customer1.refresh_from_db()
-        customer2.refresh_from_db()
-
-        name_clause = self.processor.query_builder.make_clause_template(
-            field='name',
-            value=f'{update_first_name1} last',
-            operator=self.processor.query_builder.EXACT_MATCH,
-            next_operator=self.processor.query_builder.AND
-        )
-        name_clause2 = self.processor.query_builder.make_clause_template(
-            field='name',
-            value=f'{update_first_name2} last',
-            operator=self.processor.query_builder.EXACT_MATCH,
-            next_operator=self.processor.query_builder.AND
-        )
-        site_clause = self.processor.query_builder.make_clause_template(
-            field='metadata',
-            key='site',
-            value=self.site.domain,
-            operator=self.processor.query_builder.EXACT_MATCH
-        )
-        customer1_query = self.processor.query_builder.build_search_query(self.processor.stripe.Customer,
-                                                                          [name_clause, site_clause])
-        customer2_query = self.processor.query_builder.build_search_query(self.processor.stripe.Customer,
-                                                                          [name_clause2, site_clause])
-
-        stripe_customer1 = self.processor.stripe_query_object(self.processor.stripe.Customer, customer1_query)
-        stripe_customer2 = self.processor.stripe_query_object(self.processor.stripe.Customer, customer2_query)
-
-
-        self.processor.stripe_delete_object(self.processor.stripe.Customer, customer1.meta['stripe_id'])
-        self.processor.stripe_delete_object(self.processor.stripe.Customer, customer2.meta['stripe_id'])
-
-        self.assertEquals(stripe_customer1['data']['name'], f'{update_first_name1} last')
-        self.assertEquals(stripe_customer2['data']['email'], f'{update_first_name2} last')
-
-
+        self.processor.stripe_delete_object(self.processor.stripe.Customer, stripe_id)
+        self.assertTrue(stripe_id)
 
     def test_sync_offers(self):
-        pass
+        signals.post_save.disconnect(receiver=signals.post_save, sender=CustomerProfile)
+
+        offer = Offer.objects.create(site=self.site, name='Stripe Offer', start_date=timezone.now())
+
+        self.processor.sync_offers(offer.site)
+
+        offer.refresh_from_db()
+
+        stripe_meta = offer.meta.get('stripe')
+
+        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_meta.get('product_id'))
+
+        self.assertTrue(stripe_meta)
+        self.assertTrue(stripe_meta.get('product_id'))
+        self.assertTrue(stripe_meta.get('price_id'))
+        self.assertTrue(stripe_meta.get('coupon_id'))
+
+
 
 
 @skipIf((settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None, "Strip enviornment variables not set, skipping tests")

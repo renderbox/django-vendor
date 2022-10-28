@@ -295,7 +295,14 @@ class StripeProcessor(PaymentProcessorBase):
         return stripe_object
 
     def stripe_query_object(self, stripe_object_class, query):
-        query_data = {'query': query}
+        if isinstance(query, dict):
+            query_data = query
+        elif isinstance(query, str):
+            query_data = {'query': query}
+        else:
+            logger.error(f'stripe_query_object: {query} is invalid')
+            return None
+
         query_result = self.stripe_call(stripe_object_class.search, query_data)
 
         return query_result
@@ -442,14 +449,15 @@ class StripeProcessor(PaymentProcessorBase):
         if customer_search:
             return customer_search['data']
 
-        return None
+        return []
 
     def get_vendor_customers_in_stripe(self, customer_email_list, site):
         """
         Returns all vendor customers who have been created as Stripe customers
         """
         users = CustomerProfile.objects.filter(
-            user__email__iregex=r'(' + '|'.join(customer_email_list) + ')',  # iregex used for case insensitive list match
+            user__email__iregex=r'(' + '|'.join(customer_email_list) + ')',
+            # iregex used for case insensitive list match
             site=site
         )
 
@@ -470,7 +478,6 @@ class StripeProcessor(PaymentProcessorBase):
         for profile in customers:
             profile_data = self.build_customer(profile)
             new_stripe_customer = self.stripe_create_object(self.stripe.Customer, profile_data)
-            print(f'building new customer off {profile_data}')
             if new_stripe_customer:
                 profile.meta['stripe_id'] = new_stripe_customer['id']
                 profile.save()
@@ -478,33 +485,22 @@ class StripeProcessor(PaymentProcessorBase):
     def update_stripe_customers(self, customers):
         for profile in customers:
             customer_id = profile.meta.get('stripe_id')
-            print(f'checking on customer {profile} and meta {profile.meta}')
-            if customer_id:
-                profile_data = self.build_customer(profile)
-                print(f'updating new customer off {profile_data}')
-                existing_stripe_customer = self.stripe_update_object(self.stripe.Customer, customer_id, profile_data)
+            profile_data = self.build_customer(profile)
+            existing_stripe_customer = self.stripe_update_object(self.stripe.Customer, customer_id, profile_data)
 
-                if existing_stripe_customer:
-                    profile.meta['stripe_id'] = existing_stripe_customer['id']
-                    profile.save()
+            if existing_stripe_customer:
+                profile.meta['stripe_id'] = existing_stripe_customer['id']
+                profile.save()
 
     def sync_customers(self, site):
         stripe_customers = self.get_stripe_customers(site)
-        stripe_customers_emails = []
-
-        if stripe_customers:
-            stripe_customers_emails = [customer_obj['email'] for customer_obj in stripe_customers]
+        stripe_customers_emails = [customer_obj['email'] for customer_obj in stripe_customers]
 
         vendor_customers_in_stripe = self.get_vendor_customers_in_stripe(stripe_customers_emails, site)
         vendor_customers_not_in_stripe = self.get_vendor_customers_not_in_stripe(stripe_customers_emails, site)
 
-        if vendor_customers_not_in_stripe:
-            print(f'customers not in strip are {vendor_customers_not_in_stripe}')
-            self.create_stripe_customers(vendor_customers_not_in_stripe)
-
-        if vendor_customers_in_stripe:
-            print(f'customers in strip are {vendor_customers_in_stripe}')
-            self.update_stripe_customers(vendor_customers_in_stripe)
+        self.create_stripe_customers(vendor_customers_not_in_stripe)
+        self.update_stripe_customers(vendor_customers_in_stripe)
 
     def get_site_offers(self, site):
         """
@@ -525,7 +521,7 @@ class StripeProcessor(PaymentProcessorBase):
         if product_search:
             return product_search['data']
 
-        return None
+        return []
 
     def get_price_with_pk(self, price_pk):
         """
@@ -587,19 +583,22 @@ class StripeProcessor(PaymentProcessorBase):
 
     def create_offers(self, offers):
         for offer in offers:
+            # build product first, since product_id is needed to build price later
             product_data = self.build_product(offer)
-            price_data = self.build_price(offer, offer.current_price_object())
-            coupon_data = self.build_coupon(offer, offer.current_price_object())
 
             new_stripe_product = self.stripe_create_object(self.stripe.Product, product_data)
-            new_stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
-            new_stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
 
             if new_stripe_product:
                 if offer.meta.get('stripe'):
                     offer.meta['stripe']['product_id'] = new_stripe_product['id']
                 else:
                     offer.meta['stripe'] = {'product_id': new_stripe_product['id']}
+
+            price_data = self.build_price(offer, offer.current_price_object())
+            coupon_data = self.build_coupon(offer, offer.current_price_object())
+
+            new_stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
+            new_stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
 
             if new_stripe_price:
                 if offer.meta.get('stripe'):
@@ -614,6 +613,7 @@ class StripeProcessor(PaymentProcessorBase):
                     offer.meta['stripe'] = {'coupon_id': new_stripe_coupon['id']}
 
             offer.save()
+
 
     def update_offers(self, offers):
         coupons = self.get_coupons()
@@ -676,19 +676,13 @@ class StripeProcessor(PaymentProcessorBase):
 
     def sync_offers(self, site):
         products = self.get_site_offers(site)
-        offer_pk_list = []
-
-        if products:
-            offer_pk_list = [product['metadata']['pk'] for product in products]
+        offer_pk_list = [product['metadata']['pk'] for product in products]
 
         offers_in_vendor = self.get_vendor_offers_in_stripe(offer_pk_list, site)
         offers_not_in_vendor = self.get_vendor_offers_not_in_stripe(offer_pk_list, site)
 
-        if offers_not_in_vendor:
-            self.create_offers(offers_not_in_vendor)
-
-        if offers_in_vendor:
-            self.update_offers(offers_in_vendor)
+        self.create_offers(offers_not_in_vendor)
+        self.update_offers(offers_in_vendor)
 
     def sync_stripe_vendor_objects(self, site):
         """
