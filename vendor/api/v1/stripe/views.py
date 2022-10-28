@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 class StripeEvents(TextChoices):
-    INVOICE_CREATED = 'invoice.created', _('Invoice Created')
     INVOICE_PAID = 'invoice.paid', _('Invoice Paid')
     INVOICE_PAYMENT_FAILED = 'invoice.payment_failed', _('Invoice Payment Failed')
 
@@ -53,6 +52,17 @@ class StripeBaseAPI(View):
             return False
 
         return True
+    
+    def is_incoming_event_correct(self, event, desired_event):
+        if event.type != desired_event:
+            return False
+
+        # This check is recuired to make sure that the event is related to a subscription.
+        if self.event.data.object.billing_reason != 'subscription_cycle':
+            return False
+
+        return True
+
 
 class StripeSubscriptionInvoicePaid(StripeBaseAPI):
 
@@ -62,13 +72,10 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
         if not self.is_valid_post(site):
             return HttpResponse(status=400)
 
+        if not self.is_incoming_event_correct(self.event, StripeEvents.INVOICE_PAID):
+            return HttpResponse(status=400)
+
         # TODO nice to move this assignments inside a generic function in the StripeBaseAPI class
-        if self.event.type != StripeEvents.INVOICE_PAID:
-            return HttpResponse(status=400)
-
-        if self.event.data.object.billing_reason != 'subscription_cycle':
-            return HttpResponse(status=400)
-
         stripe_subscription_id = self.event.data.object.subscription
         stripe_customer_id = self.event.data.object.customer
         stripe_customer_email = self.event.data.object.customer_email
@@ -124,10 +131,7 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
         if not self.is_valid_post(site):
             return HttpResponse(status=400)
 
-        if self.event.type != StripeEvents.INVOICE_PAYMENT_FAILED:
-            return HttpResponse(status=400)
-
-        if self.event.data.object.billing_reason != 'subscription_cycle':
+        if not self.is_incoming_event_correct(self.event, StripeEvents.INVOICE_PAYMENT_FAILED):
             return HttpResponse(status=400)
 
         # TODO nice to move this assignments inside a generic function in the StripeBaseAPI class
