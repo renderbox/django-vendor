@@ -524,7 +524,7 @@ class PaymentProcessorBase(object):
         self.payment = Payment.objects.create(
             subscription=subscription,
             profile=self.invoice.profile,
-            amount=self.invoice.amount,
+            amount=self.invoice.total,
             provider=self.provider,
             invoice=self.invoice,
             submitted_date=self.invoice.ordered_date,
