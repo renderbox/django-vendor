@@ -61,6 +61,8 @@ class StripeProcessorTests(TestCase):
         self.setup_processor_site_config()
         self.setup_existing_invoice()
         self.site = self.processor_site_config.site
+        self.site.domain = 'sc'
+        self.site.save()
         self.processor = StripeProcessor(self.site, self.existing_invoice)
         self.form_data = {
             'billing_address_form': {
@@ -515,7 +517,70 @@ class StripeProcessorTests(TestCase):
         self.processor.stripe_delete_object(self.processor.stripe.Price, stripe_price.id)"""
 
     def test_sync_customers(self):
-        pass
+        # Vendor objects not in stripe so create them there
+        user1 = User.objects.create(email='test_email@aol.com', first_name='test name', last_name='last',
+                                    username='test1')
+        customer1 = CustomerProfile.objects.create(site=self.site, user=user1)
+        user2 = User.objects.create(email='test_email2@aol.com', first_name='test name2', last_name='last',
+                                    username='test2')
+        customer2 = CustomerProfile.objects.create(site=self.site, user=user2)
+
+        self.processor.sync_customers(self.site)
+
+        customer1.refresh_from_db()
+        customer2.refresh_from_db()
+
+        self.assertTrue(customer1.meta['stripe_id'])
+        self.assertTrue(customer2.meta['stripe_id'])
+
+        # Now we know they're in stripe, lets update and sync again
+        update_first_name1 = 'Mary'
+        update_first_name2 = 'Sue'
+
+        customer1.user.first_name = update_first_name1
+        customer2.user.first_name = update_first_name2
+        customer1.save()
+        customer2.save()
+
+        self.processor.sync_customers(self.site)
+
+        customer1.refresh_from_db()
+        customer2.refresh_from_db()
+
+        name_clause = self.processor.query_builder.make_clause_template(
+            field='name',
+            value=f'{update_first_name1} last',
+            operator=self.processor.query_builder.EXACT_MATCH,
+            next_operator=self.processor.query_builder.AND
+        )
+        name_clause2 = self.processor.query_builder.make_clause_template(
+            field='name',
+            value=f'{update_first_name2} last',
+            operator=self.processor.query_builder.EXACT_MATCH,
+            next_operator=self.processor.query_builder.AND
+        )
+        site_clause = self.processor.query_builder.make_clause_template(
+            field='metadata',
+            key='site',
+            value=self.site.domain,
+            operator=self.processor.query_builder.EXACT_MATCH
+        )
+        customer1_query = self.processor.query_builder.build_search_query(self.processor.stripe.Customer,
+                                                                          [name_clause, site_clause])
+        customer2_query = self.processor.query_builder.build_search_query(self.processor.stripe.Customer,
+                                                                          [name_clause2, site_clause])
+
+        stripe_customer1 = self.processor.stripe_query_object(self.processor.stripe.Customer, customer1_query)
+        stripe_customer2 = self.processor.stripe_query_object(self.processor.stripe.Customer, customer2_query)
+
+
+        self.processor.stripe_delete_object(self.processor.stripe.Customer, customer1.meta['stripe_id'])
+        self.processor.stripe_delete_object(self.processor.stripe.Customer, customer2.meta['stripe_id'])
+
+        self.assertEquals(stripe_customer1['data']['name'], f'{update_first_name1} last')
+        self.assertEquals(stripe_customer2['data']['email'], f'{update_first_name2} last')
+
+
 
     def test_sync_offers(self):
         pass
@@ -525,7 +590,7 @@ class StripeProcessorTests(TestCase):
 class StripeCRUDObjectTests(TestCase):
 
     def init_test_objects(self):
-        self.valid_metadata = {'site': 'sc.online.edu'}
+        self.valid_metadata = {'site': 'sc'}
         self.valid_addr = {'city': "na",'country': "US",'line1': "Salvatierra walk",'postal_code': "90321",'state': 'CA'}
         
         self.cus_norrin_radd = {'name': 'Norrin Radd', 'email': 'norrin@radd.com', 'metadata': self.valid_metadata}
@@ -555,6 +620,8 @@ class StripeCRUDObjectTests(TestCase):
     def setUp(self):
         stripe.api_key = settings.STRIPE_PUBLIC_KEY
         self.site = Site.objects.get(pk=1)
+        self.site.domain = 'sc'
+        self.site.save()
         self.init_test_objects()
         self.processor = StripeProcessor(self.site)
 
@@ -743,6 +810,8 @@ class StripeBuildObjectTests(TestCase):
     def setUp(self):
         stripe.api_key = settings.STRIPE_PUBLIC_KEY
         self.site = Site.objects.get(pk=1)
+        self.site.domain = 'sc'
+        self.site.save()
         self.processor = StripeProcessor(self.site)
 
     def test_build_customer_success(self):

@@ -23,7 +23,7 @@ def stripe_create_customer_signal(sender, instance, created, **kwargs):
 
     processor = StripeProcessor(instance.site)
 
-    customer_query = {'query': f"email:'{instance.user.email}' AND metadata['site']:'{instance.site}'"}
+    customer_query = {'query': f"email:'{instance.user.email}' AND metadata['site']:'{instance.site.domain}'"}
     query_result = processor.stripe_query_object(processor.stripe.Customer, customer_query)
 
     if not query_result or not query_result.is_empty:

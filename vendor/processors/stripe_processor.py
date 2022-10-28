@@ -256,18 +256,25 @@ class StripeProcessor(PaymentProcessorBase):
 
         except self.stripe.error.CardError as e:
             logger.error(e.user_message)
+            print(e.user_message)
         except self.stripe.error.RateLimitError as e:
             logger.error(e.user_message)
+            print(e.user_message)
         except self.stripe.error.InvalidRequestError as e:
             logger.error(e.user_message)
+            print(e.user_message)
         except self.stripe.error.AuthenticationError as e:
             logger.error(e.user_message)
+            print(e.user_message)
         except self.stripe.error.APIConnectionError as e:
             logger.error(e.user_message)
+            print(e.user_message)
         except self.stripe.error.StripeError as e:
             logger.error(e.user_message)
+            print(e.user_message)
         except Exception as e:
             logger.error(str(e))
+            print(str(e))
 
         self.transaction_succeded = False
 
@@ -288,7 +295,8 @@ class StripeProcessor(PaymentProcessorBase):
         return stripe_object
 
     def stripe_query_object(self, stripe_object_class, query):
-        query_result = self.stripe_call(stripe_object_class.search, query)
+        query_data = {'query': query}
+        query_result = self.stripe_call(stripe_object_class.search, query_data)
 
         return query_result
 
@@ -462,20 +470,23 @@ class StripeProcessor(PaymentProcessorBase):
         for profile in customers:
             profile_data = self.build_customer(profile)
             new_stripe_customer = self.stripe_create_object(self.stripe.Customer, profile_data)
-
+            print(f'building new customer off {profile_data}')
             if new_stripe_customer:
                 profile.meta['stripe_id'] = new_stripe_customer['id']
                 profile.save()
 
     def update_stripe_customers(self, customers):
         for profile in customers:
-            customer_id = profile.meta['stripe_id']
-            profile_data = self.build_customer(profile)
-            existing_stripe_customer = self.stripe_update_object(self.stripe.Customer, customer_id, profile_data)
+            customer_id = profile.meta.get('stripe_id')
+            print(f'checking on customer {profile} and meta {profile.meta}')
+            if customer_id:
+                profile_data = self.build_customer(profile)
+                print(f'updating new customer off {profile_data}')
+                existing_stripe_customer = self.stripe_update_object(self.stripe.Customer, customer_id, profile_data)
 
-            if existing_stripe_customer:
-                profile.meta['stripe_id'] = existing_stripe_customer['id']
-                profile.save()
+                if existing_stripe_customer:
+                    profile.meta['stripe_id'] = existing_stripe_customer['id']
+                    profile.save()
 
     def sync_customers(self, site):
         stripe_customers = self.get_stripe_customers(site)
@@ -488,9 +499,11 @@ class StripeProcessor(PaymentProcessorBase):
         vendor_customers_not_in_stripe = self.get_vendor_customers_not_in_stripe(stripe_customers_emails, site)
 
         if vendor_customers_not_in_stripe:
+            print(f'customers not in strip are {vendor_customers_not_in_stripe}')
             self.create_stripe_customers(vendor_customers_not_in_stripe)
 
         if vendor_customers_in_stripe:
+            print(f'customers in strip are {vendor_customers_in_stripe}')
             self.update_stripe_customers(vendor_customers_in_stripe)
 
     def get_site_offers(self, site):
