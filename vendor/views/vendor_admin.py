@@ -367,25 +367,31 @@ class PaymentProcessorSiteConfigsListView(ListView):
 
     def get_queryset(self):
         payment_processor = PaymentProcessorSiteConfig()
+
         return SiteConfigModel.objects.filter(key=payment_processor.key)
 
 
-class PaymentProcessorFormView(FormView):
+class PaymentProcessorSiteFormView(SiteOnRequestFilterMixin, FormView):
     template_name = 'vendor/manage/processor_site_config.html'
     form_class = PaymentProcessorForm
 
     def get_success_url(self):
-        return reverse('vendor_admin:vendor-processor')
+        return reverse('vendor_admin:vendor-site-processor')
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        processor_config = PaymentProcessorSiteConfig()
+
+        site = get_site_from_request(self.request)
+        processor_config = PaymentProcessorSiteConfig(site)
         context['form'] = processor_config.get_form()
+
         return context
 
     def form_valid(self, form):
-        processor_config = PaymentProcessorSiteConfig()
+        site = get_site_from_request(self.request)
+        processor_config = PaymentProcessorSiteConfig(site)
         processor_config.save(form.cleaned_data["payment_processor"], "payment_processor")
+
         return redirect('vendor_admin:vendor-processor-lists')
 
 
@@ -394,18 +400,25 @@ class PaymentProcessorSiteSelectFormView(FormView):
     form_class = PaymentProcessorSiteSelectForm
 
     def get_success_url(self):
-        return reverse('vendor_admin:vendor-processor')
+        return reverse('vendor_admin:processor-lists')
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        processor_config = PaymentProcessorSiteSelectSiteConfig(Site.objects.get(pk=self.kwargs.get('pk')))
+
+        if self.kwargs.get('domain'):
+            site = Site.objects.get(domain=self.kwargs.get('domain'))
+            processor_config = PaymentProcessorSiteSelectSiteConfig(site)
+        else:
+            processor_config = PaymentProcessorSiteSelectSiteConfig()
         context['form'] = processor_config.get_form()
+
         return context
 
     def form_valid(self, form):
         site = Site.objects.get(pk=form.cleaned_data['site'])
         processor_config = PaymentProcessorSiteSelectSiteConfig(site)
         processor_config.save(form.cleaned_data["payment_processor"], "payment_processor")
+        
         return redirect('vendor_admin:vendor-processor-lists')
 
 
@@ -429,6 +442,7 @@ class AuthorizeNetIntegrationView(FormView):
     def form_valid(self, form):
         authorizenet_integration = AuthorizeNetIntegration(get_site_from_request(self.request))
         authorizenet_integration.save(form.cleaned_data)
+
         return super().form_valid(form)
 
 

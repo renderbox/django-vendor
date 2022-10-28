@@ -134,7 +134,6 @@ class PaymentProcessorBase(object):
             'full_name': full_name
         }
 
-
     def get_transaction_info(self, raw='', errors='', payment_method='', data=''):
         return {
             'raw': raw,
@@ -143,13 +142,11 @@ class PaymentProcessorBase(object):
             'data': data
         }
 
-    def parse_response(self, *args, **kwargs):
-        # implement in processor
-        pass
+    def parse_response(self):
+        ...
 
-    def parse_success(self, *args, **kwargs):
-        # implement in processor
-        pass
+    def parse_success(self):
+        ...
 
     def save_subscription_transaction_result(self):
         """
@@ -521,4 +518,16 @@ class PaymentProcessorBase(object):
     # -------------------
     # Refund a Payment
     def refund_payment(self):
-        pass
+        ...
+
+    def subscription_payment_failed(self, subscription, transaction_id):
+        self.payment = Payment.objects.create(
+            profile=self.invoice.profile,
+            amount=amount,
+            provider=self.provider,
+            invoice=self.invoice,
+            submitted_date=self.invoice.ordered_date,
+            transaction=transaction_id,
+            status = PurchaseStatus.DECLINED,
+            payee_full_name=" ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+        )
