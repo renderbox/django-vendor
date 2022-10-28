@@ -62,6 +62,7 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
         if not self.is_valid_post(site):
             return HttpResponse(status=400)
 
+        # TODO nice to move this assignments inside a generic function in the StripeBaseAPI class
         if self.event.type != StripeEvents.INVOICE_PAID:
             return HttpResponse(status=400)
 
@@ -76,6 +77,7 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
         paid_date = timezone.datetime.fromtimestamp(self.event.data.object.status_transitions.paid_at)
         amount_paid = str(self.event.data.object.total)
 
+    # TODO nice to move this try/except blocks inside a generic function in the StripeBaseAPI class
         try:
             customer_profile = CustomerProfile.objects.get(site=site, user__email__iequals=stripe_customer_email)
         except ObjectDoesNotExist:
@@ -128,6 +130,7 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
         if self.event.data.object.billing_reason != 'subscription_cycle':
             return HttpResponse(status=400)
 
+        # TODO nice to move this assignments inside a generic function in the StripeBaseAPI class
         stripe_subscription_id = self.event.data.object.subscription
         stripe_customer_id = self.event.data.object.customer
         stripe_customer_email = self.event.data.object.customer_email
@@ -135,6 +138,7 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
         stripe_invoice_id = self.event.data.object.stripe_id
         paid_date = timezone.datetime.fromtimestamp(self.event.data.object.status_transitions.paid_at)
 
+        # TODO nice to move this try/except blocks inside a generic function in the StripeBaseAPI class
         try:
             customer_profile = CustomerProfile.objects.get(site=site, user__email__iequals=stripe_customer_email)
         except ObjectDoesNotExist:
