@@ -522,6 +522,7 @@ class PaymentProcessorBase(object):
 
     def subscription_payment_failed(self, subscription, transaction_id):
         self.payment = Payment.objects.create(
+            subscription=subscription,
             profile=self.invoice.profile,
             amount=self.invoice.amount,
             provider=self.provider,
