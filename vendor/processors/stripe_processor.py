@@ -434,7 +434,7 @@ class StripeProcessor(PaymentProcessorBase):
         if customer_search:
             return customer_search['data']
 
-        return None
+        return []
 
     def get_vendor_customers_in_stripe(self, customer_email_list, site):
         """
@@ -480,8 +480,8 @@ class StripeProcessor(PaymentProcessorBase):
     def sync_customers(self, site):
         stripe_customers = self.get_stripe_customers(site)
         stripe_customers_emails = [customer_obj['email'] for customer_obj in stripe_customers]
-        vendor_customers_in_stripe = self.get_vendor_customers_in_stripe(stripe_customers_emails)
-        vendor_customers_not_in_stripe = self.get_vendor_customers_not_in_stripe(stripe_customers_emails)
+        vendor_customers_in_stripe = self.get_vendor_customers_in_stripe(stripe_customers_emails, site)
+        vendor_customers_not_in_stripe = self.get_vendor_customers_not_in_stripe(stripe_customers_emails, site)
 
         self.create_stripe_customers(vendor_customers_not_in_stripe)
         self.update_stripe_customers(vendor_customers_in_stripe)
@@ -726,12 +726,6 @@ class StripeProcessor(PaymentProcessorBase):
             operator=self.query_builder.EXACT_MATCH,
             next_operator=self.query_builder.AND
         )
-        metadata_clause = self.query_builder.make_clause_template(
-            field='metadata',
-            key=metadata['key'],
-            value=metadata['value'],
-            operator=self.query_builder.EXACT_MATCH
-        )
 
         query = self.query_builder.build_search_query(self.stripe.Product, [name_clause, metadata_clause])
 
@@ -926,6 +920,7 @@ class StripeProcessor(PaymentProcessorBase):
     def process_payment(self):
         self.transaction_succeded = False
         self.charge = self.create_charge()
+        
         if self.charge and self.charge["captured"]:
             self.transaction_succeded = True
             self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = '201'
@@ -944,6 +939,16 @@ class StripeProcessor(PaymentProcessorBase):
 
         subscription_obj = self.build_subscription(subscription, stripe_payment_method.id)
         self.stripe_subscription = self.processor.stripe_create_object(self.processor.stripe.Subscription, subscription_obj)
+
+        self.parse_response()
+        self.parse_success()
+
+        if self.invoice.vendor_notes is None:
+            self.invoice.vendor_notes = {}
+
+        self.invoice.vendor_notes['stripe_id'] = self.transaction_info['transaction_id']
+        self.invoice.save()
+        
 
 
 

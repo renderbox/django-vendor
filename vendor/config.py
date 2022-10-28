@@ -9,6 +9,9 @@ from django.utils.translation import gettext_lazy as _
 from siteconfigs.config import SiteConfigBaseClass
 from siteconfigs.models import SiteConfigModel
 
+from vendor.utils import get_site_from_request
+
+
 class SupportedPaymentProcessor(TextChoices):
     PROMO_CODE_BASE = ("base.PaymentProcessorBase", _("Default Processor"))
     AUTHORIZE_NET = ("authorizenet.AuthorizeNetProcessor", _("Authorize.Net"))
@@ -23,6 +26,8 @@ class PaymentProcessorSiteSelectForm(PaymentProcessorForm):
     site = forms.CharField(label=_("Site"))
 
     def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
         self.fields['site'].widget = forms.Select(choices=[(site.pk, site.domain) for site in Site.objects.all()])
 
 
@@ -34,6 +39,7 @@ class PaymentProcessorSiteConfig(SiteConfigBaseClass):
     instance = None
 
     def __init__(self, site=None):
+        
         if site is None:
             site = Site.objects.get_current()
 
@@ -49,11 +55,13 @@ class PaymentProcessorSiteConfig(SiteConfigBaseClass):
     def get_initials(self):
         if self.instance:
             return {'payment_processor': [choice for choice in SupportedPaymentProcessor.choices if choice[0] == self.instance.value['payment_processor']][0]}
+
         return {'payment_processor': SupportedPaymentProcessor.choices[0]}
 
     def get_selected_processor(self):
         if self.instance:
             return [choice for choice in SupportedPaymentProcessor.choices if choice[0] == self.instance.value['payment_processor']][0]
+
         return SupportedPaymentProcessor.choices[0]  # Return Default Processors
 
 
@@ -67,6 +75,7 @@ class PaymentProcessorSiteSelectSiteConfig(PaymentProcessorSiteConfig):
     def get_initials(self):
         initial = super().get_initials()
         initial['site'] = (self.site.pk, self.site.domain)
+        
         return initial
 
 
