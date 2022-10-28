@@ -88,7 +88,7 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
         try:
             customer_profile = CustomerProfile.objects.get(site=site, user__email__iequals=stripe_customer_email)
         except ObjectDoesNotExist:
-            logger.error(f"StripeSubscriptionInvoicePaid error: email: {stripe_customer_email} does not exits")
+            logger.error(f"StripeSubscriptionInvoicePaid error: email: {stripe_customer_email} does not exist")
             return HttpResponse(status=400)
 
         if 'stripe_id' not in customer_profile.meta:
@@ -146,7 +146,7 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
         try:
             customer_profile = CustomerProfile.objects.get(site=site, user__email__iequals=stripe_customer_email)
         except ObjectDoesNotExist:
-            logger.error(f"StripeSubscriptionInvoicePaid error: email: {stripe_customer_email} does not exits")
+            logger.error(f"StripeSubscriptionInvoicePaid error: email: {stripe_customer_email} does not exist")
             return HttpResponse(status=400)
 
         if 'stripe_id' not in customer_profile.meta:
