@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-17 16:57+0000\n"
+"POT-Creation-Date: 2022-10-28 22:55+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,14 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
+#: api/v1/stripe/views.py:33
+msgid "Invoice Paid"
+msgstr "請求書支払い済み"
+
+#: api/v1/stripe/views.py:34
+msgid "Invoice Payment Failed"
+msgstr "請求書の支払いに失敗しました"
 
 #: api/v1/views.py:54
 msgid "Offer does not exist or is unavailable"
@@ -66,30 +74,34 @@ msgstr "顧客プロファイルにオファーが追加されました"
 msgid "Product availability Changed"
 msgstr "製品の入手可能性が変更されました"
 
-#: config.py:13
+#: config.py:16
 msgid "Default Processor"
 msgstr "デフォルトのプロセッサ"
 
-#: config.py:14
+#: config.py:17
 msgid "Authorize.Net"
 msgstr "Authorize.Net"
 
 #: config.py:18
+msgid "Stripe"
+msgstr ""
+
+#: config.py:22
 msgid "Payment Processor"
 msgstr "支払い処理業者"
 
-#: config.py:22 models/base.py:80 models/invoice.py:31 models/offer.py:48
+#: config.py:26 models/base.py:80 models/invoice.py:33 models/offer.py:48
 #: models/profile.py:31 templates/vendor/manage/payment_list.html:21
 #: templates/vendor/manage/processor_site_config_list.html:18
 #: templates/vendor/manage/profile_list.html:50
 msgid "Site"
 msgstr "地点"
 
-#: config.py:29 config.py:60
+#: config.py:35 config.py:69
 msgid "Promo Code Processor"
 msgstr "プロモーションコードプロセッサ"
 
-#: config.py:78
+#: config.py:88
 msgid "USD Dollars"
 msgstr "米ドル"
 
@@ -275,7 +287,15 @@ msgstr "トランザクションキー"
 msgid "Signature ID"
 msgstr "署名ID"
 
-#: models/address.py:39 models/invoice.py:29 models/payment.py:114
+#: forms.py:430
+msgid "Publishable Client Key"
+msgstr ""
+
+#: forms.py:431
+msgid "Secret Server Key"
+msgstr ""
+
+#: models/address.py:39 models/invoice.py:31 models/payment.py:114
 #: models/profile.py:28 models/receipt.py:18 models/subscription.py:35
 msgid "UUID"
 msgstr "UUID"
@@ -284,7 +304,7 @@ msgstr "UUID"
 msgid "Address Name"
 msgstr "住所名"
 
-#: models/address.py:42 models/invoice.py:30 models/profile.py:50
+#: models/address.py:42 models/invoice.py:32 models/profile.py:51
 msgid "Customer Profile"
 msgstr "顧客情報"
 
@@ -356,8 +376,8 @@ msgstr "説明"
 msgid "Eg: {'call out': 'The ultimate product'}"
 msgstr "例：{'call out'： '究極の製品'}"
 
-#: models/base.py:84 models/offer.py:60 models/receipt.py:26
-#: models/subscription.py:40
+#: models/base.py:84 models/offer.py:60 models/profile.py:32
+#: models/receipt.py:26 models/subscription.py:40
 msgid "Meta"
 msgstr "メタ"
 
@@ -1654,7 +1674,7 @@ msgstr "ウィスコンシン"
 msgid "Wyoming"
 msgstr "ワイオミング"
 
-#: models/invoice.py:32 models/payment.py:127 models/subscription.py:39
+#: models/invoice.py:34 models/payment.py:127 models/subscription.py:39
 #: templates/vendor/invoice_list.html:20
 #: templates/vendor/manage/dashboard.html:109
 #: templates/vendor/manage/invoice_list.html:20
@@ -1666,19 +1686,19 @@ msgstr "ワイオミング"
 msgid "Status"
 msgstr "状態"
 
-#: models/invoice.py:33
+#: models/invoice.py:35
 msgid "Customer Notes"
 msgstr "カスタマーノート"
 
-#: models/invoice.py:34 models/receipt.py:23
+#: models/invoice.py:36 models/receipt.py:23
 msgid "Vendor Notes"
 msgstr "ベンダーノート"
 
-#: models/invoice.py:35
+#: models/invoice.py:37
 msgid "Ordered Date"
 msgstr "注文日"
 
-#: models/invoice.py:40 models/price.py:14 models/profile.py:30
+#: models/invoice.py:42 models/price.py:14 models/profile.py:30
 #: templates/vendor/invoice_list.html:22
 #: templates/vendor/manage/dashboard.html:111
 #: templates/vendor/manage/invoice_list.html:22
@@ -1688,31 +1708,31 @@ msgstr "注文日"
 msgid "Currency"
 msgstr "通貨"
 
-#: models/invoice.py:41 templates/vendor/address_detail.html:7
+#: models/invoice.py:43 templates/vendor/address_detail.html:7
 #: templates/vendor/checkout.html:35 templates/vendor/checkout.html:106
 msgid "Shipping Address"
 msgstr "お届け先の住所"
 
-#: models/invoice.py:63
+#: models/invoice.py:65
 msgid "Invoice ({self.created:%Y-%m-%d %H:%M})"
 msgstr "請求書({self.created:%Y-%m-%d %H:%M})"
 
-#: models/invoice.py:64
+#: models/invoice.py:66
 msgid "{self.profile.user.username} Invoice ({self.created:%Y-%m-%d %H:%M})"
 msgstr "{self.profile.user.username}請求書({self.created:%Y-%m-%d %H:%M})"
 
-#: models/invoice.py:274 models/payment.py:115
+#: models/invoice.py:298 models/payment.py:115
 #: templates/vendor/payment_detail.html:6
 msgid "Invoice"
 msgstr "請求書"
 
-#: models/invoice.py:275 models/price.py:12 models/wishlist.py:31
+#: models/invoice.py:299 models/price.py:12 models/wishlist.py:31
 #: templates/vendor/manage/offer.html:13
 #: templates/vendor/manage/profile_detail.html:163
 msgid "Offer"
 msgstr "提供"
 
-#: models/invoice.py:276 templates/vendor/checkout.html:185
+#: models/invoice.py:300 templates/vendor/checkout.html:185
 #: templates/vendor/invoice_history_detail.html:15
 #: templates/vendor/manage/invoice_detail.html:15
 #: templates/vendor/orderitem_list.html:19
@@ -1911,14 +1931,6 @@ msgstr "ウィッシュリスト"
 msgid "Update"
 msgstr "更新"
 
-#: templates/vendor/authorizenet_integration.html:7
-msgid "AuthorizeNet - Integration"
-msgstr "AuthorizeNet-統合"
-
-#: templates/vendor/authorizenet_integration.html:14
-msgid "Apply"
-msgstr "申し込み"
-
 #: templates/vendor/checkout.html:8
 msgid "Secure Checkout"
 msgstr "安全なチェックアウト"
@@ -1993,6 +2005,10 @@ msgstr "合計( (%(currency)s)"
 #: templates/vendor/includes/cost_overview.html:37
 msgid "Your credit card will be billed on "
 msgstr "クレジットカードに請求されます"
+
+#: templates/vendor/integration_form.html:14
+msgid "Apply"
+msgstr "申し込み"
 
 #: templates/vendor/invoice_detail.html:7
 msgid "Shopping Cart"
@@ -2220,10 +2236,6 @@ msgid "New"
 msgstr "新しい"
 
 #: templates/vendor/manage/processor_site_config_list.html:29
-msgid "Edit Processor"
-msgstr "プロセッサーの編集"
-
-#: templates/vendor/manage/processor_site_config_list.html:30
 msgid "Edit Processor and Site"
 msgstr "プロセッサーとサイトの編集"
 
@@ -2762,60 +2774,65 @@ msgstr "日付"
 msgid "Please add to your cart"
 msgstr "カートに追加してください"
 
-#: views/vendor.py:115 views/vendor.py:156 views/vendor.py:207
+#: views/vendor.py:116 views/vendor.py:158 views/vendor.py:210
 msgid "Cart changed while in checkout process"
 msgstr "チェックアウトプロセス中にカートが変更されました"
 
-#: views/vendor.py:222
+#: views/vendor.py:225
 msgid "The payment gateway did not authorize payment."
 msgstr "支払いゲートウェイは支払いを承認しませんでした。"
 
-#: views/vendor.py:293
+#: views/vendor.py:296
 msgid "Not Found"
 msgstr "見つかりません"
 
-#: views/vendor.py:309
+#: views/vendor.py:312
 msgid "Invalid Card"
 msgstr "無効なカード"
 
-#: views/vendor.py:317
-msgid ""
-"Payment gateway error: {processor.transaction_message.get('message', '')}"
-msgstr ""
-"支払いゲートウェイエラー：{processor.transaction_message.get('message', '')}"
-
-#: views/vendor.py:320
+#: views/vendor.py:323
 msgid "Success: Payment Updated"
 msgstr "成功：支払いが更新されました"
 
-#: views/vendor.py:332
+#: views/vendor.py:335
 #, python-brace-format
 msgid "Failed: {address_form.errors}"
 msgstr "失敗：{address_form.errors}"
 
-#: views/vendor.py:334
+#: views/vendor.py:337
 msgid "Success: Address Updated"
 msgstr "成功：アドレスが更新されました"
 
-#: views/vendor.py:357
+#: views/vendor.py:360
 msgid "Shipping Address Updated"
 msgstr "配送先住所が更新されました"
 
-#: views/vendor_admin.py:217
+#: views/vendor_admin.py:219
 msgid "Invalid currency"
 msgstr "通貨が無効です"
 
-#: views/vendor_admin.py:327
+#: views/vendor_admin.py:332
 msgid "Subscription Renewed"
 msgstr "サブスクリプションが更新されました"
 
-#: views/vendor_admin.py:341
+#: views/vendor_admin.py:346
 msgid "Payments with no Receipts"
 msgstr "領収書のない支払い"
 
-#: views/vendor_admin.py:355
+#: views/vendor_admin.py:360
 msgid "Payments with no Order Items"
 msgstr "注文アイテムのない支払い"
+
+#: views/vendor_admin.py:433
+msgid "AuthorizeNet Integration"
+msgstr "AuthorizeNet 統合"
+
+#: views/vendor_admin.py:454
+msgid "Stripe Integration"
+msgstr "Stripe 統合"
+
+#~ msgid "Edit Processor"
+#~ msgstr "プロセッサーの編集"
 
 #~ msgid "Completed"
 #~ msgstr "完了"
