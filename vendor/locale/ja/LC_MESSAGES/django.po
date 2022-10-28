@@ -56,7 +56,7 @@ msgstr "サブスクリプションがキャンセルされました"
 msgid ""
 "You can only cancel subscription if you are on trial or there has been at "
 "least one settled payment."
-msgstr ""
+msgstr "サブスクリプションをキャンセルできるのは、試用中か、少なくとも 1 回の決済が完了している場合のみです。"
 
 #: api/v1/views.py:138
 msgid "Customer has no longer access to Product"
@@ -84,7 +84,7 @@ msgstr "Authorize.Net"
 
 #: config.py:18
 msgid "Stripe"
-msgstr ""
+msgstr "Stripe"
 
 #: config.py:22
 msgid "Payment Processor"
@@ -191,7 +191,7 @@ msgstr "州を選択"
 
 #: forms.py:146 forms.py:171
 msgid "This field is required."
-msgstr ""
+msgstr "この項目は必須です。"
 
 #: forms.py:152
 msgid "Billing address is the same as shipping address"
@@ -289,11 +289,11 @@ msgstr "署名ID"
 
 #: forms.py:430
 msgid "Publishable Client Key"
-msgstr ""
+msgstr "公開可能なクライアント キー"
 
 #: forms.py:431
 msgid "Secret Server Key"
-msgstr ""
+msgstr "シークレット サーバー キー"
 
 #: models/address.py:39 models/invoice.py:31 models/payment.py:114
 #: models/profile.py:28 models/receipt.py:18 models/subscription.py:35
@@ -464,7 +464,7 @@ msgstr "不承認"
 
 #: models/choice.py:38
 msgid "Error"
-msgstr ""
+msgstr "エラー"
 
 #: models/choice.py:39 models/choice.py:60
 msgid "Void"
