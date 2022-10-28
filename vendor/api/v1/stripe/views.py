@@ -115,7 +115,7 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
             profile=customer_profile,
             site=site,
             ordered_date=paid_date,
-            total=float(f"{amount_paid[:-2]}.{amount_paid[-2:]}"),
+            total=amount_paid,
             status=InvoiceStatus.COMPLETE
         )
         invoice.add_offer(offer)
