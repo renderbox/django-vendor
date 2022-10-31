@@ -256,25 +256,18 @@ class StripeProcessor(PaymentProcessorBase):
 
         except self.stripe.error.CardError as e:
             logger.error(e.user_message)
-            print(e.user_message)
         except self.stripe.error.RateLimitError as e:
             logger.error(e.user_message)
-            print(e.user_message)
         except self.stripe.error.InvalidRequestError as e:
             logger.error(e.user_message)
-            print(e.user_message)
         except self.stripe.error.AuthenticationError as e:
             logger.error(e.user_message)
-            print(e.user_message)
         except self.stripe.error.APIConnectionError as e:
             logger.error(e.user_message)
-            print(e.user_message)
         except self.stripe.error.StripeError as e:
             logger.error(e.user_message)
-            print(e.user_message)
         except Exception as e:
             logger.error(str(e))
-            print(str(e))
 
         self.transaction_succeded = False
 
