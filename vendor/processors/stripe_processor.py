@@ -473,7 +473,6 @@ class StripeProcessor(PaymentProcessorBase):
         """
         users = CustomerProfile.objects.filter(
             user__email__iregex=r'(' + '|'.join(customer_email_list) + ')', # iregex used for case insensitive list match
-            meta__has_key='stripe_id',
             site=site
         )
 
@@ -485,7 +484,6 @@ class StripeProcessor(PaymentProcessorBase):
         """
         users = CustomerProfile.objects.exclude(
             user__email__iregex=r'(' + '|'.join(customer_email_list) + ')',  # iregex used for case insensitive list match
-            meta__has_key='stripe_id',
             site=site
         )
 
