@@ -60,7 +60,7 @@ setup(
             'django-allauth',
             ],
         'stripe': [             # Packages needed for Stripe
-            'stripe>=2.48.0,<3.0',
+            'stripe',
             ],
         'authorizenet': [
             'authorizenet',

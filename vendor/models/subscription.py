@@ -119,4 +119,12 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
         self.meta.update({'payment_info': payment_info})
         self.save()
 
+    def get_offer(self):
+        receipt = self.receipts.first()
+        
+        if not receipt:
+            return None
+        
+        return receipt.order_item.offer
+
 

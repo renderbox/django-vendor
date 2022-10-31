@@ -747,6 +747,7 @@ class StripeProcessor(PaymentProcessorBase):
             operator=self.query_builder.EXACT_MATCH,
             next_operator=self.query_builder.AND
         )
+
         metadata_clause = self.query_builder.make_clause_template(
             field='metadata',
             key=metadata['key'],
@@ -947,6 +948,7 @@ class StripeProcessor(PaymentProcessorBase):
     def process_payment(self):
         self.transaction_succeded = False
         self.charge = self.create_charge()
+        
         if self.charge and self.charge["captured"]:
             self.transaction_succeded = True
             self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = '201'
@@ -965,6 +967,16 @@ class StripeProcessor(PaymentProcessorBase):
 
         subscription_obj = self.build_subscription(subscription, stripe_payment_method.id)
         self.stripe_subscription = self.processor.stripe_create_object(self.processor.stripe.Subscription, subscription_obj)
+
+        self.parse_response()
+        self.parse_success()
+
+        if self.invoice.vendor_notes is None:
+            self.invoice.vendor_notes = {}
+
+        self.invoice.vendor_notes['stripe_id'] = self.transaction_info['transaction_id']
+        self.invoice.save()
+        
 
 
 

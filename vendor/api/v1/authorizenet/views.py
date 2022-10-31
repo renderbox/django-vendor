@@ -46,7 +46,6 @@ def update_payment(site, transaction_id, transaction_detail):
     except Exception as exce:
         logger.error(f"AuthorizeCaptureAPI update_payment error: {exce}")
         
-
 def subscription_save_transaction(site, transaction_id, transaction_detail):
     processor = AuthorizeNetProcessor(site)
 
@@ -141,10 +140,10 @@ class AuthorizeNetBaseAPI(View):
             return False
 
         try:
-            self.credentials = AuthorizeNetIntegration(site)
+            credentials = AuthorizeNetIntegration(site)
 
-            if self.credentials.instance.private_key:
-                hash_value = hmac.new(bytes(self.credentials.instance.private_key, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
+            if credentials.instance and credentials.instance.private_key:
+                hash_value = hmac.new(bytes(credentials.instance.private_key, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
             elif settings.AUTHORIZE_NET_SIGNATURE_KEY:
                 hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNATURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
             else:
