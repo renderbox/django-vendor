@@ -5,6 +5,7 @@ from django.test import TestCase, Client, tag
 from django.contrib.sites.models import Site
 from django.db.models import signals
 from django.utils import timezone
+from django.db.models import Q
 from siteconfigs.models import SiteConfigModel
 from unittest import skipIf
 from vendor.forms import CreditCardForm, BillingAddressForm
@@ -534,16 +535,26 @@ class StripeProcessorTests(TestCase):
 
     def test_sync_offers(self):
         signals.post_save.disconnect(receiver=signals.post_save, sender=CustomerProfile)
+        now = timezone.now()
 
-        offer = Offer.objects.create(site=self.site, name='Stripe Offer', start_date=timezone.now())
+        offer = Offer.objects.create(site=self.site, name='Stripe Offer', start_date=now)
+        product = Product.objects.create(name='Stripe Product', site=self.site)
+        product.offers.add(offer)
+        price = Price.objects.create(offer=offer, cost=10.99, start_date=timezone.now())
+
+        # clear offers that dont have a price, since we cant create stripe product and price
+        offers_with_no_price = Offer.objects.filter(Q(site=offer.site), Q(prices=None) | Q(prices__start_date__lte=now))
+        offers_with_no_price.delete()
 
         self.processor.sync_offers(offer.site)
 
         offer.refresh_from_db()
-
         stripe_meta = offer.meta.get('stripe')
 
-        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_meta.get('product_id'))
+        #deleted_price = self.processor.stripe_delete_object(self.processor.stripe.Price,
+        #                                                    stripe_meta.get('price_id'))
+        #deleted_offer = self.processor.stripe_delete_object(self.processor.stripe.Product,
+        #                                                    stripe_meta.get('product_id'))
 
         self.assertTrue(stripe_meta)
         self.assertTrue(stripe_meta.get('product_id'))

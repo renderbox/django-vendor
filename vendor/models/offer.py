@@ -144,7 +144,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
 
     def get_best_currency(self, currency=DEFAULT_CURRENCY):
         """
-        Gets best currency for prodcuts available in this offer
+        Gets best currency for products available in this offer
         """
         product_msrp_currencies = [ set(product.meta['msrp'].keys()) for product in self.products.all() ]
 

@@ -356,6 +356,10 @@ class StripeProcessor(PaymentProcessorBase):
         if 'stripe' not in offer.meta or 'product_id' not in offer.meta['stripe']:
             raise TypeError(f"Price cannot be created without a product_id on offer.meta['stripe'] field")
 
+        if isinstance(price, (int, float)):
+            raise TypeError(f"Price cannot be created without a valid vendor price object added to this offer")
+
+
         price_data = {
             'product': offer.meta['stripe']['product_id'],
             'currency': price.currency,
@@ -367,12 +371,15 @@ class StripeProcessor(PaymentProcessorBase):
             price_data['recurring'] = {
                 'interval': 'month' if offer.term_details['term_units'] == TermDetailUnits.MONTH else 'year',
                 'interval_count': offer.term_details['payment_occurrences'],
-                'usage_type': 'license'
+                'usage_type': 'licensed'
             }
         
         return price_data
     
     def build_coupon(self, offer, price):
+        if isinstance(price, (int, float)):
+            raise TypeError(f"Price cannot be created without a valid vendor price object added to this offer")
+
         coupon_data = {
             'name': offer.name,
             'currency': price.currency,
@@ -456,8 +463,8 @@ class StripeProcessor(PaymentProcessorBase):
         Returns all vendor customers who have been created as Stripe customers
         """
         users = CustomerProfile.objects.filter(
-            user__email__iregex=r'(' + '|'.join(customer_email_list) + ')',
-            # iregex used for case insensitive list match
+            user__email__iregex=r'(' + '|'.join(customer_email_list) + ')', # iregex used for case insensitive list match
+            meta__has_key='stripe_id',
             site=site
         )
 
@@ -469,6 +476,7 @@ class StripeProcessor(PaymentProcessorBase):
         """
         users = CustomerProfile.objects.exclude(
             user__email__iregex=r'(' + '|'.join(customer_email_list) + ')',  # iregex used for case insensitive list match
+            meta__has_key='stripe_id',
             site=site
         )
 
@@ -574,11 +582,11 @@ class StripeProcessor(PaymentProcessorBase):
         return coupons_list
 
     def get_vendor_offers_in_stripe(self, offer_pk_list, site):
-        offers = Offer.objects.filter(site=site, pk__in=offer_pk_list)
+        offers = Offer.objects.filter(site=site, pk__in=offer_pk_list, meta__has_key='stripe')
         return offers
 
     def get_vendor_offers_not_in_stripe(self, offer_pk_list, site):
-        offers = Offer.objects.exclude(site=site, pk__in=offer_pk_list)
+        offers = Offer.objects.exclude(site=site, pk__in=offer_pk_list, meta__has_key='stripe')
         return offers
 
     def create_offers(self, offers):
@@ -648,7 +656,7 @@ class StripeProcessor(PaymentProcessorBase):
             # Handle Coupon
             coupon_data = self.build_coupon(offer, price)
             discount = self.convert_decimal_to_integer(offer.discount())
-            trial_days = offer.get('trial_days', 0)
+            trial_days = offer.term_details.get('trial_days', 0)
 
             # If this offer has a discount check if its on stripe to create, update, delete
             if discount or trial_days:
