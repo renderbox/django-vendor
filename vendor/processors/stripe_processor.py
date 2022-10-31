@@ -18,6 +18,9 @@ from vendor.models.choice import (
 from vendor.integrations import StripeIntegration
 from vendor.models import Offer, CustomerProfile
 from django.contrib.sites.models import Site
+from vendor.config import DEFAULT_CURRENCY
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -350,15 +353,26 @@ class StripeProcessor(PaymentProcessorBase):
             raise TypeError(f"Price cannot be created without a product_id on offer.meta['stripe'] field")
 
         if isinstance(price, (int, float)):
-            raise TypeError(f"Price cannot be created without a valid vendor price object added to this offer")
+            currency = DEFAULT_CURRENCY
+            unit_amount = self.convert_decimal_to_integer(price)
+            is_price_obj = False
+        else:
+            currency = price.currency
+            unit_amount = self.convert_decimal_to_integer(price.cost)
+            is_price_obj = True
 
 
         price_data = {
             'product': offer.meta['stripe']['product_id'],
-            'currency': price.currency,
-            'unit_amount': self.convert_decimal_to_integer(price.cost),
-            'metadata': {'site': offer.site.domain, 'pk': price.pk}
+            'currency': currency,
+            'unit_amount': unit_amount,
+            'metadata': {'site': offer.site.domain}
         }
+
+        if is_price_obj:
+            price_data['metadata']['pk'] = price.pk
+        else:
+            price_data['metadata']['msrp'] = price
         
         if offer.terms < TermType.PERPETUAL:
             price_data['recurring'] = {
@@ -371,11 +385,13 @@ class StripeProcessor(PaymentProcessorBase):
     
     def build_coupon(self, offer, price):
         if isinstance(price, (int, float)):
-            raise TypeError(f"Price cannot be created without a valid vendor price object added to this offer")
+            currency = DEFAULT_CURRENCY
+        else:
+            currency = price.currency
 
         coupon_data = {
             'name': offer.name,
-            'currency': price.currency,
+            'currency': currency,
             'amount_off': self.convert_decimal_to_integer(offer.discount()),
             'metadata': {'site': offer.site.domain}
         }
