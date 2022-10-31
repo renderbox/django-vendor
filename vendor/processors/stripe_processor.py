@@ -694,13 +694,20 @@ class StripeProcessor(PaymentProcessorBase):
     def sync_offers(self, site):
         products = self.get_site_offers(site)
         offer_pk_list = [product['metadata']['pk'] for product in products]
+        # offers_without_metadata_pk
 
         offers_in_vendor = self.get_vendor_offers_in_stripe(offer_pk_list, site)
+
+        offer_in_vendor_with_stripe_meta = [offer for offer in offers_in_vendor if 'stripe' in offer.meta]
+        exclude_pks = [offer.pk for offer in offer_in_vendor_with_stripe_meta]
+
+        offer_in_vendor_withou_stripe_meta = offers_in_vendor.exclude(pk__in=exclude_pks)
+        
         offers_not_in_vendor = self.get_vendor_offers_not_in_stripe(offer_pk_list, site)
+        offers_to_create = offers_not_in_vendor + offer_inv_vendor_withou_stripe_meta
 
-        self.create_offers(offers_not_in_vendor)
-        self.update_offers(offers_in_vendor)
-
+        self.create_offers(offers_to_create)
+        self.update_offers(offer_in_vendor_with_stripe_meta)
     def sync_stripe_vendor_objects(self, site):
         """
         Sync up all the CustomerProfiles, Offers, Prices, and Coupons for all of the sites
