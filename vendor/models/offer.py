@@ -95,15 +95,14 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         now = timezone.now()
         price = self.prices.filter(Q(start_date__lte=now) | Q(start_date=None),
                                    Q(end_date__gte=now) | Q(end_date=None),
-                                   Q(currency=currency)).order_by(
-            '-priority').first()  # first()/last() returns the model object or None
+                                   Q(currency=currency)).order_by('-priority').first()  # first()/last() returns the model object or None
 
         if price is None:
-            return self.get_msrp(
-                currency)  # If there is no price for the offer, all MSRPs should be summed up for the "price".
+            # If there is no price for the offer, all MSRPs should be summed up for the "price".
+            return self.get_msrp(currency)
         elif price.cost is None:
-            return self.get_msrp(
-                currency)  # If there is no price for the offer, all MSRPs should be summed up for the "price".
+            # If there is no price for the offer, all MSRPs should be summed up for the "price".
+            return self.get_msrp(currency)
 
         return price.cost
 
