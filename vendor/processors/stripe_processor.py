@@ -474,7 +474,7 @@ class StripeProcessor(PaymentProcessorBase):
         users = CustomerProfile.objects.filter(
             user__email__iregex=r'(' + '|'.join(customer_email_list) + ')', # iregex used for case insensitive list match
             site=site
-        )
+        ).select_related('user')
 
         return users
 
@@ -482,10 +482,11 @@ class StripeProcessor(PaymentProcessorBase):
         """
         Returns all vendor customers who have not been created as Stripe customers
         """
-        users = CustomerProfile.objects.exclude(
-            user__email__iregex=r'(' + '|'.join(customer_email_list) + ')',  # iregex used for case insensitive list match
+        users = CustomerProfile.objects.filter(
             site=site
-        )
+        ).exclude(
+            user__email__iregex=r'(' + '|'.join(customer_email_list) + ')',  # iregex used for case insensitive list match
+        ).select_related('user')
 
         return users
 
@@ -512,10 +513,15 @@ class StripeProcessor(PaymentProcessorBase):
         stripe_customers_emails = [customer_obj['email'] for customer_obj in stripe_customers]
 
         vendor_customers_in_stripe = self.get_vendor_customers_in_stripe(stripe_customers_emails, site)
-        vendor_customers_not_in_stripe = self.get_vendor_customers_not_in_stripe(stripe_customers_emails, site)
 
-        self.create_stripe_customers(vendor_customers_not_in_stripe)
-        self.update_stripe_customers(vendor_customers_in_stripe)
+        vendor_customers_with_stripe_meta = vendor_customers_in_stripe.filter(meta__has_key='stripe_id')
+        vendor_customers_without_stripe_meta = vendor_customers_in_stripe.exclude(meta__has_key='stripe_id')
+
+        vendor_customers_not_in_stripe = self.get_vendor_customers_not_in_stripe(stripe_customers_emails, site)
+        vendor_customer_to_create = vendor_customers_not_in_stripe | vendor_customers_without_stripe_meta
+
+        self.create_stripe_customers(vendor_customer_to_create)
+        self.update_stripe_customers(vendor_customers_with_stripe_meta)
 
     def get_site_offers(self, site):
         """
@@ -593,7 +599,7 @@ class StripeProcessor(PaymentProcessorBase):
         return offers
 
     def get_vendor_offers_not_in_stripe(self, offer_pk_list, site):
-        offers = Offer.objects.exclude(site=site, pk__in=offer_pk_list)
+        offers = Offer.objects.filter(site=site).exclude(pk__in=offer_pk_list)
         return offers
 
     def create_offers(self, offers):
@@ -695,16 +701,14 @@ class StripeProcessor(PaymentProcessorBase):
 
         offers_in_vendor = self.get_vendor_offers_in_stripe(offer_pk_list, site)
 
-        offer_in_vendor_with_stripe_meta = [offer for offer in offers_in_vendor if 'stripe' in offer.meta]
-        exclude_pks = [offer.pk for offer in offer_in_vendor_with_stripe_meta]
-
-        offer_in_vendor_withou_stripe_meta = offers_in_vendor.exclude(pk__in=exclude_pks)
+        offers_in_vendor_with_stripe_meta = offers_in_vendor.filter(meta__has_key='stripe')
+        offers_in_vendor_without_stripe_meta = offers_in_vendor.exclude(meta__has_key='stripe')
         
         offers_not_in_vendor = self.get_vendor_offers_not_in_stripe(offer_pk_list, site)
-        offers_to_create = offers_not_in_vendor + offer_inv_vendor_withou_stripe_meta
+        offers_to_create = offers_not_in_vendor | offers_in_vendor_without_stripe_meta
 
         self.create_offers(offers_to_create)
-        self.update_offers(offer_in_vendor_with_stripe_meta)
+        self.update_offers(offers_in_vendor_with_stripe_meta)
 
     def sync_stripe_vendor_objects(self, site):
         """
