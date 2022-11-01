@@ -88,28 +88,25 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         currency = self.get_best_currency(currency)
         return sum([product.get_msrp(currency) for product in self.products.all()])
 
-    def current_price_object(self, currency=DEFAULT_CURRENCY):
+    def current_price(self, currency=DEFAULT_CURRENCY):
         '''
         Finds the highest priority active price and returns that, otherwise returns msrp total.
         '''
         now = timezone.now()
-        price = self.prices.filter( Q(start_date__lte=now) | Q(start_date=None),
-                                    Q(end_date__gte=now) | Q(end_date=None),
-                                    Q(currency=currency)).order_by('-priority').first()            # first()/last() returns the model object or None
+        price = self.prices.filter(Q(start_date__lte=now) | Q(start_date=None),
+                                   Q(end_date__gte=now) | Q(end_date=None),
+                                   Q(currency=currency)).order_by(
+            '-priority').first()  # first()/last() returns the model object or None
 
         if price is None:
-            return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price".
+            return self.get_msrp(
+                currency)  # If there is no price for the offer, all MSRPs should be summed up for the "price".
         elif price.cost is None:
-            return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price".
+            return self.get_msrp(
+                currency)  # If there is no price for the offer, all MSRPs should be summed up for the "price".
 
-        return price
+        return price.cost
 
-    def current_price(self, currency=DEFAULT_CURRENCY):
-        price = self.current_price_object(currency=currency)
-        if isinstance(price, (int, float)):
-            return price
-        else:
-            return price.cost
 
     def add_to_cart_link(self):
         return reverse("vendor_api:add-to-cart", kwargs={"slug": self.slug})
