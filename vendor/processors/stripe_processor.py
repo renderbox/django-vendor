@@ -615,8 +615,8 @@ class StripeProcessor(PaymentProcessorBase):
                 else:
                     offer.meta['stripe'] = {'product_id': new_stripe_product['id']}
 
-            price_data = self.build_price(offer, offer.current_price_object())
-            coupon_data = self.build_coupon(offer, offer.current_price_object())
+            price_data = self.build_price(offer, offer.current_price())
+            coupon_data = self.build_coupon(offer, offer.current_price())
 
             new_stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
             new_stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
