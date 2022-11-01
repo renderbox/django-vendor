@@ -473,7 +473,6 @@ class StripeProcessor(PaymentProcessorBase):
         """
         users = CustomerProfile.objects.filter(
             user__email__iregex=r'(' + '|'.join(customer_email_list) + ')', # iregex used for case insensitive list match
-            meta__has_key='stripe_id',
             site=site
         )
 
@@ -485,7 +484,6 @@ class StripeProcessor(PaymentProcessorBase):
         """
         users = CustomerProfile.objects.exclude(
             user__email__iregex=r'(' + '|'.join(customer_email_list) + ')',  # iregex used for case insensitive list match
-            meta__has_key='stripe_id',
             site=site
         )
 
@@ -591,11 +589,11 @@ class StripeProcessor(PaymentProcessorBase):
         return coupons_list
 
     def get_vendor_offers_in_stripe(self, offer_pk_list, site):
-        offers = Offer.objects.filter(site=site, pk__in=offer_pk_list, meta__has_key='stripe')
+        offers = Offer.objects.filter(site=site, pk__in=offer_pk_list)
         return offers
 
     def get_vendor_offers_not_in_stripe(self, offer_pk_list, site):
-        offers = Offer.objects.exclude(site=site, pk__in=offer_pk_list, meta__has_key='stripe')
+        offers = Offer.objects.exclude(site=site, pk__in=offer_pk_list)
         return offers
 
     def create_offers(self, offers):
@@ -696,10 +694,17 @@ class StripeProcessor(PaymentProcessorBase):
         offer_pk_list = [product['metadata']['pk'] for product in products]
 
         offers_in_vendor = self.get_vendor_offers_in_stripe(offer_pk_list, site)
-        offers_not_in_vendor = self.get_vendor_offers_not_in_stripe(offer_pk_list, site)
 
-        self.create_offers(offers_not_in_vendor)
-        self.update_offers(offers_in_vendor)
+        offer_in_vendor_with_stripe_meta = [offer for offer in offers_in_vendor if 'stripe' in offer.meta]
+        exclude_pks = [offer.pk for offer in offer_in_vendor_with_stripe_meta]
+
+        offer_in_vendor_withou_stripe_meta = offers_in_vendor.exclude(pk__in=exclude_pks)
+        
+        offers_not_in_vendor = self.get_vendor_offers_not_in_stripe(offer_pk_list, site)
+        offers_to_create = offers_not_in_vendor + offer_inv_vendor_withou_stripe_meta
+
+        self.create_offers(offers_to_create)
+        self.update_offers(offer_in_vendor_with_stripe_meta)
 
     def sync_stripe_vendor_objects(self, site):
         """
