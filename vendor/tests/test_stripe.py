@@ -10,6 +10,7 @@ from siteconfigs.models import SiteConfigModel
 from unittest import skipIf
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.processors import StripeProcessor
+from vendor.config import DEFAULT_CURRENCY
 from django.contrib.auth import get_user_model
 from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem, Subscription
 from core.models import Product
@@ -821,22 +822,31 @@ class StripeBuildObjectTests(TestCase):
             'product_id': stripe_product.id
         }
         offer.save()
-        price = offer.prices.first()
 
-        price_data = self.processor.build_price(offer, price)
+        price = offer.get_current_price_instance() if offer.get_current_price_instance() else None
+        msrp = offer.get_msrp()
+        current_price = msrp
+        price_pk = None
+        if price:
+            current_price = price.cost
+            price_pk = price.pk
+
+        price_data = self.processor.build_price(offer, msrp, current_price, DEFAULT_CURRENCY, price_pk)
         stripe_price = self.processor.stripe_create_object(self.processor.stripe.Price, price_data)
 
         self.assertIsNotNone(stripe_price.id)
+        self.processor.stripe_update_object(self.processor.stripe.Price, stripe_price.id, {'active':False})
         self.assertEqual(price.cost, stripe_price.unit_amount)
 
     def test_build_coupon_success(self):
         offer = Offer.objects.all().first()
         price = offer.prices.first()
 
-        coupon_data = self.processor.build_coupon(offer, price)
+        coupon_data = self.processor.build_coupon(offer, DEFAULT_CURRENCY)
         stripe_coupon = self.processor.stripe_create_object(self.processor.stripe.Coupon, coupon_data)
         
         self.assertIsNotNone(stripe_coupon.id)
+        self.processor.stripe_delete_object(self.processor.stripe.Coupon, stripe_coupon.id)
         self.assertEqual("".join([str(stripe_coupon.amount_off)[:-2], ".", str(stripe_coupon.amount_off)[-2:]]), str((offer.get_msrp() - price.cost)))
 
     def test_build_subscription_success(self):
