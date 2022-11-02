@@ -2,10 +2,15 @@
 Payment processor for Stripe.
 """
 import logging
-import uuid
 import stripe
+import uuid
+
 from django.conf import settings
-from .base import PaymentProcessorBase
+from django.contrib.sites.models import Site
+
+from vendor.config import DEFAULT_CURRENCY
+from vendor.integrations import StripeIntegration
+from vendor.models import Offer, CustomerProfile
 from vendor.models.choice import (
     SubscriptionStatus,
     TransactionTypes,
@@ -15,10 +20,7 @@ from vendor.models.choice import (
     InvoiceStatus,
     PurchaseStatus
 )
-from vendor.integrations import StripeIntegration
-from vendor.models import Offer, CustomerProfile
-from django.contrib.sites.models import Site
-from vendor.config import DEFAULT_CURRENCY
+from vendor.processors.base import PaymentProcessorBase
 
 
 
@@ -347,32 +349,23 @@ class StripeProcessor(PaymentProcessorBase):
             'metadata': {'site': offer.site.domain, 'pk': offer.pk}
 
         }
-
-    def build_price(self, offer, price):
+    # TODO: Try to reduce the number of arguments to max 3. 
+    def build_price(self, offer, mspr, currenct_price, currency, price_pk=None):
         if 'stripe' not in offer.meta or 'product_id' not in offer.meta['stripe']:
             raise TypeError(f"Price cannot be created without a product_id on offer.meta['stripe'] field")
-
-        if isinstance(price, (int, float)):
-            currency = DEFAULT_CURRENCY
-            unit_amount = self.convert_decimal_to_integer(price)
-            is_price_obj = False
-        else:
-            currency = price.currency
-            unit_amount = self.convert_decimal_to_integer(price.cost)
-            is_price_obj = True
-
 
         price_data = {
             'product': offer.meta['stripe']['product_id'],
             'currency': currency,
-            'unit_amount': unit_amount,
-            'metadata': {'site': offer.site.domain}
+            'unit_amount': self.convert_decimal_to_integer(currenct_price),
+            'metadata': {
+                'site': offer.site.domain,
+                'msrp': mspr
+                }
         }
 
-        if is_price_obj:
-            price_data['metadata']['pk'] = price.pk
-        else:
-            price_data['metadata']['msrp'] = price
+        if price_pk:
+            price_data['metadata']['pk'] = price_pk
         
         if offer.terms < TermType.PERPETUAL:
             price_data['recurring'] = {
@@ -383,16 +376,11 @@ class StripeProcessor(PaymentProcessorBase):
         
         return price_data
     
-    def build_coupon(self, offer, price):
-        if isinstance(price, (int, float)):
-            currency = DEFAULT_CURRENCY
-        else:
-            currency = price.currency
-
+    def build_coupon(self, offer, currency):
         coupon_data = {
             'name': offer.name,
             'currency': currency,
-            'amount_off': self.convert_decimal_to_integer(offer.discount()),
+            'amount_off': self.convert_decimal_to_integer(offer.discount(currency)),
             'metadata': {'site': offer.site.domain}
         }
 
@@ -615,8 +603,22 @@ class StripeProcessor(PaymentProcessorBase):
                 else:
                     offer.meta['stripe'] = {'product_id': new_stripe_product['id']}
 
-            price_data = self.build_price(offer, offer.current_price())
-            coupon_data = self.build_coupon(offer, offer.current_price())
+            # TODO: Need to explore what is the best way to upload prices in each currency
+            # currently we will only support the default currency (DEFAULT_CURRENCY) se
+            # on the vendor.config.py file
+            # for currency in AVAILABLE_CURRENCIES:
+            #     ...
+            price = offer.get_current_price_instance() if offer.get_current_price_instance() else None
+            msrp = offer.get_msrp()
+            current_price = msrp
+            price_pk = None
+            
+            if price:
+                currenct_price = price
+                price_pk = price.pk
+
+            price_data = self.build_price(offer, msrp, current_price, DEFAULT_CURRENCY, price_pk)
+            coupon_data = self.build_coupon(offer, DEFAULT_CURRENCY)
 
             new_stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
             new_stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
@@ -645,6 +647,7 @@ class StripeProcessor(PaymentProcessorBase):
             product_id = offer.meta['stripe']['product_id']
             product_data = self.build_product(offer)
             existing_stripe_product = self.stripe_update_object(self.stripe.Product, product_id, product_data)
+            
             if existing_stripe_product:
                 if offer.meta.get('stripe'):
                     offer.meta['stripe']['product_id'] = existing_stripe_product['id']
@@ -652,14 +655,31 @@ class StripeProcessor(PaymentProcessorBase):
                     offer.meta['stripe'] = {'product_id': existing_stripe_product['id']}
 
             # Handle Price
-            price = offer.current_price()
-            price_data = self.build_price(offer, price)
-            stripe_price_obj = self.get_price_with_pk(price.pk)
+            # TODO: Need to explore what is the best way to upload prices in each currency
+            # currently we will only support the default currency (DEFAULT_CURRENCY) se
+            # on the vendor.config.py file
+            # for currency in AVAILABLE_CURRENCIES:
+            #     ...
+            price = offer.get_current_price_instance() if offer.get_current_price_instance() else None
+            msrp = offer.get_msrp()
+            current_price = msrp
+            price_pk = None
+            
+            if price:
+                currenct_price = price
+                price_pk = price.pk
 
-            if stripe_price_obj:
-                stripe_price = self.stripe_update_object(self.stripe.Price, stripe_price_obj['id'], price_data)
+                price_data = self.build_price(offer, msrp, current_price, DEFAULT_CURRENCY, price_pk)
+                stripe_price_obj = self.get_price_with_pk(price.pk)
+
+                if stripe_price_obj:
+                    stripe_price = self.stripe_update_object(self.stripe.Price, stripe_price_obj['id'], price_data)
+                else:
+                    stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
             else:
+                price_data = self.build_price(offer, msrp, current_price, DEFAULT_CURRENCY, price_pk)
                 stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
+
 
             if offer.meta.get('stripe'):
                 offer.meta['stripe']['price_id'] = stripe_price['id']
@@ -667,7 +687,7 @@ class StripeProcessor(PaymentProcessorBase):
                 offer.meta['stripe'] = {'price_id': stripe_price['id']}
 
             # Handle Coupon
-            coupon_data = self.build_coupon(offer, price)
+            coupon_data = self.build_coupon(offer, DEFAULT_CURRENCY)
             discount = self.convert_decimal_to_integer(offer.discount())
             trial_days = offer.term_details.get('trial_days', 0)
 
