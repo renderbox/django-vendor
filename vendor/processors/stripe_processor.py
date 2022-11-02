@@ -384,6 +384,7 @@ class StripeProcessor(PaymentProcessorBase):
             raise TypeError(f"Price cannot be created without a product_id on offer.meta['stripe'] field")
 
         price_data = {
+            'active': True,
             'product': offer.meta['stripe']['product_id'],
             'currency': currency,
             'unit_amount': self.convert_decimal_to_integer(current_price),
@@ -604,7 +605,7 @@ class StripeProcessor(PaymentProcessorBase):
             price_pk = None
             
             if price:
-                current_price = price
+                current_price = price.cost
                 price_pk = price.pk
 
             price_data = self.build_price(offer, msrp, current_price, DEFAULT_CURRENCY, price_pk)
@@ -649,35 +650,45 @@ class StripeProcessor(PaymentProcessorBase):
             # for currency in AVAILABLE_CURRENCIES:
             #     ...
             msrp = offer.get_msrp()
-            stripe_product_prices = self.get_prices_for_product(product_id)
+            stripe_product_prices = self.get_stripe_prices_for_product(product_id)
+
+            price = offer.get_current_price_instance() if offer.get_current_price_instance() else None
+            current_price = msrp
+            price_pk = None
+            
+            if price:
+                current_price = price.cost
+                price_pk = price.pk
+            
+            price_data = self.build_price(offer, msrp, current_price, DEFAULT_CURRENCY, price_pk)
+            stripe_price = None
 
             if not stripe_product_prices:
-                price = offer.get_current_price_instance() if offer.get_current_price_instance() else None
-                current_price = msrp
-                price_pk = None
-                
-                if price:
-                    current_price = price
-                    price_pk = price.pk
-
-                price_data = self.build_price(offer, msrp, current_price, DEFAULT_CURRENCY, price_pk)
                 stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
 
             else:
-                for stripe_price in stripe_product_prices:
-                    if 'pk' in stripe_price.metadata:
-                        price = offer.prices.get(pk=stripe_price.metadata['pk'])
-                        price_data = self.build_price(offer, msrp, price.cost, DEFAULT_CURRENCY, price.pk)
+                prices_to_deactivate = [stripe_price for stripe_price in stripe_product_prices if self.convert_decimal_to_integer(current_price) != stripe_price.unit_amount]
+                prices_to_check = [stripe_price for stripe_price in stripe_product_prices if self.convert_decimal_to_integer(current_price) == stripe_price.unit_amount]
+                
+                for stripe_price_deactivate in prices_to_deactivate:
+                    self.stripe_update_object(self.stripe.Price, stripe_price_deactivate.id, {'active': False})
+                
+                any_match = False
+                for stripe_price_check in prices_to_check:
+                    if self.does_stripe_and_vendor_price_match(stripe_price_check, price_data):
+                        any_match = True
+                        stripe_price = stripe_price_check
                     else:
-                        price_data = self.build_price(offer, msrp, msrp, DEFAULT_CURRENCY)
+                        self.stripe_update_object(self.stripe.Price, stripe_price_check.id, {'active': False})
+                
+                if not any_match:
+                    stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
 
-                    stripe_price_update = self.stripe_update_object(self.stripe.Price, stripe_price['id'], price_data)
-
-
-            if offer.meta.get('stripe'):
-                offer.meta['stripe']['price_id'] = stripe_price_update['id']
-            else:
-                offer.meta['stripe'] = {'price_id': stripe_price_update['id']}
+            if stripe_price:
+                if offer.meta.get('stripe'):
+                    offer.meta['stripe']['price_id'] = stripe_price['id']
+                else:
+                    offer.meta['stripe'] = {'price_id': stripe_price['id']}
 
             # Handle Coupon
             coupon_data = self.build_coupon(offer, DEFAULT_CURRENCY)
@@ -732,6 +743,23 @@ class StripeProcessor(PaymentProcessorBase):
     ##########
     # Prices
     ##########
+    def does_stripe_and_vendor_price_match(self, stripe_price, vendor_price):
+        if not stripe_price.unit_amount == self.convert_decimal_to_integer(vendor_price['unit_amount']):
+            return False
+        
+        if 'recurring' in vendor_price:
+            if 'recurring' not in stripe_price:
+                return False
+
+            if not stripe_price.recurring['interval'] == vendor_price['recurring']['interval']:
+                return False
+            
+            if not stripe_price.recurring['interval_count'] == vendor_price['recurring']['interval_count']:
+                return False
+        
+        return True
+        
+
     def get_price_with_pk(self, price_pk):
         """
         Returns stripe Price based on metadata pk value
@@ -760,7 +788,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         return None
     
-    def get_prices_for_product(self, product):
+    def get_stripe_prices_for_product(self, product):
         product_clause = self.query_builder.make_clause_template(
             field='product',
             value=product,
@@ -952,7 +980,6 @@ class StripeProcessor(PaymentProcessorBase):
         """
         Sync up all the CustomerProfiles, Offers, Prices, and Coupons for all of the sites
         """
-
         self.sync_customers(site)
         self.sync_offers(site)
 
