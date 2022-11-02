@@ -12,6 +12,7 @@ from vendor.config import DEFAULT_CURRENCY
 from vendor.integrations import StripeIntegration
 from vendor.models import Offer, CustomerProfile
 from vendor.models.choice import (
+    Country,
     SubscriptionStatus,
     TransactionTypes,
     PaymentTypes,
@@ -439,7 +440,7 @@ class StripeProcessor(PaymentProcessorBase):
                     'line2': self.billing_address.data.get('billing-address_2', None),
                     'city': self.billing_address.data.get("billing-locality", ""),
                     'state': self.billing_address.data.get("billing-state", ""),
-                    'country': self.billing_address.data.get("billing-country"),
+                    'country': Country.names[Country.values.index(int(self.billing_address.data.get("billing-country")))],
                     'postal_code': self.billing_address.data.get("billing-postal_code")
                 },
                 'name': self.payment_info.data.get('full_name', None)
