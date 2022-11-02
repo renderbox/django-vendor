@@ -379,7 +379,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         }
     # TODO: Try to reduce the number of arguments to max 3. 
-    def build_price(self, offer, mspr, current_price, currency, price_pk=None):
+    def build_price(self, offer, msrp, current_price, currency, price_pk=None):
         if 'stripe' not in offer.meta or 'product_id' not in offer.meta['stripe']:
             raise TypeError(f"Price cannot be created without a product_id on offer.meta['stripe'] field")
 
@@ -390,7 +390,7 @@ class StripeProcessor(PaymentProcessorBase):
             'unit_amount': self.convert_decimal_to_integer(current_price),
             'metadata': {
                 'site': offer.site.domain,
-                'msrp': mspr
+                'msrp': msrp
                 }
         }
 
