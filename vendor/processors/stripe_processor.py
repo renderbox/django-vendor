@@ -281,12 +281,44 @@ class StripeProcessor(PaymentProcessorBase):
 
         return int("".join(integer_str_rep))
 
+    ##########
+    # Parsers
+    ##########
+    def parse_response(self, subscription=True):
+        """
+        Processes the transaction response
+        """
+        transaction_id = ''
+        raw_data = ''
+        messages = ''
+        
+        if not subscription:
+            transaction_id = self.charge['id']
+            raw_data = str(self.charge)
+            messages = f'trans id is {transaction_id}'
+        else:
+            if self.stripe_subscription.get('id'):
+                transaction_id = self.stripe_subscription['id']
+                raw_data = str(self.stripe_subscription)
+                messages = f'trans id is {transaction_id}'
 
+        self.transaction_id = transaction_id
+        self.transaction_response = self.make_transaction_response(
+            raw=raw_data,
+            messages=messages
+        )
+
+    def parse_success(self, subscription=True):
+        if not subscription:
+            if self.charge.get('id'):
+                self.transaction_succeded = True
+        else:
+            if self.stripe_subscription.get('id'):
+                self.transaction_succeded = True
 
     ##########
     # CRUD Stripe Object
     ##########
-
     def stripe_create_object(self, stripe_object_class, object_data):
         stripe_object = self.stripe_call(stripe_object_class.create, object_data)
 
@@ -329,9 +361,6 @@ class StripeProcessor(PaymentProcessorBase):
         stripe_objects = self.stripe_call(stripe_object_class.list, object_data)
 
         return stripe_objects
-
-
-
 
     ##########
     # Stripe Object Builders
@@ -429,11 +458,9 @@ class StripeProcessor(PaymentProcessorBase):
             'metadata': {'site': self.invoice.site}
         }
 
-
     ##########
-    # Stripe & Vendor Objects Synchronization
+    # Customers
     ##########
-
     def get_stripe_customers(self, site):
         """
         Returns all Stripe created customers
@@ -496,20 +523,33 @@ class StripeProcessor(PaymentProcessorBase):
                 profile.meta['stripe_id'] = existing_stripe_customer['id']
                 profile.save()
 
-    def sync_customers(self, site):
-        stripe_customers = self.get_stripe_customers(site)
-        stripe_customers_emails = [customer_obj['email'] for customer_obj in stripe_customers]
+    ##########
+    # Offers/Products
+    ##########
+    def does_product_exist(self, name, metadata):
+        name_clause = self.query_builder.make_clause_template(
+            field='name',
+            value=name,
+            operator=self.query_builder.EXACT_MATCH,
+            next_operator=self.query_builder.AND
+        )
 
-        vendor_customers_in_stripe = self.get_vendor_customers_in_stripe(stripe_customers_emails, site)
+        metadata_clause = self.query_builder.make_clause_template(
+            field='metadata',
+            key=metadata['key'],
+            value=metadata['value'],
+            operator=self.query_builder.EXACT_MATCH
+        )
 
-        vendor_customers_with_stripe_meta = vendor_customers_in_stripe.filter(meta__has_key='stripe_id')
-        vendor_customers_without_stripe_meta = vendor_customers_in_stripe.exclude(meta__has_key='stripe_id')
+        query = self.query_builder.build_search_query(self.stripe.Product, [name_clause, metadata_clause])
 
-        vendor_customers_not_in_stripe = self.get_vendor_customers_not_in_stripe(stripe_customers_emails, site)
-        vendor_customer_to_create = vendor_customers_not_in_stripe | vendor_customers_without_stripe_meta
+        search_data = self.stripe_query_object(self.stripe.Product, {'query': query})
 
-        self.create_stripe_customers(vendor_customer_to_create)
-        self.update_stripe_customers(vendor_customers_with_stripe_meta)
+        if search_data:
+            if search_data.get('data', False):
+                return True
+
+        return False
 
     def get_site_offers(self, site):
         """
@@ -531,56 +571,6 @@ class StripeProcessor(PaymentProcessorBase):
             return product_search['data']
 
         return []
-
-    def get_price_with_pk(self, price_pk):
-        """
-        Returns stripe Price based on metadata pk value
-        """
-
-        clause = self.query_builder.make_clause_template(
-            field='metadata',
-            key='pk',
-            value=price_pk,
-            operator=self.query_builder.EXACT_MATCH
-        )
-
-        query = self.query_builder.build_search_query(self.stripe.Price, [clause])
-
-        price_search = self.stripe_query_object(self.stripe.Price, {'query': query})
-
-        if price_search:
-            return price_search['data'][0]
-
-        return None
-
-    def match_coupons(self, coupons, offer):
-        matches = []
-        amount_off = self.convert_decimal_to_integer(offer.discount())
-        duration = offer.get_trial_duration_in_months()
-        for coupon in coupons:
-            if coupon['metadata']['site'] == offer.site.domain and coupon['amount_off'] == amount_off\
-                    and coupon['duration_in_months'] == duration:
-                matches.append(coupon)
-        return matches
-
-    def get_coupons(self):
-        """
-        Returns all stripe Coupons
-
-        This is needed since there is no search method on Coupon. Will make multiple stripe calls until the
-        list is exhausted
-        """
-        coupons_list = []
-        starting_after = None
-        while True:
-            coupons = self.stripe_list_objects(self.stripe.Coupon, limit=100, starting_after=starting_after)
-            coupons_list.extend(coupons)
-            if coupons['has_more']:
-                starting_after = coupons['data'][-1]['id']
-            else:
-                break
-
-        return coupons_list
 
     def get_vendor_offers_in_stripe(self, offer_pk_list, site):
         offers = Offer.objects.filter(site=site, pk__in=offer_pk_list)
@@ -637,7 +627,6 @@ class StripeProcessor(PaymentProcessorBase):
 
             offer.save()
 
-
     def update_offers(self, offers):
         coupons = self.get_coupons()
 
@@ -670,7 +659,7 @@ class StripeProcessor(PaymentProcessorBase):
                 price_pk = price.pk
 
                 price_data = self.build_price(offer, msrp, current_price, DEFAULT_CURRENCY, price_pk)
-                stripe_price_obj = self.get_price_with_pk(price.pk)
+                stripe_price_obj = self.get_price_with_pk(price_pk)
 
                 if stripe_price_obj:
                     stripe_price = self.stripe_update_object(self.stripe.Price, stripe_price_obj['id'], price_data)
@@ -715,85 +704,13 @@ class StripeProcessor(PaymentProcessorBase):
 
             offer.save()
 
-    def sync_offers(self, site):
-        products = self.get_site_offers(site)
-        offer_pk_list = [product['metadata']['pk'] for product in products]
-
-        offers_in_vendor = self.get_vendor_offers_in_stripe(offer_pk_list, site)
-
-        offers_in_vendor_with_stripe_meta = offers_in_vendor.filter(meta__has_key='stripe')
-        offers_in_vendor_without_stripe_meta = offers_in_vendor.exclude(meta__has_key='stripe')
-        
-        offers_not_in_vendor = self.get_vendor_offers_not_in_stripe(offer_pk_list, site)
-        offers_to_create = offers_not_in_vendor | offers_in_vendor_without_stripe_meta
-
-        self.create_offers(offers_to_create)
-        self.update_offers(offers_in_vendor_with_stripe_meta)
-
-    def sync_stripe_vendor_objects(self, site):
-        """
-        Sync up all the CustomerProfiles, Offers, Prices, and Coupons for all of the sites
-        """
-
-        self.sync_customers(site)
-        self.sync_offers(site)
-
-    def create_setup_intent(self, setup_intent_data):
-        setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_data)
-
-        return setup_intent
-
-    def create_payment_intent(self, payment_intent_data):
-        # Will return client secret value to be returned to the front end to continue processing payment
-
-        #intent = self.stripe_call(self.stripe.PaymentIntent.create, {
-        #    'customer': customer['id'],
-        #    'setup_future_usage': 'off_session',
-        #    'amount': self.invoice.get_one_time_transaction_total(),
-        #    'currency': self.invoice.currency,
-        #    'automatic_payment_methods': {
-        #        'enabled': True
-        #    }
-        #})
-
-        payment_intent = self.stripe_create_object(self.stripe.PaymentIntent, payment_intent_data)
-
-        return payment_intent
-
-    def set_stripe_payment_source(self):
-        """
-        This is needed for the charge api due to this error message:
-        'You cannot create a charge with a PaymentMethod. Use the Payment Intents API instead'
-        """
-        if not self.source:
-            if self.payment_info.is_valid():
-                card_number = self.payment_info.cleaned_data.get('card_number')
-                exp_month = self.payment_info.cleaned_data.get('expire_month')
-                exp_year = self.payment_info.cleaned_data.get('expire_year')
-                cvc = self.payment_info.cleaned_data.get('cvc_number')
-                card = {
-                    'number': card_number,
-                    'exp_month': exp_month,
-                    'exp_year': exp_year,
-                    'cvc': cvc
-                 }
-                card = self.stripe_create_object(self.stripe.Token, {'card':card})
-                if card:
-                    self.source = card['id']
-
-    def create_payment_method(self, payment_method_data):
-        payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
-
-        return payment_method
-
-    def does_product_exist(self, name, metadata):
+    def get_product_id_with_name(self, name, metadata):
         name_clause = self.query_builder.make_clause_template(
             field='name',
             value=name,
             operator=self.query_builder.EXACT_MATCH,
             next_operator=self.query_builder.AND
         )
-
         metadata_clause = self.query_builder.make_clause_template(
             field='metadata',
             key=metadata['key'],
@@ -802,12 +719,34 @@ class StripeProcessor(PaymentProcessorBase):
         )
 
         query = self.query_builder.build_search_query(self.stripe.Product, [name_clause, metadata_clause])
-
         search_data = self.stripe_query_object(self.stripe.Product, {'query': query})
+
         if search_data:
-            if search_data.get('data', False):
-                return True
-        return False
+            return search_data['data'][0]['id']
+        return None
+
+    ##########
+    # Prices
+    ##########
+    def get_price_with_pk(self, price_pk):
+        """
+        Returns stripe Price based on metadata pk value
+        """
+        clause = self.query_builder.make_clause_template(
+            field='metadata',
+            key='pk',
+            value=price_pk,
+            operator=self.query_builder.EXACT_MATCH
+        )
+
+        query = self.query_builder.build_search_query(self.stripe.Price, [clause])
+
+        price_search = self.stripe_query_object(self.stripe.Price, {'query': query})
+
+        if price_search:
+            return price_search['data'][0]
+
+        return None
 
     def does_price_exist(self, product, metadata):
         product_clause = self.query_builder.make_clause_template(
@@ -830,8 +769,65 @@ class StripeProcessor(PaymentProcessorBase):
         if search_data:
             if search_data.get('data', False):
                 return True
+
         return False
 
+    def get_price_id_with_product(self, product):
+        price = self.stripe_get_object(self.stripe.Price, {'id': product})
+
+        if price:
+            return price['id']
+
+        return None
+
+    def create_price_with_product(self, product):
+        price_data = {
+            'currency': self.invoice.currency,
+            'product': product
+        }
+
+        price = self.stripe_create_object(self.stripe.Price, price_data)
+
+        if price:
+            return price['id']
+
+        return None
+
+    ##########
+    # Coupons
+    ##########
+    def match_coupons(self, coupons, offer):
+        matches = []
+        amount_off = self.convert_decimal_to_integer(offer.discount())
+        duration = offer.get_trial_duration_in_months()
+        for coupon in coupons:
+            if coupon['metadata']['site'] == offer.site.domain and coupon['amount_off'] == amount_off\
+                    and coupon['duration_in_months'] == duration:
+                matches.append(coupon)
+        return matches
+
+    def get_coupons(self):
+        """
+        Returns all stripe Coupons
+
+        This is needed since there is no search method on Coupon. Will make multiple stripe calls until the
+        list is exhausted
+        """
+        coupons_list = []
+        starting_after = None
+        while True:
+            coupons = self.stripe_list_objects(self.stripe.Coupon, limit=100, starting_after=starting_after)
+            coupons_list.extend(coupons)
+            if coupons['has_more']:
+                starting_after = coupons['data'][-1]['id']
+            else:
+                break
+
+        return coupons_list
+
+    ##########
+    # Sync Vendor and Stripe
+    ##########
     def initialize_products(self, site):
         """
         Grab all subscription offers on invoice and either create or fetch Stripe products.
@@ -902,42 +898,94 @@ class StripeProcessor(PaymentProcessorBase):
                         'price_id': price_id
                     }
 
-    def get_product_id_with_name(self, name, metadata):
-        name_clause = self.query_builder.make_clause_template(
-            field='name',
-            value=name,
-            operator=self.query_builder.EXACT_MATCH,
-            next_operator=self.query_builder.AND
-        )
-        metadata_clause = self.query_builder.make_clause_template(
-            field='metadata',
-            key=metadata['key'],
-            value=metadata['value'],
-            operator=self.query_builder.EXACT_MATCH
-        )
+    def sync_customers(self, site):
+        stripe_customers = self.get_stripe_customers(site)
+        stripe_customers_emails = [customer_obj['email'] for customer_obj in stripe_customers]
 
-        query = self.query_builder.build_search_query(self.stripe.Product, [name_clause, metadata_clause])
-        search_data = self.stripe_query_object(self.stripe.Product, {'query': query})
+        vendor_customers_in_stripe = self.get_vendor_customers_in_stripe(stripe_customers_emails, site)
 
-        if search_data:
-            return search_data['data'][0]['id']
-        return None
+        vendor_customers_with_stripe_meta = vendor_customers_in_stripe.filter(meta__has_key='stripe_id')
+        vendor_customers_without_stripe_meta = vendor_customers_in_stripe.exclude(meta__has_key='stripe_id')
 
-    def get_price_id_with_product(self, product):
-        price = self.stripe_get_object(self.stripe.Price, {'id': product})
-        if price:
-            return price['id']
-        return None
+        vendor_customers_not_in_stripe = self.get_vendor_customers_not_in_stripe(stripe_customers_emails, site)
+        vendor_customer_to_create = vendor_customers_not_in_stripe | vendor_customers_without_stripe_meta
 
-    def create_price_with_product(self, product):
-        price_data = {
-            'currency': self.invoice.currency,
-            'product': product
-        }
-        price = self.stripe_create_object(self.stripe.Price, price_data)
-        if price:
-            return price['id']
-        return None
+        self.create_stripe_customers(vendor_customer_to_create)
+        self.update_stripe_customers(vendor_customers_with_stripe_meta)
+
+    def sync_offers(self, site):
+        products = self.get_site_offers(site)
+        offer_pk_list = [product['metadata']['pk'] for product in products]
+
+        offers_in_vendor = self.get_vendor_offers_in_stripe(offer_pk_list, site)
+
+        offers_in_vendor_with_stripe_meta = offers_in_vendor.filter(meta__has_key='stripe')
+        offers_in_vendor_without_stripe_meta = offers_in_vendor.exclude(meta__has_key='stripe')
+        
+        offers_not_in_vendor = self.get_vendor_offers_not_in_stripe(offer_pk_list, site)
+        offers_to_create = offers_not_in_vendor | offers_in_vendor_without_stripe_meta
+
+        self.create_offers(offers_to_create)
+        self.update_offers(offers_in_vendor_with_stripe_meta)
+
+    def sync_stripe_vendor_objects(self, site):
+        """
+        Sync up all the CustomerProfiles, Offers, Prices, and Coupons for all of the sites
+        """
+
+        self.sync_customers(site)
+        self.sync_offers(site)
+
+    ##########
+    # Stripe Transactions
+    ##########
+    def create_setup_intent(self, setup_intent_data):
+        setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_data)
+
+        return setup_intent
+
+    def create_payment_intent(self, payment_intent_data):
+        # Will return client secret value to be returned to the front end to continue processing payment
+
+        #intent = self.stripe_call(self.stripe.PaymentIntent.create, {
+        #    'customer': customer['id'],
+        #    'setup_future_usage': 'off_session',
+        #    'amount': self.invoice.get_one_time_transaction_total(),
+        #    'currency': self.invoice.currency,
+        #    'automatic_payment_methods': {
+        #        'enabled': True
+        #    }
+        #})
+
+        payment_intent = self.stripe_create_object(self.stripe.PaymentIntent, payment_intent_data)
+
+        return payment_intent
+
+    def set_stripe_payment_source(self):
+        """
+        This is needed for the charge api due to this error message:
+        'You cannot create a charge with a PaymentMethod. Use the Payment Intents API instead'
+        """
+        if not self.source:
+            if self.payment_info.is_valid():
+                card_number = self.payment_info.cleaned_data.get('card_number')
+                exp_month = self.payment_info.cleaned_data.get('expire_month')
+                exp_year = self.payment_info.cleaned_data.get('expire_year')
+                cvc = self.payment_info.cleaned_data.get('cvc_number')
+                card = {
+                    'number': card_number,
+                    'exp_month': exp_month,
+                    'exp_year': exp_year,
+                    'cvc': cvc
+                 }
+                card = self.stripe_create_object(self.stripe.Token, {'card':card})
+                if card:
+                    self.source = card['id']
+
+    def create_payment_method(self, payment_method_data):
+        payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
+
+        return payment_method
 
     def create_charge(self):
         charge_data = {
@@ -949,38 +997,6 @@ class StripeProcessor(PaymentProcessorBase):
         if charge:
             return charge
         return None
-
-    def parse_response(self, subscription=True):
-        """
-        Processes the transaction response
-        """
-        transaction_id = ''
-        raw_data = ''
-        messages = ''
-        
-        if not subscription:
-            transaction_id = self.charge['id']
-            raw_data = str(self.charge)
-            messages = f'trans id is {transaction_id}'
-        else:
-            if self.stripe_subscription.get('id'):
-                transaction_id = self.stripe_subscription['id']
-                raw_data = str(self.stripe_subscription)
-                messages = f'trans id is {transaction_id}'
-
-        self.transaction_id = transaction_id
-        self.transaction_response = self.make_transaction_response(
-            raw=raw_data,
-            messages=messages
-        )
-
-    def parse_success(self, subscription=True):
-        if not subscription:
-            if self.charge.get('id'):
-                self.transaction_succeded = True
-        else:
-            if self.stripe_subscription.get('id'):
-                self.transaction_succeded = True
 
     ##########
     # Base Processor Transaction Implementations
