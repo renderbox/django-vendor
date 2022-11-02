@@ -631,7 +631,6 @@ class StripeProcessor(PaymentProcessorBase):
         coupons = self.get_coupons()
 
         for offer in offers:
-
             # Handle product
             product_id = offer.meta['stripe']['product_id']
             product_data = self.build_product(offer)
@@ -649,6 +648,9 @@ class StripeProcessor(PaymentProcessorBase):
             # on the vendor.config.py file
             # for currency in AVAILABLE_CURRENCIES:
             #     ...
+
+            stripe_prices = self.get_prices_for_product(product_id)
+
             price = offer.get_current_price_instance() if offer.get_current_price_instance() else None
             msrp = offer.get_msrp()
             current_price = msrp
@@ -748,6 +750,30 @@ class StripeProcessor(PaymentProcessorBase):
 
         return None
 
+    def get_price_id_with_product(self, product):
+        price = self.stripe_get_object(self.stripe.Price, {'id': product})
+
+        if price:
+            return price['id']
+
+        return None
+    
+    def get_prices_for_product(self, product):
+        product_clause = self.query_builder.make_clause_template(
+            field='product',
+            value=product,
+            operator=self.query_builder.EXACT_MATCH
+        )
+
+        query = self.query_builder.build_search_query(self.stripe.Price, [product_clause])
+
+        search_data = self.stripe_query_object(self.stripe.Price, {'query': query})
+
+        if search_data:
+            return search_data['data']
+
+        return []
+
     def does_price_exist(self, product, metadata):
         product_clause = self.query_builder.make_clause_template(
             field='product',
@@ -771,14 +797,6 @@ class StripeProcessor(PaymentProcessorBase):
                 return True
 
         return False
-
-    def get_price_id_with_product(self, product):
-        price = self.stripe_get_object(self.stripe.Price, {'id': product})
-
-        if price:
-            return price['id']
-
-        return None
 
     def create_price_with_product(self, product):
         price_data = {
