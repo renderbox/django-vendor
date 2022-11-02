@@ -86,6 +86,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         It assumes that all product in a offer use the same currency
         """
         currency = self.get_best_currency(currency)
+
         return sum([product.get_msrp(currency) for product in self.products.all()])
 
     def current_price(self, currency=DEFAULT_CURRENCY):
@@ -100,11 +101,20 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         if price is None:
             # If there is no price for the offer, all MSRPs should be summed up for the "price".
             return self.get_msrp(currency)
+
         elif price.cost is None:
             # If there is no price for the offer, all MSRPs should be summed up for the "price".
             return self.get_msrp(currency)
 
         return price.cost
+
+    def get_current_price_instance(self, currency=DEFAULT_CURRENCY):
+        now = timezone.now()
+        price = self.prices.filter(Q(start_date__lte=now) | Q(start_date=None),
+                                   Q(end_date__gte=now) | Q(end_date=None),
+                                   Q(currency=currency)).order_by('-priority').first()  # first()/last() returns the model object or None
+
+        return price
 
 
     def add_to_cart_link(self):
@@ -134,8 +144,10 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         Gets the savings between the difference between the product's msrp and the currenct price
         """
         discount = self.get_msrp(currency) - self.current_price(currency)
+
         if discount <= 0:
             return 0
+            
         return discount
 
     def get_best_currency(self, currency=DEFAULT_CURRENCY):
