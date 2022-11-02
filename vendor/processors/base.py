@@ -6,9 +6,11 @@ import django.dispatch
 from decimal import Decimal, ROUND_DOWN
 from django.conf import settings
 from django.utils import timezone
+
 from vendor import config
+from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models import Payment, Invoice, Receipt, Subscription
-from vendor.models.choice import PurchaseStatus, SubscriptionStatus, TermType, InvoiceStatus
+from vendor.models.choice import PurchaseStatus, SubscriptionStatus, TermType, InvoiceStatus, PaymentTypes
 from vendor.utils import get_payment_scheduled_end_date, get_subscription_start_date, get_future_date_days
 
 ##########
@@ -291,6 +293,13 @@ class PaymentProcessorBase(object):
         '''
         # context = deepcopy(context)
         context['invoice'] = self.invoice
+        
+        if 'credit_card_form' not in context:
+            context['credit_card_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
+
+        if 'billing_address_form' not in context:
+            context['billing_address_form'] = BillingAddressForm()
+
         return context
 
     def get_header_javascript(self):

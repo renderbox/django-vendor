@@ -76,14 +76,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def __str__(self):
         return 'Authorize.Net'
 
-    def get_checkout_context(self, request=None, context={}):
-        context = super().get_checkout_context(context=context)
-        if 'credit_card_form' not in context:
-            context['credit_card_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
-        if 'billing_address_form' not in context:
-            context['billing_address_form'] = BillingAddressForm()
-        return context
-
     def processor_setup(self, site):
         """
         Merchant Information needed to aprove the transaction.
