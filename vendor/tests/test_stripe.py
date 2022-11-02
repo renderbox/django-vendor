@@ -352,8 +352,10 @@ class StripeProcessorTests(TestCase):
     def test_get_vendor_offers_in_stripe(self):
         offer1 = Offer.objects.create(site=self.site, name=self.pro_annual_license['name'], start_date=timezone.now())
         offer2 = Offer.objects.create(site=self.site, name=self.pro_annual_license2['name'], start_date=timezone.now())
+        
         self.pro_annual_license['metadata']['pk'] = offer1.pk
         self.pro_annual_license2['metadata']['pk'] = offer2.pk
+        
         stripe_product1 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
         stripe_product2 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license2)
 

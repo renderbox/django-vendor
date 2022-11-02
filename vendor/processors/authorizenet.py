@@ -76,6 +76,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def __str__(self):
         return 'Authorize.Net'
 
+
     def processor_setup(self, site):
         """
         Merchant Information needed to aprove the transaction.
