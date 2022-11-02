@@ -652,7 +652,7 @@ class StripeProcessor(PaymentProcessorBase):
                     offer.meta['stripe'] = {'product_id': existing_stripe_product['id']}
 
             # Handle Price
-            price = offer.current_price_object()
+            price = offer.current_price()
             price_data = self.build_price(offer, price)
             stripe_price_obj = self.get_price_with_pk(price.pk)
 
