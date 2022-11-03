@@ -141,7 +141,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
 
     def discount(self, currency=DEFAULT_CURRENCY):
         """
-        Gets the savings between the difference between the product's msrp and the currenct price
+        Gets the savings between the difference between the product's msrp and the current price
         """
         discount = self.get_msrp(currency) - self.current_price(currency)
 
@@ -195,7 +195,6 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
 
         return math.ceil(duration/31)
 
-
     def has_trial_occurrences(self):
         if self.term_details.get('trial_occurrences', 0) > 0:
             return True
@@ -225,5 +224,12 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
     
     def get_trial_days(self):
         return self.term_details.get('trial_days', 0)
+
+    def has_any_discount_or_trial(self):
+        if self.discount() or self.get_trial_amount() or\
+           self.get_trial_occurrences() or self.get_trial_days():
+            return True
+            
+        return False
     
 
