@@ -249,6 +249,21 @@ class StripeProcessor(PaymentProcessorBase):
         # https://stripe.com/docs/libraries/set-version
         self.stripe.api_version = '2022-08-01'
 
+        self.customer_setup()
+        self.subscription_offer_setup()
+
+    def customer_setup(self):
+        if not self.invoice.profile.meta.get('stripe_id'):
+            self.create_stripe_customers([self.invoice.profile])
+
+    def subscription_offer_setup(self):
+        offers_to_sync = []
+        for order_item in self.invoice.order_items:
+            if not order_item.offer.meta.get('stripe_id'):
+                offers_to_sync.append(order_item.offer)
+
+        self.create_offers(offers_to_sync)
+
     ##########
     # Parsers
     ##########

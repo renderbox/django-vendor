@@ -205,7 +205,6 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         # context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user, get_site_from_request(request))
-
         if not invoice.order_items.count() or invoice.status == InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
