@@ -1070,11 +1070,9 @@ class StripeProcessor(PaymentProcessorBase):
         if not stripe_payment_intent:
             return None
 
-        stripe_payment_intent.confirm(payment_method=stripe_payment_method)
+        self.stripe_call(stripe_payment_intent.confirm, {"payment_method":stripe_payment_method})
 
-        self.transaction_succeded = False
-        if stripe_payment_intent.status == 'succeded':
-            self.transaction_succeded = True
+        if self.transaction_succeded:
             self.transaction_id = stripe_payment_intent.id
 
     def subscription_payment(self, subscription):
