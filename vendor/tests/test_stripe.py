@@ -3,7 +3,9 @@ from random import randrange
 from django.conf import settings
 from django.test import TestCase, Client, tag
 from django.contrib.sites.models import Site
+from django.db.models import signals
 from django.utils import timezone
+from django.db.models import Q
 from siteconfigs.models import SiteConfigModel
 from unittest import skipIf
 from vendor.forms import CreditCardForm, BillingAddressForm
@@ -37,6 +39,7 @@ class StripeProcessorTests(TestCase):
     def setup_user_client(self):
         self.client = Client()
         self.user = User.objects.get(pk=1)
+        self.customer = CustomerProfile.objects.get(pk=1)
         self.client.force_login(self.user)
 
     def setup_existing_invoice(self):
@@ -61,6 +64,8 @@ class StripeProcessorTests(TestCase):
         self.setup_processor_site_config()
         self.setup_existing_invoice()
         self.site = self.processor_site_config.site
+        self.site.domain = 'sc'
+        self.site.save()
         self.processor = StripeProcessor(self.site, self.existing_invoice)
         self.form_data = {
             'billing_address_form': {
@@ -94,6 +99,7 @@ class StripeProcessorTests(TestCase):
                             "recurring": {"interval": "month", "interval_count": 1, "usage_type": "licensed"},
                             'metadata': self.valid_metadata}
 
+
     def test_environment_variables_set(self):
         self.assertIsNotNone(settings.STRIPE_PUBLIC_KEY)
 
@@ -103,14 +109,18 @@ class StripeProcessorTests(TestCase):
         self.assertIsNotNone(self.processor.credentials)
 
     def test_process_payment_transaction_success(self):
+        self.processor.create_stripe_customers([self.customer])
+        self.processor.invoice.profile.refresh_from_db()
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
         self.processor.invoice.total = randrange(1, 1000)
+
         for recurring_order_items in self.processor.invoice.get_recurring_order_items():
             self.processor.invoice.remove_offer(recurring_order_items.offer)
 
         self.processor.set_stripe_payment_source()
         self.processor.authorize_payment()
+
         self.assertIsNotNone(self.processor.payment)
         self.assertTrue(self.processor.payment.success)
         self.assertEquals(InvoiceStatus.COMPLETE, self.processor.invoice.status)
@@ -121,6 +131,8 @@ class StripeProcessorTests(TestCase):
         billing information. The test send an invalid card number to test the
         transation fails
         """
+        self.processor.create_stripe_customers([self.customer])
+        self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['card_number'] = '4242424242424241'
 
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
@@ -137,6 +149,8 @@ class StripeProcessorTests(TestCase):
         billing information. The test send an invalid expiration date to test the
         transation fails.
         """
+        self.processor.create_stripe_customers([self.customer])
+        self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['expire_month'] = str(timezone.now().month)
         self.form_data['credit_card_form']['expire_year'] = str(timezone.now().year - 1)
 
@@ -153,6 +167,8 @@ class StripeProcessorTests(TestCase):
         """
         Check incorrect cvc. Will fail with card number 4000000000000127
         """
+        self.processor.create_stripe_customers([self.customer])
+        self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['cvv_number'] = '901'
         self.form_data['credit_card_form']['card_number'] = '4000000000000127'
 
@@ -167,6 +183,8 @@ class StripeProcessorTests(TestCase):
         """
         Check a failed transaction due to to generic decline
         """
+        self.processor.create_stripe_customers([self.customer])
+        self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['cvv_number'] = '902'
         self.form_data['credit_card_form']['card_number'] = '4000000000000002'
 
@@ -181,6 +199,8 @@ class StripeProcessorTests(TestCase):
         """
         CVC number check fails for any cvv number passed
         """
+        self.processor.create_stripe_customers([self.customer])
+        self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['cvv_number'] = '903'
         self.form_data['credit_card_form']['card_number'] = '4000000000000101'
 
@@ -195,6 +215,8 @@ class StripeProcessorTests(TestCase):
         """
         Payment fails because of expired card
         """
+        self.processor.create_stripe_customers([self.customer])
+        self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['cvv_number'] = '904'
         self.form_data['credit_card_form']['card_number'] = '4000000000000069'
 
@@ -209,6 +231,8 @@ class StripeProcessorTests(TestCase):
         """
         Fraud prevention fail: Always blocked
         """
+        self.processor.create_stripe_customers([self.customer])
+        self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['cvv_number'] = '903'
         self.form_data['credit_card_form']['card_number'] = '4000000000000101'
 
@@ -223,6 +247,8 @@ class StripeProcessorTests(TestCase):
         """
         Fraud prevention fail: Higest Risk
         """
+        self.processor.create_stripe_customers([self.customer])
+        self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['cvv_number'] = '903'
         self.form_data['credit_card_form']['card_number'] = '4000000000004954'
 
@@ -231,12 +257,15 @@ class StripeProcessorTests(TestCase):
 
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
+
         self.assertFalse(self.processor.transaction_succeded)
 
     def test_process_payment_fail_fraud_elevated_risk(self):
         """
         Fraud prevention fail : Elevated risk
         """
+        self.processor.create_stripe_customers([self.customer])
+        self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['cvv_number'] = '903'
         self.form_data['credit_card_form']['card_number'] = '4000000000009235'
 
@@ -245,13 +274,15 @@ class StripeProcessorTests(TestCase):
 
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
+        
         self.assertFalse(self.processor.transaction_succeded)
 
     def test_process_payment_postal_code_check_fails(self):
         """
         Postal code check fails for any code given fo this card number
         """
-
+        self.processor.create_stripe_customers([self.customer])
+        self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['card_number'] = '4000000000000036'
 
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
@@ -345,49 +376,59 @@ class StripeProcessorTests(TestCase):
         self.assertIn(stripe_product2.name, offer_names)
 
     def test_get_vendor_offers_in_stripe(self):
+        # Test will fail on initial run without products created on stripe. Dont create duplicates
+
         offer1 = Offer.objects.create(site=self.site, name=self.pro_annual_license['name'], start_date=timezone.now())
         offer2 = Offer.objects.create(site=self.site, name=self.pro_annual_license2['name'], start_date=timezone.now())
-        self.pro_annual_license['metadata']['pk'] = offer1.pk
-        self.pro_annual_license2['metadata']['pk'] = offer2.pk
-        stripe_product1 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
-        stripe_product2 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license2)
 
         offers = self.processor.get_site_offers(self.site)
+        stripe_offer_names = [product['name'] for product in offers]
+        vendor_offer_names = [offer1.name, offer2.name]
+        offers_exist = [name for name in vendor_offer_names if name in stripe_offer_names] or False
+
+        if not offers_exist:
+            self.pro_annual_license['metadata']['pk'] = offer1.pk
+            self.pro_annual_license2['metadata']['pk'] = offer2.pk
+            stripe_product1 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
+            stripe_product2 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license2)
+
         pk_list = [product['metadata']['pk'] for product in offers]
         vendor_offers_in_stripe = self.processor.get_vendor_offers_in_stripe(pk_list, self.site)
 
-        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_product1.id)
-        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_product2.id)
 
         self.assertIsNotNone(vendor_offers_in_stripe)
-        self.assertEquals(vendor_offers_in_stripe.count(), 2)
+        self.assertIn(offer1, vendor_offers_in_stripe)
+        self.assertIn(offer2, vendor_offers_in_stripe)
+
 
     def test_get_vendor_offers_not_in_stripe(self):
-        stripe_product1 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
-        stripe_product2 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license2)
-
         offers = self.processor.get_site_offers(self.site)
-        pk_list = [product['metadata']['pk'] for product in offers]
-        vendor_offers_not_in_stripe = self.processor.get_vendor_offers_not_in_stripe(pk_list, self.site)
+        #stripe_offer_names = [product['name'] for product in offers]
+        #vendor_offer_names = [self.pro_annual_license['name'], self.pro_annual_license2['name']]
 
-        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_product1.id)
-        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_product2.id)
+        pk_list = [product['metadata']['pk'] for product in offers]
+
+        vendor_offers_not_in_stripe = self.processor.get_vendor_offers_not_in_stripe(pk_list, self.site)
 
         self.assertIsNotNone(vendor_offers_not_in_stripe)
 
     def test_get_stripe_customers(self):
-        stripe_customer1 = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
-        stripe_customer2 = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd2)
+        # Test will fail on initial run without customers created on stripe. Dont create duplicates
 
         current_stripe_customers = self.processor.get_stripe_customers(self.site)
         customer_names = [customer.name for customer in current_stripe_customers]
 
-        self.processor.stripe_delete_object(self.processor.stripe.Customer, stripe_customer1.id)
-        self.processor.stripe_delete_object(self.processor.stripe.Customer, stripe_customer2.id)
+        test_names = [self.cus_norrin_radd['name'], self.cus_norrin_radd2['name']]
+        customers_exists = [name for name in test_names if name in customer_names] or False
+
+        if not customers_exists:
+            self.stripe_customer1 = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
+            self.stripe_customer2 = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd2)
+
 
         self.assertIsNotNone(current_stripe_customers)
-        self.assertIn(stripe_customer1.name, customer_names)
-        self.assertIn(stripe_customer2.name, customer_names)
+        self.assertIn(self.cus_norrin_radd['name'], customer_names)
+        self.assertIn(self.cus_norrin_radd2['name'], customer_names)
 
 
     def test_get_vendor_customers_in_stripe(self):
@@ -480,7 +521,8 @@ class StripeProcessorTests(TestCase):
         self.assertIsNotNone(product)
 
     def test_get_product_id_with_name(self):
-        stripe_product = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
+        # Test will fail on initial run without products created on stripe. Dont create duplicates
+
         metadata = {
             'key': 'site',
             'value': self.site.domain,
@@ -488,9 +530,10 @@ class StripeProcessorTests(TestCase):
         }
         product_id = self.processor.get_product_id_with_name(self.pro_annual_license['name'], metadata=metadata)
 
-        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_product.id)
+        offers = self.processor.get_site_offers(self.site)
+        stripe_offer_ids = [product['id'] for product in offers]
 
-        self.assertEquals(stripe_product.id, product_id)
+        self.assertIn(product_id, stripe_offer_ids)
 
 
     """
@@ -515,17 +558,51 @@ class StripeProcessorTests(TestCase):
         self.processor.stripe_delete_object(self.processor.stripe.Price, stripe_price.id)"""
 
     def test_sync_customers(self):
-        pass
+        # Vendor objects not in stripe so create them there
+        signals.post_save.disconnect(receiver=signals.post_save, sender=CustomerProfile)
+        user = User.objects.get(pk=1)
+        customer = CustomerProfile.objects.create(site=self.site, user=user)
+
+        self.processor.sync_customers(customer.site)
+
+        customer.refresh_from_db()
+
+        stripe_id = customer.meta.get('stripe_id')
+
+        self.processor.stripe_delete_object(self.processor.stripe.Customer, stripe_id)
+        self.assertTrue(stripe_id)
 
     def test_sync_offers(self):
-        pass
+        signals.post_save.disconnect(receiver=signals.post_save, sender=CustomerProfile)
+        now = timezone.now()
+
+        offer = Offer.objects.create(site=self.site, name='Stripe Offer', start_date=now)
+        product = Product.objects.create(name='Stripe Product', site=self.site)
+        product.offers.add(offer)
+        price = Price.objects.create(offer=offer, cost=10.99, start_date=timezone.now())
+
+        # clear offers that dont have a price, since we cant create stripe product and price
+        offers_with_no_price = Offer.objects.filter(Q(site=offer.site), Q(prices=None) | Q(prices__start_date__lte=now))
+        offers_with_no_price.delete()
+
+        self.processor.sync_offers(offer.site)
+
+        offer.refresh_from_db()
+        stripe_meta = offer.meta.get('stripe')
+
+
+        self.assertTrue(stripe_meta)
+        self.assertTrue(stripe_meta.get('product_id'))
+        self.assertTrue(stripe_meta.get('price_id'))
+
+
 
 
 @skipIf((settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None, "Strip enviornment variables not set, skipping tests")
 class StripeCRUDObjectTests(TestCase):
 
     def init_test_objects(self):
-        self.valid_metadata = {'site': 'sc.online.edu'}
+        self.valid_metadata = {'site': 'sc'}
         self.valid_addr = {'city': "na",'country': "US",'line1': "Salvatierra walk",'postal_code': "90321",'state': 'CA'}
         
         self.cus_norrin_radd = {'name': 'Norrin Radd', 'email': 'norrin@radd.com', 'metadata': self.valid_metadata}
@@ -555,6 +632,8 @@ class StripeCRUDObjectTests(TestCase):
     def setUp(self):
         stripe.api_key = settings.STRIPE_PUBLIC_KEY
         self.site = Site.objects.get(pk=1)
+        self.site.domain = 'sc'
+        self.site.save()
         self.init_test_objects()
         self.processor = StripeProcessor(self.site)
 
@@ -743,6 +822,8 @@ class StripeBuildObjectTests(TestCase):
     def setUp(self):
         stripe.api_key = settings.STRIPE_PUBLIC_KEY
         self.site = Site.objects.get(pk=1)
+        self.site.domain = 'sc'
+        self.site.save()
         self.processor = StripeProcessor(self.site)
 
     def test_build_customer_success(self):
