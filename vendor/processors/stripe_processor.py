@@ -421,6 +421,7 @@ class StripeProcessor(PaymentProcessorBase):
         }
 
         if offer.terms < TermType.PERPETUAL:
+            coupon_data['amount_off'] = self.convert_decimal_to_integer(offer.get_trial_discount())
             coupon_data['duration']: 'once' if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
             coupon_data['duration_in_months']: offer.get_trial_duration_in_months()
         
@@ -466,9 +467,24 @@ class StripeProcessor(PaymentProcessorBase):
     def build_subscription(self, subscription, payment_method_id):
         return {
             'customer': self.invoice.profile.meta['stripe_id'],
+            'coupon': subscription.offer.meta['stripe'].get('coupon_id'),
             'items': [{'price': subscription.offer.meta['stripe']['price_id']}],
             'default_payment_method': payment_method_id,
             'metadata': {'site': self.invoice.site}
+        }
+
+    def build_invoice_line_item(self, order_item, invoice_id):
+        return {
+            'customer': self.invoice.profile.meta.get('stripe_id'),
+            'invoice': invoice_id,
+            'price': order_item.offer.meta['stripe'].get('price_id'),
+            'discounts': [{'coupon': order_item.offer.meta['stripe'].get('coupon_id')}]
+        }
+
+    def build_invoice(self, currency=DEFAULT_CURRENCY):
+        return {
+            'customer': self.invoice.profile.meta.get('stripe_id'),
+            'currency': currency
         }
 
     ##########
@@ -621,22 +637,24 @@ class StripeProcessor(PaymentProcessorBase):
                 price_pk = price.pk
 
             price_data = self.build_price(offer, msrp, current_price, DEFAULT_CURRENCY, price_pk)
-            coupon_data = self.build_coupon(offer, DEFAULT_CURRENCY)
-
             new_stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
-            new_stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
-
+            
             if new_stripe_price:
                 if offer.meta.get('stripe'):
                     offer.meta['stripe']['price_id'] = new_stripe_price['id']
                 else:
                     offer.meta['stripe'] = {'price_id': new_stripe_price['id']}
 
-            if new_stripe_coupon:
-                if offer.meta.get('stripe'):
-                    offer.meta['stripe']['coupon_id'] = new_stripe_coupon['id']
-                else:
-                    offer.meta['stripe'] = {'coupon_id': new_stripe_coupon['id']}
+            if offer.has_any_discount_or_trial():
+                coupon_data = self.build_coupon(offer, DEFAULT_CURRENCY)
+
+                new_stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
+
+                if new_stripe_coupon:
+                    if offer.meta.get('stripe'):
+                        offer.meta['stripe']['coupon_id'] = new_stripe_coupon['id']
+                    else:
+                        offer.meta['stripe'] = {'coupon_id': new_stripe_coupon['id']}
 
             offer.save()
 
@@ -723,11 +741,11 @@ class StripeProcessor(PaymentProcessorBase):
                     # update the only one we have remaining
                     stripe_coupon = self.stripe_update_object(self.stripe.Coupon, stripe_coupon_matches[0]['id'], coupon_data)
 
-
-                if offer.meta.get('stripe'):
-                    offer.meta['stripe']['coupon_id'] = stripe_coupon['id']
-                else:
-                    offer.meta['stripe'] = {'coupon_id': stripe_coupon['id']}
+                if stripe_coupon:
+                    if offer.meta.get('stripe'):
+                        offer.meta['stripe']['coupon_id'] = stripe_coupon['id']
+                    else:
+                        offer.meta['stripe'] = {'coupon_id': stripe_coupon['id']}
 
             offer.save()
 
@@ -1074,16 +1092,35 @@ class StripeProcessor(PaymentProcessorBase):
         # payment_method.name = "Norrin Radd"
 
         # payment_intent.confirm(payment_method=payment_method)
+        invoice_data = self.build_invoice()
+        stripe_invoice = self.stripe_create_object(self.stripe.Invoice, invoice_data)
+
         payment_method_data = self.build_payment_method()
         stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
         if not stripe_payment_method:
             return None
-            
-        amount = self.convert_decimal_to_integer(self.invoice.get_one_time_transaction_total())
-        payment_intent_data = self.build_payment_intent(amount)
-        stripe_payment_intent = self.stripe_create_object(self.stripe.PaymentIntent, payment_intent_data)
-        if not stripe_payment_intent:
-            return None
+        
+        stripe_invoice.default_payment_method = stripe_payment_method.id
+        self.invoice.vendor_notes['stripe_id'] = stripe_invoice.id
+        self.invoice.save()
+        
+        stripe_line_items = []
+        for order_item in self.invoice.get_one_time_transaction_order_items():
+            line_item_data = self.build_invoice_line_item(order_item, stripe_invoice.id)
+            stripe_line_item = self.stripe_create_object(self.stripe.InvoiceItem, line_item_data) 
+            stripe_line_items.append(stripe_line_item)
+
+        stripe_invoice.lines = stripe_line_items
+        self.stripe_call(stripe_invoice.pay, {})
+
+        if self.transaction_succeded:
+            self.transaction_id = stripe_invoice.number
+
+        # amount = self.convert_decimal_to_integer(self.invoice.get_one_time_transaction_total())
+        # payment_intent_data = self.build_payment_intent(amount)
+        # stripe_payment_intent = self.stripe_create_object(self.stripe.PaymentIntent, payment_intent_data)
+        # if not stripe_payment_intent:
+        #     return None
 
         self.stripe_call(stripe_payment_intent.confirm, {"payment_method":stripe_payment_method})
 
