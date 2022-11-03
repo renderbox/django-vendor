@@ -26,15 +26,27 @@ def stripe_create_customer_signal(sender, instance, created, **kwargs):
     customer_query = {'query': f"email:'{instance.user.email}' AND metadata['site']:'{instance.site.domain}'"}
     query_result = processor.stripe_query_object(processor.stripe.Customer, customer_query)
 
-    if not query_result or not query_result.is_empty:
-        logger.warning(f"stripe_create_customer_signal instance: {instance.pk} is already on stripe, may need to sync it.")
+    if not processor.transaction_succeded:
+        logger.error(f"stripe_create_customer_signal: {processor.transactions_info}")
+        return None 
+
+    if not query_result.is_empty:
+        instance.meta['stripe_id'] = query_result.data[0].id
+        instance.save()
+        if len(query_result.data) > 1:
+            logger.warning(f"stripe_create_customer_signal: more than one customer found for email: {instance.user.email} on site: {instance.site.domain}")
         return None
    
-    customer = processor.build_customer(instance)
+    customer_data = processor.build_customer(instance)
+    stripe_customer = processor.stripe_create_object(processor.stripe.Customer, customer_data)
 
-    instance.meta['stripe_id'] = customer.id
+    if not processor.transaction_succeded:
+        logger.error(f"stripe_create_customer_signal: {processor.transactions_info}")
+        return None 
+
+    instance.meta['stripe_id'] = stripe_customer.id
     instance.save()
-    logger.success(f"stripe_create_customer_signal instance: {instance.pk} successfully created on Stripe")
+    logger.info(f"stripe_create_customer_signal instance: {instance.pk} successfully created on Stripe")
 
 @receiver(post_delete, sender=CustomerProfile)
 def stripe_delete_customer_signal(sender, instance, **kwargs):

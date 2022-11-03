@@ -12,6 +12,7 @@ from vendor.config import DEFAULT_CURRENCY
 from vendor.integrations import StripeIntegration
 from vendor.models import Offer, CustomerProfile
 from vendor.models.choice import (
+    Country,
     SubscriptionStatus,
     TransactionTypes,
     PaymentTypes,
@@ -249,72 +250,58 @@ class StripeProcessor(PaymentProcessorBase):
         self.stripe.api_version = '2022-08-01'
 
     ##########
+    # Parsers
+    ##########
+    def parse_response(self, response_data):
+        """
+        Processes the transaction response
+        """
+        ...
+
+
+    ##########
     # Stripe utils
     ##########
     def stripe_call(self, *args):
         func, func_args = args
+        self.transaction_succeded = False
+
         try:
             if isinstance(func_args, str):
-                return func(func_args)
+                self.transaction_response = func(func_args)
+            else:
+                self.transaction_response = func(**func_args)
 
-            return func(**func_args)
+        except (self.stripe.error.CardError, self.stripe.error.RateLimitError,
+                self.stripe.error.InvalidRequestError, self.stripe.error.AuthenticationError,
+                self.stripe.error.APIConnectionError, self.stripe.error.StripeError,
+                Exception) as e:
 
-        except self.stripe.error.CardError as e:
             logger.error(e.user_message)
-        except self.stripe.error.RateLimitError as e:
-            logger.error(e.user_message)
-        except self.stripe.error.InvalidRequestError as e:
-            logger.error(e.user_message)
-        except self.stripe.error.AuthenticationError as e:
-            logger.error(e.user_message)
-        except self.stripe.error.APIConnectionError as e:
-            logger.error(e.user_message)
-        except self.stripe.error.StripeError as e:
-            logger.error(e.user_message)
-        except Exception as e:
-            logger.error(str(e))
+            self.transaction_info = self.get_transaction_info(raw=f"{e}\n{func}\n{func_args}", errors=e.user_message)
+            return None
 
-        self.transaction_succeded = False
+        self.transaction_succeded = True
+        self.transaction_info = self.get_transaction_info(raw=f"{func} - {func_args} {self.transaction_response}", data=self.transaction_response.data if 'data' in self.transaction_response else "")
+
+        return self.transaction_response
 
     def convert_decimal_to_integer(self, decimal):
         integer_str_rep = str(decimal).split(".")
-
-        return int("".join(integer_str_rep))
-
-    ##########
-    # Parsers
-    ##########
-    def parse_response(self, subscription=True):
-        """
-        Processes the transaction response
-        """
-        transaction_id = ''
-        raw_data = ''
-        messages = ''
         
-        if not subscription:
-            transaction_id = self.charge['id']
-            raw_data = str(self.charge)
-            messages = f'trans id is {transaction_id}'
-        else:
-            if self.stripe_subscription.get('id'):
-                transaction_id = self.stripe_subscription['id']
-                raw_data = str(self.stripe_subscription)
-                messages = f'trans id is {transaction_id}'
+        if decimal == 0:
+            return 0
 
-        self.transaction_id = transaction_id
-        self.transaction_response = self.make_transaction_response(
-            raw=raw_data,
-            messages=messages
-        )
+        if len(integer_str_rep) < 2:
+            raise TypeError(f"convert_decimal_to_integer: error with decimal value receieved: {decimal}")
+        
+        whole_part = integer_str_rep[0]
+        fractional_part = integer_str_rep[1]
 
-    def parse_success(self, subscription=True):
-        if not subscription:
-            if self.charge.get('id'):
-                self.transaction_succeded = True
-        else:
-            if self.stripe_subscription.get('id'):
-                self.transaction_succeded = True
+        if len(fractional_part) < 2:
+            fractional_part = "0" + fractional_part
+            
+        return int("".join([whole_part, fractional_part]))
 
     ##########
     # CRUD Stripe Object
@@ -439,11 +426,17 @@ class StripeProcessor(PaymentProcessorBase):
                     'line2': self.billing_address.data.get('billing-address_2', None),
                     'city': self.billing_address.data.get("billing-locality", ""),
                     'state': self.billing_address.data.get("billing-state", ""),
-                    'country': self.billing_address.data.get("billing-country"),
+                    'country': Country.names[Country.values.index(int(self.billing_address.data.get("billing-country")))],
                     'postal_code': self.billing_address.data.get("billing-postal_code")
                 },
                 'name': self.payment_info.data.get('full_name', None)
             }
+        }
+
+    def build_payment_intent(self, amount, currency=DEFAULT_CURRENCY):
+        return {
+            'amount': amount,
+            'currency': currency
         }
 
     def build_setup_intent(self, payment_method_id):
@@ -458,7 +451,7 @@ class StripeProcessor(PaymentProcessorBase):
     def build_subscription(self, subscription, payment_method_id):
         return {
             'customer': self.invoice.profile.meta['stripe_id'],
-            'items': [{'price': subscription.meta['stripe']['price_id']}],
+            'items': [{'price': subscription.offer.meta['stripe']['price_id']}],
             'default_payment_method': payment_method_id,
             'metadata': {'site': self.invoice.site}
         }
@@ -748,7 +741,7 @@ class StripeProcessor(PaymentProcessorBase):
     # Prices
     ##########
     def does_stripe_and_vendor_price_match(self, stripe_price, vendor_price):
-        if not stripe_price.unit_amount == self.convert_decimal_to_integer(vendor_price['unit_amount']):
+        if not stripe_price.unit_amount == vendor_price['unit_amount']:
             return False
         
         if 'recurring' in vendor_price:
@@ -1059,36 +1052,57 @@ class StripeProcessor(PaymentProcessorBase):
         pass
 
     def process_payment(self):
-        self.transaction_succeded = False
-        self.charge = self.create_charge()
-        
-        if self.charge and self.charge["captured"]:
-            self.transaction_succeded = True
-            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = '201'
-            self.transaction_message[self.TRANSACTION_SUCCESS_MESSAGE] = "Success"
-            self.payment.status = PurchaseStatus.CAPTURED
-            self.payment.save()
-            self.update_invoice_status(InvoiceStatus.COMPLETE)
-            self.parse_response(subscription=False)
+        # card ={'number': 4242424242424242, 'exp_month': "10", 'exp_year': "2023", 'cvc': "9000"}
 
-    def subscription_payment(self, subscription):
+        # payment_intent = stripe.PaymentIntent.create(amount=999, currency='usd')
+        # payment_method = stripe.PaymentMethod.create(type='card', card=card)
+        # payment_method.name = "Norrin Radd"
+
+        # payment_intent.confirm(payment_method=payment_method)
         payment_method_data = self.build_payment_method()
         stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
+        if not stripe_payment_method:
+            return None
+            
+        amount = self.convert_decimal_to_integer(self.invoice.get_one_time_transaction_total())
+        payment_intent_data = self.build_payment_intent(amount)
+        stripe_payment_intent = self.stripe_create_object(self.stripe.PaymentIntent, payment_intent_data)
+        if not stripe_payment_intent:
+            return None
+
+        self.stripe_call(stripe_payment_intent.confirm, {"payment_method":stripe_payment_method})
+
+        if self.transaction_succeded:
+            self.transaction_id = stripe_payment_intent.id
+
+    def subscription_payment(self, subscription):
         
+        payment_method_data = self.build_payment_method()
+        stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
+        if not stripe_payment_method:
+            return None
+
         setup_intent_object = self.build_setup_intent(stripe_payment_method.id)
+        if not setup_intent_object:
+            return None
+
         stripe_setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_object)
+        if not stripe_setup_intent:
+            return None
 
-        subscription_obj = self.build_subscription(subscription, stripe_payment_method.id)
-        self.stripe_subscription = self.processor.stripe_create_object(self.processor.stripe.Subscription, subscription_obj)
-
-        self.parse_response()
-        self.parse_success()
+        subscription_obj = self.build_subscription(subscription, stripe_payment_method.id)        
+        stripe_subscription = self.stripe_create_object(self.stripe.Subscription, subscription_obj)
+        if not stripe_subscription:
+            return None
 
         if self.invoice.vendor_notes is None:
             self.invoice.vendor_notes = {}
 
-        self.invoice.vendor_notes['stripe_id'] = self.transaction_info['transaction_id']
+        self.invoice.vendor_notes['stripe_id'] = stripe_subscription.latest_invoice
         self.invoice.save()
+
+        self.subscription_id = stripe_subscription.id
+        
         
 
 
