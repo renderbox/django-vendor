@@ -250,72 +250,46 @@ class StripeProcessor(PaymentProcessorBase):
         self.stripe.api_version = '2022-08-01'
 
     ##########
+    # Parsers
+    ##########
+    def parse_response(self, response_data):
+        """
+        Processes the transaction response
+        """
+        ...
+
+
+    ##########
     # Stripe utils
     ##########
     def stripe_call(self, *args):
         func, func_args = args
+        self.transaction_succeded = False
+
         try:
             if isinstance(func_args, str):
-                return func(func_args)
+                self.transaction_response = func(func_args)
+            else:
+                self.transaction_response = func(**func_args)
 
-            return func(**func_args)
+        except (self.stripe.error.CardError, self.stripe.error.RateLimitError,
+                self.stripe.error.InvalidRequestError, self.stripe.error.AuthenticationError,
+                self.stripe.error.APIConnectionError, self.stripe.error.StripeError,
+                Exception) as e:
 
-        except self.stripe.error.CardError as e:
             logger.error(e.user_message)
-        except self.stripe.error.RateLimitError as e:
-            logger.error(e.user_message)
-        except self.stripe.error.InvalidRequestError as e:
-            logger.error(e.user_message)
-        except self.stripe.error.AuthenticationError as e:
-            logger.error(e.user_message)
-        except self.stripe.error.APIConnectionError as e:
-            logger.error(e.user_message)
-        except self.stripe.error.StripeError as e:
-            logger.error(e.user_message)
-        except Exception as e:
-            logger.error(str(e))
+            self.transaction_info = self.get_transaction_info(raw=f"{e}\n{func}\n{func_args}", errors=e.user_message)
+            return None
 
-        self.transaction_succeded = False
+        self.transaction_succeded = True
+        self.transaction_info = self.get_transaction_info(raw=f"{func} - {func_args} {self.transaction_response}", data=self.transaction_response.data if 'data' in self.transaction_response else "")
+
+        return self.transaction_response
 
     def convert_decimal_to_integer(self, decimal):
         integer_str_rep = str(decimal).split(".")
 
         return int("".join(integer_str_rep))
-
-    ##########
-    # Parsers
-    ##########
-    def parse_response(self, subscription=True):
-        """
-        Processes the transaction response
-        """
-        transaction_id = ''
-        raw_data = ''
-        messages = ''
-        
-        if not subscription:
-            transaction_id = self.charge['id']
-            raw_data = str(self.charge)
-            messages = f'trans id is {transaction_id}'
-        else:
-            if self.stripe_subscription.get('id'):
-                transaction_id = self.stripe_subscription['id']
-                raw_data = str(self.stripe_subscription)
-                messages = f'trans id is {transaction_id}'
-
-        self.transaction_id = transaction_id
-        self.transaction_response = self.make_transaction_response(
-            raw=raw_data,
-            messages=messages
-        )
-
-    def parse_success(self, subscription=True):
-        if not subscription:
-            if self.charge.get('id'):
-                self.transaction_succeded = True
-        else:
-            if self.stripe_subscription.get('id'):
-                self.transaction_succeded = True
 
     ##########
     # CRUD Stripe Object
@@ -459,7 +433,7 @@ class StripeProcessor(PaymentProcessorBase):
     def build_subscription(self, subscription, payment_method_id):
         return {
             'customer': self.invoice.profile.meta['stripe_id'],
-            'items': [{'price': subscription.meta['stripe']['price_id']}],
+            'items': [{'price': subscription.offer.meta['stripe']['price_id']}],
             'default_payment_method': payment_method_id,
             'metadata': {'site': self.invoice.site}
         }
@@ -1060,36 +1034,36 @@ class StripeProcessor(PaymentProcessorBase):
         pass
 
     def process_payment(self):
-        self.transaction_succeded = False
-        self.charge = self.create_charge()
-        
-        if self.charge and self.charge["captured"]:
-            self.transaction_succeded = True
-            self.transaction_message[self.TRANSACTION_RESPONSE_CODE] = '201'
-            self.transaction_message[self.TRANSACTION_SUCCESS_MESSAGE] = "Success"
-            self.payment.status = PurchaseStatus.CAPTURED
-            self.payment.save()
-            self.update_invoice_status(InvoiceStatus.COMPLETE)
-            self.parse_response(subscription=False)
+        ...
 
     def subscription_payment(self, subscription):
         payment_method_data = self.build_payment_method()
-        stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
         
+        stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
+        if not stripe_payment_method:
+            return None
+
         setup_intent_object = self.build_setup_intent(stripe_payment_method.id)
+        if not setup_intent_object:
+            return None
+
         stripe_setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_object)
+        if not stripe_setup_intent:
+            return None
 
-        subscription_obj = self.build_subscription(subscription, stripe_payment_method.id)
-        self.stripe_subscription = self.processor.stripe_create_object(self.processor.stripe.Subscription, subscription_obj)
-
-        self.parse_response()
-        self.parse_success()
+        subscription_obj = self.build_subscription(subscription, stripe_payment_method.id)        
+        stripe_subscription = self.stripe_create_object(self.stripe.Subscription, subscription_obj)
+        if not stripe_subscription:
+            return None
 
         if self.invoice.vendor_notes is None:
             self.invoice.vendor_notes = {}
 
-        self.invoice.vendor_notes['stripe_id'] = self.transaction_info['transaction_id']
+        self.invoice.vendor_notes['stripe_id'] = stripe_subscription.latest_invoice
         self.invoice.save()
+
+        self.subscription_id = stripe_subscription.id
+        
         
 
 
