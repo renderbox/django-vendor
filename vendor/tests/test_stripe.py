@@ -10,7 +10,6 @@ from siteconfigs.models import SiteConfigModel
 from unittest import skipIf
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.processors import StripeProcessor
-from vendor.config import DEFAULT_CURRENCY
 from django.contrib.auth import get_user_model
 from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem, Subscription
 from core.models import Product
@@ -99,6 +98,7 @@ class StripeProcessorTests(TestCase):
         self.pri_monthly = {"currency": "usd", "unit_amount": 1024,
                             "recurring": {"interval": "month", "interval_count": 1, "usage_type": "licensed"},
                             'metadata': self.valid_metadata}
+
 
     def test_environment_variables_set(self):
         self.assertIsNotNone(settings.STRIPE_PUBLIC_KEY)
@@ -376,51 +376,59 @@ class StripeProcessorTests(TestCase):
         self.assertIn(stripe_product2.name, offer_names)
 
     def test_get_vendor_offers_in_stripe(self):
+        # Test will fail on initial run without products created on stripe. Dont create duplicates
+
         offer1 = Offer.objects.create(site=self.site, name=self.pro_annual_license['name'], start_date=timezone.now())
         offer2 = Offer.objects.create(site=self.site, name=self.pro_annual_license2['name'], start_date=timezone.now())
-        
-        self.pro_annual_license['metadata']['pk'] = offer1.pk
-        self.pro_annual_license2['metadata']['pk'] = offer2.pk
-        
-        stripe_product1 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
-        stripe_product2 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license2)
 
         offers = self.processor.get_site_offers(self.site)
+        stripe_offer_names = [product['name'] for product in offers]
+        vendor_offer_names = [offer1.name, offer2.name]
+        offers_exist = [name for name in vendor_offer_names if name in stripe_offer_names] or False
+
+        if not offers_exist:
+            self.pro_annual_license['metadata']['pk'] = offer1.pk
+            self.pro_annual_license2['metadata']['pk'] = offer2.pk
+            stripe_product1 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
+            stripe_product2 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license2)
+
         pk_list = [product['metadata']['pk'] for product in offers]
         vendor_offers_in_stripe = self.processor.get_vendor_offers_in_stripe(pk_list, self.site)
 
-        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_product1.id)
-        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_product2.id)
 
         self.assertIsNotNone(vendor_offers_in_stripe)
-        self.assertEquals(vendor_offers_in_stripe.count(), 2)
+        self.assertIn(offer1, vendor_offers_in_stripe)
+        self.assertIn(offer2, vendor_offers_in_stripe)
+
 
     def test_get_vendor_offers_not_in_stripe(self):
-        stripe_product1 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
-        stripe_product2 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license2)
-
         offers = self.processor.get_site_offers(self.site)
-        pk_list = [product['metadata']['pk'] for product in offers]
-        vendor_offers_not_in_stripe = self.processor.get_vendor_offers_not_in_stripe(pk_list, self.site)
+        #stripe_offer_names = [product['name'] for product in offers]
+        #vendor_offer_names = [self.pro_annual_license['name'], self.pro_annual_license2['name']]
 
-        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_product1.id)
-        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_product2.id)
+        pk_list = [product['metadata']['pk'] for product in offers]
+
+        vendor_offers_not_in_stripe = self.processor.get_vendor_offers_not_in_stripe(pk_list, self.site)
 
         self.assertIsNotNone(vendor_offers_not_in_stripe)
 
     def test_get_stripe_customers(self):
-        stripe_customer1 = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
-        stripe_customer2 = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd2)
+        # Test will fail on initial run without customers created on stripe. Dont create duplicates
 
         current_stripe_customers = self.processor.get_stripe_customers(self.site)
         customer_names = [customer.name for customer in current_stripe_customers]
 
-        self.processor.stripe_delete_object(self.processor.stripe.Customer, stripe_customer1.id)
-        self.processor.stripe_delete_object(self.processor.stripe.Customer, stripe_customer2.id)
+        test_names = [self.cus_norrin_radd['name'], self.cus_norrin_radd2['name']]
+        customers_exists = [name for name in test_names if name in customer_names] or False
+
+        if not customers_exists:
+            self.stripe_customer1 = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
+            self.stripe_customer2 = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd2)
+
 
         self.assertIsNotNone(current_stripe_customers)
-        self.assertIn(stripe_customer1.name, customer_names)
-        self.assertIn(stripe_customer2.name, customer_names)
+        self.assertIn(self.cus_norrin_radd['name'], customer_names)
+        self.assertIn(self.cus_norrin_radd2['name'], customer_names)
 
 
     def test_get_vendor_customers_in_stripe(self):
@@ -513,7 +521,8 @@ class StripeProcessorTests(TestCase):
         self.assertIsNotNone(product)
 
     def test_get_product_id_with_name(self):
-        stripe_product = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
+        # Test will fail on initial run without products created on stripe. Dont create duplicates
+
         metadata = {
             'key': 'site',
             'value': self.site.domain,
@@ -521,9 +530,10 @@ class StripeProcessorTests(TestCase):
         }
         product_id = self.processor.get_product_id_with_name(self.pro_annual_license['name'], metadata=metadata)
 
-        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_product.id)
+        offers = self.processor.get_site_offers(self.site)
+        stripe_offer_ids = [product['id'] for product in offers]
 
-        self.assertEquals(stripe_product.id, product_id)
+        self.assertIn(product_id, stripe_offer_ids)
 
 
     """
@@ -580,15 +590,10 @@ class StripeProcessorTests(TestCase):
         offer.refresh_from_db()
         stripe_meta = offer.meta.get('stripe')
 
-        #deleted_price = self.processor.stripe_delete_object(self.processor.stripe.Price,
-        #                                                    stripe_meta.get('price_id'))
-        #deleted_offer = self.processor.stripe_delete_object(self.processor.stripe.Product,
-        #                                                    stripe_meta.get('product_id'))
 
         self.assertTrue(stripe_meta)
         self.assertTrue(stripe_meta.get('product_id'))
         self.assertTrue(stripe_meta.get('price_id'))
-        self.assertTrue(stripe_meta.get('coupon_id'))
 
 
 
@@ -850,31 +855,22 @@ class StripeBuildObjectTests(TestCase):
             'product_id': stripe_product.id
         }
         offer.save()
+        price = offer.prices.first()
 
-        price = offer.get_current_price_instance() if offer.get_current_price_instance() else None
-        msrp = offer.get_msrp()
-        current_price = msrp
-        price_pk = None
-        if price:
-            current_price = price.cost
-            price_pk = price.pk
-
-        price_data = self.processor.build_price(offer, msrp, current_price, DEFAULT_CURRENCY, price_pk)
+        price_data = self.processor.build_price(offer, price)
         stripe_price = self.processor.stripe_create_object(self.processor.stripe.Price, price_data)
 
         self.assertIsNotNone(stripe_price.id)
-        self.processor.stripe_update_object(self.processor.stripe.Price, stripe_price.id, {'active':False})
         self.assertEqual(price.cost, stripe_price.unit_amount)
 
     def test_build_coupon_success(self):
         offer = Offer.objects.all().first()
         price = offer.prices.first()
 
-        coupon_data = self.processor.build_coupon(offer, DEFAULT_CURRENCY)
+        coupon_data = self.processor.build_coupon(offer, price)
         stripe_coupon = self.processor.stripe_create_object(self.processor.stripe.Coupon, coupon_data)
         
         self.assertIsNotNone(stripe_coupon.id)
-        self.processor.stripe_delete_object(self.processor.stripe.Coupon, stripe_coupon.id)
         self.assertEqual("".join([str(stripe_coupon.amount_off)[:-2], ".", str(stripe_coupon.amount_off)[-2:]]), str((offer.get_msrp() - price.cost)))
 
     def test_build_subscription_success(self):

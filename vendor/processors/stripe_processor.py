@@ -378,7 +378,7 @@ class StripeProcessor(PaymentProcessorBase):
             'metadata': {
                 'site': offer.site.domain,
                 'msrp': mspr
-            }
+                }
         }
 
         if price_pk:
