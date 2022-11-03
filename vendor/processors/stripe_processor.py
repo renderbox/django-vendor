@@ -288,8 +288,20 @@ class StripeProcessor(PaymentProcessorBase):
 
     def convert_decimal_to_integer(self, decimal):
         integer_str_rep = str(decimal).split(".")
+        
+        if decimal == 0:
+            return 0
 
-        return int("".join(integer_str_rep))
+        if len(integer_str_rep) < 2:
+            raise TypeError(f"convert_decimal_to_integer: error with decimal value receieved: {decimal}")
+        
+        whole_part = integer_str_rep[0]
+        fractional_part = integer_str_rep[1]
+
+        if len(fractional_part) < 2:
+            fractional_part = "0" + fractional_part
+            
+        return int("".join([whole_part, fractional_part]))
 
     ##########
     # CRUD Stripe Object
@@ -419,6 +431,12 @@ class StripeProcessor(PaymentProcessorBase):
                 },
                 'name': self.payment_info.data.get('full_name', None)
             }
+        }
+
+    def build_payment_intent(self, amount, currency=DEFAULT_CURRENCY):
+        return {
+            'amount': amount,
+            'currency': currency
         }
 
     def build_setup_intent(self, payment_method_id):
@@ -723,7 +741,7 @@ class StripeProcessor(PaymentProcessorBase):
     # Prices
     ##########
     def does_stripe_and_vendor_price_match(self, stripe_price, vendor_price):
-        if not stripe_price.unit_amount == self.convert_decimal_to_integer(vendor_price['unit_amount']):
+        if not stripe_price.unit_amount == vendor_price['unit_amount']:
             return False
         
         if 'recurring' in vendor_price:
@@ -1034,11 +1052,34 @@ class StripeProcessor(PaymentProcessorBase):
         pass
 
     def process_payment(self):
-        ...
+        # card ={'number': 4242424242424242, 'exp_month': "10", 'exp_year': "2023", 'cvc': "9000"}
+
+        # payment_intent = stripe.PaymentIntent.create(amount=999, currency='usd')
+        # payment_method = stripe.PaymentMethod.create(type='card', card=card)
+        # payment_method.name = "Norrin Radd"
+
+        # payment_intent.confirm(payment_method=payment_method)
+        payment_method_data = self.build_payment_method()
+        stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
+        if not stripe_payment_method:
+            return None
+            
+        amount = self.convert_decimal_to_integer(self.invoice.get_one_time_transaction_total())
+        payment_intent_data = self.build_payment_intent(amount)
+        stripe_payment_intent = self.stripe_create_object(self.stripe.PaymentIntent, payment_intent_data)
+        if not stripe_payment_intent:
+            return None
+
+        stripe_payment_intent.confirm(payment_method=stripe_payment_method)
+
+        self.transaction_succeded = False
+        if stripe_payment_intent.status == 'succeded':
+            self.transaction_succeded = True
+            self.transaction_id = stripe_payment_intent.id
 
     def subscription_payment(self, subscription):
-        payment_method_data = self.build_payment_method()
         
+        payment_method_data = self.build_payment_method()
         stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
         if not stripe_payment_method:
             return None
