@@ -258,7 +258,7 @@ class StripeProcessor(PaymentProcessorBase):
 
     def subscription_offer_setup(self):
         offers_to_sync = []
-        for order_item in self.invoice.order_items:
+        for order_item in self.invoice.order_items.all():
             if not order_item.offer.meta.get('stripe_id'):
                 offers_to_sync.append(order_item.offer)
 

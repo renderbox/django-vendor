@@ -360,20 +360,24 @@ class StripeProcessorTests(TestCase):
         self.assertEquals(query, "")
 
     def test_get_stripe_offers(self):
-        # TODO I think there is a delay in the ability to search an object after its been created
+        # Test will fail on initial run without products created on stripe. Dont create duplicates
 
-        stripe_product = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
-        stripe_product2 = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license2)
+        offers = self.processor.get_site_offers(self.site)
+        stripe_offer_names = [product['name'] for product in offers]
+        names = [self.pro_annual_license['name'], self.pro_annual_license2['name']]
+
+        offers_exist = [name for name in names if name in stripe_offer_names] or False
+
+        if not offers_exist:
+            self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
+            self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license2)
 
         current_stripe_offers = self.processor.get_site_offers(self.site)
         offer_names = [offer.name for offer in current_stripe_offers]
 
-        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_product.id)
-        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_product2.id)
-
         self.assertIsNotNone(current_stripe_offers)
-        self.assertIn(stripe_product.name, offer_names)
-        self.assertIn(stripe_product2.name, offer_names)
+        self.assertIn(names[0], offer_names)
+        self.assertIn(names[1], offer_names)
 
     def test_get_vendor_offers_in_stripe(self):
         # Test will fail on initial run without products created on stripe. Dont create duplicates
@@ -430,41 +434,54 @@ class StripeProcessorTests(TestCase):
         self.assertIn(self.cus_norrin_radd['name'], customer_names)
         self.assertIn(self.cus_norrin_radd2['name'], customer_names)
 
-
     def test_get_vendor_customers_in_stripe(self):
+        # Test will fail on initial run without customers created on stripe. Dont create duplicates
+
+        current_stripe_customers = self.processor.get_stripe_customers(self.site)
+        customer_names = [customer.name for customer in current_stripe_customers]
+        email_list = [customer.email for customer in current_stripe_customers]
+
+        test_names = [self.cus_norrin_radd['name'], self.cus_norrin_radd2['name']]
+        customers_exists = [name for name in test_names if name in customer_names] or False
+
+        if not customers_exists:
+            self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
+            self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd2)
+
         first_name1, last_name1 = self.cus_norrin_radd['name'].split(' ')
         first_name2, last_name2 = self.cus_norrin_radd2['name'].split(' ')
-        user1 = User.objects.create(email=self.cus_norrin_radd['email'], first_name=first_name1, last_name=last_name1, username='test1')
-        user2 = User.objects.create(email=self.cus_norrin_radd2['email'], first_name=first_name2, last_name=last_name2, username='test2')
-        stripe_customer1 = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
-        stripe_customer2 = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd2)
+        user1 = User.objects.create(email=self.cus_norrin_radd['email'], first_name=first_name1, last_name=last_name1,
+                                    username='test1')
+        user2 = User.objects.create(email=self.cus_norrin_radd2['email'], first_name=first_name2, last_name=last_name2,
+                                    username='test2')
+
         vendor_customer1 = CustomerProfile.objects.create(site=self.site, user=user1)
         vendor_customer2 = CustomerProfile.objects.create(site=self.site, user=user2)
 
-        current_stripe_customers = self.processor.get_stripe_customers(self.site)
-        email_list = [customer.email for customer in current_stripe_customers]
         customers_in_vendor = self.processor.get_vendor_customers_in_stripe(email_list, self.site)
-
-        self.processor.stripe_delete_object(self.processor.stripe.Customer, stripe_customer1.id)
-        self.processor.stripe_delete_object(self.processor.stripe.Customer, stripe_customer2.id)
+        customers_in_vendor_emails = [customer.user.email for customer in customers_in_vendor]
 
         self.assertIsNotNone(customers_in_vendor)
-        self.assertEquals(customers_in_vendor.count(), 2)
+        self.assertIn(vendor_customer1.user.email, customers_in_vendor_emails)
+        self.assertIn(vendor_customer2.user.email, customers_in_vendor_emails)
 
     def test_get_vendor_customers_not_in_stripe(self):
-        stripe_customer1 = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
-        stripe_customer2 = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd2)
-
         current_stripe_customers = self.processor.get_stripe_customers(self.site)
+        customer_names = [customer.name for customer in current_stripe_customers]
         email_list = [customer.email for customer in current_stripe_customers]
-        customers_not_in_vendor = self.processor.get_vendor_customers_not_in_stripe(email_list, self.site)
 
-        self.processor.stripe_delete_object(self.processor.stripe.Customer, stripe_customer1.id)
-        self.processor.stripe_delete_object(self.processor.stripe.Customer, stripe_customer2.id)
+        test_names = [self.cus_norrin_radd['name'], self.cus_norrin_radd2['name']]
+        customers_exists = [name for name in test_names if name in customer_names] or False
+        if not customers_exists:
+            self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
+            self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd2)
+
+        customers_not_in_vendor = self.processor.get_vendor_customers_not_in_stripe(email_list, self.site)
 
         self.assertIsNotNone(customers_not_in_vendor)
 
     def test_create_stripe_customers(self):
+
         first_name1, last_name1 = self.cus_norrin_radd['name'].split(' ')
         first_name2, last_name2 = self.cus_norrin_radd2['name'].split(' ')
         user1 = User.objects.create(email=self.cus_norrin_radd['email'], first_name=first_name1, last_name=last_name1, username='test1')
@@ -508,15 +525,20 @@ class StripeProcessorTests(TestCase):
         self.assertEquals(updated_stripe_customer2.name, f'{user2.first_name} {user2.last_name}')
 
     def test_check_product_does_exist(self):
-        stripe_product = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
+        offers = self.processor.get_site_offers(self.site)
+        stripe_offer_names = [product['name'] for product in offers]
+
+        offer_exists = self.pro_annual_license['name'] in stripe_offer_names
+
+        if not offer_exists:
+            self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
+
         metadata = {
                 'key': 'site',
                 'value': 'site4',
                 'field': 'metadata'
         }
         product = self.processor.does_product_exist(self.pro_annual_license['name'], metadata=metadata)
-
-        self.processor.stripe_delete_object(self.processor.stripe.Product, stripe_product.id)
 
         self.assertIsNotNone(product)
 
@@ -559,7 +581,7 @@ class StripeProcessorTests(TestCase):
 
     def test_sync_customers(self):
         # Vendor objects not in stripe so create them there
-        signals.post_save.disconnect(receiver=signals.post_save, sender=CustomerProfile)
+
         user = User.objects.get(pk=1)
         customer = CustomerProfile.objects.create(site=self.site, user=user)
 
