@@ -49,6 +49,7 @@ def stripe_create_customer_signal(sender, instance, created, **kwargs):
         return None 
 
     if query_result:
+        logger.info(f"stripe_create_customer_signal: updating customer")
         processor.update_stripe_customers([instance])
         if len(query_result.data) > 1:
             logger.warning(f"stripe_create_customer_signal: more than one customer found for email: {instance.user.email} on site: {instance.site.domain}")
