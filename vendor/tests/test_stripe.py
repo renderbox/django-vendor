@@ -33,7 +33,7 @@ class StripeProcessorTests(TestCase):
         self.processor_site_config = SiteConfigModel()
         self.processor_site_config.site = self.existing_invoice.site
         self.processor_site_config.key = 'vendor.config.PaymentProcessorSiteConfig'
-        self.processor_site_config.value = {"payment_processor": "stripe.StripeProcessor"}
+        self.processor_site_config.value = {"payment_processor": "stripe_processor.StripeProcessor"}
         self.processor_site_config.save()
 
     def setup_user_client(self):
@@ -87,7 +87,7 @@ class StripeProcessorTests(TestCase):
                 'payment_type': '10'
             }
         }
-        self.valid_metadata = {'site': self.site.domain}
+        self.valid_metadata = {'site': self.site.domain, 'pk': 1}
         self.valid_addr = {'city': "na", 'country': "US", 'line1': "Salvatierra walk", 'postal_code': "90321",
                            'state': 'CA'}
 
@@ -624,7 +624,7 @@ class StripeProcessorTests(TestCase):
 class StripeCRUDObjectTests(TestCase):
 
     def init_test_objects(self):
-        self.valid_metadata = {'site': 'sc'}
+        self.valid_metadata = {'site': 'sc', 'pk':1}
         self.valid_addr = {'city': "na",'country': "US",'line1': "Salvatierra walk",'postal_code': "90321",'state': 'CA'}
         
         self.cus_norrin_radd = {'name': 'Norrin Radd', 'email': 'norrin@radd.com', 'metadata': self.valid_metadata}
