@@ -400,7 +400,7 @@ class StripeProcessor(PaymentProcessorBase):
         if offer.terms < TermType.PERPETUAL:
             price_data['recurring'] = {
                 'interval': 'month' if offer.term_details['term_units'] == TermDetailUnits.MONTH else 'year',
-                'interval_count': offer.term_details['payment_occurrences'],
+                'interval_count': offer.term_details['period_length'],
                 'usage_type': 'licensed'
             }
         
@@ -636,7 +636,8 @@ class StripeProcessor(PaymentProcessorBase):
             price_pk = None
             
             if price:
-                current_price = price.cost
+                if not msrp and price.cost > msrp:
+                    current_price = price.cost
                 price_pk = price.pk
 
             price_data = self.build_price(offer, msrp, current_price, DEFAULT_CURRENCY, price_pk)
@@ -959,7 +960,7 @@ class StripeProcessor(PaymentProcessorBase):
                         'unit_amount_decimal': total,
                         'recurring': {
                             'interval': interval,
-                            'interval_count': subscription.offer.get_payment_occurrences()
+                            'interval_count': subscription.offer.get_period_length()
                         }
                     }
                 })
