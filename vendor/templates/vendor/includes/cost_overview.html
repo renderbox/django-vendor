@@ -35,6 +35,6 @@
   {% for billing_date, billing_total in invoice.get_billing_dates_and_prices.items %}
   <li class="px-0 border-0 d-flex justify-content-between mt-3">
       <span class="text-dark font-italic">{% trans 'Your credit card will be billed on ' %}{{ billing_date|date:"F j, Y" }}</span>
-      <span class="font-italic" >${{ billing_total }}</span>
+      <span class="font-italic" >${{ billing_total|default_if_none:"0.00"|floatformat:2 }}</span>
   </li>
   {% endfor %}

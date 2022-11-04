@@ -249,8 +249,6 @@ class StripeProcessor(PaymentProcessorBase):
         # https://stripe.com/docs/libraries/set-version
         self.stripe.api_version = '2022-08-01'
 
-        self.customer_setup()
-        self.subscription_offer_setup()
 
     def customer_setup(self):
         if not self.invoice.profile.meta.get('stripe_id'):
@@ -258,7 +256,7 @@ class StripeProcessor(PaymentProcessorBase):
 
     def subscription_offer_setup(self):
         offers_to_sync = []
-        for order_item in self.invoice.order_items:
+        for order_item in self.invoice.order_items.all():
             if not order_item.offer.meta.get('stripe_id'):
                 offers_to_sync.append(order_item.offer)
 
@@ -445,7 +443,8 @@ class StripeProcessor(PaymentProcessorBase):
                     'country': Country.names[Country.values.index(int(self.billing_address.data.get("billing-country")))],
                     'postal_code': self.billing_address.data.get("billing-postal_code")
                 },
-                'name': self.payment_info.data.get('full_name', None)
+                'name': self.payment_info.data.get('full_name', None),
+                'email': self.invoice.profile.user.email
             }
         }
 
@@ -474,17 +473,21 @@ class StripeProcessor(PaymentProcessorBase):
         }
 
     def build_invoice_line_item(self, order_item, invoice_id):
-        return {
+        line_item = {
             'customer': self.invoice.profile.meta.get('stripe_id'),
             'invoice': invoice_id,
             'price': order_item.offer.meta['stripe'].get('price_id'),
-            'discounts': [{'coupon': order_item.offer.meta['stripe'].get('coupon_id')}]
         }
+
+        if order_item.offer.has_any_discount_or_trial():
+            line_item['discounts'] = [{'coupon': order_item.offer.meta['stripe'].get('coupon_id')}]
+
+        return line_item
 
     def build_invoice(self, currency=DEFAULT_CURRENCY):
         return {
             'customer': self.invoice.profile.meta.get('stripe_id'),
-            'currency': currency
+            'currency': currency,
         }
 
     ##########
@@ -1082,25 +1085,25 @@ class StripeProcessor(PaymentProcessorBase):
         """
         Called before the authorization begins.
         """
-        pass
+        self.customer_setup()
+        self.subscription_offer_setup()
 
     def process_payment(self):
-        # card ={'number': 4242424242424242, 'exp_month': "10", 'exp_year': "2023", 'cvc': "9000"}
-
-        # payment_intent = stripe.PaymentIntent.create(amount=999, currency='usd')
-        # payment_method = stripe.PaymentMethod.create(type='card', card=card)
-        # payment_method.name = "Norrin Radd"
-
-        # payment_intent.confirm(payment_method=payment_method)
         invoice_data = self.build_invoice()
         stripe_invoice = self.stripe_create_object(self.stripe.Invoice, invoice_data)
+        if not stripe_invoice:
+            return None
 
         payment_method_data = self.build_payment_method()
         stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
         if not stripe_payment_method:
             return None
+
+        self.stripe_call(stripe_payment_method.attach, {'customer': self.invoice.profile.meta.get('stripe_id')})
+        if not self.transaction_succeded:
+            return None
         
-        stripe_invoice.default_payment_method = stripe_payment_method.id
+        stripe_invoice
         self.invoice.vendor_notes['stripe_id'] = stripe_invoice.id
         self.invoice.save()
         
@@ -1109,23 +1112,20 @@ class StripeProcessor(PaymentProcessorBase):
             line_item_data = self.build_invoice_line_item(order_item, stripe_invoice.id)
             stripe_line_item = self.stripe_create_object(self.stripe.InvoiceItem, line_item_data) 
             stripe_line_items.append(stripe_line_item)
-
+        
         stripe_invoice.lines = stripe_line_items
-        self.stripe_call(stripe_invoice.pay, {})
+
+        amount = self.convert_decimal_to_integer(self.invoice.get_one_time_transaction_total())
+        payment_intent_data = self.build_payment_intent(amount)
+        stripe_payment_intent = self.stripe_create_object(self.stripe.PaymentIntent, payment_intent_data)
+
+        if not stripe_payment_intent:
+            return None
+
+        self.stripe_call(stripe_invoice.pay, {"payment_method": stripe_payment_method.id})
 
         if self.transaction_succeded:
-            self.transaction_id = stripe_invoice.number
-
-        # amount = self.convert_decimal_to_integer(self.invoice.get_one_time_transaction_total())
-        # payment_intent_data = self.build_payment_intent(amount)
-        # stripe_payment_intent = self.stripe_create_object(self.stripe.PaymentIntent, payment_intent_data)
-        # if not stripe_payment_intent:
-        #     return None
-
-        self.stripe_call(stripe_payment_intent.confirm, {"payment_method":stripe_payment_method})
-
-        if self.transaction_succeded:
-            self.transaction_id = stripe_payment_intent.id
+            self.transaction_id = stripe_invoice.payment_intent
 
     def subscription_payment(self, subscription):
         
