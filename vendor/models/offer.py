@@ -156,8 +156,9 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         """
         product_msrp_currencies = [ set(product.meta['msrp'].keys()) for product in self.products.all() ]
 
-        if is_currency_available(product_msrp_currencies[0].union(*product_msrp_currencies[1:]), currency=currency):
-            return currency
+        if len(product_msrp_currencies) >= 2:  # fixes IndexError: list index out of range
+            if is_currency_available(product_msrp_currencies[0].union(*product_msrp_currencies[1:]), currency=currency):
+                return currency
 
         return DEFAULT_CURRENCY
 

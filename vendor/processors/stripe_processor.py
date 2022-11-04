@@ -791,27 +791,6 @@ class StripeProcessor(PaymentProcessorBase):
                 return False
         
         return True
-        
-
-    def get_price_with_pk(self, price_pk):
-        """
-        Returns stripe Price based on metadata pk value
-        """
-        clause = self.query_builder.make_clause_template(
-            field='metadata',
-            key='pk',
-            value=price_pk,
-            operator=self.query_builder.EXACT_MATCH
-        )
-
-        query = self.query_builder.build_search_query(self.stripe.Price, [clause])
-
-        price_search = self.stripe_query_object(self.stripe.Price, {'query': query})
-
-        if price_search:
-            return price_search['data'][0]
-
-        return None
 
     def get_price_id_with_product(self, product):
         price = self.stripe_get_object(self.stripe.Price, {'id': product})
