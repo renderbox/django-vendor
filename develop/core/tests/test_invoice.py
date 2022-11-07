@@ -195,7 +195,7 @@ class ModelInvoiceTests(TestCase):
 
     def test_save_discounts_vendor_notes(self):
         free_month_offer = Offer.objects.get(pk=7)
-        discount = free_month_offer.current_price()
+        discount = free_month_offer.current_price() - free_month_offer.get_trial_amount()
         self.new_invoice.add_offer(free_month_offer)
         self.new_invoice.save_discounts_vendor_notes()
         self.assertEqual(self.new_invoice.vendor_notes['discounts'], discount)

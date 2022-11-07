@@ -410,7 +410,7 @@
             "payment_occurrences": 12,
             "term_units": 20,
             "trial_occurrences": 1,
-            "trial_amount": 10.0
+            "trial_amount": 0
         },
         "term_start_date": null,
         "available": true,
