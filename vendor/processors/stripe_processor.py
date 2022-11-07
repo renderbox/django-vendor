@@ -469,6 +469,7 @@ class StripeProcessor(PaymentProcessorBase):
             'coupon': subscription.offer.meta['stripe'].get('coupon_id'),
             'items': [{'price': subscription.offer.meta['stripe']['price_id']}],
             'default_payment_method': payment_method_id,
+            'trial_period_days': subscription.offer.get_trial_days(),
             'metadata': {'site': self.invoice.site}
         }
 
@@ -816,6 +817,17 @@ class StripeProcessor(PaymentProcessorBase):
             return search_data['data']
 
         return []
+
+    def get_customer_email(self, customer_id):
+        customer = self.stripe_get_object(self.stripe.Customer, customer_id)
+
+        if customer:
+            return customer['email']
+        return None
+
+    def get_customer_id_for_expiring_cards(self, month):
+        # TODO implement
+        ...
 
     def does_price_exist(self, product, metadata):
         product_clause = self.query_builder.make_clause_template(
