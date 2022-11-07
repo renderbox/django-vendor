@@ -116,7 +116,6 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
 
         return price
 
-
     def add_to_cart_link(self):
         return reverse("vendor_api:add-to-cart", kwargs={"slug": self.slug})
 
@@ -202,7 +201,10 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         return False
 
     def get_next_billing_date(self):
-        return get_payment_scheduled_end_date(self)
+        start_date = timezone.now()
+        if self.term_start_date:
+            start_date = self.term_start_date
+        return get_payment_scheduled_end_date(self, start_date)
 
     def get_period_length(self):
         if self.terms == TermType.SUBSCRIPTION:
@@ -233,4 +235,9 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
             
         return False
     
+    def get_term_start_date(self, start_date=timezone.now()):
+        if self.term_start_date and self.term_start_date > start_date:
+            return self.term_start_date
+        
+        return start_date
 
