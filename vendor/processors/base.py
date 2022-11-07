@@ -234,6 +234,14 @@ class PaymentProcessorBase(object):
             subscription=self.subscription
         )
 
+        if order_item.offer.terms < TermType.PERPETUAL:
+            self.payment.subscription = self.subscription
+            self.payment.save()
+            
+            self.receipt.subscription = self.subscription
+            self.receipt.save()
+            
+
     def create_order_item_receipt(self, order_item):
         """
         Creates a receipt for every product in the order item according to its,

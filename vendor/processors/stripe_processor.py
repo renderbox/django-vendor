@@ -290,8 +290,12 @@ class StripeProcessor(PaymentProcessorBase):
                 self.stripe.error.APIConnectionError, self.stripe.error.StripeError,
                 Exception) as e:
 
-            logger.error(e.user_message)
-            self.transaction_info = self.get_transaction_info(raw=f"{e}\n{func}\n{func_args}", errors=e.user_message)
+            user_message = ""
+            if hasattr(e, 'user_message'):
+                user_message = e.user_message
+
+            self.transaction_info = self.get_transaction_info(raw=f"{e}\n{func}\n{func_args}:user_message: {user_message}", errors=e)
+            logger.error(self.transaction_info)
             return None
 
         self.transaction_succeded = True
@@ -420,8 +424,8 @@ class StripeProcessor(PaymentProcessorBase):
 
         if offer.terms < TermType.PERPETUAL:
             coupon_data['amount_off'] = self.convert_decimal_to_integer(offer.get_trial_discount())
-            coupon_data['duration']: 'once' if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
-            coupon_data['duration_in_months']: offer.get_trial_duration_in_months()
+            coupon_data['duration'] = 'once' if offer.term_details['trial_occurrences'] <= 1 else 'repeating'
+            coupon_data['duration_in_months'] = offer.term_details['trial_occurrences']
         
         return coupon_data
 
@@ -469,8 +473,9 @@ class StripeProcessor(PaymentProcessorBase):
             'coupon': subscription.offer.meta['stripe'].get('coupon_id'),
             'items': [{'price': subscription.offer.meta['stripe']['price_id']}],
             'default_payment_method': payment_method_id,
-            'trial_period_days': subscription.offer.get_trial_days(),
-            'metadata': {'site': self.invoice.site}
+            'metadata': {'site': self.invoice.site},
+            'trial_period_days': subscription.offer.get_trial_days()
+
         }
 
     def build_invoice_line_item(self, order_item, invoice_id):
@@ -650,7 +655,7 @@ class StripeProcessor(PaymentProcessorBase):
                 else:
                     offer.meta['stripe'] = {'price_id': new_stripe_price['id']}
 
-            if offer.has_any_discount_or_trial():
+            if offer.discount() or offer.get_trial_amount():
                 coupon_data = self.build_coupon(offer, DEFAULT_CURRENCY)
 
                 new_stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
@@ -1146,6 +1151,7 @@ class StripeProcessor(PaymentProcessorBase):
         self.invoice.save()
 
         self.subscription_id = stripe_subscription.id
+
         
         
 
