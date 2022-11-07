@@ -206,6 +206,21 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         next_billing_dates.sort()
 
         return next_billing_dates[0]
+
+    def get_subscription_start_date(self):
+        """
+        Return the date the subscription will go into effect.
+        """
+        recurring_offers = self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)
+
+        if not recurring_offers.count():
+            return None
+
+        next_billing_dates = [order_item.offer.get_subscription_start_date(profile=self.profile) for order_item in recurring_offers]
+
+        next_billing_dates.sort()
+
+        return next_billing_dates[0]
     
     def get_billing_dates_and_prices(self):
         now = timezone.now()
