@@ -216,7 +216,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         if not recurring_offers.count():
             return None
 
-        next_billing_dates = [order_item.offer.get_subscription_start_date(profile=self.profile) for order_item in recurring_offers]
+        next_billing_dates = [get_subscription_start_date(order_item.offer, profile=self.profile) for order_item in recurring_offers]
 
         next_billing_dates.sort()
 

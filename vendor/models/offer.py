@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from vendor.config import DEFAULT_CURRENCY
-from vendor.utils import get_payment_scheduled_end_date, get_subscription_start_date
+from vendor.utils import get_payment_scheduled_end_date
 
 from .base import CreateUpdateModelBase, SoftDeleteModelBase
 from .choice import TermType, TermDetailUnits
@@ -205,9 +205,6 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         if self.term_start_date:
             start_date = self.term_start_date
         return get_payment_scheduled_end_date(self, start_date)
-
-    def get_subscription_start_date(self, profile):
-        return get_subscription_start_date(self, profile)
 
     def get_period_length(self):
         if self.terms == TermType.SUBSCRIPTION:
