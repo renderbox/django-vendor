@@ -213,7 +213,8 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         
         for recurring_order_item in self.get_recurring_order_items():
             offer_total = (recurring_order_item.total - recurring_order_item.discounts)
-            subscription_start_date = get_subscription_start_date(recurring_order_item.offer, self.profile, now)
+            start_date = recurring_order_item.offer.get_term_start_date(now)
+            subscription_start_date = get_subscription_start_date(recurring_order_item.offer, self.profile, start_date)
 
             if subscription_start_date in payments_info:
                 payments_info.update({subscription_start_date: payments_info[subscription_start_date] + offer_total})

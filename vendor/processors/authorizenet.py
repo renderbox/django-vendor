@@ -142,7 +142,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         transaction = apicontractsv1.createTransactionRequest()
         transaction.merchantAuthentication = self.merchant_auth
-        transaction.refId = self.get_transaction_id()
+        transaction.refId = self.get_transaction_id()[:20]
         return transaction
 
     def create_transaction_type(self, trans_type):
@@ -284,6 +284,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             term_units=10 (Day), trial_occurrences=7
             start_date = now + 7 days
         """
+        start_date = subscription.offer.get_term_start_date()
+
         payment_schedule = apicontractsv1.paymentScheduleType()
         payment_schedule.interval = apicontractsv1.paymentScheduleTypeInterval()
         payment_schedule.interval.unit = self.get_interval_units(subscription)
@@ -292,10 +294,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         payment_schedule.totalOccurrences = subscription.offer.get_payment_occurrences()
 
         if self.invoice.profile.has_owned_product(subscription.offer.products.all()):
-            payment_schedule.startDate = CustomDate(timezone.now())
+            payment_schedule.startDate = CustomDate(start_date)
             payment_schedule.trialOccurrences = 0
         else:
-            payment_schedule.startDate = CustomDate(get_future_date_days(timezone.now(), subscription.offer.get_trial_days()))
+            payment_schedule.startDate = CustomDate(get_future_date_days(start_date, subscription.offer.get_trial_days()))
             payment_schedule.trialOccurrences = subscription.offer.get_trial_occurrences()
                 
         return payment_schedule

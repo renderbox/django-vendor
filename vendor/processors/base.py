@@ -192,7 +192,8 @@ class PaymentProcessorBase(object):
         self.receipt.transaction = self.payment.transaction
         self.receipt.meta.update(self.payment.result)
         self.receipt.meta['payment_amount'] = self.payment.amount
-        self.receipt.start_date = get_subscription_start_date(order_item.offer, self.invoice.profile, today)
+        start_date = order_item.offer.get_term_start_date(today)
+        self.receipt.start_date = get_subscription_start_date(order_item.offer, self.invoice.profile, start_date)
         self.receipt.save()
 
         if term_type < TermType.PERPETUAL:
@@ -208,14 +209,14 @@ class PaymentProcessorBase(object):
         if not order_item.offer.get_trial_days():
             return None
 
-        today = timezone.now()
+        start_date = order_item.offer.get_term_start_date()
 
         self.payment = Payment.objects.create(
             profile=self.invoice.profile,
             amount=0,
             provider=self.provider,
             invoice=self.invoice,
-            submitted_date=today,
+            submitted_date=start_date,
             success=True,
             status=PurchaseStatus.SETTLED,
             payee_full_name=" ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
@@ -228,8 +229,8 @@ class PaymentProcessorBase(object):
             profile=self.invoice.profile,
             order_item=order_item,
             transaction=self.payment.transaction,
-            start_date=today,
-            end_date=get_future_date_days(today, order_item.offer.get_trial_days()),
+            start_date=start_date,
+            end_date=get_future_date_days(start_date, order_item.offer.get_trial_days()),
             subscription=self.subscription
         )
 
@@ -272,7 +273,7 @@ class PaymentProcessorBase(object):
         return amount
 
     def get_transaction_id(self):
-        return "{}-{}-{}-{}".format(self.invoice.profile.pk, settings.SITE_ID, self.invoice.pk, str(self.payment.created)[-12:-6])
+        return f"{self.invoice.site.pk}-{self.invoice.pk}"
 
     def set_billing_address_form_data(self, form_data, form_class):
         self.billing_address = form_class(form_data)
@@ -439,8 +440,8 @@ class PaymentProcessorBase(object):
         Process/subscribies recurring payments throught the payement gateway and creates a payment model for each subscription.
         If a payment is completed it will create a receipt for the subscription
         """
-        if not self.is_card_valid():
-            return None
+        # if not self.is_card_valid():
+        #     return None
 
         for subscription in self.invoice.get_recurring_order_items():
             self.create_payment_model()
