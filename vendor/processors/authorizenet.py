@@ -142,7 +142,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         transaction = apicontractsv1.createTransactionRequest()
         transaction.merchantAuthentication = self.merchant_auth
-        transaction.refId = self.get_transaction_id()
+        transaction.refId = self.get_transaction_id()[:20]
         return transaction
 
     def create_transaction_type(self, trans_type):
