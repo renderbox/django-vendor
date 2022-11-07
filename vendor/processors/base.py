@@ -231,13 +231,12 @@ class PaymentProcessorBase(object):
             transaction=self.payment.transaction,
             start_date=start_date,
             end_date=get_future_date_days(start_date, order_item.offer.get_trial_days()),
-            subscription=self.subscription
         )
 
         if order_item.offer.terms < TermType.PERPETUAL:
             self.payment.subscription = self.subscription
             self.payment.save()
-            
+
             self.receipt.subscription = self.subscription
             self.receipt.save()
             
