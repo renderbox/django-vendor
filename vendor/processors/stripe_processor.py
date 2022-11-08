@@ -277,7 +277,7 @@ class StripeProcessor(PaymentProcessorBase):
     ##########
     def stripe_call(self, *args):
         func, func_args = args
-        self.transaction_succeded = False
+        self.transaction_succeeded = False
 
         try:
             if isinstance(func_args, str):
@@ -298,7 +298,7 @@ class StripeProcessor(PaymentProcessorBase):
             logger.error(self.transaction_info)
             return None
 
-        self.transaction_succeded = True
+        self.transaction_succeeded = True
         self.transaction_info = self.get_transaction_info(raw=f"{func} - {func_args} {self.transaction_response}", data=self.transaction_response.data if 'data' in self.transaction_response else "")
 
         return self.transaction_response
@@ -1085,7 +1085,7 @@ class StripeProcessor(PaymentProcessorBase):
             return None
 
         self.stripe_call(stripe_payment_method.attach, {'customer': self.invoice.profile.meta.get('stripe_id')})
-        if not self.transaction_succeded:
+        if not self.transaction_succeeded:
             return None
         
         stripe_invoice
@@ -1109,11 +1109,10 @@ class StripeProcessor(PaymentProcessorBase):
 
         self.stripe_call(stripe_invoice.pay, {"payment_method": stripe_payment_method.id})
 
-        if self.transaction_succeded:
+        if self.transaction_succeeded:
             self.transaction_id = stripe_invoice.payment_intent
 
     def subscription_payment(self, subscription):
-        
         payment_method_data = self.build_payment_method()
         stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
         if not stripe_payment_method:

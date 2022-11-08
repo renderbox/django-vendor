@@ -495,10 +495,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         )
 
     def parse_success(self):
-        self.transaction_succeded = False
+        self.transaction_succeeded = False
 
         if hasattr(self.transaction_response, 'messages') and self.transaction_response.messages.resultCode == "Ok":
-            self.transaction_succeded = True
+            self.transaction_succeeded = True
 
     ##########
     # Base Processor Transaction Implementations
@@ -529,7 +529,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.transaction_id = self.transaction_info['data'].get('transId', "")
 
-        if self.transaction_succeded:
+        if self.transaction_succeeded:
             self.payment.status = PurchaseStatus.CAPTURED
         else:
             self.payment.status = PurchaseStatus.DECLINED
@@ -569,7 +569,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.parse_response(self.parse_transaction_response)
         self.parse_success()
 
-        if self.transaction_succeded:
+        if self.transaction_succeeded:
             self.subscription_id = self.transaction_info['data'].get('subscription_id', "")
 
     def subscription_update_payment(self, subscription):
@@ -642,7 +642,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.parse_response(self.parse_transaction_response)
         self.parse_success()
         
-        if self.transaction_succeded:
+        if self.transaction_succeeded:
             return self.transaction_response
 
         return None
@@ -672,7 +672,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.parse_response(self.parse_payment_response)
         self.parse_success()
         
-        if self.transaction_succeded:
+        if self.transaction_succeeded:
             payment.status = PurchaseStatus.REFUNDED
             payment.save()
 
@@ -717,7 +717,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.parse_response(self.parse_payment_response)
         self.parse_success()
         
-        if self.transaction_succeded:
+        if self.transaction_succeeded:
             self.payment.transaction = self.transaction_info['data'].get('trans_id', "")
             self.payment.save()
             self.void_payment(self.payment.transaction)
@@ -743,7 +743,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.parse_response(self.parse_transaction_response)
         self.parse_success()
 
-        if self.transaction_succeded:
+        if self.transaction_succeeded:
             super().subscription_update_price(subscription, new_price, user)
 
     def get_customer_id_for_expiring_cards(self, month):
@@ -773,7 +773,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         customer_profile_ids = []
         last_page = 1
         
-        if self.transaction_succeded and self.transaction_response.paymentProfiles:
+        if self.transaction_succeeded and self.transaction_response.paymentProfiles:
             last_page = ceil(self.transaction_response.totalNumInResultSet.pyval / paging.limit)
             customer_profile_ids.extend([customer_profile.customerProfileId.text for customer_profile in self.transaction_response.paymentProfiles.paymentProfile])
 
@@ -787,7 +787,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             self.parse_response(self.parse_transaction_response)
             self.parse_success()
 
-            if self.transaction_succeded and self.transaction_response.paymentProfiles:
+            if self.transaction_succeeded and self.transaction_response.paymentProfiles:
                 customer_profile_ids.extend([customer_profile.customerProfileId.text for customer_profile in self.transaction_response.paymentProfiles.paymentProfile])
 
         return customer_profile_ids
@@ -804,7 +804,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.parse_response(self.parse_transaction_response)
         self.parse_success()
 
-        if self.transaction_succeded:
+        if self.transaction_succeeded:
             return self.transaction_response.profile.email.pyval
         
         return None
@@ -853,7 +853,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.parse_response(self.parse_transaction_response)
         self.parse_success()
 
-        if self.transaction_succeded and hasattr(self.transaction_response, 'batchList'):
+        if self.transaction_succeeded and hasattr(self.transaction_response, 'batchList'):
             return [batch for batch in self.transaction_response.batchList.batch]
 
     def get_transaction_batch_list(self, batch_id):
@@ -903,7 +903,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.parse_response(self.parse_transaction_response)
         self.parse_success()
 
-        if self.transaction_succeded:
+        if self.transaction_succeeded:
             return self.transaction_response.subscriptionDetails.subscriptionDetail
         else:
             return []

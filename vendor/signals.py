@@ -44,7 +44,7 @@ def stripe_create_customer_signal(sender, instance, created, **kwargs):
     query = query_builder.build_search_query(processor.stripe.Customer, [email_clause, metadata_clause])
     query_result = processor.stripe_query_object(processor.stripe.Customer, query)
 
-    if not processor.transaction_succeded:
+    if not processor.transaction_succeeded:
         logger.error(f"stripe_create_customer_signal: {processor.transactions_info}")
         return None 
 
@@ -110,7 +110,7 @@ def stripe_create_offer_signal(sender, instance, created, **kwargs):
     query = query_builder.build_search_query(processor.stripe.Product, [pk_clause, metadata_clause])
     query_result = processor.stripe_query_object(processor.stripe.Product, query)
 
-    if not processor.transaction_succeded:
+    if not processor.transaction_succeeded:
         logger.error(f"stripe_create_offer_signal: {processor.transactions_info}")
         return None
 

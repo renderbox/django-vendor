@@ -82,7 +82,7 @@ class BaseProcessorTests(TestCase):
         self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
         self.base_processor.is_data_valid()
         self.base_processor.create_payment_model()
-        self.base_processor.transaction_succeded = payment_success
+        self.base_processor.transaction_succeeded = payment_success
         self.base_processor.transaction_id = transaction_id
         self.base_processor.save_payment_transaction_result()
 
@@ -94,7 +94,7 @@ class BaseProcessorTests(TestCase):
         self.assertIn('payment_info', self.base_processor.payment.result)
 
     def test_update_invoice_status_success(self):
-        self.base_processor.transaction_succeded = True
+        self.base_processor.transaction_succeeded = True
         self.base_processor.update_invoice_status(InvoiceStatus.COMPLETE)
 
         self.assertEquals(InvoiceStatus.COMPLETE, self.base_processor.invoice.status)
