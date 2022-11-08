@@ -85,9 +85,6 @@ def stripe_create_offer_signal(sender, instance, created, **kwargs):
             f"stripe_create_offer_signal instance: {instance.pk} was not created on stripe for site {instance.site} because site is not configured with Stripe")
         return None
 
-    if 'stripe' in instance.meta:
-        return None
-
     processor = StripeProcessor(instance.site)
 
     query_builder = StripeQueryBuilder()
@@ -95,7 +92,7 @@ def stripe_create_offer_signal(sender, instance, created, **kwargs):
     pk_clause = query_builder.make_clause_template(
         field='metadata',
         key='pk',
-        value=instance.pk,
+        value=str(instance.pk),
         operator=query_builder.EXACT_MATCH,
         next_operator=query_builder.AND
     )
@@ -114,7 +111,7 @@ def stripe_create_offer_signal(sender, instance, created, **kwargs):
         logger.error(f"stripe_create_offer_signal: {processor.transactions_info}")
         return None
 
-    if query_result:
+    if query_result['data']:
         logger.info(f"stripe_create_offer_signal: updating the offer")
         processor.update_offers([instance])
         return None
