@@ -44,7 +44,7 @@ def stripe_create_customer_signal(sender, instance, created, **kwargs):
     query = query_builder.build_search_query(processor.stripe.Customer, [email_clause, metadata_clause])
     query_result = processor.stripe_query_object(processor.stripe.Customer, query)
 
-    if not processor.transaction_succeded:
+    if not processor.transaction_succeeded:
         logger.error(f"stripe_create_customer_signal: {processor.transactions_info}")
         return None 
 
@@ -73,7 +73,7 @@ def stripe_delete_customer_signal(sender, instance, **kwargs):
     processor = StripeProcessor(instance.site)
 
     processor.stripe_delete_object(processor.stripe.Customer, instance.meta['stripe_id'])
-    logger.success(f"stripe_delete_customer_signal instance: {instance.pk} was successfully deleted on Stripe")
+    logger.info(f"stripe_delete_customer_signal instance: {instance.pk} was successfully deleted on Stripe")
 
 
 @receiver(post_save, sender=Offer)
@@ -110,7 +110,7 @@ def stripe_create_offer_signal(sender, instance, created, **kwargs):
     query = query_builder.build_search_query(processor.stripe.Product, [pk_clause, metadata_clause])
     query_result = processor.stripe_query_object(processor.stripe.Product, query)
 
-    if not processor.transaction_succeded:
+    if not processor.transaction_succeeded:
         logger.error(f"stripe_create_offer_signal: {processor.transactions_info}")
         return None
 
@@ -142,6 +142,6 @@ def stripe_delete_offer_signal(sender, instance, **kwargs):
 
     if instance.meta.get('stripe').get('coupon_id'):
         processor.stripe_delete_object(processor.stripe.Coupon, instance.meta['stripe']['coupon_id'])
-        logger.success(f"stripe_delete_offer_signal instance: offer {instance.pk} coupon was successfully deleted on Stripe")
+        logger.info(f"stripe_delete_offer_signal instance: offer {instance.pk} coupon was successfully deleted on Stripe")
 
-    logger.success(f"stripe_delete_offer_signal instance: offer {instance.pk} was successfully deleted on Stripe")
+    logger.info(f"stripe_delete_offer_signal instance: offer {instance.pk} was successfully deleted on Stripe")

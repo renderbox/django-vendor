@@ -230,7 +230,7 @@ class StripeInvoicePaid(StripeBaseAPI):
         payment.status = PurchaseStatus.SETTLED
         payment.save()
 
-        receipt.transaction = stripe_invoice.subscription
+        receipt.transaction = stripe_invoice.charge
         receipt.save()
 
         return HttpResponse(status=200)

@@ -41,7 +41,7 @@ class PaymentProcessorBase(object):
     billing_address = {}
     transaction_token = None
     transaction_id = ""
-    transaction_succeded = False
+    transaction_succeeded = False
     transaction_info = {}
     transaction_response = None
 
@@ -120,7 +120,7 @@ class PaymentProcessorBase(object):
         """
         Saves the result output of any transaction.
         """
-        self.payment.success = self.transaction_succeded
+        self.payment.success = self.transaction_succeeded
         self.payment.transaction = self.transaction_id
         self.payment.result.update(self.transaction_info)
         self.payment.save()
@@ -154,7 +154,7 @@ class PaymentProcessorBase(object):
         """
         Saves the result output of any transaction.
         """
-        if self.transaction_succeded:
+        if self.transaction_succeeded:
             self.subscription.status = SubscriptionStatus.ACTIVE
             self.subscription.gateway_id = self.transaction
             
@@ -167,7 +167,7 @@ class PaymentProcessorBase(object):
         Otherwise it returns the invoice to the Cart. The error is saved in
         the payment for the transaction.
         """
-        if self.transaction_succeded:
+        if self.transaction_succeeded:
             self.invoice.status = new_status
         else:
             self.invoice.status = InvoiceStatus.CART
@@ -179,7 +179,7 @@ class PaymentProcessorBase(object):
         If payment was successful and invoice status is complete returns True. Otherwise
         false and no receipts should be created.
         """
-        if self.transaction_succeded and self.invoice.status == InvoiceStatus.COMPLETE:
+        if self.transaction_succeeded and self.invoice.status == InvoiceStatus.COMPLETE:
             return True
 
         return False
@@ -410,7 +410,7 @@ class PaymentProcessorBase(object):
                                created=timezone.now()
                                )
         self.payment.save()
-        self.transaction_succeded = True
+        self.transaction_succeeded = True
         self.payment.success = True
         self.payment.status = PurchaseStatus.SETTLED
         self.payment.transaction = f"{self.payment.uuid}-free"
@@ -454,6 +454,7 @@ class PaymentProcessorBase(object):
         for subscription in self.invoice.get_recurring_order_items():
             self.create_payment_model()
             self.subscription_payment(subscription)
+            self.save_payment_transaction_result()
             self.update_invoice_status(InvoiceStatus.COMPLETE)
             
             if self.is_transaction_and_invoice_complete():

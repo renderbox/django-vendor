@@ -2,9 +2,11 @@
 Payment processor for Stripe.
 """
 import logging
+import json
 import stripe
 import uuid
 
+from math import modf
 from django.conf import settings
 from django.contrib.sites.models import Site
 
@@ -277,7 +279,7 @@ class StripeProcessor(PaymentProcessorBase):
     ##########
     def stripe_call(self, *args):
         func, func_args = args
-        self.transaction_succeded = False
+        self.transaction_succeeded = False
 
         try:
             if isinstance(func_args, str):
@@ -293,32 +295,36 @@ class StripeProcessor(PaymentProcessorBase):
             user_message = ""
             if hasattr(e, 'user_message'):
                 user_message = e.user_message
-
-            self.transaction_info = self.get_transaction_info(raw=f"{e}\n{func}\n{func_args}:user_message: {user_message}", errors=e)
+            raw = {
+                'exception': f"{e}\n{func}\n{func_args}:user_message: {user_message}"
+            }
+            errors = {
+                'error': f"{e}"
+            }
+            self.transaction_info = self.get_transaction_info(raw=raw, errors=errors)
             logger.error(self.transaction_info)
             return None
 
-        self.transaction_succeded = True
-        self.transaction_info = self.get_transaction_info(raw=f"{func} - {func_args} {self.transaction_response}", data=self.transaction_response.data if 'data' in self.transaction_response else "")
+        self.transaction_succeeded = True
+        self.transaction_info = self.get_transaction_info(raw=f"{func} - {func_args} {json.dumps(self.transaction_response)}", data=self.transaction_response.data if 'data' in self.transaction_response else "")
 
         return self.transaction_response
 
     def convert_decimal_to_integer(self, decimal):
-        integer_str_rep = str(decimal).split(".")
-        
         if decimal == 0:
             return 0
-
-        if len(integer_str_rep) < 2:
-            raise TypeError(f"convert_decimal_to_integer: error with decimal value receieved: {decimal}")
-        
-        whole_part = integer_str_rep[0]
-        fractional_part = integer_str_rep[1]
-
-        if len(fractional_part) < 2:
-            fractional_part = "0" + fractional_part
             
-        return int("".join([whole_part, fractional_part]))
+        fraction_part, whole_part = modf(decimal)
+                
+        whole_str = str(whole_part).split('.')[0]
+        fraction_str = str(fraction_part).split('.')[1][:2]
+
+        if len(fraction_str) < 2:
+            fraction_str = "0" + fraction_str
+
+        stripe_amount = int("".join([whole_str, fraction_str]))
+            
+        return stripe_amount
 
     ##########
     # CRUD Stripe Object
@@ -1084,6 +1090,7 @@ class StripeProcessor(PaymentProcessorBase):
         """
         self.customer_setup()
         self.subscription_offer_setup()
+        self.transaction_succeeded = False
 
     def process_payment(self):
         invoice_data = self.build_invoice()
@@ -1097,7 +1104,7 @@ class StripeProcessor(PaymentProcessorBase):
             return None
 
         self.stripe_call(stripe_payment_method.attach, {'customer': self.invoice.profile.meta.get('stripe_id')})
-        if not self.transaction_succeded:
+        if not self.transaction_succeeded:
             return None
         
         stripe_invoice
@@ -1121,11 +1128,10 @@ class StripeProcessor(PaymentProcessorBase):
 
         self.stripe_call(stripe_invoice.pay, {"payment_method": stripe_payment_method.id})
 
-        if self.transaction_succeded:
+        if self.transaction_succeeded:
             self.transaction_id = stripe_invoice.payment_intent
 
     def subscription_payment(self, subscription):
-        
         payment_method_data = self.build_payment_method()
         stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
         if not stripe_payment_method:
