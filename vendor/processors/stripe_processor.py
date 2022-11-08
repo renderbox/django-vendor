@@ -553,9 +553,11 @@ class StripeProcessor(PaymentProcessorBase):
         for profile in customers:
             profile_data = self.build_customer(profile)
             new_stripe_customer = self.stripe_create_object(self.stripe.Customer, profile_data)
+
             if new_stripe_customer:
-                profile.meta['stripe_id'] = new_stripe_customer['id']
-                profile.save()
+                profile_meta = profile.meta
+                profile_meta['stripe_id'] = new_stripe_customer['id']
+                CustomerProfile.objects.filter(pk=profile.pk).update(meta=profile_meta)
 
     def update_stripe_customers(self, customers):
         for profile in customers:
@@ -564,8 +566,9 @@ class StripeProcessor(PaymentProcessorBase):
             existing_stripe_customer = self.stripe_update_object(self.stripe.Customer, customer_id, profile_data)
 
             if existing_stripe_customer:
-                profile.meta['stripe_id'] = existing_stripe_customer['id']
-                profile.save()
+                profile_meta = profile.meta
+                profile_meta['stripe_id'] = existing_stripe_customer['id']
+                CustomerProfile.objects.filter(pk=profile.pk).update(meta=profile_meta)
 
     ##########
     # Offers/Products
@@ -626,16 +629,17 @@ class StripeProcessor(PaymentProcessorBase):
 
     def create_offers(self, offers):
         for offer in offers:
+            offer_meta = offer.meta
             # build product first, since product_id is needed to build price later
             product_data = self.build_product(offer)
 
             new_stripe_product = self.stripe_create_object(self.stripe.Product, product_data)
 
             if new_stripe_product:
-                if offer.meta.get('stripe'):
-                    offer.meta['stripe']['product_id'] = new_stripe_product['id']
+                if offer_meta.get('stripe'):
+                    offer_meta['stripe']['product_id'] = new_stripe_product['id']
                 else:
-                    offer.meta['stripe'] = {'product_id': new_stripe_product['id']}
+                    offer_meta['stripe'] = {'product_id': new_stripe_product['id']}
 
             # TODO: Need to explore what is the best way to upload prices in each currency
             # currently we will only support the default currency (DEFAULT_CURRENCY) se
@@ -656,10 +660,10 @@ class StripeProcessor(PaymentProcessorBase):
             new_stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
             
             if new_stripe_price:
-                if offer.meta.get('stripe'):
-                    offer.meta['stripe']['price_id'] = new_stripe_price['id']
+                if offer_meta.get('stripe'):
+                    offer_meta['stripe']['price_id'] = new_stripe_price['id']
                 else:
-                    offer.meta['stripe'] = {'price_id': new_stripe_price['id']}
+                    offer_meta['stripe'] = {'price_id': new_stripe_price['id']}
 
             if offer.discount() or offer.get_trial_amount():
                 coupon_data = self.build_coupon(offer, DEFAULT_CURRENCY)
@@ -667,27 +671,28 @@ class StripeProcessor(PaymentProcessorBase):
                 new_stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
 
                 if new_stripe_coupon:
-                    if offer.meta.get('stripe'):
-                        offer.meta['stripe']['coupon_id'] = new_stripe_coupon['id']
+                    if offer_meta.get('stripe'):
+                        offer_meta['stripe']['coupon_id'] = new_stripe_coupon['id']
                     else:
-                        offer.meta['stripe'] = {'coupon_id': new_stripe_coupon['id']}
-
-            offer.save()
+                        offer_meta['stripe'] = {'coupon_id': new_stripe_coupon['id']}
+            
+            Offer.objects.filter(pk=offer.pk).update(meta=offer_meta)  # Doing an update to avoid triggering post_save()
 
     def update_offers(self, offers):
         coupons = self.get_coupons()
 
         for offer in offers:
             # Handle product
+            offer_meta = offer.meta
             product_id = offer.meta['stripe']['product_id']
             product_data = self.build_product(offer)
             existing_stripe_product = self.stripe_update_object(self.stripe.Product, product_id, product_data)
             
             if existing_stripe_product:
-                if offer.meta.get('stripe'):
-                    offer.meta['stripe']['product_id'] = existing_stripe_product['id']
+                if offer_meta.get('stripe'):
+                    offer_meta['stripe']['product_id'] = existing_stripe_product['id']
                 else:
-                    offer.meta['stripe'] = {'product_id': existing_stripe_product['id']}
+                    offer_meta['stripe'] = {'product_id': existing_stripe_product['id']}
 
             # Handle Price
             # TODO: Need to explore what is the best way to upload prices in each currency
@@ -731,10 +736,10 @@ class StripeProcessor(PaymentProcessorBase):
                     stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
 
             if stripe_price:
-                if offer.meta.get('stripe'):
-                    offer.meta['stripe']['price_id'] = stripe_price['id']
+                if offer_meta.get('stripe'):
+                    offer_meta['stripe']['price_id'] = stripe_price['id']
                 else:
-                    offer.meta['stripe'] = {'price_id': stripe_price['id']}
+                    offer_meta['stripe'] = {'price_id': stripe_price['id']}
 
             # Handle Coupon
             coupon_data = self.build_coupon(offer, DEFAULT_CURRENCY)
@@ -758,12 +763,12 @@ class StripeProcessor(PaymentProcessorBase):
                     stripe_coupon = self.stripe_update_object(self.stripe.Coupon, stripe_coupon_matches[0]['id'], coupon_data)
 
                 if stripe_coupon:
-                    if offer.meta.get('stripe'):
-                        offer.meta['stripe']['coupon_id'] = stripe_coupon['id']
+                    if offer_meta.get('stripe'):
+                        offer_meta['stripe']['coupon_id'] = stripe_coupon['id']
                     else:
-                        offer.meta['stripe'] = {'coupon_id': stripe_coupon['id']}
+                        offer_meta['stripe'] = {'coupon_id': stripe_coupon['id']}
 
-            offer.save()
+            Offer.objects.filter(pk=offer.pk).update(meta=offer_meta)
 
     def get_product_id_with_name(self, name, metadata):
         name_clause = self.query_builder.make_clause_template(
