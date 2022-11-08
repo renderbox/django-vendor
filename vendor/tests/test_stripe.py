@@ -119,6 +119,8 @@ class StripeProcessorTests(TestCase):
             self.processor.invoice.remove_offer(recurring_order_items.offer)
 
         self.processor.set_stripe_payment_source()
+        self.processor.transaction_succeeded = False
+
         self.processor.authorize_payment()
 
         self.assertIsNotNone(self.processor.payment)
@@ -132,6 +134,7 @@ class StripeProcessorTests(TestCase):
         transation fails
         """
         self.processor.create_stripe_customers([self.customer])
+        self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['card_number'] = '4242424242424241'
 
@@ -150,6 +153,7 @@ class StripeProcessorTests(TestCase):
         transation fails.
         """
         self.processor.create_stripe_customers([self.customer])
+        self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['expire_month'] = str(timezone.now().month)
         self.form_data['credit_card_form']['expire_year'] = str(timezone.now().year - 1)
@@ -168,6 +172,7 @@ class StripeProcessorTests(TestCase):
         Check incorrect cvc. Will fail with card number 4000000000000127
         """
         self.processor.create_stripe_customers([self.customer])
+        self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['cvv_number'] = '901'
         self.form_data['credit_card_form']['card_number'] = '4000000000000127'
@@ -184,6 +189,7 @@ class StripeProcessorTests(TestCase):
         Check a failed transaction due to to generic decline
         """
         self.processor.create_stripe_customers([self.customer])
+        self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['cvv_number'] = '902'
         self.form_data['credit_card_form']['card_number'] = '4000000000000002'
@@ -200,6 +206,7 @@ class StripeProcessorTests(TestCase):
         CVC number check fails for any cvv number passed
         """
         self.processor.create_stripe_customers([self.customer])
+        self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['cvv_number'] = '903'
         self.form_data['credit_card_form']['card_number'] = '4000000000000101'
@@ -216,6 +223,7 @@ class StripeProcessorTests(TestCase):
         Payment fails because of expired card
         """
         self.processor.create_stripe_customers([self.customer])
+        self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['cvv_number'] = '904'
         self.form_data['credit_card_form']['card_number'] = '4000000000000069'
@@ -232,6 +240,7 @@ class StripeProcessorTests(TestCase):
         Fraud prevention fail: Always blocked
         """
         self.processor.create_stripe_customers([self.customer])
+        self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['cvv_number'] = '903'
         self.form_data['credit_card_form']['card_number'] = '4000000000000101'
@@ -248,6 +257,7 @@ class StripeProcessorTests(TestCase):
         Fraud prevention fail: Higest Risk
         """
         self.processor.create_stripe_customers([self.customer])
+        self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['cvv_number'] = '903'
         self.form_data['credit_card_form']['card_number'] = '4000000000004954'
@@ -265,6 +275,7 @@ class StripeProcessorTests(TestCase):
         Fraud prevention fail : Elevated risk
         """
         self.processor.create_stripe_customers([self.customer])
+        self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['cvv_number'] = '903'
         self.form_data['credit_card_form']['card_number'] = '4000000000009235'
@@ -282,6 +293,7 @@ class StripeProcessorTests(TestCase):
         Postal code check fails for any code given fo this card number
         """
         self.processor.create_stripe_customers([self.customer])
+        self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data['credit_card_form']['card_number'] = '4000000000000036'
 
@@ -398,7 +410,6 @@ class StripeProcessorTests(TestCase):
 
         pk_list = [product['metadata']['pk'] for product in offers]
         vendor_offers_in_stripe = self.processor.get_vendor_offers_in_stripe(pk_list, self.site)
-
 
         self.assertIsNotNone(vendor_offers_in_stripe)
         self.assertIn(offer1, vendor_offers_in_stripe)
