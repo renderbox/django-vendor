@@ -454,6 +454,7 @@ class PaymentProcessorBase(object):
         for subscription in self.invoice.get_recurring_order_items():
             self.create_payment_model()
             self.subscription_payment(subscription)
+            self.save_payment_transaction_result()
             self.update_invoice_status(InvoiceStatus.COMPLETE)
             
             if self.is_transaction_and_invoice_complete():
