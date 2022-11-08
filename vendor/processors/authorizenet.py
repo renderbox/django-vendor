@@ -5,7 +5,6 @@ import ast
 import logging
 
 from datetime import datetime
-from decimal import Decimal, ROUND_DOWN
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import IntegerChoices
@@ -72,17 +71,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     transaction = None
     merchant_auth = None
     transaction_type = None
+    subscription_details = []
 
     def __str__(self):
         return 'Authorize.Net'
 
-    def get_checkout_context(self, request=None, context={}):
-        context = super().get_checkout_context(context=context)
-        if 'credit_card_form' not in context:
-            context['credit_card_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
-        if 'billing_address_form' not in context:
-            context['billing_address_form'] = BillingAddressForm()
-        return context
 
     def processor_setup(self, site):
         """
@@ -149,7 +142,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         transaction = apicontractsv1.createTransactionRequest()
         transaction.merchantAuthentication = self.merchant_auth
-        transaction.refId = self.get_transaction_id()
+        transaction.refId = self.get_transaction_id()[:20]
         return transaction
 
     def create_transaction_type(self, trans_type):
@@ -219,6 +212,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         line_item.description = str(order_item.offer.description)[:250]
         line_item.quantity = str(order_item.quantity)
         line_item.unitPrice = str(order_item.price)
+
         return line_item
 
     def create_line_item_array(self, order_items):
@@ -228,6 +222,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         line_items = apicontractsv1.ArrayOfLineItem()
         for order_item in order_items:
             line_items.lineItem.append(self.create_line_item(order_item))
+
         return line_items
 
     def create_tax(self, tax):
@@ -245,14 +240,17 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         billing_address.lastName = (self.payment_info.data.get('full_name', "").split(" ")[-1])[:50]
         billing_address.company = self.billing_address.data.get('billing-company', "")[:50]
         address_lines = self.billing_address.data.get('billing-address_1', "")
+
         if self.billing_address.data['billing-address_2']:
             address_lines += f", {self.billing_address.data['billing-address_2']}"
+
         billing_address.address = address_lines
         billing_address.city = self.billing_address.data.get("billing-locality", "")[:40]
         billing_address.state = self.billing_address.data.get("billing-state", "")[:40]
         billing_address.zip = self.billing_address.data.get("billing-postal_code")[:20]
         country = Country(int(self.billing_address.data.get("billing-country")))
         billing_address.country = str(country.name)
+        
         return billing_address
 
     def create_customer(self):
@@ -286,6 +284,8 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             term_units=10 (Day), trial_occurrences=7
             start_date = now + 7 days
         """
+        start_date = subscription.offer.get_term_start_date()
+
         payment_schedule = apicontractsv1.paymentScheduleType()
         payment_schedule.interval = apicontractsv1.paymentScheduleTypeInterval()
         payment_schedule.interval.unit = self.get_interval_units(subscription)
@@ -294,10 +294,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         payment_schedule.totalOccurrences = subscription.offer.get_payment_occurrences()
 
         if self.invoice.profile.has_owned_product(subscription.offer.products.all()):
-            payment_schedule.startDate = CustomDate(timezone.now())
+            payment_schedule.startDate = CustomDate(start_date)
             payment_schedule.trialOccurrences = 0
         else:
-            payment_schedule.startDate = CustomDate(get_future_date_days(timezone.now(), subscription.offer.get_trial_days()))
+            payment_schedule.startDate = CustomDate(get_future_date_days(start_date, subscription.offer.get_trial_days()))
             payment_schedule.trialOccurrences = subscription.offer.get_trial_occurrences()
                 
         return payment_schedule
@@ -363,15 +363,18 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             raise TypeError(f"{transaction_status} is not supported, check Authorize.Net docs for transactionStatus field choices")
 
     def get_payment_info(self, transaction):
-        return {
-            'account_number': transaction.payment.creditCard.cardNumber.text[-4:],
+        account_number = transaction.payment.creditCard.cardNumber.text[-4:]
+        full_name = " ".join([transaction.billTo.firstName.text, transaction.billTo.lastName.text])
+
+        payment_info = super().get_payment_info(account_number, full_name)
+        
+        return payment_info.update({
             'account_type': transaction.payment.creditCard.cardType.text,
-            'full_name': " ".join([transaction.billTo.firstName.text, transaction.billTo.lastName.text]),
             'transaction_id': transaction.transId.text,
             'subscription_id': transaction.subscription.id.text if hasattr(transaction, 'subscription') else "-",
             'payment_number': transaction.subscription.payNum.text,
             'status': transaction.transactionStatus.text
-        }
+        })
 
     def subscription_info_to_dict(self, subscription_info):
         return {
@@ -404,118 +407,98 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Returns a dictionary with raw information about the current transaction
         """
         response = self.transaction_response.__dict__
+
         if 'errors' in response:
             response.pop('errors')
+
         if 'messages' in response:
             response.pop('messages')
-        return str({**self.transaction_message, **response})
+            
+        return str({**self.transaction_info, **response})
 
-    def process_payment_transaction_response(self):
-        """
-        Processes the transaction reponse from the gateway so it can be saved in the payment model
-        """
-        self.transaction_id = str(getattr(self.transaction_response, 'transId', 'failed_payment'))
+    def get_transaction_errors(self, transaction_data=None):
+        errors = []
 
-        transaction_info = {}
-        transaction_info['raw'] = self.get_transaction_raw_response()
-        transaction_info['account_type'] = ast.literal_eval(transaction_info['raw']).get('accountType')
+        if self.transaction_response.messages.resultCode == "Error":
+            errors.append({key: value.text for key, value in self.transaction_response.messages.message.__dict__.items() if value.text})
 
-        self.transaction_response = transaction_info
-
-    def save_payment_subscription(self):
-        """
-        Processes the transaction reponse from the gateway so it can be saved in the payment model
-        The transaction id is the subscription id returned by Authorize.Net
-        """
-        self.transaction_id = self.transaction_message.get("subscription_id", 'failed_payement')
-
-        transaction_info = {}
-        transaction_info['raw'] = self.get_transaction_raw_response()
-
-        self.transaction_response = transaction_info
-
-    def save_subscription_result(self):
-        """
-        Processes the transaction reponse from the gateway so it can be saved in the payment model
-        The transaction id is the subscription id returned by Authorize.Net
-        """
-        self.transaction_id = self.transaction_message.get("subscription_id", 'failed_subscription')
-
-        transaction_info = {}
-        transaction_info['raw'] = self.get_transaction_raw_response()
-
-        self.transaction_response = transaction_info
-
-    def check_response(self, response):
-        """
-        Checks the transaction response and set the transaction_submitted and transaction_response variables
-        """
-        self.transaction_response = response.transactionResponse
-        self.transaction_message = {}
-        self.transaction_submitted = False
-        self.transaction_message['msg'] = ""
-        if response is not None:
-            # Check to see if the API request was successfully received and acted upon
-            if response.messages.resultCode == "Ok":
-                # Since the API request was successful, look for a transaction response
-                # and parse it to display the results of authorizing the card
-                if hasattr(response.transactionResponse, 'messages') is True:
-                    self.transaction_submitted = True
-                    self.transaction_message['msg'] = "Payment Complete"
-                    self.transaction_message['trans_id'] = response.transactionResponse.transId
-                    self.transaction_message['response_code'] = response.transactionResponse.responseCode
-                    self.transaction_message['code'] = response.transactionResponse.messages.message[0].code
-                    self.transaction_message['message'] = response.transactionResponse.messages.message[0].description
-                else:
-                    self.transaction_message['msg'] = 'Failed Transaction.'
-                    if hasattr(response.transactionResponse, 'errors') is True:
-                        self.transaction_message['error_code'] = response.transactionResponse.errors.error[0].errorCode
-                        self.transaction_message['error_text'] = response.transactionResponse.errors.error[0].errorText
-                        logger.info(f"AuthorizeNetProcessor check_response Failed Transaction: code {self.transaction_message['error_code']}, msg: {self.transaction_message['error_text']}")
-            # Or, print errors if the API request wasn't successful
-            else:
-                self.transaction_message['msg'] = 'Failed Transaction.'
-                if hasattr(response, 'transactionResponse') is True and hasattr(response.transactionResponse, 'errors') is True:
-                    self.transaction_message['error_code'] = response.transactionResponse.errors.error[0].errorCode
-                    self.transaction_message['error_text'] = response.transactionResponse.errors.error[0].errorText
-                else:
-                    self.transaction_message['error_code'] = response.messages.message[0]['code'].text
-                    self.transaction_message['error_text'] = response.messages.message[0]['text'].text
-                logger.info(f"AuthorizeNetProcessor check_response Failed Transaction: code {self.transaction_message['error_code']}, msg: {self.transaction_message['error_text']}")
-        else:
-            logger.info("AuthorizeNetProcessor check_response Null Response")
-            self.transaction_message['msg'] = 'Null Response.'
-
-    def check_subscription_response(self, response):
-        self.transaction_response = response
-        self.transaction_message = {}
-        self.transaction_submitted = False
-        self.transaction_message['msg'] = ""
-        self.transaction_message['code'] = response.messages.message[0]['code'].text
-        self.transaction_message['message'] = response.messages.message[0]['text'].text
-
-        if (response.messages.resultCode == "Ok"):
-            self.transaction_submitted = True
-            self.transaction_message['msg'] = "Subscription Tansaction Complete"
-            if 'subscriptionId' in response.__dict__:
-                self.transaction_message['subscription_id'] = response.subscriptionId.text
+        if transaction_data and hasattr(transaction_data, 'errors'):
+            errors.append({key: value.text for key, value in transaction_data.errors.error.__dict__.items() if value.text})
         
-        logger.info(f"AuthorizeNetProcessor check_subscription_response submitted: {self.transaction_submitted} msg: {self.transaction_message}")
+        return errors
 
-    def check_customer_list_response(self, response):
-        self.transaction_response = response
-        self.transaction_message = {}
-        self.transaction_submitted = False
-        self.transaction_message['msg'] = ""
-        self.transaction_message['code'] = response.messages.message[0]['code'].text
-        self.transaction_message['message'] = response.messages.message[0]['text'].text
+    def get_transaction_data(self, transaction_data=None):
+        response_data = {key: value.text for key, value in self.transaction_response.__dict__.items() if value.text}
 
-        if (response.messages.resultCode == "Ok"):
-            self.transaction_submitted = True
+        if transaction_data:
+            for key, value in transaction_data.__dict__.items():
+                if value.text:
+                    response_data.update({key: value.text})
 
-    def to_valid_decimal(self, number):
-        # TODO: Need to check currency to determin decimal places.
-        return Decimal(number).quantize(Decimal('.00'))
+        if 'messages' in self.transaction_response.__dict__:
+            response_data['resultCode'] = self.transaction_response.messages.resultCode.text
+            response_data['messages'] = {key: value.text for key, value in self.transaction_response.messages.message.__dict__.items() if value.text}
+
+        return response_data
+
+    def parse_response(self, parser_function):
+        """
+        Processes the transaction response from the gateway so it can be saved in the payment model
+        """
+        parser_function()
+
+    def is_transaction_response_empty(self):
+
+        if not self.transaction_response:
+            self.set_transaction_info(
+                raw="No transaction Response was set",
+                errors="No transaction Response was set",
+                messages="No transaction Response was set"
+            )
+            return True
+        
+        return False
+
+    def parse_payment_response(self):
+        self.transaction_info = {}
+
+        if self.is_transaction_response_empty():
+            return None
+
+        errors = self.get_transaction_errors(self.transaction_response.transactionResponse)
+        
+        if not hasattr(self.transaction_response, 'transactionResponse'):
+            self.set_transaction_info(
+                raw=self.get_transaction_raw_response(),
+                errors=errors
+            )
+            return None
+
+        self.transaction_info = self.get_transaction_info(
+            raw=self.get_transaction_raw_response(),
+            errors=errors,
+            data=self.get_transaction_data(self.transaction_response.transactionResponse)
+        )
+
+    def parse_transaction_response(self):
+        self.transaction_info = {}
+
+        if self.is_transaction_response_empty():
+            return None
+
+        errors = self.get_transaction_errors()
+
+        self.transaction_info = self.get_transaction_info(
+            raw=self.get_transaction_raw_response(),
+            errors=errors,
+            data=self.get_transaction_data()
+        )
+
+    def parse_success(self):
+        self.transaction_succeeded = False
+
+        if hasattr(self.transaction_response, 'messages') and self.transaction_response.messages.resultCode == "Ok":
+            self.transaction_succeeded = True
 
     ##########
     # Base Processor Transaction Implementations
@@ -540,12 +523,13 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.controller.execute()
 
         # You execute and get the response
-        response = self.controller.getresponse()
-        self.check_response(response)
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_payment_response)
+        self.parse_success()
 
-        self.process_payment_transaction_response()
+        self.transaction_id = self.transaction_info['data'].get('transId', "")
 
-        if self.transaction_submitted:
+        if self.transaction_succeeded:
             self.payment.status = PurchaseStatus.CAPTURED
         else:
             self.payment.status = PurchaseStatus.DECLINED
@@ -581,48 +565,47 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.controller.execute()
 
         # Getting the response
-        response = self.controller.getresponse()
-        self.check_subscription_response(response)
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_transaction_response)
+        self.parse_success()
 
-        self.save_subscription_result()
+        if self.transaction_succeeded:
+            self.subscription_id = self.transaction_info['data'].get('subscription_id', "")
 
-    def subscription_update_payment(self, receipt):
+    def subscription_update_payment(self, subscription):
         """
         Updates the credit card information for the subscriptions in authorize.net
         and updates the payment record associated with the receipt.
         """
-        self.payment = Payment.objects.get(success=True, transaction=receipt.transaction, invoice=receipt.order_item.invoice)
-
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.payment = self.create_authorize_payment()
 
         self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = str(receipt.subscription.gateway_id)
+        self.transaction.subscriptionId = subscription.gateway_id
         self.transaction.subscription = self.transaction_type
 
         self.controller = ARBUpdateSubscriptionController(self.transaction)
         self.set_controller_api_endpoint()
         self.controller.execute()
 
-        response = self.controller.getresponse()
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_transaction_response)
+        self.parse_success()
 
-        self.check_subscription_response(response)
+        subscription_info = self.subscription_info(subscription.gateway_id)
 
-        receipt.meta[f"payment-update-{timezone.now():%Y-%m-%d %H:%M}"] = {'raw': str({**self.transaction_message, **response})}
-        receipt.save()
-
-        subscription_info = self.subscription_info(receipt.subscription.gateway_id)
-
+        payment_info = {}
         account_number = getattr(subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'], 'cardNumber', None)
-        if account_number:
-            self.payment.result['account_number'] = account_number.text
-
         account_type = getattr(subscription_info['subscription']['profile']['paymentProfile']['payment']['creditCard'], 'accountType', None)
-        if account_type:
-            self.payment.result['account_type'] = account_type.text
 
-        self.payment.save()
+        if account_number:
+            payment_info['account_number'] = account_number.text
+
+        if account_type:
+            payment_info['account_type'] = account_type.text
+
+        subscription.save_payment_info(payment_info)
 
     def subscription_cancel(self, subscription):
         """
@@ -641,11 +624,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.set_controller_api_endpoint()
         self.controller.execute()
 
-        response = self.controller.getresponse()
-
-        self.check_subscription_response(response)
-
-
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_transaction_response)
+        self.parse_success()
+            
     def subscription_info(self, subscription_id):
         self.transaction = apicontractsv1.ARBGetSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
@@ -656,9 +638,14 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.set_controller_api_endpoint()
         self.controller.execute()
 
-        response = self.controller.getresponse()
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_transaction_response)
+        self.parse_success()
+        
+        if self.transaction_succeeded:
+            return self.transaction_response
 
-        return response
+        return None
 
     def refund_payment(self, payment):
         # Init transaction
@@ -669,7 +656,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_type.refTransId = payment.transaction
 
         creditCard = apicontractsv1.creditCardType()
-        creditCard.cardNumber = ast.literal_eval(payment.result['raw']).get('accountNumber')[-4:]
+        creditCard.cardNumber = ast.literal_eval(payment.result['payment_info']).get('account_number')[-4:]
         creditCard.expirationDate = "XXXX"
 
         payment_type = apicontractsv1.paymentType()
@@ -681,10 +668,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.set_controller_api_endpoint()
         self.controller.execute()
 
-        response = self.controller.getresponse()
-        self.check_response(response)
-
-        if self.transaction_submitted:
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_payment_response)
+        self.parse_success()
+        
+        if self.transaction_succeeded:
             payment.status = PurchaseStatus.REFUNDED
             payment.save()
 
@@ -699,10 +687,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.set_controller_api_endpoint()
         self.controller.execute()
 
-        response = self.controller.getresponse()
-
-        self.check_response(response)
-
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_payment_response)
+        self.parse_success()
+        
         super().void_payment()
 
     def is_card_valid(self):
@@ -725,35 +713,38 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.controller.execute()
 
         # You execute and get the response
-        response = self.controller.getresponse()
-        self.check_response(response)
-
-        if self.transaction_submitted:
-            self.payment.transaction = self.transaction_message['trans_id'].text
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_payment_response)
+        self.parse_success()
+        
+        if self.transaction_succeeded:
+            self.payment.transaction = self.transaction_info['data'].get('trans_id', "")
             self.payment.save()
-            self.void_payment(self.transaction_message['trans_id'].text)
+            self.void_payment(self.payment.transaction)
+
             return True
+
         return False
 
-    def subscription_update_price(self, receipt, new_price, user):
+    def subscription_update_price(self, subscription, new_price, user):
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
         self.transaction_type.amount = self.to_valid_decimal(new_price)
 
         self.transaction = apicontractsv1.ARBUpdateSubscriptionRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
-        self.transaction.subscriptionId = str(receipt.subscription.gateway_id)
+        self.transaction.subscriptionId = str(subscription.gateway_id)
         self.transaction.subscription = self.transaction_type
 
         self.controller = ARBUpdateSubscriptionController(self.transaction)
         self.set_controller_api_endpoint()
         self.controller.execute()
 
-        response = self.controller.getresponse()
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_transaction_response)
+        self.parse_success()
 
-        self.check_subscription_response(response)
-
-        if self.transaction_submitted:
-            super().subscription_update_price(receipt, new_price, user)
+        if self.transaction_succeeded:
+            super().subscription_update_price(subscription, new_price, user)
 
     def get_customer_id_for_expiring_cards(self, month):
         paging = apicontractsv1.Paging()
@@ -775,25 +766,29 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.controller = getCustomerPaymentProfileListController(self.transaction)
         self.controller.execute()
 
-        response = self.controller.getresponse()
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_transaction_response)
+        self.parse_success()
 
-        self.check_customer_list_response(response)
         customer_profile_ids = []
         last_page = 1
         
-        if self.transaction_submitted and response.paymentProfiles:
-            last_page = ceil(response.totalNumInResultSet.pyval / paging.limit)
-            customer_profile_ids.extend([customer_profile.customerProfileId.text for customer_profile in response.paymentProfiles.paymentProfile])
+        if self.transaction_succeeded and self.transaction_response.paymentProfiles:
+            last_page = ceil(self.transaction_response.totalNumInResultSet.pyval / paging.limit)
+            customer_profile_ids.extend([customer_profile.customerProfileId.text for customer_profile in self.transaction_response.paymentProfiles.paymentProfile])
 
         for previous_page in range(1, last_page):
             paging.offset = previous_page + 1
+
             self.transaction.paging = paging
             self.controller = getCustomerPaymentProfileListController(self.transaction)
             self.controller.execute()
-            response = self.controller.getresponse()
-            self.check_customer_list_response(response)
-            if self.transaction_submitted and response.paymentProfiles:
-                customer_profile_ids.extend([customer_profile.customerProfileId.text for customer_profile in response.paymentProfiles.paymentProfile])
+            self.transaction_response = self.controller.getresponse()
+            self.parse_response(self.parse_transaction_response)
+            self.parse_success()
+
+            if self.transaction_succeeded and self.transaction_response.paymentProfiles:
+                customer_profile_ids.extend([customer_profile.customerProfileId.text for customer_profile in self.transaction_response.paymentProfiles.paymentProfile])
 
         return customer_profile_ids
     
@@ -805,18 +800,19 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.controller = getCustomerProfileController(self.transaction)
         self.controller.execute()
 
-        response = self.controller.getresponse()
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_transaction_response)
+        self.parse_success()
 
-        self.check_customer_list_response(response)
-
-        if self.transaction_submitted:
-            return response.profile.email.pyval
+        if self.transaction_succeeded:
+            return self.transaction_response.profile.email.pyval
         
         return None
 
     def get_settled_transactions(self, start_date, end_date):
         batch_list = self.get_settled_batch_list(start_date, end_date)
         successfull_transactions = []
+
         if not batch_list:
             return []
         
@@ -853,10 +849,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.set_controller_api_endpoint()
         self.controller.execute()
 
-        response = self.controller.getresponse()
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_transaction_response)
+        self.parse_success()
 
-        if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok and hasattr(response, 'batchList'):
-            return [batch for batch in response.batchList.batch]
+        if self.transaction_succeeded and hasattr(self.transaction_response, 'batchList'):
+            return [batch for batch in self.transaction_response.batchList.batch]
 
     def get_transaction_batch_list(self, batch_id):
         """
@@ -901,11 +899,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.controller.execute()
 
         # Work on the response
-        response = self.controller.getresponse()
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_transaction_response)
+        self.parse_success()
 
-        self.check_subscription_response(response)
-
-        if self.transaction_submitted:
+        if self.transaction_succeeded:
             return self.transaction_response.subscriptionDetails.subscriptionDetail
         else:
             return []
@@ -987,7 +985,8 @@ def sync_subscriptions(site):
                         payment.submitted_date = submitted_datetime
                         payment.status = payment_status
                         payment.success = payment_success
-                        payment.result = payment_info
+                        payment.result = {}
+                        payment.result['payment_info'] = payment_info
                         payment.transaction = transaction_id
                         payment.payee_full_name = payment_info['full_name']
                         payment.save()
@@ -1014,7 +1013,8 @@ def sync_subscriptions(site):
                         payment.submitted_date = submitted_datetime
                         payment.status = payment_status
                         payment.success = payment_success
-                        payment.result = payment_info
+                        payment.result = {}
+                        payment.result['payment_info'] = payment_info
                         payment.payee_full_name = payment_info['full_name']
                         payment.save()
 
@@ -1120,9 +1120,10 @@ def sync_subscriptions_and_create_missing_receipts(site):
                 # Create Payment
                 payment = Payment(profile=invoice.profile,
                             amount=invoice.total,
-                            invoice=invoice,
-                            created=submitted_datetime)
-                payment.result = payment_info
+                            invoice=invoice
+                            )
+                payment.result = {}
+                payment.result['payment_info'] = payment_info
                 payment.subscription = subscription
                 payment.success = True
                 payment.status = PurchaseStatus.SETTLED

@@ -303,7 +303,7 @@ class CreditCardForm(PaymentFrom):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         today = datetime.now()
-        self.fields['expire_year'].choices = [(x, x) for x in range(today.year - 1, today.year + 15)]
+        self.fields['expire_year'].choices = [(x, x) for x in range(today.year, today.year + 15)]
         self.fields['expire_year'].initial = (today.year, today.year)
         self.fields['full_name'].widget.attrs.update({'placeholder': _('Enter Name on Card')})
 
@@ -417,5 +417,21 @@ class AuthorizeNetIntegrationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['client_id'].required = True
+        self.fields['public_key'].required = True
+        self.fields['private_key'].required = True
+
+
+class StripeIntegrationForm(forms.ModelForm):
+
+    class Meta:
+        model = Credential
+        fields = ['public_key', 'private_key']
+        labels = {
+            'public_key': _("Publishable Client Key"),
+            'private_key': _("Secret Server Key")
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.fields['public_key'].required = True
         self.fields['private_key'].required = True

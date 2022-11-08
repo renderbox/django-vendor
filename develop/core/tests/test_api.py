@@ -11,7 +11,7 @@ from unittest import skipIf
 
 from vendor.forms import DateTimeRangeForm
 from vendor.processors.base import PaymentProcessorBase
-from vendor.models import Offer, Price, Receipt
+from vendor.models import Offer, Price, Receipt, Subscription
 
 User = get_user_model()
 
@@ -26,23 +26,23 @@ class VendorAPITest(TestCase):
         self.client.force_login(self.user)
 
     def test_subscription_price_update_success(self):
-        receipt = Receipt.objects.get(pk=3)
+        subscription = Subscription.objects.get(pk=1)
         offer = Offer.objects.get(pk=4)
         price = Price.objects.create(offer=offer, cost=89.99, currency='usd', start_date=timezone.now())
         offer.prices.add(price)
 
         url = reverse('vendor_api:manager-subscription-price-update')
 
-        response = self.client.post(url, data={"receipt_uuid": receipt.uuid, "offer_uuid": offer.uuid})
+        response = self.client.post(url, data={"subscription_uuid": subscription.uuid, "offer_uuid": offer.uuid})
 
-        receipt.refresh_from_db()
+        subscription.refresh_from_db()
 
         self.assertEqual(response.status_code, 302)
-        self.assertIn('price_update', receipt.vendor_notes.keys())
+        self.assertIn('price_update', subscription.meta)
 
     def test_subscription_price_update_fail(self):
         url = reverse('vendor_api:manager-subscription-price-update')
-        response = self.client.post(url, data={"receipt_uuid": "188e45aa-0fdf-4877-ba84-f4c39c0fc41b", "offer_uuid": "188e45aa-0fdf-4877-ba84-f4c39c0fc41b"})
+        response = self.client.post(url, data={"subscription_uuid": "188e45aa-0fdf-4877-ba84-f4c39c0fc41b", "offer_uuid": "188e45aa-0fdf-4877-ba84-f4c39c0fc41b"})
 
         self.assertEqual(response.status_code, 404)
 

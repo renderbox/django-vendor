@@ -1,0 +1,434 @@
+[
+{
+    "model": "vendor.customerprofile",
+    "pk": 1,
+    "fields": {
+        "created": "2020-06-30T01:15:00.350Z",
+        "updated": "2020-06-30T01:15:00.350Z",
+        "uuid": "cbb49050-c7df-465f-91d1-261c0afa6c0f",
+        "user": 1,
+        "currency": "usd",
+        "site": 1
+    }
+},
+{
+    "model": "vendor.customerprofile",
+    "pk": 2,
+    "fields": {
+        "created": "2020-06-30T01:15:00.350Z",
+        "updated": "2020-06-30T01:15:00.350Z",
+        "uuid": "dbb49050-c7df-465f-91d1-261c0afa6c0f",
+        "user": 2,
+        "currency": "usd",
+        "site": 2
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 9,
+    "fields": {
+        "created": "2022-06-24T00:43:28.984Z",
+        "updated": "2022-06-24T00:46:40.500Z",
+        "deleted": false,
+        "uuid": "03299a7e-5840-4a5a-b052-22bd1cc33e7e",
+        "slug": "monthly-plan",
+        "site": 1,
+        "name": "Monthly Plan",
+        "start_date": "2022-06-24T00:42:24Z",
+        "end_date": null,
+        "terms": 101,
+        "term_details": {
+            "term_units": 20,
+            "trial_days": 0,
+            "period_length": 1,
+            "trial_occurrences": 0,
+            "payment_occurrences": 12
+        },
+        "term_start_date": null,
+        "available": true,
+        "bundle": false,
+        "offer_description": "- Unlimited access to all courses\r\n- Learning with the world's leading professionals\r\n- Cancel any time",
+        "list_bundle_items": false,
+        "allow_multiple": false,
+        "meta": {
+            "terms": "Monthly",
+            "featured": false,
+            "includes": "Includes:",
+            "button_text": "Get Started",
+            "description": "",
+            "trial_message": "",
+            "price_point_callout": ""
+        }
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 10,
+    "fields": {
+        "created": "2022-06-24T00:46:33.172Z",
+        "updated": "2022-06-24T00:53:07.282Z",
+        "deleted": false,
+        "uuid": "62d46cd3-b8b8-481b-bbc0-390e1bb92e04",
+        "slug": "first-2-weeks-off-monthly-license",
+        "site": 1,
+        "name": "First 2 Weeks Off Monthly License",
+        "start_date": "2022-06-24T00:45:10Z",
+        "end_date": null,
+        "terms": 101,
+        "term_details": {
+            "term_units": 20,
+            "trial_days": 15,
+            "period_length": 1,
+            "trial_occurrences": 0,
+            "payment_occurrences": 9999,
+            "trial_amount": 0.0
+        },
+        "term_start_date": null,
+        "available": true,
+        "bundle": false,
+        "offer_description": "",
+        "list_bundle_items": false,
+        "allow_multiple": false,
+        "meta": {
+            "terms": "Monthly",
+            "featured": false,
+            "includes": "Includes:",
+            "button_text": "Get Started",
+            "description": "",
+            "trial_message": "First 2 Weeks Free",
+            "price_point_callout": ""
+        }
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 11,
+    "fields": {
+        "created": "2022-06-24T00:47:58.461Z",
+        "updated": "2022-06-24T00:52:31.320Z",
+        "deleted": false,
+        "uuid": "76a1431f-45a5-4ba0-bfe0-e0933feeafa4",
+        "slug": "one-month-free",
+        "site": 1,
+        "name": "One Month Free",
+        "start_date": "2022-06-24T00:47:38Z",
+        "end_date": null,
+        "terms": 101,
+        "term_details": {
+            "term_units": 20,
+            "trial_days": 30,
+            "period_length": 1,
+            "trial_occurrences": 1,
+            "payment_occurrences": 9999,
+            "trial_amount": 0.0
+        },
+        "term_start_date": null,
+        "available": true,
+        "bundle": false,
+        "offer_description": "",
+        "list_bundle_items": false,
+        "allow_multiple": false,
+        "meta": {
+            "terms": "Month",
+            "featured": false,
+            "includes": "",
+            "button_text": "Get Started",
+            "description": "",
+            "trial_message": "",
+            "price_point_callout": ""
+        }
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 12,
+    "fields": {
+        "created": "2022-06-24T00:50:14.624Z",
+        "updated": "2022-06-24T00:52:59.227Z",
+        "deleted": false,
+        "uuid": "6e25f976-6171-4836-86c4-0cb947b4fa7f",
+        "slug": "3-months-50-off",
+        "site": 1,
+        "name": "3 Months 50% off",
+        "start_date": "2022-06-24T00:49:11Z",
+        "end_date": null,
+        "terms": 101,
+        "term_details": {
+            "term_units": 20,
+            "trial_days": 0,
+            "trial_amount": 6.0,
+            "period_length": 1,
+            "trial_occurrences": 3,
+            "payment_occurrences": 9999
+        },
+        "term_start_date": null,
+        "available": true,
+        "bundle": false,
+        "offer_description": "",
+        "list_bundle_items": false,
+        "allow_multiple": false,
+        "meta": {
+            "terms": "Month",
+            "featured": false,
+            "includes": "",
+            "button_text": "Get Started",
+            "description": "",
+            "trial_message": "",
+            "price_point_callout": ""
+        }
+    }
+},
+{
+    "model": "vendor.offer",
+    "pk": 13,
+    "fields": {
+        "created": "2022-06-24T01:05:45.663Z",
+        "updated": "2022-06-24T01:05:45.663Z",
+        "deleted": false,
+        "uuid": "d389bb87-9ecb-4e09-bbd6-4c84e72dc144",
+        "slug": "wampa",
+        "site": 1,
+        "name": "Wampa",
+        "start_date": "2022-06-24T01:05:21Z",
+        "end_date": null,
+        "terms": 200,
+        "term_details": {
+            "term_units": 20,
+            "trial_days": 0,
+            "trial_amount": 0,
+            "period_length": 1,
+            "trial_occurrences": 0,
+            "payment_occurrences": 12
+        },
+        "term_start_date": null,
+        "available": true,
+        "bundle": false,
+        "offer_description": "",
+        "list_bundle_items": false,
+        "allow_multiple": false,
+        "meta": {
+            "term_units": 20,
+            "trial_days": 0,
+            "trial_amount": 0,
+            "period_length": 1,
+            "trial_occurrences": 0,
+            "payment_occurrences": 12
+        }
+    }
+},
+{
+    "model": "vendor.invoice",
+    "pk": 33,
+    "fields": {
+        "created": "2022-06-24T00:55:27.743Z",
+        "updated": "2022-06-24T01:07:00.779Z",
+        "deleted": false,
+        "uuid": "28d5c3d5-ef7f-4e1a-810d-c756fef6d5b8",
+        "profile": 2,
+        "site": 2,
+        "status": 0,
+        "customer_notes": {},
+        "vendor_notes": {},
+        "ordered_date": null,
+        "subtotal": 0,
+        "tax": 0.0,
+        "shipping": 0.0,
+        "total": 0,
+        "currency": "usd",
+        "shipping_address": null
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 10,
+    "fields": {
+        "offer": 9,
+        "cost": 12.0,
+        "currency": "usd",
+        "start_date": "2022-06-24T00:43:24Z",
+        "end_date": null,
+        "priority": 0
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 11,
+    "fields": {
+        "offer": 10,
+        "cost": 12.0,
+        "currency": "usd",
+        "start_date": "2022-06-24T00:45:36Z",
+        "end_date": null,
+        "priority": 0
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 12,
+    "fields": {
+        "offer": 11,
+        "cost": 12.0,
+        "currency": "usd",
+        "start_date": "2022-06-24T00:47:50Z",
+        "end_date": null,
+        "priority": 0
+    }
+},
+{
+    "model": "vendor.price",
+    "pk": 13,
+    "fields": {
+        "offer": 12,
+        "cost": 12.0,
+        "currency": "usd",
+        "start_date": "2022-06-24T00:50:13Z",
+        "end_date": null,
+        "priority": 0
+    }
+},
+{
+    "model": "core.product",
+    "pk": 1,
+    "fields": {
+        "created": "2022-07-06T19:01:52.650Z",
+        "updated": "2022-07-06T19:01:52.650Z",
+        "sku": "monthly",
+        "uuid": "99642547-2d6f-4026-9707-569cdb81cb56",
+        "name": "Monthly License",
+        "site": 1,
+        "slug": "monthly-license",
+        "available": false,
+        "description": {
+            "call_out": " ",
+            "description": ""
+        },
+        "meta": {
+            "msrp": {
+                "usd": 0.0,
+                "default": "usd"
+            }
+        },
+        "classification": [],
+        "offers": [
+            9
+        ],
+        "receipts": []
+    }
+},
+{
+    "model": "core.product",
+    "pk": 2,
+    "fields": {
+        "created": "2022-07-06T19:02:23.199Z",
+        "updated": "2022-07-06T19:02:23.199Z",
+        "sku": "two-weeks-off",
+        "uuid": "e8adf079-6a16-4402-82ba-a083516b2967",
+        "name": "First 2 Weeks Off Monthly License",
+        "site": 1,
+        "slug": "first-2-weeks-off-monthly-license",
+        "available": false,
+        "description": {
+            "call_out": " ",
+            "description": ""
+        },
+        "meta": {
+            "msrp": {
+                "usd": 0.0,
+                "default": "usd"
+            }
+        },
+        "classification": [],
+        "offers": [
+            10
+        ],
+        "receipts": []
+    }
+},
+{
+    "model": "core.product",
+    "pk": 3,
+    "fields": {
+        "created": "2022-07-06T19:02:38.240Z",
+        "updated": "2022-07-06T19:02:38.240Z",
+        "sku": "one-month-free",
+        "uuid": "c1ed4f78-d469-4464-83e7-ff80e4edd7ff",
+        "name": "One Month Free",
+        "site": 1,
+        "slug": "one-month-free",
+        "available": false,
+        "description": {
+            "call_out": " ",
+            "description": ""
+        },
+        "meta": {
+            "msrp": {
+                "usd": 0.0,
+                "default": "usd"
+            }
+        },
+        "classification": [],
+        "offers": [
+            11
+        ],
+        "receipts": []
+    }
+},
+{
+    "model": "core.product",
+    "pk": 4,
+    "fields": {
+        "created": "2022-07-06T19:02:56.501Z",
+        "updated": "2022-07-06T19:02:56.501Z",
+        "sku": "three-50-off",
+        "uuid": "5963d433-82d3-47c2-9acc-9687b16c5448",
+        "name": "3 Months 50% off",
+        "site": 1,
+        "slug": "3-months-50-off",
+        "available": false,
+        "description": {
+            "call_out": " ",
+            "description": ""
+        },
+        "meta": {
+            "msrp": {
+                "usd": 0.0,
+                "default": "usd"
+            }
+        },
+        "classification": [],
+        "offers": [
+            12
+        ],
+        "receipts": []
+    }
+},
+{
+    "model": "core.product",
+    "pk": 5,
+    "fields": {
+        "created": "2022-07-06T19:03:09.773Z",
+        "updated": "2022-07-06T19:03:09.773Z",
+        "sku": "wampa",
+        "uuid": "299062b9-27a5-4984-b3c5-1a01adeb3b73",
+        "name": "Wampa",
+        "site": 1,
+        "slug": "wampa",
+        "available": false,
+        "description": {
+            "call_out": " ",
+            "description": ""
+        },
+        "meta": {
+            "msrp": {
+                "usd": 0.0,
+                "default": "usd"
+            }
+        },
+        "classification": [],
+        "offers": [
+            13
+        ],
+        "receipts": []
+    }
+}
+]

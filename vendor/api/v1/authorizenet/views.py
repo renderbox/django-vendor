@@ -46,7 +46,6 @@ def update_payment(site, transaction_id, transaction_detail):
     except Exception as exce:
         logger.error(f"AuthorizeCaptureAPI update_payment error: {exce}")
         
-
 def subscription_save_transaction(site, transaction_id, transaction_detail):
     processor = AuthorizeNetProcessor(site)
 
@@ -104,7 +103,8 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
 
         processor = AuthorizeNetProcessor(site, invoice)
         processor.subscription = subscription
-        processor.renew_subscription(subscription.gateway_id, payment_info, payment_status, payment_success)
+        
+        processor.renew_subscription(subscription, transaction_id, payment_status, payment_success)
         logger.info(f"AuthorizeCaptureAPI subscription_save_transaction creating new payment and receipt for subscription, for {subscription_id}")
         
         return None # No need to continue to create receipt as it is done in the above function
@@ -140,10 +140,10 @@ class AuthorizeNetBaseAPI(View):
             return False
 
         try:
-            self.credentials = AuthorizeNetIntegration(site)
+            credentials = AuthorizeNetIntegration(site)
 
-            if self.credentials.instance.private_key:
-                hash_value = hmac.new(bytes(self.credentials.instance.private_key, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
+            if credentials.instance and credentials.instance.private_key:
+                hash_value = hmac.new(bytes(credentials.instance.private_key, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
             elif settings.AUTHORIZE_NET_SIGNATURE_KEY:
                 hash_value = hmac.new(bytes(settings.AUTHORIZE_NET_SIGNATURE_KEY, 'utf-8'), self.request.body, hashlib.sha512).hexdigest()
             else:

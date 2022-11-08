@@ -41,11 +41,11 @@
                                 </tr>
                                 <tr>
                                         <th>{% trans 'Account Ending' %}</th>
-                                        <td>{{ payment.result.account_number }}</td>
+                                        <td>{{ payment.result.payment_info.account_number }}</td>
                                 </tr>
                                 <tr>
                                         <th>{% trans 'Account Type' %}</th>
-                                        <td>{{ payment.result.account_type }}</td>
+                                        <td>{{ payment.result.payment_info.account_type }}</td>
                                 </tr>
                                 <tr>
                                         <th>{% trans 'Billing Address' %}</th>
@@ -59,13 +59,13 @@
                                         </td>
                                 </tr>
                                 {% endif %}
-                                {% if object.status == 20 %}
+                                {% if object.subscription %}
                                 <tr>
                                         <th>{% trans 'Actions' %}</th>
                                         <td>
                                                 {% if object.order_item.offer.terms < 200 %}
                                                 <form method="post" class="ml-auto"
-                                                        action="{% url 'vendor_api:customer-subscription-cancel' object.uuid %}">
+                                                        action="{% url 'vendor_api:customer-subscription-cancel' object.subscription.uuid %}">
                                                         {% csrf_token %}
                                                         <button class="btn btn-sm btn-danger rounded"
                                                                 type="submit">{% trans 'Cancel Subscription' %}</button>

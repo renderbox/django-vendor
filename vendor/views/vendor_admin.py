@@ -9,19 +9,21 @@ from django.views.generic import View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, FormView
 from django.views.generic.list import ListView
+from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from vendor.config import VENDOR_PRODUCT_MODEL, PaymentProcessorSiteConfig, PaymentProcessorSiteSelectSiteConfig, PaymentProcessorForm, PaymentProcessorSiteSelectForm
-from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm, AuthorizeNetIntegrationForm
-from vendor.integrations import AuthorizeNetIntegration
+from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm, AuthorizeNetIntegrationForm, StripeIntegrationForm
+from vendor.integrations import AuthorizeNetIntegration, StripeIntegration
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment, Subscription
-from vendor.models.choice import TermType, PaymentTypes, InvoiceStatus
+from vendor.models.choice import TermType, PaymentTypes, InvoiceStatus, PurchaseStatus
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
 from vendor.processors import get_site_payment_processor
 
 from siteconfigs.models import SiteConfigModel
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
+
 #############
 # Admin Views
 class AdminDashboardView(LoginRequiredMixin, SiteOnRequestFilterMixin, ListView):
@@ -305,24 +307,27 @@ class AdminProfileDetailView(LoginRequiredMixin, DetailView):
 
 class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
     success_url = reverse_lazy('vendor_admin:manage-profiles')
-    model = Receipt
+    model = Subscription
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
 
     def post(self, request, *args, **kwargs):
-        past_receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
+        subscription = Subscription.objects.get(uuid=self.kwargs["uuid"])
+        submitted_datetime = timezone.now()
 
-        payment_info = {
-            'msg': 'renewed manually'
-        }
-
-        invoice = Invoice(status=InvoiceStatus.CHECKOUT, site=past_receipt.order_item.invoice.site)
-        invoice.profile = past_receipt.profile
+        invoice = Invoice.objects.create(
+            profile=customer_profile,
+            site=site,
+            ordered_date=submitted_datetime,
+            status=InvoiceStatus.COMPLETE
+        )
+        invoice.add_offer(offer)
         invoice.save()
-        invoice.add_offer(past_receipt.order_item.offer)
+
+        transaction_id = timezone.now().strftime("%Y-%m-%d_%H-%M-%S-Manual-Renewal")
 
         processor = get_site_payment_processor(invoice.site)(invoice.site, invoice)
-        processor.renew_subscription(past_receipt.transaction, payment_info)
+        processor.renew_subscription(subscription, transaction_id, PurchaseStatus.CAPTURED)
 
         messages.info(request, _("Subscription Renewed"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
@@ -362,25 +367,31 @@ class PaymentProcessorSiteConfigsListView(ListView):
 
     def get_queryset(self):
         payment_processor = PaymentProcessorSiteConfig()
+
         return SiteConfigModel.objects.filter(key=payment_processor.key)
 
 
-class PaymentProcessorFormView(FormView):
+class PaymentProcessorSiteFormView(SiteOnRequestFilterMixin, FormView):
     template_name = 'vendor/manage/processor_site_config.html'
     form_class = PaymentProcessorForm
 
     def get_success_url(self):
-        return reverse('vendor_admin:vendor-processor')
+        return reverse('vendor_admin:vendor-site-processor')
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        processor_config = PaymentProcessorSiteConfig()
+
+        site = get_site_from_request(self.request)
+        processor_config = PaymentProcessorSiteConfig(site)
         context['form'] = processor_config.get_form()
+
         return context
 
     def form_valid(self, form):
-        processor_config = PaymentProcessorSiteConfig()
+        site = get_site_from_request(self.request)
+        processor_config = PaymentProcessorSiteConfig(site)
         processor_config.save(form.cleaned_data["payment_processor"], "payment_processor")
+
         return redirect('vendor_admin:vendor-processor-lists')
 
 
@@ -389,36 +400,66 @@ class PaymentProcessorSiteSelectFormView(FormView):
     form_class = PaymentProcessorSiteSelectForm
 
     def get_success_url(self):
-        return reverse('vendor_admin:vendor-processor')
+        return reverse('vendor_admin:processor-lists')
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        processor_config = PaymentProcessorSiteSelectSiteConfig(Site.objects.get(pk=self.kwargs.get('pk')))
+
+        if self.kwargs.get('domain'):
+            site = Site.objects.get(domain=self.kwargs.get('domain'))
+            processor_config = PaymentProcessorSiteSelectSiteConfig(site)
+        else:
+            processor_config = PaymentProcessorSiteSelectSiteConfig()
         context['form'] = processor_config.get_form()
+
         return context
 
     def form_valid(self, form):
         site = Site.objects.get(pk=form.cleaned_data['site'])
         processor_config = PaymentProcessorSiteSelectSiteConfig(site)
         processor_config.save(form.cleaned_data["payment_processor"], "payment_processor")
+        
         return redirect('vendor_admin:vendor-processor-lists')
 
 
 class AuthorizeNetIntegrationView(FormView):
-    template_name = "vendor/authorizenet_integration.html"
+    template_name = "vendor/integration_form.html"
     form_class = AuthorizeNetIntegrationForm
     success_url = reverse_lazy('authorizenet-integration')
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         authorizenet_integration = AuthorizeNetIntegration(get_site_from_request(self.request))
-        if authorizenet_integration.instance:
-            context['form'] = AuthorizeNetIntegrationForm(instance=authorizenet_integration.instance)
-        else:
-            context['form'] = AuthorizeNetIntegrationForm()
+        context['integration_name'] = _("AuthorizeNet Integration")
+
+        context['form'] = AuthorizeNetIntegrationForm(instance=authorizenet_integration.instance)
+
         return context
     
     def form_valid(self, form):
         authorizenet_integration = AuthorizeNetIntegration(get_site_from_request(self.request))
         authorizenet_integration.save(form.cleaned_data)
+
         return super().form_valid(form)
+
+
+class StripeIntegrationView(FormView):
+    template_name = "vendor/integration_form.html"
+    form_class = StripeIntegrationForm
+    success_url = reverse_lazy('stripe-integration')
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        stripe_integration = StripeIntegration(get_site_from_request(self.request))
+        context['integration_name'] = _("Stripe Integration")
+
+        context['form'] = StripeIntegrationForm(instance=stripe_integration.instance)
+
+        return context
+    
+    def form_valid(self, form):
+        stripe_integration = StripeIntegration(get_site_from_request(self.request))
+        stripe_integration.save(form.cleaned_data)
+
+        return super().form_valid(form)
+

@@ -13,7 +13,7 @@ from django.views.generic.list import ListView
 
 
 from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm, AddressForm
-from vendor.models import Offer, Invoice, Address, OrderItem, Receipt
+from vendor.models import Offer, Invoice, Address, OrderItem, Receipt, Subscription
 from vendor.models.choice import TermType, PurchaseStatus, InvoiceStatus
 from vendor.processors import get_site_payment_processor
 from vendor.utils import get_site_from_request, get_or_create_session_cart, clear_session_purchase_data
@@ -71,7 +71,6 @@ class CartView(TemplateView):
         return render(request, self.template_name, context)
 
 
-
 class AccountInformationView(LoginRequiredMixin, TemplateView):
     template_name = 'vendor/checkout.html'
 
@@ -83,6 +82,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         clear_session_purchase_data(request)
 
         invoice = get_purchase_invoice(request.user, get_site_from_request(request))
+        
         if not invoice.order_items.count():
             return redirect('vendor:cart')
 
@@ -100,6 +100,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
 
         context['form'] = form
         context['invoice'] = invoice
+
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -119,6 +120,7 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         invoice.customer_notes = {'remittance_email': form.cleaned_data['email']}
         # TODO: Need to add a drop down to select existing address
         shipping_address, created = invoice.profile.get_or_create_address(shipping_address)
+
         if created:
             shipping_address.profile = invoice.profile
             shipping_address.save()
@@ -126,7 +128,6 @@ class AccountInformationView(LoginRequiredMixin, TemplateView):
         invoice.save()
 
         return redirect('vendor:checkout-payment')
-
 
 
 class PaymentView(LoginRequiredMixin, TemplateView):
@@ -137,6 +138,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         invoice = get_purchase_invoice(request.user, get_site_from_request(request))
+
         if not invoice.order_items.count():
             return redirect('vendor:cart')
 
@@ -157,6 +159,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
             return redirect('vendor:cart')
 
         credit_card_form = CreditCardForm(request.POST)
+        
         if request.POST.get('billing-same_as_shipping') == 'on':
             billing_address_form = BillingAddressForm(instance=invoice.shipping_address)
             billing_address_form.data = {f'billing-{key}': value for key, value in billing_address_form.initial.items()}
@@ -202,7 +205,6 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         # context = super().get_context_data(**kwargs)
         invoice = get_purchase_invoice(request.user, get_site_from_request(request))
-
         if not invoice.order_items.count() or invoice.status == InvoiceStatus.CART:
             messages.info(request, _("Cart changed while in checkout process"))
             return redirect('vendor:cart')
@@ -214,10 +216,10 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
 
         processor.authorize_payment()
 
-        if processor.transaction_submitted:
+        if processor.transaction_succeeded:
             return redirect('vendor:purchase-summary', uuid=invoice.uuid)
         else:
-            logger.warning(f"Payment gateway did not authorize payment {processor.transaction_message}")
+            logger.warning(f"Payment gateway did not authorize payment {processor.transaction_info}")
             # TODO: Make message configurable for the site in the settings
             messages.info(self.request, _("The payment gateway did not authorize payment."))
             return redirect('vendor:checkout-account')
@@ -302,19 +304,19 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy('vendor:customer-subscriptions')
 
     def post(self, request, *args, **kwargs):
-        receipt = Receipt.objects.get(uuid=self.kwargs["uuid"])
+        subscription = Subscription.objects.get(uuid=self.kwargs["uuid"])
         payment_form = CreditCardForm(request.POST)
 
         if not payment_form.is_valid():
             messages.info(request, _("Invalid Card"))
             return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
-        processor = get_site_payment_processor(receipt.order_item.invoice.site)(receipt.order_item.invoice.site, receipt.order_item.invoice)
+        processor = get_site_payment_processor(subscription.profile.site)(subscription.profile.site)
         processor.set_payment_info_form_data(request.POST, CreditCardForm)
-        processor.subscription_update_payment(receipt)
+        processor.subscription_update_payment(subscription)
 
-        if not processor.transaction_submitted:
-            messages.info(request, _(f"Payment gateway error: {processor.transaction_message.get('message', '')}"))
+        if not processor.transaction_succeeded:
+            messages.info(request, _(f"Payment gateway error: {processor.transaction_info.get('errors', '')}"))
             return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
         messages.info(request, _("Success: Payment Updated"))

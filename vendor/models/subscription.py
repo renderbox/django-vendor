@@ -10,6 +10,7 @@ from vendor.models.base import CreateUpdateModelBase, SoftDeleteModelBase
 from vendor.models.choice import SubscriptionStatus, PurchaseStatus
 from vendor.utils import get_payment_scheduled_end_date
 
+
 class SubscriptionReportModelManger(models.Manager):
     def get_total_cancelled_subscriptions(self, site, start_date=None, end_date=None):
         qs = super().get_queryset()
@@ -24,7 +25,6 @@ class SubscriptionReportModelManger(models.Manager):
             return qs.filter(profile__site=site, status=SubscriptionStatus.CANCELED, updated__date__lte=end_date)
             
         return qs.filter(profile__site=site, status=SubscriptionStatus.CANCELED, updated__date__gte=start_date, updated__date__lte=end_date)
-
 
 
 class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
@@ -108,5 +108,23 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
             return False
         
         return True
+
+    def get_total(self):
+        return self.receipts.first().order_item.total
+
+    def save_payment_info(self, payment_info):
+        if 'payment_info' not in self.meta:
+            self.meta['payment_info'] = {}
+        
+        self.meta.update({'payment_info': payment_info})
+        self.save()
+
+    def get_offer(self):
+        receipt = self.receipts.first()
+        
+        if not receipt:
+            return None
+        
+        return receipt.order_item.offer
 
 

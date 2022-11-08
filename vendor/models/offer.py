@@ -1,5 +1,5 @@
 import uuid
-
+import math
 from autoslug import AutoSlugField
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
@@ -86,6 +86,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         It assumes that all product in a offer use the same currency
         """
         currency = self.get_best_currency(currency)
+
         return sum([product.get_msrp(currency) for product in self.products.all()])
 
     def current_price(self, currency=DEFAULT_CURRENCY):
@@ -93,16 +94,27 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         Finds the highest priority active price and returns that, otherwise returns msrp total.
         '''
         now = timezone.now()
-        price = self.prices.filter( Q(start_date__lte=now) | Q(start_date=None),
-                                    Q(end_date__gte=now) | Q(end_date=None),
-                                    Q(currency=currency)).order_by('-priority').first()            # first()/last() returns the model object or None
+        price = self.prices.filter(Q(start_date__lte=now) | Q(start_date=None),
+                                   Q(end_date__gte=now) | Q(end_date=None),
+                                   Q(currency=currency)).order_by('-priority').first()  # first()/last() returns the model object or None
 
         if price is None:
-            return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price".
+            # If there is no price for the offer, all MSRPs should be summed up for the "price".
+            return self.get_msrp(currency)
+
         elif price.cost is None:
-            return self.get_msrp(currency)                            # If there is no price for the offer, all MSRPs should be summed up for the "price".
+            # If there is no price for the offer, all MSRPs should be summed up for the "price".
+            return self.get_msrp(currency)
 
         return price.cost
+
+    def get_current_price_instance(self, currency=DEFAULT_CURRENCY):
+        now = timezone.now()
+        price = self.prices.filter(Q(start_date__lte=now) | Q(start_date=None),
+                                   Q(end_date__gte=now) | Q(end_date=None),
+                                   Q(currency=currency)).order_by('-priority').first()  # first()/last() returns the model object or None
+
+        return price
 
     def add_to_cart_link(self):
         return reverse("vendor_api:add-to-cart", kwargs={"slug": self.slug})
@@ -128,21 +140,24 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
 
     def discount(self, currency=DEFAULT_CURRENCY):
         """
-        Gets the savings between the difference between the product's msrp and the currenct price
+        Gets the savings between the difference between the product's msrp and the current price
         """
         discount = self.get_msrp(currency) - self.current_price(currency)
+
         if discount <= 0:
             return 0
+            
         return discount
 
     def get_best_currency(self, currency=DEFAULT_CURRENCY):
         """
-        Gets best currency for prodcuts available in this offer
+        Gets best currency for products available in this offer
         """
         product_msrp_currencies = [ set(product.meta['msrp'].keys()) for product in self.products.all() ]
 
-        if is_currency_available(product_msrp_currencies[0].union(*product_msrp_currencies[1:]), currency=currency):
-            return currency
+        if product_msrp_currencies and len(product_msrp_currencies[0]) >= 2:  # fixes IndexError: list index out of range
+            if is_currency_available(product_msrp_currencies[0].union(*product_msrp_currencies[1:]), currency=currency):
+                return currency
 
         return DEFAULT_CURRENCY
 
@@ -172,13 +187,24 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
 
         return self.term_details.get('trial_amount', 0)
 
+    def get_trial_duration_in_months(self):
+        duration = self.term_details.get('trial_days', 0)
+
+        if duration <= 0:
+            return 0
+
+        return math.ceil(duration/31)
+
     def has_trial_occurrences(self):
         if self.term_details.get('trial_occurrences', 0) > 0:
             return True
         return False
 
     def get_next_billing_date(self):
-        return get_payment_scheduled_end_date(self)
+        start_date = timezone.now()
+        if self.term_start_date:
+            start_date = self.term_start_date
+        return get_payment_scheduled_end_date(self, start_date)
 
     def get_period_length(self):
         if self.terms == TermType.SUBSCRIPTION:
@@ -201,5 +227,17 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
     
     def get_trial_days(self):
         return self.term_details.get('trial_days', 0)
+
+    def has_any_discount_or_trial(self):
+        if self.discount() or self.get_trial_amount() or\
+           self.get_trial_occurrences() or self.get_trial_days():
+            return True
+            
+        return False
     
+    def get_term_start_date(self, start_date=timezone.now()):
+        if self.term_start_date and self.term_start_date > start_date:
+            return self.term_start_date
+        
+        return start_date
 
