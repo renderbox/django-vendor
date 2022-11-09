@@ -30,12 +30,15 @@ def convert_integer_to_float(number):
 
     return float(f"{number_string[:-2]}.{number_string[-2:]}")
 
+
 class StripeEvents(TextChoices):
     INVOICE_PAID = 'invoice.paid', _('Invoice Paid')
     INVOICE_PAYMENT_FAILED = 'invoice.payment_failed', _('Invoice Payment Failed')
     INOVICE_PAYMENT_SUCCEEDED = 'invoice.payment_succeeded', _('Invoice Payment Succeeded')
     PAYMENT_INTENT_SUCCEDED = 'payment_intent.succeeded', _("Payment Succeeded")
     CHARGE_SUCCEEDED = 'charge.succeeded', _('Charge Succeeded')
+
+
 class StripeBaseAPI(View):
 
     def __init__(self, **kwargs):
