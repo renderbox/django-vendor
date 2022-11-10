@@ -9,7 +9,7 @@ import uuid
 from math import modf
 from django.conf import settings
 from django.contrib.sites.models import Site
-
+from django.utils import timezone
 from vendor.config import DEFAULT_CURRENCY
 from vendor.integrations import StripeIntegration
 from vendor.models import Offer, CustomerProfile
@@ -329,16 +329,42 @@ class StripeProcessor(PaymentProcessorBase):
     ##########
     # CRUD Stripe Object
     ##########
+
+    def get_all_stripe_list_objects(self, stripe_object):
+        """
+        Get entire list of any stripe object with .list() method.
+        Will make multiple stripe calls until the list is exhausted
+        """
+        object_list = []
+        starting_after = None
+        while True:
+            objs = self.stripe_list_objects(stripe_object, limit=100, starting_after=starting_after)
+            object_list.extend(objs)
+            if objs['has_more']:
+                starting_after = objs['data'][-1]['id']
+            else:
+                break
+
+        return object_list
+
     def stripe_create_object(self, stripe_object_class, object_data):
         stripe_object = self.stripe_call(stripe_object_class.create, object_data)
 
         return stripe_object
 
-    def stripe_query_object(self, stripe_object_class, query):
+    def stripe_query_object(self, stripe_object_class, query, limit=100, page=None):
         if isinstance(query, dict):
             query_data = query
+            query_data['limit'] = limit
+            query_data['page'] = page
+
         elif isinstance(query, str):
-            query_data = {'query': query}
+            query_data = {
+                'query': query,
+                'limit': limit,
+                'page': page
+            }
+
         else:
             logger.error(f'stripe_query_object: {query} is invalid')
             return None
@@ -352,7 +378,13 @@ class StripeProcessor(PaymentProcessorBase):
 
         return delete_result
 
-    def stripe_get_object(self, stripe_object_class, object_id):
+    def stripe_get_object(self, stripe_object_class, object_id, expand=None):
+        if expand:
+            # some fields are expandable https://stripe.com/docs/api/expanding_objects
+            object_id = {
+                'sid': object_id,
+                'expand': expand
+            }
         stripe_object = self.stripe_call(stripe_object_class.retrieve, object_id)
 
         return stripe_object
@@ -363,7 +395,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         return stripe_object
 
-    def stripe_list_objects(self, stripe_object_class, limit=10, starting_after=None):
+    def stripe_list_objects(self, stripe_object_class, limit=100, starting_after=None):
         object_data = {
             'limit': limit,
             'starting_after': starting_after
@@ -371,6 +403,43 @@ class StripeProcessor(PaymentProcessorBase):
         stripe_objects = self.stripe_call(stripe_object_class.list, object_data)
 
         return stripe_objects
+
+    def get_all_stripe_list_objects(self, stripe_object):
+        """
+        Get entire list of any stripe object with .list() method.
+        Will make multiple stripe calls until the list is exhausted
+        """
+        object_list = []
+        starting_after = None
+        while True:
+            objs = self.stripe_list_objects(stripe_object, limit=100, starting_after=starting_after)
+            object_list.extend(objs)
+            if objs['has_more']:
+                starting_after = objs['data'][-1]['id']
+            else:
+                break
+
+        return object_list
+
+    def get_all_stripe_search_objects(self, stripe_object, query, limit=100):
+        """
+        Get entire list of any stripe object with .search() method.
+        Will make multiple stripe calls until the list is exhausted
+        """
+        object_list = []
+        page = None
+
+        while True:
+            objs = self.stripe_query_object(stripe_object, query=query, limit=limit, page=page)
+            object_list.extend(objs['data'])
+            if objs['has_more']:
+                page = objs['next_page']
+            else:
+                break
+
+        return object_list
+
+
 
     ##########
     # Stripe Object Builders
@@ -505,9 +574,10 @@ class StripeProcessor(PaymentProcessorBase):
     ##########
     # Customers
     ##########
-    def get_stripe_customers(self, site):
+
+    def get_stripe_customers(self, site, expand=None):
         """
-        Returns all Stripe created customers
+        Returns all Stripe created customers for this site
         """
 
         clause = self.query_builder.make_clause_template(
@@ -519,10 +589,9 @@ class StripeProcessor(PaymentProcessorBase):
 
         query = self.query_builder.build_search_query(self.stripe.Customer, [clause])
 
-        customer_search = self.stripe_query_object(self.stripe.Customer, {'query': query})
+        customer_search = self.get_all_stripe_search_objects(self.stripe.Customer, {'query': query})
 
-        if customer_search:
-            return customer_search['data']
+        return customer_search
 
         return []
 
@@ -612,12 +681,9 @@ class StripeProcessor(PaymentProcessorBase):
 
         query = self.query_builder.build_search_query(self.stripe.Product, [clause])
 
-        product_search = self.stripe_query_object(self.stripe.Product, {'query': query})
+        product_search = self.get_all_stripe_search_objects(self.stripe.Product, {'query': query})
 
-        if product_search:
-            return product_search['data']
-
-        return []
+        return product_search
 
     def get_vendor_offers_in_stripe(self, offer_pk_list, site):
         offers = Offer.objects.filter(site=site, pk__in=offer_pk_list)
@@ -827,12 +893,9 @@ class StripeProcessor(PaymentProcessorBase):
 
         query = self.query_builder.build_search_query(self.stripe.Price, [product_clause])
 
-        search_data = self.stripe_query_object(self.stripe.Price, {'query': query})
+        search_data = self.get_all_stripe_search_objects(self.stripe.Price, {'query': query})
 
-        if search_data:
-            return search_data['data']
-
-        return []
+        return search_data
 
     def get_customer_email(self, customer_id):
         customer = self.stripe_get_object(self.stripe.Customer, customer_id)
@@ -842,8 +905,31 @@ class StripeProcessor(PaymentProcessorBase):
         return None
 
     def get_customer_id_for_expiring_cards(self, month):
-        # TODO implement
-        ...
+        # month is passed as YYYY-M
+
+        customers = self.get_stripe_customers(self.site)
+        sources = [
+            (customer['id'], customer['email'], customer['default_source'])
+            for customer in customers if customer.get('default_source')
+        ]
+
+        expired_cards_emails = []
+        for customer_id, customer_email, source_id in sources:
+            if 'card' in source_id:
+                stripe_card = self.stripe_call(
+                    self.stripe.Customer.retrieve_source,
+                    {'id': customer_id, 'nested_id': source_id}
+                )
+                if stripe_card:
+                    if stripe_card['exp_year'] and stripe_card['exp_month']:
+                        exp_date = f"{stripe_card['exp_year']}-{stripe_card['exp_month']}"
+                        exp_date_obj = timezone.datetime.strptime(exp_date, "%Y-%m")
+                        current_date_obj = timezone.datetime.strptime(month, "%Y-%m")
+                        date_diff = (exp_date_obj - current_date_obj).days
+                        if 0 < date_diff <= 60:
+                            expired_cards_emails.append(customer_email)
+
+        return expired_cards_emails
 
     def does_price_exist(self, product, metadata):
         product_clause = self.query_builder.make_clause_template(
@@ -899,20 +985,10 @@ class StripeProcessor(PaymentProcessorBase):
         """
         Returns all stripe Coupons
 
-        This is needed since there is no search method on Coupon. Will make multiple stripe calls until the
-        list is exhausted
+        This is needed since there is no search method on Coupon.
         """
-        coupons_list = []
-        starting_after = None
-        while True:
-            coupons = self.stripe_list_objects(self.stripe.Coupon, limit=100, starting_after=starting_after)
-            coupons_list.extend(coupons)
-            if coupons['has_more']:
-                starting_after = coupons['data'][-1]['id']
-            else:
-                break
 
-        return coupons_list
+        return self.get_all_stripe_list_objects(self.stripe.Coupon) or []
 
     ##########
     # Sync Vendor and Stripe
