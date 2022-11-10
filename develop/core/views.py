@@ -56,7 +56,7 @@ class AccountView(LoginRequiredMixin, TemplateView):
 
         if subscriptions:
             context['subscription'] = subscriptions.first()
-            context['payment'] = subscriptions.first().order_item.invoice.payments.filter(success=True).first()
+            context['payment'] = subscriptions.first().payments.filter(success=True).first()
             context['payment_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
 
         return render(request, self.template_name, context)
