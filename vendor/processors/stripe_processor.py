@@ -365,7 +365,7 @@ class StripeProcessor(PaymentProcessorBase):
         if expand:
             # some fields are expandable https://stripe.com/docs/api/expanding_objects
             object_id = {
-                'sid': object_id,
+                'id': object_id,
                 'expand': expand
             }
         stripe_object = self.stripe_call(stripe_object_class.retrieve, object_id)
