@@ -330,23 +330,6 @@ class StripeProcessor(PaymentProcessorBase):
     # CRUD Stripe Object
     ##########
 
-    def get_all_stripe_list_objects(self, stripe_object):
-        """
-        Get entire list of any stripe object with .list() method.
-        Will make multiple stripe calls until the list is exhausted
-        """
-        object_list = []
-        starting_after = None
-        while True:
-            objs = self.stripe_list_objects(stripe_object, limit=100, starting_after=starting_after)
-            object_list.extend(objs)
-            if objs['has_more']:
-                starting_after = objs['data'][-1]['id']
-            else:
-                break
-
-        return object_list
-
     def stripe_create_object(self, stripe_object_class, object_data):
         stripe_object = self.stripe_call(stripe_object_class.create, object_data)
 
