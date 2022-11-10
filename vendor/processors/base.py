@@ -474,6 +474,7 @@ class PaymentProcessorBase(object):
             gateway_id=self.subscription_id,
             profile=self.invoice.profile,
             auto_renew=True,
+            status=SubscriptionStatus.ACTIVE
         )
         self.subscription.meta['response'] = self.transaction_info
         self.subscription.save()
