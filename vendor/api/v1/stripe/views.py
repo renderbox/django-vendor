@@ -139,6 +139,7 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
 
         return HttpResponse(status=200)
 
+
 class StripeSubscriptionPaymentFailed(StripeBaseAPI):
 
     def post(self, request, *args, **kwargs):
@@ -192,6 +193,7 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
         processor.subscription_payment_failed(subscription, stripe_invoice.charge)
 
         return HttpResponse(status=200)
+
 
 class StripeInvoicePaid(StripeBaseAPI):
 
