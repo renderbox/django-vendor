@@ -249,7 +249,7 @@ class StripeCardExpiring(StripeBaseAPI):
         if not self.is_valid_post(site):
             return HttpResponse(status=400)
 
-        if not self.is_incoming_event_correct(self.event, StripeEvents.INOVICE_PAYMENT_SUCCEEDED):
+        if not self.is_incoming_event_correct(self.event, StripeEvents.SOURCE_EXPIRED):
             return HttpResponse(status=400)
 
         stripe_card = self.event.data.object
