@@ -1,4 +1,3 @@
-from django.dispatch import Signal
 import logging
 
 from django.db.models.signals import post_delete, post_save
@@ -143,7 +142,3 @@ def stripe_delete_offer_signal(sender, instance, **kwargs):
         logger.info(f"stripe_delete_offer_signal instance: offer {instance.pk} coupon was successfully deleted on Stripe")
 
     logger.info(f"stripe_delete_offer_signal instance: offer {instance.pk} was successfully deleted on Stripe")
-
-
-# Signal for Stripe webhook
-customer_source_expiring = Signal(providing_args=["site", "email"])

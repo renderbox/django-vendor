@@ -1,8 +1,9 @@
 """
 Payment processor for Stripe.
 """
-import logging
+import django.dispatch
 import json
+import logging
 import stripe
 import uuid
 
@@ -25,20 +26,10 @@ from vendor.models.choice import (
 )
 from vendor.processors.base import PaymentProcessorBase
 
-
-
 logger = logging.getLogger(__name__)
 
-# def add_site_on_object_metadata(func):
-#     # Decorate that check if the stripe object data has a metadata field that has site field.
-#     # If it does not have one it addas it to kwargs
-#     def wrapper(*args, **kwargs):
-#         if 'metadata' not in kwargs or 'site' not in kwargs['metadata']:
-#             kwargs['metadata'] = {'site': args[0].site}
 
-#         return func(*args, kwargs)
-    
-#     return wrapper
+customer_source_expiring = django.dispatch.Signal()
 
 class StripeQueryBuilder:
     """
@@ -387,44 +378,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         return stripe_objects
 
-    def get_all_stripe_list_objects(self, stripe_object):
-        """
-        Get entire list of any stripe object with .list() method.
-        Will make multiple stripe calls until the list is exhausted
-        """
-        object_list = []
-        starting_after = None
-        while True:
-            objs = self.stripe_list_objects(stripe_object, limit=100, starting_after=starting_after)
-            object_list.extend(objs)
-            if objs['has_more']:
-                starting_after = objs['data'][-1]['id']
-            else:
-                break
-
-        return object_list
-
-    def get_all_stripe_search_objects(self, stripe_object, query, limit=100):
-        """
-        Get entire list of any stripe object with .search() method.
-        Will make multiple stripe calls until the list is exhausted
-        """
-        object_list = []
-        page = None
-
-        while True:
-            objs = self.stripe_query_object(stripe_object, query=query, limit=limit, page=page)
-            object_list.extend(objs['data'])
-            if objs['has_more']:
-                page = objs['next_page']
-            else:
-                break
-
-        return object_list
-
-
-
-    ##########
+    def get_all_stripe_list_objects(self, stripe_object):customer_source_expiring
     # Stripe Object Builders
     ##########
     def build_customer(self, customer_profile):
@@ -1222,8 +1176,10 @@ class StripeProcessor(PaymentProcessorBase):
 
         self.subscription_id = stripe_subscription.id
 
-        
-        
 
-
+    ##########
+    # Signals
+    ##########
+    def customer_card_expired(self, site, profile):
+        customer_source_expiring.send(sender=self.__class__, site_pk=site.pk, profile_pk=profile.pk)
 

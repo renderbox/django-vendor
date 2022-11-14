@@ -17,7 +17,6 @@ from vendor.utils import get_site_from_request
 from vendor.models import CustomerProfile, Subscription, Invoice
 from vendor.processors import StripeProcessor
 from vendor.config import SupportedPaymentProcessor
-from vendor.signals.stripe_signals import customer_source_expiring
 
 
 logger = logging.getLogger(__name__)
@@ -268,11 +267,10 @@ class StripeCardExpiring(StripeBaseAPI):
 
             email = customer_profile.user.email
             logger.info(f'StripeCardExpiring: sending customer_source_expiring signal for site {site} and email {email}')
-            customer_source_expiring.send(
-                sender=SupportedPaymentProcessor.STRIPE.value,
-                site=site,
-                email=email
-            )
+            
+            processor = StripeProcessor(site)
+            processor.customer_card_expired(site, customer_profile)
+            
         return HttpResponse(status=200)
 
 
