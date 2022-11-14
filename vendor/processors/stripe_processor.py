@@ -24,8 +24,7 @@ from vendor.models.choice import (
     InvoiceStatus,
     PurchaseStatus
 )
-from vendor.processors.base import PaymentProcessorBase
-from vendor.signals.signal_definitions import customer_source_expiring
+from vendor.processors.base import PaymentProcessorBase, customer_source_expiring
 
 
 logger = logging.getLogger(__name__)

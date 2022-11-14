@@ -15,12 +15,11 @@ from vendor.utils import get_payment_scheduled_end_date, get_subscription_start_
 
 ##########
 # SIGNALS
-from vendor.signals.signal_definitions import (
-    vendor_pre_authorization,
-    vendor_post_authorization,
-    vendor_process_payment,
-    vendor_subscription_cancel
-)
+vendor_pre_authorization = django.dispatch.Signal()
+vendor_process_payment = django.dispatch.Signal()
+vendor_post_authorization = django.dispatch.Signal()
+vendor_subscription_cancel = django.dispatch.Signal()
+customer_source_expiring = django.dispatch.Signal()
 
 
 #############
