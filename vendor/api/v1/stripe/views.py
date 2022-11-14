@@ -269,7 +269,7 @@ class StripeCardExpiring(StripeBaseAPI):
             logger.info(f'StripeCardExpiring: sending customer_source_expiring signal for site {site} and email {email}')
             
             processor = StripeProcessor(site)
-            processor.customer_card_expired(site, customer_profile)
+            processor.customer_card_expired(site, email)
             
         return HttpResponse(status=200)
 

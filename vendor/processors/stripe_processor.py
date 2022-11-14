@@ -25,11 +25,10 @@ from vendor.models.choice import (
     PurchaseStatus
 )
 from vendor.processors.base import PaymentProcessorBase
+from vendor.signals.signal_definitions import customer_source_expiring
+
 
 logger = logging.getLogger(__name__)
-
-
-customer_source_expiring = django.dispatch.Signal()
 
 class StripeQueryBuilder:
     """
@@ -1214,6 +1213,6 @@ class StripeProcessor(PaymentProcessorBase):
     ##########
     # Signals
     ##########
-    def customer_card_expired(self, site, profile):
-        customer_source_expiring.send(sender=self.__class__, site_pk=site.pk, profile_pk=profile.pk)
+    def customer_card_expired(self, site, email):
+        customer_source_expiring.send(sender=self.__class__, site_pk=site.pk, email=email)
 
