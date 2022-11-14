@@ -262,10 +262,12 @@ class StripeCardExpiring(StripeBaseAPI):
                 logger.error(f"StripeCardExpiring: stripe id {stripe_customer_id} does not exist for customer in vendor")
                 return HttpResponse(status=200)
 
+            email = customer_profile.user.email
+            logger.info(f'StripeCardExpiring: sending customer_source_expiring signal for site {site} and email {email}')
             customer_source_expiring.send(
                 sender=SupportedPaymentProcessor.STRIPE.value,
                 site=site,
-                email=customer_profile.user.email
+                email=email
             )
         return HttpResponse(status=200)
 
