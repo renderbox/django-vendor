@@ -32,6 +32,7 @@ def convert_integer_to_float(number):
 
     return float(f"{number_string[:-2]}.{number_string[-2:]}")
 
+
 class StripeEvents(TextChoices):
     INVOICE_PAID = 'invoice.paid', _('Invoice Paid')
     INVOICE_PAYMENT_FAILED = 'invoice.payment_failed', _('Invoice Payment Failed')
@@ -39,6 +40,7 @@ class StripeEvents(TextChoices):
     PAYMENT_INTENT_SUCCEDED = 'payment_intent.succeeded', _("Payment Succeeded")
     CHARGE_SUCCEEDED = 'charge.succeeded', _('Charge Succeeded')
     SOURCE_EXPIRED = 'customer.source.expired', _('Source Expired')
+
 
 
 class StripeBaseAPI(View):
@@ -141,6 +143,7 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
 
         return HttpResponse(status=200)
 
+
 class StripeSubscriptionPaymentFailed(StripeBaseAPI):
 
     def post(self, request, *args, **kwargs):
@@ -194,6 +197,7 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
         processor.subscription_payment_failed(subscription, stripe_invoice.charge)
 
         return HttpResponse(status=200)
+
 
 class StripeInvoicePaid(StripeBaseAPI):
 

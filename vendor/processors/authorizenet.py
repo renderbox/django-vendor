@@ -497,7 +497,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     def parse_success(self):
         self.transaction_succeeded = False
 
-        if hasattr(self.transaction_response, 'messages') and self.transaction_response.messages.resultCode == "Ok":
+        if hasattr(self.transaction_response, 'messages') and\
+           self.transaction_response.messages.resultCode == "Ok" and\
+           not self.transaction_info['errors']:
             self.transaction_succeeded = True
 
     ##########
