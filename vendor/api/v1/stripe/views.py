@@ -17,7 +17,7 @@ from vendor.utils import get_site_from_request
 from vendor.models import CustomerProfile, Subscription, Invoice
 from vendor.processors import StripeProcessor
 from vendor.config import SupportedPaymentProcessor
-from vendor.signals.stripe_signals import customer_source_expiring
+from vendor.signals.stripe_custom_signals import customer_source_expiring
 
 
 logger = logging.getLogger(__name__)
