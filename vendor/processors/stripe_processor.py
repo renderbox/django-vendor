@@ -24,7 +24,7 @@ from vendor.models.choice import (
     InvoiceStatus,
     PurchaseStatus
 )
-from vendor.processors.base import PaymentProcessorBase, customer_source_expiring
+from vendor.processors.base import PaymentProcessorBase
 
 
 logger = logging.getLogger(__name__)
@@ -1207,11 +1207,4 @@ class StripeProcessor(PaymentProcessorBase):
         self.invoice.save()
 
         self.subscription_id = stripe_subscription.id
-
-
-    ##########
-    # Signals
-    ##########
-    def customer_card_expired(self, site, email):
-        customer_source_expiring.send(sender=self.__class__, site_pk=site.pk, email=email)
 

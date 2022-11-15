@@ -19,7 +19,7 @@ vendor_pre_authorization = django.dispatch.Signal()
 vendor_process_payment = django.dispatch.Signal()
 vendor_post_authorization = django.dispatch.Signal()
 vendor_subscription_cancel = django.dispatch.Signal()
-customer_source_expiring = django.dispatch.Signal()
+vendor_customer_card_expiring = django.dispatch.Signal()
 
 
 #############
@@ -553,3 +553,9 @@ class PaymentProcessorBase(object):
             status = PurchaseStatus.DECLINED,
             payee_full_name=" ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
         )
+
+    ##########
+    # Signals
+    ##########
+    def customer_card_expired(self, site, email):
+        vendor_customer_card_expiring.send(sender=self.__class__, site_pk=site.pk, email=email)
