@@ -1,5 +1,5 @@
 from calendar import mdays
-from datetime import timedelta, datetime, timezone
+from datetime import timedelta, datetime
 from decimal import Decimal, ROUND_UP
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils import timezone

@@ -1,5 +1,6 @@
 import uuid
 
+from datetime import timedelta
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
@@ -102,7 +103,7 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
             return False
 
         receipt = self.receipts.filter(deleted=False).order_by('start_date').first()
-        trial_end_date = receipt.start_date + timedelta(days=self.order_item.offer.get_trial_days())
+        trial_end_date = receipt.start_date + timedelta(days=receipt.order_item.offer.get_trial_days())
 
         if timezone.now() > trial_end_date:
             return False
