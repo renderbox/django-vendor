@@ -16,6 +16,7 @@ from vendor.integrations import StripeIntegration
 from vendor.utils import get_site_from_request
 from vendor.models import CustomerProfile, Subscription, Invoice
 from vendor.processors import StripeProcessor
+from vendor.config import SupportedPaymentProcessor
 
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,8 @@ class StripeEvents(TextChoices):
     INOVICE_PAYMENT_SUCCEEDED = 'invoice.payment_succeeded', _('Invoice Payment Succeeded')
     PAYMENT_INTENT_SUCCEDED = 'payment_intent.succeeded', _("Payment Succeeded")
     CHARGE_SUCCEEDED = 'charge.succeeded', _('Charge Succeeded')
+    SOURCE_EXPIRED = 'customer.source.expired', _('Source Expired')
+
 
 
 class StripeBaseAPI(View):
@@ -241,6 +244,36 @@ class StripeInvoicePaid(StripeBaseAPI):
         return HttpResponse(status=200)
 
 
+class StripeCardExpiring(StripeBaseAPI):
+
+    def post(self, request, *args, **kwargs):
+        site = get_site_from_request(self.request)
+
+        if not self.is_valid_post(site):
+            return HttpResponse(status=400)
+
+        if not self.is_incoming_event_correct(self.event, StripeEvents.SOURCE_EXPIRED):
+            return HttpResponse(status=400)
+
+        stripe_card = self.event.data.object
+
+        stripe_customer_id = stripe_card['customer']
+        if stripe_customer_id:
+            try:
+                customer_profile = CustomerProfile.objects.get(meta__stripe_id=stripe_customer_id)
+            except ObjectDoesNotExist:
+                logger.error(f"StripeCardExpiring: stripe id {stripe_customer_id} does not exist for customer in vendor")
+                return HttpResponse(status=200)
+
+            email = customer_profile.user.email
+            logger.info(f'StripeCardExpiring: sending customer_source_expiring signal for site {site} and email {email}')
+            
+            processor = StripeProcessor(site)
+            processor.customer_card_expired(site, email)
+            
+        return HttpResponse(status=200)
+
+
 class StripeSyncObjects(View):
 
     def get(self, request, *args, **kwargs):
@@ -250,3 +283,4 @@ class StripeSyncObjects(View):
         processor.sync_stripe_vendor_objects(site)
 
         return HttpResponse(status=200)
+
