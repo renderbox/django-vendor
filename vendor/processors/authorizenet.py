@@ -987,10 +987,13 @@ def sync_subscriptions(site):
                         payment.submitted_date = submitted_datetime
                         payment.status = payment_status
                         payment.success = payment_success
-                        payment.result = {}
-                        payment.result['payment_info'] = payment_info
                         payment.transaction = transaction_id
-                        payment.payee_full_name = payment_info['full_name']
+                        payment.result = {}
+
+                        if payment_info:
+                            payment.result['payment_info'] = payment_info
+                            payment.payee_full_name = payment_info.get('full_name', '')
+
                         payment.save()
 
                         if payment_status == PurchaseStatus.SETTLED:
@@ -1016,8 +1019,11 @@ def sync_subscriptions(site):
                         payment.status = payment_status
                         payment.success = payment_success
                         payment.result = {}
-                        payment.result['payment_info'] = payment_info
-                        payment.payee_full_name = payment_info['full_name']
+
+                        if payment_info:
+                            payment.result['payment_info'] = payment_info
+                            payment.payee_full_name = payment_info.get('full_name', '')
+                            
                         payment.save()
 
                         if not payment.invoice:                        ### Create Invoice
@@ -1057,11 +1063,13 @@ def sync_subscriptions(site):
                                 receipt.save()
 
             except ObjectDoesNotExist as exce:
-                logger.error(f"sync_subscriptions exception: {exce}")
+                logger.exception(f"sync_subscriptions exception: {exce}")
             except MultipleObjectsReturned as exce:
-                logger.error(f"sync_subscriptions exception: {exce}")
+                logger.exception(f"sync_subscriptions exception: {exce}")
             except Exception as exce:
-                logger.error(f"sync_subscriptions exception: {exce}")
+                logger.exception(f"sync_subscriptions exception: {exce}")
+    
+    logger.info(f"sync_subscriptions Finished Subscription Migration")
 
 def sync_subscriptions_and_create_missing_receipts(site):
     logger.info("sync_subscriptions_and_create_missing_receipts Starting Subscription Migration")
