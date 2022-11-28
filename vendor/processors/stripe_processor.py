@@ -1033,6 +1033,7 @@ class StripeProcessor(PaymentProcessorBase):
                     }
 
     def sync_customers(self, site):
+        logger.info(f"StripeProcessor sync_customers Started")
         stripe_customers = self.get_stripe_customers(site)
         stripe_customers_emails = [customer_obj['email'] for customer_obj in stripe_customers]
 
@@ -1046,8 +1047,10 @@ class StripeProcessor(PaymentProcessorBase):
 
         self.create_stripe_customers(vendor_customer_to_create)
         self.update_stripe_customers(vendor_customers_with_stripe_meta)
+        logger.info(f"StripeProcessor sync_customers Finished")
 
     def sync_offers(self, site):
+        logger.info(f"StripeProcessor sync_offers Started")
         products = self.get_site_offers(site)
         offer_pk_list = [product['metadata']['pk'] for product in products]
 
@@ -1061,13 +1064,16 @@ class StripeProcessor(PaymentProcessorBase):
 
         self.create_offers(offers_to_create)
         self.update_offers(offers_in_vendor_with_stripe_meta)
+        logger.info(f"StripeProcessor sync_offers Finished")
 
     def sync_stripe_vendor_objects(self, site):
         """
         Sync up all the CustomerProfiles, Offers, Prices, and Coupons for all of the sites
         """
+        logger.info(f"StripeProcessor sync_stripe_vendor_objects Started")
         self.sync_customers(site)
         self.sync_offers(site)
+        logger.info(f"StripeProcessor sync_stripe_vendor_objects Finished")
 
     ##########
     # Stripe Transactions
