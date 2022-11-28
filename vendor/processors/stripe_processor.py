@@ -244,6 +244,11 @@ class StripeProcessor(PaymentProcessorBase):
     def customer_setup(self):
         if not self.invoice.profile.meta.get('stripe_id'):
             self.create_stripe_customers([self.invoice.profile])
+        
+        stripe_customer = self.stripe_get_object(self.stripe.Customer, self.invoice.profile.meta.get('stripe_id'))
+
+        if not stripe_customer:
+            self.create_stripe_customers([self.invoice.profile])
 
     def subscription_offer_setup(self):
         offers_to_sync = []
@@ -365,7 +370,11 @@ class StripeProcessor(PaymentProcessorBase):
         object_data['sid'] = object_id
         stripe_object = self.stripe_call(stripe_object_class.modify, object_data)
 
-        return stripe_object
+        if self.transaction_succeeded:
+            self.transaction_succeeded = False
+            return stripe_object
+
+        return None
 
     def stripe_list_objects(self, stripe_object_class, limit=100, starting_after=None):
         object_data = {
@@ -607,7 +616,8 @@ class StripeProcessor(PaymentProcessorBase):
                 profile_meta = profile.meta
                 profile_meta['stripe_id'] = existing_stripe_customer['id']
                 CustomerProfile.objects.filter(pk=profile.pk).update(meta=profile_meta)
-
+            else:
+                self.create_stripe_customers([profile])
     ##########
     # Offers/Products
     ##########
@@ -723,87 +733,89 @@ class StripeProcessor(PaymentProcessorBase):
             product_data = self.build_product(offer)
             existing_stripe_product = self.stripe_update_object(self.stripe.Product, product_id, product_data)
             
-            if existing_stripe_product:
+            if not existing_stripe_product:
+                self.create_offers([offer])
+            else:
                 if offer_meta.get('stripe'):
                     offer_meta['stripe']['product_id'] = existing_stripe_product['id']
                 else:
                     offer_meta['stripe'] = {'product_id': existing_stripe_product['id']}
 
-            # Handle Price
-            # TODO: Need to explore what is the best way to upload prices in each currency
-            # currently we will only support the default currency (DEFAULT_CURRENCY) se
-            # on the vendor.config.py file
-            # for currency in AVAILABLE_CURRENCIES:
-            #     ...
-            msrp = offer.get_msrp()
-            stripe_product_prices = self.get_stripe_prices_for_product(product_id)
+                # Handle Price
+                # TODO: Need to explore what is the best way to upload prices in each currency
+                # currently we will only support the default currency (DEFAULT_CURRENCY) se
+                # on the vendor.config.py file
+                # for currency in AVAILABLE_CURRENCIES:
+                #     ...
+                msrp = offer.get_msrp()
+                stripe_product_prices = self.get_stripe_prices_for_product(product_id)
 
-            price = offer.get_current_price_instance() if offer.get_current_price_instance() else None
-            current_price = msrp
-            price_pk = None
-            
-            if price:
-                current_price = price.cost
-                price_pk = price.pk
-            
-            price_data = self.build_price(offer, msrp, current_price, DEFAULT_CURRENCY, price_pk)
-            stripe_price = None
+                price = offer.get_current_price_instance() if offer.get_current_price_instance() else None
+                current_price = msrp
+                price_pk = None
+                
+                if price:
+                    current_price = price.cost
+                    price_pk = price.pk
+                
+                price_data = self.build_price(offer, msrp, current_price, DEFAULT_CURRENCY, price_pk)
+                stripe_price = None
 
-            if not stripe_product_prices:
-                stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
-
-            else:
-                prices_to_deactivate = [stripe_price for stripe_price in stripe_product_prices if self.convert_decimal_to_integer(current_price) != stripe_price.unit_amount]
-                prices_to_check = [stripe_price for stripe_price in stripe_product_prices if self.convert_decimal_to_integer(current_price) == stripe_price.unit_amount]
-                
-                for stripe_price_deactivate in prices_to_deactivate:
-                    self.stripe_update_object(self.stripe.Price, stripe_price_deactivate.id, {'active': False})
-                
-                any_match = False
-                for stripe_price_check in prices_to_check:
-                    if self.does_stripe_and_vendor_price_match(stripe_price_check, price_data):
-                        any_match = True
-                        stripe_price = stripe_price_check
-                    else:
-                        self.stripe_update_object(self.stripe.Price, stripe_price_check.id, {'active': False})
-                
-                if not any_match:
+                if not stripe_product_prices:
                     stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
 
-            if stripe_price:
-                if offer_meta.get('stripe'):
-                    offer_meta['stripe']['price_id'] = stripe_price['id']
                 else:
-                    offer_meta['stripe'] = {'price_id': stripe_price['id']}
+                    prices_to_deactivate = [stripe_price for stripe_price in stripe_product_prices if self.convert_decimal_to_integer(current_price) != stripe_price.unit_amount]
+                    prices_to_check = [stripe_price for stripe_price in stripe_product_prices if self.convert_decimal_to_integer(current_price) == stripe_price.unit_amount]
+                    
+                    for stripe_price_deactivate in prices_to_deactivate:
+                        self.stripe_update_object(self.stripe.Price, stripe_price_deactivate.id, {'active': False})
+                    
+                    any_match = False
+                    for stripe_price_check in prices_to_check:
+                        if self.does_stripe_and_vendor_price_match(stripe_price_check, price_data):
+                            any_match = True
+                            stripe_price = stripe_price_check
+                        else:
+                            self.stripe_update_object(self.stripe.Price, stripe_price_check.id, {'active': False})
+                    
+                    if not any_match:
+                        stripe_price = self.stripe_create_object(self.stripe.Price, price_data)
 
-            # Handle Coupon
-            coupon_data = self.build_coupon(offer, DEFAULT_CURRENCY)
-            discount = self.convert_decimal_to_integer(offer.discount())
-            trial_days = offer.term_details.get('trial_days', 0)
-
-            # If this offer has a discount check if its on stripe to create, update, delete
-            if discount or trial_days:
-                stripe_coupon_matches = self.match_coupons(coupons, offer)
-                if not stripe_coupon_matches:
-                    stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
-                elif len(stripe_coupon_matches) == 1:
-                    coupon_id = stripe_coupon_matches[0]['id']
-                    stripe_coupon = self.stripe_update_object(self.stripe.Coupon, coupon_id, coupon_data)
-                else:
-                    # Duplicates, so delete all but one and update it
-                    for coupon_data in stripe_coupon_matches[1:]:
-                        self.stripe_delete_object(self.stripe.Coupon, coupon_data['id'])
-
-                    # update the only one we have remaining
-                    stripe_coupon = self.stripe_update_object(self.stripe.Coupon, stripe_coupon_matches[0]['id'], coupon_data)
-
-                if stripe_coupon:
+                if stripe_price:
                     if offer_meta.get('stripe'):
-                        offer_meta['stripe']['coupon_id'] = stripe_coupon['id']
+                        offer_meta['stripe']['price_id'] = stripe_price['id']
                     else:
-                        offer_meta['stripe'] = {'coupon_id': stripe_coupon['id']}
+                        offer_meta['stripe'] = {'price_id': stripe_price['id']}
 
-            Offer.objects.filter(pk=offer.pk).update(meta=offer_meta)
+                # Handle Coupon
+                coupon_data = self.build_coupon(offer, DEFAULT_CURRENCY)
+                discount = self.convert_decimal_to_integer(offer.discount())
+                trial_days = offer.term_details.get('trial_days', 0)
+
+                # If this offer has a discount check if its on stripe to create, update, delete
+                if discount or trial_days:
+                    stripe_coupon_matches = self.match_coupons(coupons, offer)
+                    if not stripe_coupon_matches:
+                        stripe_coupon = self.stripe_create_object(self.stripe.Coupon, coupon_data)
+                    elif len(stripe_coupon_matches) == 1:
+                        coupon_id = stripe_coupon_matches[0]['id']
+                        stripe_coupon = self.stripe_update_object(self.stripe.Coupon, coupon_id, coupon_data)
+                    else:
+                        # Duplicates, so delete all but one and update it
+                        for coupon_data in stripe_coupon_matches[1:]:
+                            self.stripe_delete_object(self.stripe.Coupon, coupon_data['id'])
+
+                        # update the only one we have remaining
+                        stripe_coupon = self.stripe_update_object(self.stripe.Coupon, stripe_coupon_matches[0]['id'], coupon_data)
+
+                    if stripe_coupon:
+                        if offer_meta.get('stripe'):
+                            offer_meta['stripe']['coupon_id'] = stripe_coupon['id']
+                        else:
+                            offer_meta['stripe'] = {'coupon_id': stripe_coupon['id']}
+
+                Offer.objects.filter(pk=offer.pk).update(meta=offer_meta)
 
     def get_product_id_with_name(self, name, metadata):
         name_clause = self.query_builder.make_clause_template(
