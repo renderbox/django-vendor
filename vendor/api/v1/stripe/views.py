@@ -233,8 +233,8 @@ class StripeInvoicePaid(StripeBaseAPI):
             logger.error(f"StripeInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
             return HttpResponse(status=400, content=f"StripeInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
 
-        payment = subscription.payments.filter(transaction=None, status=PurchaseStatus.QUEUED).first()
-        receipt = subscription.receipts.filter(transaction=None).first()
+        payment = subscription.payments.filter(transaction="", status=PurchaseStatus.QUEUED).first()
+        receipt = subscription.receipts.filter(transaction="").first()
 
         if not payment and not receipt:
             logger.warning(f"There are no payments to update for subscription: {subscription}. Stripe Invoice: {stripe_invoice.id}")
