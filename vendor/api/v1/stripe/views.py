@@ -5,7 +5,7 @@ import stripe
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.http.response import HttpResponse
-from django.db.models import TextChoices
+from django.db.models import TextChoices, Q
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views import View
@@ -233,8 +233,8 @@ class StripeInvoicePaid(StripeBaseAPI):
             logger.error(f"StripeInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
             return HttpResponse(status=400, content=f"StripeInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
 
-        payment = subscription.payments.filter(transaction="", status=PurchaseStatus.QUEUED).first()
-        receipt = subscription.receipts.filter(transaction="").first()
+        payment = subscription.payments.filter(Q(transaction="") | Q(transaction=None), status=PurchaseStatus.QUEUED).first()
+        receipt = subscription.receipts.filter(Q(transaction="") | Q(transaction=None)).first()
 
         if not payment and not receipt:
             logger.warning(f"There are no payments to update for subscription: {subscription}. Stripe Invoice: {stripe_invoice.id}")
