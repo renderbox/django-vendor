@@ -2,24 +2,25 @@ from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.models import Site
+from django.db import IntegrityError, DatabaseError, transaction
 from django.db.models import Count, Q
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse, reverse_lazy
-from django.views.generic import View
+from django.views.generic import View, TemplateView
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, UpdateView, FormView
+from django.views.generic.edit import CreateView, UpdateView, FormView, ProcessFormView
 from django.views.generic.list import ListView
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from vendor.config import VENDOR_PRODUCT_MODEL, PaymentProcessorSiteConfig, PaymentProcessorSiteSelectSiteConfig, PaymentProcessorForm, PaymentProcessorSiteSelectForm
-from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm, AuthorizeNetIntegrationForm, StripeIntegrationForm
+from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm, AuthorizeNetIntegrationForm, StripeIntegrationForm, SubscriptionForm, SiteSelectForm
 from vendor.integrations import AuthorizeNetIntegration, StripeIntegration
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment, Subscription
-from vendor.models.choice import TermType, PaymentTypes, InvoiceStatus, PurchaseStatus
+from vendor.models.choice import TermType, PaymentTypes, InvoiceStatus, PurchaseStatus, SubscriptionStatus
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
 from vendor.processors import get_site_payment_processor
-
+from vendor.utils import get_subscription_start_date, get_payment_scheduled_end_date
 from siteconfigs.models import SiteConfigModel
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
@@ -260,6 +261,90 @@ class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
         context['billing_form'] = AddressForm(instance=payment.billing_address)
 
         return context
+
+
+class AdminSubscriptionCreateView(LoginRequiredMixin, TemplateView):
+    '''
+    Gets all Customer Profile information for quick lookup and management
+    '''
+    template_name = 'vendor/manage/subscription_create.html'
+    success_url = reverse_lazy('vendor_admin:manager-subscription-create')
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+
+        if 'site' in request.GET:
+            site_form = SiteSelectForm(request.GET)
+
+            if not site_form.is_valid():
+                context['site_form'] = site_form
+                return render(request, self.template_name, context)
+            
+            context['subscription_form'] = SubscriptionForm(initial={'site': site_form.cleaned_data['site']})
+            context['site_form'] = site_form
+
+            return render(request, self.template_name, context)
+
+        context['site_form'] = SiteSelectForm()
+
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        
+        subscription_form = SubscriptionForm(request.POST)
+        context['subscription_form'] = subscription_form
+
+        if not subscription_form.is_valid():
+            return render(request, self.template_name, context)
+        
+        offer = subscription_form.cleaned_data['offer']
+        profile = subscription_form.cleaned_data['customer_profile']
+        transaction_id = subscription_form.cleaned_data['transaction_id']
+        subscription_id = subscription_form.cleaned_data['subscription_id']
+        
+        invoice = profile.get_cart_or_checkout_cart()
+        invoice.empty_cart()
+        invoice.status = InvoiceStatus.COMPLETE
+        invoice.add_offer(offer)
+        
+        try:
+            with transaction.atomic():
+
+                subscription = Subscription.objects.create(
+                    profile=profile,
+                    status=SubscriptionStatus.ACTIVE,
+                    gateway_id=subscription_id
+                )
+
+                payment = Payment.objects.create(
+                    invoice=invoice,
+                    profile=profile,
+                    transaction=transaction_id,
+                    success=True,
+                    status=PurchaseStatus.SETTLED,
+                    amount=invoice.total,
+                    subscription=subscription
+                )
+
+                receipt = Receipt.objects.create(
+                    transaction=transaction_id,
+                    order_item=invoice.order_items.first(),
+                    profile=profile,
+                    start_date=get_subscription_start_date(offer, profile),
+                    end_date=get_payment_scheduled_end_date(offer),
+                    subscription=subscription
+                )
+
+            messages.info(request, _("Subscription Created"))
+
+        except (IntegrityError, DatabaseError, Exception) as exce:
+            logger.error(f"AdminSubscriptionCreateView error: {exce}")
+            messages.error(request, "failed create subscription")
+
+
+        return redirect(self.success_url)
+
 
 
 class AdminProfileListView(LoginRequiredMixin, TableFilterMixin, SiteOnRequestFilterMixin, ListView):

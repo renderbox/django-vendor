@@ -242,7 +242,6 @@ class PaymentProcessorBase(object):
             self.receipt.subscription = self.subscription
             self.receipt.save()
             
-
     def create_order_item_receipt(self, order_item):
         """
         Creates a receipt for every product in the order item according to its,

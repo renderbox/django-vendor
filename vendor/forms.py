@@ -3,6 +3,7 @@ from datetime import datetime
 from django import forms
 from django.apps import apps
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.forms import inlineformset_factory
 from django.forms.widgets import SelectDateWidget, TextInput
 from django.utils.translation import gettext_lazy as _
@@ -10,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from integrations.models import Credential
 
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import Address, Offer, Price, offer_term_details_default
+from vendor.models import Address, Offer, Price, offer_term_details_default, CustomerProfile
 from vendor.models.choice import PaymentTypes, TermType, Country, USAStateChoices
 from vendor.utils import get_site_from_request
 
@@ -372,6 +373,7 @@ class DateRangeForm(forms.Form):
 
         return cleaned_data
 
+
 class DateTimeRangeForm(forms.Form):
     start_date = forms.DateTimeField(required=False, label=_("Start Date"), widget=SelectDateWidget())
     end_date = forms.DateTimeField(required=False, label=_("End Date"), widget=SelectDateWidget())
@@ -387,6 +389,30 @@ class DateTimeRangeForm(forms.Form):
 
         return cleaned_data
 
+
+class SiteSelectForm(forms.Form):
+    site = forms.ModelChoiceField(queryset=Site.objects.all())
+
+
+class SubscriptionForm(forms.Form):
+    site = forms.ModelChoiceField(queryset=Site.objects.all())
+    customer_profile = forms.ModelChoiceField(queryset=None)
+    subscription_id = forms.CharField(max_length=30)
+    transaction_id = forms.CharField(max_length=30)
+    offer = forms.ModelChoiceField(queryset=None)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if 'site' in self.initial:
+            site = self.initial['site']
+        
+        if 'site' in self.data:
+            site = self.data['site']
+            
+        self.fields['site'].widget = forms.HiddenInput()
+        self.fields['customer_profile'].queryset = CustomerProfile.objects.filter(site=site)
+        self.fields['offer'].queryset = Offer.objects.filter(site=site)
 ##########
 # From Sets
 ##########
