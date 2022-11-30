@@ -25,10 +25,17 @@
             <form method="post">
                 {% csrf_token %}
                 {{ subscription_form.as_p }}
-                <button class="btn btn-primary btn-lg btn-block" type="submit">{% trans 'Save Offer' %}</button>
+                <button class="btn btn-primary btn-lg btn-block" type="submit">{% trans 'Save Subscription' %}</button>
             </form>
         </div>
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script>
+    $(".datepicker").datepicker();
+</script>
 {% endblock %}

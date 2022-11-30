@@ -8,13 +8,17 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import View, TemplateView
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, UpdateView, FormView, ProcessFormView
+from django.views.generic.edit import CreateView, UpdateView, FormView, ProcessFormView, FormMixin
 from django.views.generic.list import ListView
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-from vendor.config import VENDOR_PRODUCT_MODEL, PaymentProcessorSiteConfig, PaymentProcessorSiteSelectSiteConfig, PaymentProcessorForm, PaymentProcessorSiteSelectForm
-from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm, AuthorizeNetIntegrationForm, StripeIntegrationForm, SubscriptionForm, SiteSelectForm
+from vendor.config import VENDOR_PRODUCT_MODEL, PaymentProcessorSiteConfig,\
+    PaymentProcessorSiteSelectSiteConfig, PaymentProcessorForm, PaymentProcessorSiteSelectForm
+
+from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm,\
+    AuthorizeNetIntegrationForm, StripeIntegrationForm, SubscriptionForm, SiteSelectForm, SubscriptionAddPaymentForm
+
 from vendor.integrations import AuthorizeNetIntegration, StripeIntegration
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment, Subscription
 from vendor.models.choice import TermType, PaymentTypes, InvoiceStatus, PurchaseStatus, SubscriptionStatus
@@ -253,12 +257,19 @@ class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        payment = transaction=context['object'].payments.first()
+        subscription = context['object']
+        payment = subscription.payments.first()
 
         context['payment'] = payment
         context['payment_form'] = CreditCardForm(
-            initial={'payment_type': PaymentTypes.CREDIT_CARD})
-        context['billing_form'] = AddressForm(instance=payment.billing_address)
+            initial={'payment_type': PaymentTypes.CREDIT_CARD}
+        )
+        if payment.billing_address:
+            context['billing_form'] = AddressForm(instance=payment.billing_address)
+
+        context['invoices'] = subscription.profile.invoices.order_by('-created')
+        context['payments'] = subscription.payments.order_by('-submitted_date')
+        context['receipts'] = subscription.receipts.order_by('-start_date')
 
         return context
 
@@ -302,6 +313,7 @@ class AdminSubscriptionCreateView(LoginRequiredMixin, TemplateView):
         profile = subscription_form.cleaned_data['customer_profile']
         transaction_id = subscription_form.cleaned_data['transaction_id']
         subscription_id = subscription_form.cleaned_data['subscription_id']
+        start_date = subscription_form.cleaned_data['start_date'] if subscription_form.cleaned_data['start_date'] else timezone.now()
         
         invoice = profile.get_cart_or_checkout_cart()
         invoice.empty_cart()
@@ -327,14 +339,15 @@ class AdminSubscriptionCreateView(LoginRequiredMixin, TemplateView):
                     subscription=subscription
                 )
 
-                receipt = Receipt.objects.create(
-                    transaction=transaction_id,
-                    order_item=invoice.order_items.first(),
-                    profile=profile,
-                    start_date=get_subscription_start_date(offer, profile),
-                    end_date=get_payment_scheduled_end_date(offer),
-                    subscription=subscription
-                )
+                if payment.success and payment.status == PurchaseStatus.SETTLED:
+                    receipt = Receipt.objects.create(
+                        transaction=transaction_id,
+                        order_item=invoice.order_items.first(),
+                        profile=profile,
+                        start_date=get_subscription_start_date(offer, profile, start_date),
+                        end_date=get_payment_scheduled_end_date(offer, start_date),
+                        subscription=subscription
+                    )
 
             messages.info(request, _("Subscription Created"))
 
@@ -342,9 +355,58 @@ class AdminSubscriptionCreateView(LoginRequiredMixin, TemplateView):
             logger.error(f"AdminSubscriptionCreateView error: {exce}")
             messages.error(request, "failed create subscription")
 
-
         return redirect(self.success_url)
 
+
+class AdminSubscriptionAddPaymentView(LoginRequiredMixin, FormMixin, TemplateView):
+    template_name = 'vendor/manage/subscription_add_payment.html'
+    form_class = SubscriptionAddPaymentForm
+    success_url = reverse_lazy('vendor_admin:manager-subscriptions')
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
+
+    def get(self, request, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        subscription = Subscription.objects.get(uuid=kwargs.get('uuid_subscription'))
+        profile = CustomerProfile.objects.get(uuid=kwargs.get('uuid_profile'))
+        context['form'] = self.get_form_class()(initial={
+            'subscription': subscription,
+            'profile': profile
+        })
+
+        return render(request, self.template_name, context)
+
+    def form_valid(self, form):
+        payment = form.save(commit=False)
+        offer = payment.subscription.get_offer()
+        invoice = payment.profile.get_cart_or_checkout_cart()
+        invoice.empty_cart()
+        invoice.status = InvoiceStatus.COMPLETE
+        invoice.add_offer(offer)
+
+        try:
+            with transaction.atomic():
+                payment.invoice = invoice
+                payment.amount = invoice.total
+                payment.save()
+
+                if payment.success and payment.status == PurchaseStatus.SETTLED:
+                    receipt = Receipt.objects.create(
+                        transaction=payment.transaction,
+                        order_item=invoice.order_items.first(),
+                        profile=profile,
+                        start_date=get_subscription_start_date(offer, profile, payment.submitted_date),
+                        end_date=get_payment_scheduled_end_date(offer, payment.submitted_date),
+                        subscription=subscription
+                    )
+
+            messages.info(request, _("Payment Added to Subscription"))
+
+        except (IntegrityError, DatabaseError, Exception) as exce:
+            logger.error(f"AdminSubscriptionCreateView error: {exce}")
+            messages.error(request, "failed create subscription")
+
+        return request.META.get('HTTP_REFERER', self.success_url)
 
 
 class AdminProfileListView(LoginRequiredMixin, TableFilterMixin, SiteOnRequestFilterMixin, ListView):
