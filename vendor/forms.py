@@ -396,31 +396,24 @@ class SiteSelectForm(forms.Form):
     site = forms.ModelChoiceField(queryset=Site.objects.all())
 
 
-class SubscriptionForm(forms.Form):
-    site = forms.ModelChoiceField(queryset=Site.objects.all())
-    customer_profile = forms.ModelChoiceField(queryset=None)
-    subscription_id = forms.CharField(max_length=30)
-    transaction_id = forms.CharField(max_length=30)
-    offer = forms.ModelChoiceField(queryset=None)
-    start_date = forms.DateTimeField(required=False, widget=forms.DateTimeInput(
-        attrs={
-            'placeholder': _('Add Date & Time'),
-            'class': 'datepicker'
-            }
-        ))
+class SubscriptionForm(forms.ModelForm):
+
+    class Meta:
+        model = Subscription
+        fields = ['site', 'gateway_id', 'status']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if 'site' in self.initial:
-            site = self.initial['site']
-        
-        if 'site' in self.data:
-            site = self.data['site']
+        if 'site' not in self.initial or 'site' not in self.data:
+            raise KeyError("site needs to be inluded in either initial or data attributes")
+
+        site = self.initial.get('site') if self.initial.get('site', None) else self.data['site']
             
         self.fields['site'].widget = forms.HiddenInput()
         self.fields['customer_profile'].queryset = CustomerProfile.objects.filter(site=site).order_by('user__username').select_related('user')
         self.fields['offer'].queryset = Offer.objects.filter(site=site).order_by('name')
+
 
 class SubscriptionAddPaymentForm(forms.ModelForm):
     

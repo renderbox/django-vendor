@@ -274,12 +274,14 @@ class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class AdminSubscriptionCreateView(LoginRequiredMixin, TemplateView):
+class AdminSubscriptionCreateView(LoginRequiredMixin, ModelFormMixin, CreateView):
     '''
     Gets all Customer Profile information for quick lookup and management
     '''
     template_name = 'vendor/manage/subscription_create.html'
     success_url = reverse_lazy('vendor_admin:manager-subscription-create')
+    model = Subscription
+    form_class = SubscriptionForm
 
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -300,60 +302,9 @@ class AdminSubscriptionCreateView(LoginRequiredMixin, TemplateView):
 
         return render(request, self.template_name, context)
 
-    def post(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        
-        subscription_form = SubscriptionForm(request.POST)
-        context['subscription_form'] = subscription_form
-
-        if not subscription_form.is_valid():
-            return render(request, self.template_name, context)
-        
-        offer = subscription_form.cleaned_data['offer']
-        profile = subscription_form.cleaned_data['customer_profile']
-        transaction_id = subscription_form.cleaned_data['transaction_id']
-        subscription_id = subscription_form.cleaned_data['subscription_id']
-        start_date = subscription_form.cleaned_data['start_date'] if subscription_form.cleaned_data['start_date'] else timezone.now()
-        
-        invoice = profile.get_cart_or_checkout_cart()
-        invoice.empty_cart()
-        invoice.status = InvoiceStatus.COMPLETE
-        invoice.add_offer(offer)
-        
-        try:
-            with transaction.atomic():
-
-                subscription = Subscription.objects.create(
-                    profile=profile,
-                    status=SubscriptionStatus.ACTIVE,
-                    gateway_id=subscription_id
-                )
-
-                payment = Payment.objects.create(
-                    invoice=invoice,
-                    profile=profile,
-                    transaction=transaction_id,
-                    success=True,
-                    status=PurchaseStatus.SETTLED,
-                    amount=invoice.total,
-                    subscription=subscription
-                )
-
-                if payment.success and payment.status == PurchaseStatus.SETTLED:
-                    receipt = Receipt.objects.create(
-                        transaction=transaction_id,
-                        order_item=invoice.order_items.first(),
-                        profile=profile,
-                        start_date=get_subscription_start_date(offer, profile, start_date),
-                        end_date=get_payment_scheduled_end_date(offer, start_date),
-                        subscription=subscription
-                    )
-
-            messages.info(request, _("Subscription Created"))
-
-        except (IntegrityError, DatabaseError, Exception) as exce:
-            logger.error(f"AdminSubscriptionCreateView error: {exce}")
-            messages.error(request, "failed create subscription")
+    def form_valid(self, form):
+        subscription = subscription_form.save(commit=False)
+        subscription.save()
 
         return redirect(self.success_url)
 
@@ -379,6 +330,7 @@ class AdminSubscriptionAddPaymentView(LoginRequiredMixin, FormMixin, TemplateVie
     def form_valid(self, form):
         payment = form.save(commit=False)
         offer = payment.subscription.get_offer()
+
         invoice = payment.profile.get_cart_or_checkout_cart()
         invoice.empty_cart()
         invoice.status = InvoiceStatus.COMPLETE
@@ -404,7 +356,7 @@ class AdminSubscriptionAddPaymentView(LoginRequiredMixin, FormMixin, TemplateVie
 
         except (IntegrityError, DatabaseError, Exception) as exce:
             logger.error(f"AdminSubscriptionCreateView error: {exce}")
-            messages.error(request, "failed create subscription")
+            messages.error(request, "failed to add payment to subscription")
 
         return request.META.get('HTTP_REFERER', self.success_url)
 
