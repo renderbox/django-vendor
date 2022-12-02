@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-28 22:55+0000\n"
+"POT-Creation-Date: 2022-12-02 19:51+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,13 +18,29 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: api/v1/stripe/views.py:33
+#: api/v1/stripe/views.py:36
 msgid "Invoice Paid"
 msgstr "請求書支払い済み"
 
-#: api/v1/stripe/views.py:34
+#: api/v1/stripe/views.py:37
 msgid "Invoice Payment Failed"
 msgstr "請求書の支払いに失敗しました"
+
+#: api/v1/stripe/views.py:38
+msgid "Invoice Payment Succeeded"
+msgstr "請求書の支払いが成功しました"
+
+#: api/v1/stripe/views.py:39
+msgid "Payment Succeeded"
+msgstr "支払いが成功しました"
+
+#: api/v1/stripe/views.py:40
+msgid "Charge Succeeded"
+msgstr "充電成功"
+
+#: api/v1/stripe/views.py:41
+msgid "Source Expired"
+msgstr "ソース期限切れ"
 
 #: api/v1/views.py:54
 msgid "Offer does not exist or is unavailable"
@@ -56,7 +72,9 @@ msgstr "サブスクリプションがキャンセルされました"
 msgid ""
 "You can only cancel subscription if you are on trial or there has been at "
 "least one settled payment."
-msgstr "サブスクリプションをキャンセルできるのは、試用中か、少なくとも 1 回の決済が完了している場合のみです。"
+msgstr ""
+"サブスクリプションをキャンセルできるのは、試用中か、少なくとも 1 回の決済が完"
+"了している場合のみです。"
 
 #: api/v1/views.py:138
 msgid "Customer has no longer access to Product"
@@ -105,15 +123,15 @@ msgstr "プロモーションコードプロセッサ"
 msgid "USD Dollars"
 msgstr "米ドル"
 
-#: forms.py:31
+#: forms.py:32
 msgid "Purchase Price"
 msgstr "購入金額"
 
-#: forms.py:32
+#: forms.py:33
 msgid "Free"
 msgstr "自由"
 
-#: forms.py:44 templates/vendor/invoice_history_detail.html:14
+#: forms.py:45 templates/vendor/invoice_history_detail.html:14
 #: templates/vendor/manage/invoice_detail.html:14
 #: templates/vendor/manage/offers.html:25
 #: templates/vendor/purchase_detail.html:27
@@ -121,182 +139,186 @@ msgstr "自由"
 msgid "Price"
 msgstr "価格"
 
-#: forms.py:62
+#: forms.py:63
 msgid "Available Products:"
 msgstr "利用可能な製品："
 
-#: forms.py:75
+#: forms.py:76
 msgid "Available to Purchase"
 msgstr "購入可能"
 
-#: forms.py:86
+#: forms.py:87
 msgid "Bundle: "
 msgstr "バンドル："
 
-#: forms.py:91
+#: forms.py:92
 msgid "Invalid term details for subscription"
 msgstr "サブスクリプションの期間の詳細が無効です"
 
-#: forms.py:106
+#: forms.py:108
 msgid "Enter First Name"
 msgstr "名を入力して"
 
-#: forms.py:107
+#: forms.py:109
 msgid "Enter Last Name"
 msgstr "姓を入力して"
 
-#: forms.py:108
+#: forms.py:110
 msgid "Billing Country/Region"
 msgstr "請求先の国/地域"
 
-#: forms.py:110
+#: forms.py:112
 msgid "Enter Address"
 msgstr "住所を入力してください"
 
-#: forms.py:111
+#: forms.py:113
 msgid "Enter Apt, Suite, Unit, Building, Floor, etc."
 msgstr "アパート、スイート、ユニット、建物、フロアなどを入力してください"
 
-#: forms.py:112
+#: forms.py:114
 msgid "Enter State"
 msgstr "州に入る"
 
-#: forms.py:113
+#: forms.py:115
 msgid "Enter City"
 msgstr "市に入る"
 
-#: forms.py:116
+#: forms.py:118
 msgid "Zip Code"
 msgstr "郵便番号"
 
-#: forms.py:117
+#: forms.py:119
 msgid "Enter Zip"
 msgstr "郵便番号を入力"
 
-#: forms.py:126
+#: forms.py:129
 msgid "Email Address"
 msgstr "電子メールアドレス"
 
-#: forms.py:127 forms.py:153 models/address.py:48
+#: forms.py:130 forms.py:156 models/address.py:48
 msgid "State"
 msgstr "状態"
 
-#: forms.py:137
+#: forms.py:140
 msgid "Enter Email Address"
 msgstr "メールアドレスを入力して"
 
-#: forms.py:138 forms.py:163
+#: forms.py:141 forms.py:166
 msgid "Select State"
 msgstr "州を選択"
 
-#: forms.py:146 forms.py:171
+#: forms.py:149 forms.py:174
 msgid "This field is required."
 msgstr "この項目は必須です。"
 
-#: forms.py:152
+#: forms.py:155
 msgid "Billing address is the same as shipping address"
 msgstr "請求先住所は配送先住所と同じです"
 
-#: forms.py:248
+#: forms.py:251
 msgid "The credit card number is invalid"
 msgstr "クレジットカード番号が無効です"
 
-#: forms.py:293
+#: forms.py:296
 msgid "Payment Type"
 msgstr "支払いタイプ"
 
-#: forms.py:297 models/payment.py:125
+#: forms.py:300 models/payment.py:125
 #: templates/vendor/manage/receipt_detail.html:82
-#: templates/vendor/manage/subscription_detail.html:100
+#: templates/vendor/manage/subscription_detail.html:103
 msgid "Name on Card"
 msgstr "カードの名前"
 
-#: forms.py:298
+#: forms.py:301
 msgid "Credit Card Number"
 msgstr "クレジットカード番号"
 
-#: forms.py:299
+#: forms.py:302
 msgid "Expiration Month"
 msgstr "有効期限月"
 
-#: forms.py:300
+#: forms.py:303
 msgid "Expiration Year"
 msgstr "有効期限"
 
-#: forms.py:301
+#: forms.py:304
 msgid "CVV Number"
 msgstr "CVV番号"
 
-#: forms.py:301
+#: forms.py:304
 msgid "Enter CVV"
 msgstr "CVVを入力して"
 
-#: forms.py:308
+#: forms.py:311
 msgid "Enter Name on Card"
 msgstr "カードに名前を入力"
 
-#: forms.py:325
+#: forms.py:328
 msgid "You must select a valid expiration month"
 msgstr "有効な有効期限を選択する必要があります"
 
-#: forms.py:333
+#: forms.py:336
 msgid "You must select a valid expiration year"
 msgstr "有効な有効期限を選択する必要があります"
 
-#: forms.py:341
+#: forms.py:344
 msgid "CVV must be all digits"
 msgstr "CVVはすべて数字である必要があります"
 
-#: forms.py:354
+#: forms.py:357
 msgid "The expiration date you entered is in the past."
 msgstr "入力した有効期限は過去のものです。"
 
-#: forms.py:355
+#: forms.py:358
 msgid "Check expiration"
 msgstr "有効期限を確認してください"
 
-#: forms.py:361 forms.py:376 models/offer.py:50 models/price.py:15
+#: forms.py:364 forms.py:380 models/offer.py:50 models/price.py:15
 #: models/receipt.py:21 templates/vendor/manage/offers.html:20
 #: templates/vendor/manage/profile_detail.html:274
-#: templates/vendor/manage/receipt_list.html:21
+#: templates/vendor/manage/receipt_list.html:25
+#: templates/vendor/manage/subscription_detail.html:232
+#: templates/vendor/manage/subscription_detail.html:313
 #: templates/vendor/purchase_detail.html:31
 msgid "Start Date"
 msgstr "開始日"
 
-#: forms.py:362 forms.py:377 models/offer.py:51 models/price.py:16
+#: forms.py:365 forms.py:381 models/offer.py:51 models/price.py:16
 #: models/receipt.py:22 templates/vendor/manage/offers.html:21
 #: templates/vendor/manage/profile_detail.html:275
-#: templates/vendor/manage/receipt_list.html:22
+#: templates/vendor/manage/receipt_list.html:26
+#: templates/vendor/manage/subscription_detail.html:233
+#: templates/vendor/manage/subscription_detail.html:314
 #: templates/vendor/purchase_detail.html:35
 msgid "End Date"
 msgstr "終了日"
 
-#: forms.py:370 forms.py:385
+#: forms.py:373 forms.py:389
 msgid "End Date cannot be before Start Date"
 msgstr "あなたはわれあなたのつにこのできました。"
 
-#: forms.py:412
+#: forms.py:472
 msgid "API ID"
 msgstr "API ID"
 
-#: forms.py:413
+#: forms.py:473
 msgid "Transaction Key"
 msgstr "トランザクションキー"
 
-#: forms.py:414
+#: forms.py:474
 msgid "Signature ID"
 msgstr "署名ID"
 
-#: forms.py:430
+#: forms.py:490
 msgid "Publishable Client Key"
 msgstr "公開可能なクライアント キー"
 
-#: forms.py:431
+#: forms.py:491
 msgid "Secret Server Key"
 msgstr "シークレット サーバー キー"
 
 #: models/address.py:39 models/invoice.py:31 models/payment.py:114
-#: models/profile.py:28 models/receipt.py:18 models/subscription.py:35
+#: models/profile.py:28 models/receipt.py:18 models/subscription.py:36
 msgid "UUID"
 msgstr "UUID"
 
@@ -356,6 +378,7 @@ msgstr "ユーザー定義可能なSKUフィールド"
 #: templates/vendor/manage/offers.html:19
 #: templates/vendor/manage/profile_detail.html:17
 #: templates/vendor/manage/profile_detail.html:273
+#: templates/vendor/manage/subscription_detail.html:231
 #: templates/vendor/purchase_list.html:17
 msgid "Name"
 msgstr "名前"
@@ -377,7 +400,7 @@ msgid "Eg: {'call out': 'The ultimate product'}"
 msgstr "例：{'call out'： '究極の製品'}"
 
 #: models/base.py:84 models/offer.py:60 models/profile.py:32
-#: models/receipt.py:26 models/subscription.py:40
+#: models/receipt.py:26 models/subscription.py:41
 msgid "Meta"
 msgstr "メタ"
 
@@ -402,7 +425,8 @@ msgid "Complete"
 msgstr "コンプリート"
 
 #: models/choice.py:20 models/payment.py:128 models/receipt.py:25
-#: templates/vendor/manage/receipt_list.html:19
+#: templates/vendor/manage/receipt_list.html:23
+#: templates/vendor/manage/subscription_create.html:18
 msgid "Subscription"
 msgstr "サブスクリプション"
 
@@ -1674,13 +1698,16 @@ msgstr "ウィスコンシン"
 msgid "Wyoming"
 msgstr "ワイオミング"
 
-#: models/invoice.py:34 models/payment.py:127 models/subscription.py:39
+#: models/invoice.py:34 models/payment.py:127 models/subscription.py:40
 #: templates/vendor/invoice_list.html:20
 #: templates/vendor/manage/dashboard.html:109
 #: templates/vendor/manage/invoice_list.html:20
 #: templates/vendor/manage/profile_detail.html:222
 #: templates/vendor/manage/profile_detail.html:276
-#: templates/vendor/manage/receipt_list.html:23
+#: templates/vendor/manage/receipt_list.html:27
+#: templates/vendor/manage/subscription_detail.html:180
+#: templates/vendor/manage/subscription_detail.html:234
+#: templates/vendor/manage/subscription_detail.html:280
 #: templates/vendor/purchase_detail.html:39
 #: templates/vendor/purchase_list.html:19
 msgid "Status"
@@ -1704,6 +1731,7 @@ msgstr "注文日"
 #: templates/vendor/manage/invoice_list.html:22
 #: templates/vendor/manage/profile_detail.html:226
 #: templates/vendor/manage/profile_list.html:51
+#: templates/vendor/manage/subscription_detail.html:184
 #: templates/vendor/purchase_list.html:21
 msgid "Currency"
 msgstr "通貨"
@@ -1721,18 +1749,19 @@ msgstr "請求書({self.created:%Y-%m-%d %H:%M})"
 msgid "{self.profile.user.username} Invoice ({self.created:%Y-%m-%d %H:%M})"
 msgstr "{self.profile.user.username}請求書({self.created:%Y-%m-%d %H:%M})"
 
-#: models/invoice.py:298 models/payment.py:115
+#: models/invoice.py:314 models/payment.py:115
+#: templates/vendor/manage/subscription_detail.html:276
 #: templates/vendor/payment_detail.html:6
 msgid "Invoice"
 msgstr "請求書"
 
-#: models/invoice.py:299 models/price.py:12 models/wishlist.py:31
+#: models/invoice.py:315 models/price.py:12 models/wishlist.py:31
 #: templates/vendor/manage/offer.html:13
 #: templates/vendor/manage/profile_detail.html:163
 msgid "Offer"
 msgstr "提供"
 
-#: models/invoice.py:300 templates/vendor/checkout.html:185
+#: models/invoice.py:316 templates/vendor/checkout.html:185
 #: templates/vendor/invoice_history_detail.html:15
 #: templates/vendor/manage/invoice_detail.html:15
 #: templates/vendor/orderitem_list.html:19
@@ -1817,6 +1846,7 @@ msgid "Scheduled"
 msgstr "予定"
 
 #: models/payment.py:116 templates/vendor/manage/profile_detail.html:221
+#: templates/vendor/manage/subscription_detail.html:179
 msgid "Date Created"
 msgstr "作成日"
 
@@ -1834,10 +1864,12 @@ msgstr "支払いプロバイダー"
 
 #: models/payment.py:120 templates/vendor/manage/payment_list.html:19
 #: templates/vendor/manage/profile_detail.html:247
+#: templates/vendor/manage/subscription_detail.html:205
+#: templates/vendor/manage/subscription_detail.html:279
 msgid "Amount"
 msgstr "量"
 
-#: models/payment.py:121 models/receipt.py:19 models/subscription.py:37
+#: models/payment.py:121 models/receipt.py:19 models/subscription.py:38
 #: models/wishlist.py:12
 msgid "Purchase Profile"
 msgstr "購入プロファイル"
@@ -1897,14 +1929,17 @@ msgstr "注文アイテム"
 #: templates/vendor/manage/profile_detail.html:272
 #: templates/vendor/manage/receipt_detail.html:19
 #: templates/vendor/manage/subscription_detail.html:20
+#: templates/vendor/manage/subscription_detail.html:204
+#: templates/vendor/manage/subscription_detail.html:230
+#: templates/vendor/manage/subscription_detail.html:277
 msgid "Transaction"
 msgstr "トランザクション"
 
-#: models/subscription.py:36
+#: models/subscription.py:37
 msgid "Subscription Gateway ID"
 msgstr "サブスクリプション ゲートウェイ ID"
 
-#: models/subscription.py:38 templates/vendor/manage/receipt_detail.html:25
+#: models/subscription.py:39 templates/vendor/manage/receipt_detail.html:25
 #: templates/vendor/manage/subscription_detail.html:26
 msgid "Auto Renew"
 msgstr "自動更新"
@@ -1926,8 +1961,8 @@ msgid "Wishlist"
 msgstr "ウィッシュリスト"
 
 #: templates/vendor/address_detail.html:11
-#: templates/vendor/manage/subscription_detail.html:139
-#: templates/vendor/manage/subscription_detail.html:156
+#: templates/vendor/manage/subscription_detail.html:142
+#: templates/vendor/manage/subscription_detail.html:160
 msgid "Update"
 msgstr "更新"
 
@@ -1945,7 +1980,7 @@ msgstr "継続する"
 
 #: templates/vendor/checkout.html:52
 #: templates/vendor/manage/receipt_detail.html:65
-#: templates/vendor/manage/subscription_detail.html:83
+#: templates/vendor/manage/subscription_detail.html:86
 msgid "Billing"
 msgstr "請求"
 
@@ -1982,6 +2017,7 @@ msgstr "単価"
 #: templates/vendor/invoice_history_detail.html:32
 #: templates/vendor/manage/invoice_detail.html:34
 #: templates/vendor/manage/profile_detail.html:223
+#: templates/vendor/manage/subscription_detail.html:181
 msgid "Subtotal"
 msgstr "小計"
 
@@ -2007,6 +2043,8 @@ msgid "Your credit card will be billed on "
 msgstr "クレジットカードに請求されます"
 
 #: templates/vendor/integration_form.html:14
+#: templates/vendor/manage/subscription_add_payment.html:15
+#: templates/vendor/manage/subscription_create.html:23
 msgid "Apply"
 msgstr "申し込み"
 
@@ -2082,6 +2120,11 @@ msgstr "注文詳細"
 #: templates/vendor/manage/profile_detail.html:220
 #: templates/vendor/manage/profile_detail.html:245
 #: templates/vendor/manage/profile_detail.html:271
+#: templates/vendor/manage/subscription_detail.html:178
+#: templates/vendor/manage/subscription_detail.html:203
+#: templates/vendor/manage/subscription_detail.html:229
+#: templates/vendor/manage/subscription_detail.html:275
+#: templates/vendor/manage/subscription_detail.html:311
 #: templates/vendor/purchase_list.html:16
 msgid "#"
 msgstr "＃"
@@ -2097,7 +2140,8 @@ msgstr "項目"
 #: templates/vendor/manage/invoice_detail.html:16
 #: templates/vendor/manage/invoice_list.html:23
 #: templates/vendor/manage/profile_detail.html:225
-#: templates/vendor/manage/receipt_list.html:24
+#: templates/vendor/manage/receipt_list.html:28
+#: templates/vendor/manage/subscription_detail.html:183
 #: templates/vendor/purchase_list.html:22
 msgid "Total"
 msgstr "合計"
@@ -2122,7 +2166,7 @@ msgstr "日付"
 #: templates/vendor/invoice_list.html:40
 #: templates/vendor/manage/dashboard.html:129
 #: templates/vendor/manage/invoice_list.html:40
-#: templates/vendor/manage/receipt_list.html:45
+#: templates/vendor/manage/receipt_list.html:49
 msgid "No Orders"
 msgstr "注文なし"
 
@@ -2183,6 +2227,7 @@ msgstr "オファーリスト"
 #: templates/vendor/manage/profile_detail.html:97
 #: templates/vendor/manage/profile_detail.html:135
 #: templates/vendor/manage/profile_detail.html:277
+#: templates/vendor/manage/subscription_detail.html:235
 #: templates/vendor/purchase_detail.html:64
 msgid "Actions"
 msgstr "行動"
@@ -2208,7 +2253,7 @@ msgid "Invoice ID"
 msgstr "請求書ID"
 
 #: templates/vendor/manage/payment_list.html:20
-#: templates/vendor/manage/receipt_list.html:20
+#: templates/vendor/manage/receipt_list.html:24
 msgid "Profile"
 msgstr "プロフィール"
 
@@ -2218,8 +2263,8 @@ msgstr "支払いなし"
 
 #: templates/vendor/manage/processor_site_config.html:11
 #: templates/vendor/manage/profile_detail.html:200
-#: templates/vendor/manage/subscription_detail.html:141
-#: templates/vendor/manage/subscription_detail.html:158
+#: templates/vendor/manage/subscription_detail.html:144
+#: templates/vendor/manage/subscription_detail.html:162
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -2340,6 +2385,7 @@ msgstr "保存されたアドレス"
 
 #: templates/vendor/manage/profile_detail.html:70
 #: templates/vendor/manage/profile_detail.html:291
+#: templates/vendor/manage/subscription_detail.html:249
 msgid "TBD"
 msgstr "決定すべき未定"
 
@@ -2372,32 +2418,41 @@ msgid "Renew"
 msgstr "更新"
 
 #: templates/vendor/manage/profile_detail.html:216
+#: templates/vendor/manage/subscription_detail.html:172
 msgid "Invoices"
 msgstr "請求書"
 
 #: templates/vendor/manage/profile_detail.html:224
+#: templates/vendor/manage/subscription_detail.html:182
 msgid "Tax"
 msgstr "税金"
 
 #: templates/vendor/manage/profile_detail.html:244
+#: templates/vendor/manage/subscription_detail.html:202
+#: templates/vendor/manage/subscription_detail.html:269
 msgid "Payments"
 msgstr "支払い"
 
 #: templates/vendor/manage/profile_detail.html:248
+#: templates/vendor/manage/subscription_detail.html:206
 msgid "Payee"
 msgstr "受取人"
 
 #: templates/vendor/manage/profile_detail.html:249
 #: templates/vendor/manage/receipt_detail.html:86
-#: templates/vendor/manage/subscription_detail.html:104
+#: templates/vendor/manage/subscription_detail.html:107
+#: templates/vendor/manage/subscription_detail.html:207
 msgid "Account"
 msgstr "アカウント"
 
 #: templates/vendor/manage/profile_detail.html:250
+#: templates/vendor/manage/subscription_detail.html:208
 msgid "Success"
 msgstr "成功"
 
 #: templates/vendor/manage/profile_detail.html:270
+#: templates/vendor/manage/subscription_detail.html:228
+#: templates/vendor/manage/subscription_detail.html:305
 msgid "Receipts"
 msgstr "領収書"
 
@@ -2482,28 +2537,28 @@ msgid "Ends On"
 msgstr "終了"
 
 #: templates/vendor/manage/receipt_detail.html:70
-#: templates/vendor/manage/subscription_detail.html:88
+#: templates/vendor/manage/subscription_detail.html:91
 msgid "Customer Name"
 msgstr "顧客名"
 
 #: templates/vendor/manage/receipt_detail.html:74
-#: templates/vendor/manage/subscription_detail.html:92
+#: templates/vendor/manage/subscription_detail.html:95
 msgid "Customer Last Name"
 msgstr "顧客の姓"
 
 #: templates/vendor/manage/receipt_detail.html:78
-#: templates/vendor/manage/subscription_detail.html:96
+#: templates/vendor/manage/subscription_detail.html:99
 msgid "Customer E-Mail"
 msgstr "顧客の電子メール"
 
 #: templates/vendor/manage/receipt_detail.html:90
-#: templates/vendor/manage/subscription_detail.html:108
+#: templates/vendor/manage/subscription_detail.html:111
 msgid "Billing Address:"
 msgstr "請求先住所："
 
 #: templates/vendor/manage/receipt_detail.html:94
 #: templates/vendor/manage/subscription_detail.html:62
-#: templates/vendor/manage/subscription_detail.html:112
+#: templates/vendor/manage/subscription_detail.html:115
 msgid "Actions:"
 msgstr "行動："
 
@@ -2521,9 +2576,33 @@ msgstr "サブスクリプションをキャンセルする"
 msgid "Customers subscriptions"
 msgstr "顧客サブスクリプション"
 
-#: templates/vendor/manage/receipt_list.html:18
+#: templates/vendor/manage/receipt_list.html:14
+msgid "Create Subscription"
+msgstr "サブスクリプションの作成"
+
+#: templates/vendor/manage/receipt_list.html:22
 msgid "Subscription ID"
 msgstr "サブスクリプションID"
+
+#: templates/vendor/manage/subscription_add_payment.html:6
+msgid "Admin: Subscription Add Payment"
+msgstr "管理者: サブスクリプション追加支払い"
+
+#: templates/vendor/manage/subscription_add_payment.html:10
+msgid "Add Payments"
+msgstr "支払いを追加"
+
+#: templates/vendor/manage/subscription_add_payment.html:20
+msgid "Add Payment"
+msgstr "支払いを追加"
+
+#: templates/vendor/manage/subscription_create.html:13
+msgid "Subscription Create"
+msgstr "メンバーシップの作成"
+
+#: templates/vendor/manage/subscription_create.html:28
+msgid "Save Subscription"
+msgstr "サブスクリプションを保存"
 
 #: templates/vendor/manage/subscription_detail.html:6
 msgid "Admin: Subscription Detail"
@@ -2537,21 +2616,33 @@ msgstr "サブスクリプションの概要"
 msgid "Renew Subscription"
 msgstr "サブスクリプションの更新"
 
-#: templates/vendor/manage/subscription_detail.html:116
+#: templates/vendor/manage/subscription_detail.html:119
 msgid "Update Card"
 msgstr "カードを更新する"
 
-#: templates/vendor/manage/subscription_detail.html:121
+#: templates/vendor/manage/subscription_detail.html:124
 msgid "Update Address"
 msgstr "住所の更新"
 
-#: templates/vendor/manage/subscription_detail.html:133
+#: templates/vendor/manage/subscription_detail.html:136
 msgid "Update Card Info"
 msgstr "カード情報の更新"
 
-#: templates/vendor/manage/subscription_detail.html:150
+#: templates/vendor/manage/subscription_detail.html:154
 msgid "Update Billing Address"
 msgstr "請求先住所の更新"
+
+#: templates/vendor/manage/subscription_detail.html:278
+msgid "Submitted Date"
+msgstr "提出日"
+
+#: templates/vendor/manage/subscription_detail.html:281
+msgid "Succedded"
+msgstr "成功した"
+
+#: templates/vendor/manage/subscription_detail.html:312
+msgid "transaction"
+msgstr "取引"
 
 #: templates/vendor/orderitem_confirm_delete.html:6
 #, python-format
@@ -2774,60 +2865,72 @@ msgstr "日付"
 msgid "Please add to your cart"
 msgstr "カートに追加してください"
 
-#: views/vendor.py:116 views/vendor.py:158 views/vendor.py:210
+#: views/vendor.py:116 views/vendor.py:158 views/vendor.py:209
 msgid "Cart changed while in checkout process"
 msgstr "チェックアウトプロセス中にカートが変更されました"
 
-#: views/vendor.py:225
+#: views/vendor.py:224
 msgid "The payment gateway did not authorize payment."
 msgstr "支払いゲートウェイは支払いを承認しませんでした。"
 
-#: views/vendor.py:296
+#: views/vendor.py:295
 msgid "Not Found"
 msgstr "見つかりません"
 
-#: views/vendor.py:312
+#: views/vendor.py:311
 msgid "Invalid Card"
 msgstr "無効なカード"
 
-#: views/vendor.py:323
+#: views/vendor.py:319
+msgid "Payment gateway error: {processor.transaction_info.get('errors', '')}"
+msgstr ""
+
+#: views/vendor.py:322
 msgid "Success: Payment Updated"
 msgstr "成功：支払いが更新されました"
 
-#: views/vendor.py:335
+#: views/vendor.py:334
 #, python-brace-format
 msgid "Failed: {address_form.errors}"
 msgstr "失敗：{address_form.errors}"
 
-#: views/vendor.py:337
+#: views/vendor.py:336
 msgid "Success: Address Updated"
 msgstr "成功：アドレスが更新されました"
 
-#: views/vendor.py:360
+#: views/vendor.py:359
 msgid "Shipping Address Updated"
 msgstr "配送先住所が更新されました"
 
-#: views/vendor_admin.py:219
+#: views/vendor_admin.py:229
 msgid "Invalid currency"
 msgstr "通貨が無効です"
 
-#: views/vendor_admin.py:332
+#: views/vendor_admin.py:321
+msgid "Subscription Created"
+msgstr "メンバーシップが作成されました"
+
+#: views/vendor_admin.py:395
+msgid "Payment Added to Subscription"
+msgstr "サブスクリプションに追加された支払い"
+
+#: views/vendor_admin.py:473
 msgid "Subscription Renewed"
 msgstr "サブスクリプションが更新されました"
 
-#: views/vendor_admin.py:346
+#: views/vendor_admin.py:487
 msgid "Payments with no Receipts"
 msgstr "領収書のない支払い"
 
-#: views/vendor_admin.py:360
+#: views/vendor_admin.py:501
 msgid "Payments with no Order Items"
 msgstr "注文アイテムのない支払い"
 
-#: views/vendor_admin.py:433
+#: views/vendor_admin.py:574
 msgid "AuthorizeNet Integration"
 msgstr "AuthorizeNet 統合"
 
-#: views/vendor_admin.py:454
+#: views/vendor_admin.py:595
 msgid "Stripe Integration"
 msgstr "Stripe 統合"
 
