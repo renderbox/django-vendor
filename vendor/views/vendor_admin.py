@@ -269,10 +269,9 @@ class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
         context['payment_form'] = CreditCardForm(
             initial={'payment_type': PaymentTypes.CREDIT_CARD}
         )
-        if payment.billing_address:
+        if payment and payment.billing_address:
             context['billing_form'] = AddressForm(instance=payment.billing_address)
 
-        context['invoices'] = subscription.profile.invoices.order_by('-created')
         context['payments'] = subscription.payments.order_by('-submitted_date')
         context['receipts'] = subscription.receipts.order_by('-start_date')
 
@@ -351,7 +350,7 @@ class AdminSubscriptionAddPaymentView(LoginRequiredMixin, TemplateView):
 
             return render(request, self.template_name, context)
 
-        context['site_form'] = OfferSiteSelectForm()
+        context['offer_site_form'] = OfferSiteSelectForm()
 
         return render(request, self.template_name, context)
 
@@ -442,6 +441,7 @@ class AdminProfileDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
 
         context['free_offers'] = Offer.objects.filter(prices__cost=0, site=self.object.site)
+        context['invoices'] = self.object.invoices.order_by("-created")
 
         return context
 

@@ -11,12 +11,13 @@
     </div>
     <div class="card-body">
       <form method="get">
-          {{ offer_site_form.site }}
+          {{ offer_site_form.as_p }}
           <button type="submit">Apply</button>
       </form>
       <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
+        <button type="submit">Add Payment</button>
       </form>
     </div>
   </div>

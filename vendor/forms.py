@@ -404,6 +404,8 @@ class OfferSiteSelectForm(SiteSelectForm):
         if 'site' in self.initial or 'site' in self.data:
             site = self.initial.get('site') if self.initial.get('site', None) else self.data['site']
             self.fields['offer'].queryset = Offer.objects.filter(site=site)
+        else:
+            self.fields['offer'].widget = forms.HiddenInput()
 
 
 class SubscriptionForm(forms.Form):

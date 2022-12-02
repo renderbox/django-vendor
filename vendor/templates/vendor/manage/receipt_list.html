@@ -10,9 +10,13 @@
     <!-- </ol> -->
   </nav>
   <div class="row">
+    <div class="col-3">
+      <a class="btn btn-primary" href="{% url 'vendor_admin:manager-subscription-create' %}">Create Subscription</a>
+    </div>
+  </div>
+  <div class="row">
     <div class="col">
       <table class="table table-striped">
-
         <thead>
           <tr>
             <th scope="col">{% trans 'Subscription ID' %}</th>
