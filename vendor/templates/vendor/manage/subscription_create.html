@@ -20,7 +20,7 @@
         <div class='card-body'>
             <form method="get">
                 {{ site_form.site }}
-                <button type="submit">Apply</button>
+                <button type="submit">{% trans 'Apply' %}</button>
             </form>
             <form method="post">
                 {% csrf_token %}
