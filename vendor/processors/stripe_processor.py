@@ -1215,7 +1215,10 @@ class StripeProcessor(PaymentProcessorBase):
 
         subscription_obj = self.build_subscription(subscription, stripe_payment_method.id)        
         stripe_subscription = self.stripe_create_object(self.stripe.Subscription, subscription_obj)
-        if not stripe_subscription:
+        
+        if not stripe_subscription or stripe_subscription.status == 'incomplete':
+            self.transaction_succeeded = False
+            self.transaction_info['errors'] = "Subscription was not settled"
             return None
 
         if self.invoice.vendor_notes is None:
