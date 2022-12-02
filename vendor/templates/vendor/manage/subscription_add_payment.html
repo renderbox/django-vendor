@@ -10,6 +10,10 @@
       Add Payments
     </div>
     <div class="card-body">
+      <form method="get">
+          {{ offer_site_form.site }}
+          <button type="submit">Apply</button>
+      </form>
       <form method="post">
         {% csrf_token %}
         {{ form.as_p }}

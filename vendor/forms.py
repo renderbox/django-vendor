@@ -11,8 +11,8 @@ from django.utils.translation import gettext_lazy as _
 from integrations.models import Credential
 
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import Address, Offer, Price, offer_term_details_default, CustomerProfile, Payment
-from vendor.models.choice import PaymentTypes, TermType, Country, USAStateChoices
+from vendor.models import Address, Offer, Price, offer_term_details_default, CustomerProfile, Payment, Subscription
+from vendor.models.choice import PaymentTypes, TermType, Country, USAStateChoices, SubscriptionStatus
 from vendor.utils import get_site_from_request
 
 
@@ -395,34 +395,52 @@ class DateTimeRangeForm(forms.Form):
 class SiteSelectForm(forms.Form):
     site = forms.ModelChoiceField(queryset=Site.objects.all())
 
+class OfferSiteSelectForm(SiteSelectForm):
+    offer = forms.ModelChoiceField(queryset=None, required=False)
 
-class SubscriptionForm(forms.ModelForm):
-
-    class Meta:
-        model = Subscription
-        fields = ['site', 'gateway_id', 'status']
-    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if 'site' not in self.initial or 'site' not in self.data:
+        if 'site' in self.initial or 'site' in self.data:
+            site = self.initial.get('site') if self.initial.get('site', None) else self.data['site']
+            self.fields['offer'].queryset = Offer.objects.filter(site=site)
+
+
+class SubscriptionForm(forms.Form):
+    site = forms.ModelChoiceField(queryset=Site.objects.all())
+    profile = forms.ModelChoiceField(queryset=None)
+    subscription_id = forms.CharField(max_length=80)
+    status = forms.ChoiceField(choices=SubscriptionStatus.choices)
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if not ('site' in self.initial or 'site' in self.data):
             raise KeyError("site needs to be inluded in either initial or data attributes")
 
         site = self.initial.get('site') if self.initial.get('site', None) else self.data['site']
             
         self.fields['site'].widget = forms.HiddenInput()
-        self.fields['customer_profile'].queryset = CustomerProfile.objects.filter(site=site).order_by('user__username').select_related('user')
-        self.fields['offer'].queryset = Offer.objects.filter(site=site).order_by('name')
+        self.fields['profile'].queryset = CustomerProfile.objects.filter(site=site).order_by('user__username').select_related('user')
 
 
 class SubscriptionAddPaymentForm(forms.ModelForm):
+    offer = forms.ModelChoiceField(queryset=None)
     
     class Meta:
         model = Payment
         fields = ['subscription', 'profile', 'submitted_date', 'transaction', 'amount', 'success', 'status', 'payee_full_name']
 
     def __init__(self, *args, **kwargs):
+        offers_queryset = None
+        if 'site' in kwargs:
+            offers_queryset = Offer.objects.filter(site=kwargs.get('site'))
+            del(kwargs['site'])
+
         super().__init__(*args, **kwargs)
+
+        self.fields['offer'].widget = forms.HiddenInput()
+        self.fields['offer'].queryset = offers_queryset
         self.fields['submitted_date'].widget.attrs['class'] = 'datepicker'
         self.fields['subscription'].widget = forms.HiddenInput()
         self.fields['profile'].widget = forms.HiddenInput()
