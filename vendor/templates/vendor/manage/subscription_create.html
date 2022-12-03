@@ -1,0 +1,41 @@
+{% extends "vendor/manage/base.html" %}
+{% load i18n %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+{% endblock %}
+
+{% block extra_head_js %}
+{% endblock %}
+
+{% block vendor_content %}
+<nav aria-label="breadcrumb">
+    <h1>{% trans 'Subscription Create' %}</h1>
+</nav>
+<div class="row">
+    <div class='card'>
+        <div class='card-header'>
+            {% trans 'Subscription' %}
+        </div>
+        <div class='card-body'>
+            <form method="get">
+                {{ site_form.site }}
+                <button type="submit">{% trans 'Apply' %}</button>
+            </form>
+            <form method="post">
+                {% csrf_token %}
+                {{ subscription_form.as_p }}
+                <button class="btn btn-primary btn-lg btn-block" type="submit">{% trans 'Save Subscription' %}</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script>
+    $(".datepicker").datepicker();
+</script>
+{% endblock %}

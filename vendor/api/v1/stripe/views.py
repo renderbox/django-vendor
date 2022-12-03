@@ -5,7 +5,7 @@ import stripe
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.http.response import HttpResponse
-from django.db.models import TextChoices
+from django.db.models import TextChoices, Q
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views import View
@@ -94,10 +94,12 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
         site = get_site_from_request(self.request)
 
         if not self.is_valid_post(site):
-            return HttpResponse(status=400)
+            logger.error(f"StripeSubscriptionInvoicePaid error: invalid post")
+            return HttpResponse(status=400, content="StripeSubscriptionInvoicePaid invalid post")
 
         if not self.is_incoming_event_correct_and_recurring(self.event, StripeEvents.INVOICE_PAID):
-            return HttpResponse(status=400)
+            logger.error(f"StripeSubscriptionInvoicePaid error: invalid event: {self.event}")
+            return HttpResponse(status=400, content=f"StripeSubscriptionInvoicePaid error: invalid event: {self.event}")
 
         stripe_invoice = self.event.data.object
         paid_date = timezone.datetime.fromtimestamp(stripe_invoice.status_transitions.paid_at)
@@ -108,7 +110,7 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
             customer_profile = CustomerProfile.objects.get(site=site, user__email=stripe_invoice.customer_email)
         except ObjectDoesNotExist:
             logger.error(f"StripeSubscriptionInvoicePaid error: email: {stripe_invoice.customer_email} does not exist")
-            return HttpResponse(status=400)
+            return HttpResponse(status=400, content=f"StripeSubscriptionInvoicePaid error: email: {stripe_invoice.customer_email} does not exist")
 
         if 'stripe_id' not in customer_profile.meta:
             customer_profile.meta['stripe_id'] = stripe_invoice.customer
@@ -118,13 +120,13 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
             subscription = Subscription.objects.get(meta__stripe_id=stripe_invoice.subscription, profile=customer_profile)
         except ObjectDoesNotExist:
             logger.error(f"StripeSubscriptionInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
-            return HttpResponse(status=400)
+            return HttpResponse(status=400, content=f"StripeSubscriptionInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
 
         offer = subscription.get_offer()
 
         if not offer:
             logger.error(f"StripeSubscriptionInvoicePaid {subscription} has no offer attached")
-            return HttpResponse(status=400)
+            return HttpResponse(status=400, content=f"StripeSubscriptionInvoicePaid {subscription} has no offer attached")
 
         invoice = Invoice.objects.create(
             profile=customer_profile,
@@ -149,10 +151,12 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
         site = get_site_from_request(request)
 
         if not self.is_valid_post(site):
-            return HttpResponse(status=400)
+            logger.error("StripeSubscriptionPaymentFailed error: invalid post")
+            return HttpResponse(status=400, content="StripeSubscriptionPaymentFailed error: invalid post")
 
         if not self.is_incoming_event_correct_and_recurring(self.event, StripeEvents.INVOICE_PAYMENT_FAILED):
-            return HttpResponse(status=400)
+            logger.error(f"StripeSubscriptionPaymentFailed error: invalid event: {self.event}")
+            return HttpResponse(status=400, content=f"StripeSubscriptionPaymentFailed error: invalid event: {self.event}")
 
         stripe_invoice = self.event.data.object
         paid_date = timezone.datetime.fromtimestamp(stripe_invoice.status_transitions.paid_at)
@@ -161,8 +165,8 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
         try:
             customer_profile = CustomerProfile.objects.get(site=site, user__email=stripe_invoice.customer_email)
         except ObjectDoesNotExist:
-            logger.error(f"StripeSubscriptionInvoicePaid error: email: {stripe_invoice.customer_email} does not exist")
-            return HttpResponse(status=400)
+            logger.error(f"StripeSubscriptionPaymentFailed error: email: {stripe_invoice.customer_email} does not exist")
+            return HttpResponse(status=400, content=f"StripeSubscriptionPaymentFailed error: email: {stripe_invoice.customer_email} does not exist")
 
         if 'stripe_id' not in customer_profile.meta:
             customer_profile.meta['stripe_id'] = stripe_invoice.customer
@@ -171,14 +175,14 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
         try:
             subscription = Subscription.objects.get(meta__stripe_id=stripe_invoice.subscription, profile=customer_profile)
         except ObjectDoesNotExist:
-            logger.error(f"StripeSubscriptionInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
-            return HttpResponse(status=400)
+            logger.error(f"StripeSubscriptionPaymentFailed customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
+            return HttpResponse(status=400, content=f"StripeSubscriptionPaymentFailed customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
 
         offer = subscription.get_offer()
 
         if not offer:
-            logger.error(f"StripeSubscriptionInvoicePaid {subscription} has no offer attached")
-            return HttpResponse(status=400)
+            logger.error(f"StripeSubscriptionPaymentFailed {subscription} has no offer attached")
+            return HttpResponse(status=400, content=f"StripeSubscriptionPaymentFailed {subscription} has no offer attached")
 
         invoice = Invoice.objects.create(
             profile=subscription.profile,
@@ -204,18 +208,20 @@ class StripeInvoicePaid(StripeBaseAPI):
         site = get_site_from_request(self.request)
 
         if not self.is_valid_post(site):
-            return HttpResponse(status=400)
+            logger.error("StripeInvoicePaid error: invalid post")
+            return HttpResponse(status=400, content="StripeInvoicePaid error: invalid post")
 
         if not self.is_incoming_event_correct(self.event, StripeEvents.INOVICE_PAYMENT_SUCCEEDED):
-            return HttpResponse(status=400)
+            logger.error(f"StripeInvoicePaid error: invalid event {self.event}")
+            return HttpResponse(status=400, content=f"StripeInvoicePaid error: invalid event {self.event}")
 
         stripe_invoice = self.event.data.object
 
         try:
             customer_profile = CustomerProfile.objects.get(site=site, user__email=stripe_invoice.customer_email)
         except ObjectDoesNotExist:
-            logger.error(f"StripeSubscriptionInvoicePaid error: email: {stripe_invoice.customer_email} does not exist")
-            return HttpResponse(status=400)
+            logger.error(f"StripeInvoicePaid error: email: {stripe_invoice.customer_email} does not exist")
+            return HttpResponse(status=400, content=f"StripeInvoicePaid error: email: {stripe_invoice.customer_email} does not exist")
 
         if 'stripe_id' not in customer_profile.meta:
             customer_profile.meta['stripe_id'] = stripe_invoice.customer
@@ -224,15 +230,15 @@ class StripeInvoicePaid(StripeBaseAPI):
         try:
             subscription = Subscription.objects.get(gateway_id=stripe_invoice.subscription, profile=customer_profile)
         except ObjectDoesNotExist:
-            logger.error(f"StripeSubscriptionInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
-            return HttpResponse(status=400)
+            logger.error(f"StripeInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
+            return HttpResponse(status=400, content=f"StripeInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
 
-        payment = subscription.payments.filter(transaction=None, status=PurchaseStatus.QUEUED).first()
-        receipt = subscription.receipts.filter(transaction=None).first()
+        payment = subscription.payments.filter(Q(transaction="") | Q(transaction=None), status=PurchaseStatus.QUEUED).first()
+        receipt = subscription.receipts.filter(Q(transaction="") | Q(transaction=None)).first()
 
         if not payment and not receipt:
             logger.warning(f"There are no payments to update for subscription: {subscription}. Stripe Invoice: {stripe_invoice.id}")
-            return HttpResponse(status=400)
+            return HttpResponse(status=400, content=f"There are no payments to update for subscription: {subscription}. Stripe Invoice: {stripe_invoice.id}")
         
         payment.transaction = stripe_invoice.charge
         payment.status = PurchaseStatus.SETTLED
@@ -250,10 +256,12 @@ class StripeCardExpiring(StripeBaseAPI):
         site = get_site_from_request(self.request)
 
         if not self.is_valid_post(site):
-            return HttpResponse(status=400)
+            logger.error("StripeCardExpiring error: invalid event post")
+            return HttpResponse(status=400, content="StripeCardExpiring error: invalid event post")
 
         if not self.is_incoming_event_correct(self.event, StripeEvents.SOURCE_EXPIRED):
-            return HttpResponse(status=400)
+            logger.error(f"StripeCardExpiring error: invalid event {self.event}")
+            return HttpResponse(status=400, content=f"StripeCardExpiring error: invalid event {self.event}")
 
         stripe_card = self.event.data.object
 
@@ -263,7 +271,7 @@ class StripeCardExpiring(StripeBaseAPI):
                 customer_profile = CustomerProfile.objects.get(meta__stripe_id=stripe_customer_id)
             except ObjectDoesNotExist:
                 logger.error(f"StripeCardExpiring: stripe id {stripe_customer_id} does not exist for customer in vendor")
-                return HttpResponse(status=200)
+                return HttpResponse(status=200, content=f"StripeCardExpiring: stripe id {stripe_customer_id} does not exist for customer in vendor")
 
             email = customer_profile.user.email
             logger.info(f'StripeCardExpiring: sending customer_source_expiring signal for site {site} and email {email}')
@@ -278,9 +286,11 @@ class StripeSyncObjects(View):
 
     def get(self, request, *args, **kwargs):
         site = get_site_from_request(request)
+        logger.info(f'StripeSyncObjects: started for site: {site}')
 
         processor = StripeProcessor(site)
         processor.sync_stripe_vendor_objects(site)
 
+        logger.info(f'StripeSyncObjects: finished for site: {site}')
         return HttpResponse(status=200)
 

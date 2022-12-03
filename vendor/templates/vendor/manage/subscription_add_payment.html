@@ -1,0 +1,32 @@
+{% extends "vendor/manage/base.html" %}
+{% load i18n %}
+
+{% block vendor_content %}
+
+<h2>{% trans 'Admin: Subscription Add Payment' %}</h2>
+<div class="row">
+  <div class="card">
+    <div class="card-header">
+      {% trans 'Add Payments' %}
+    </div>
+    <div class="card-body">
+      <form method="get">
+          {{ offer_site_form.as_p }}
+          <button type="submit">{% trans 'Apply' %}</button>
+      </form>
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">{% trans 'Add Payment' %}</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script>
+    $(".datepicker").datepicker();
+</script>
+{% endblock %}

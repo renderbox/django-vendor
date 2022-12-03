@@ -3,6 +3,7 @@ from datetime import datetime
 from django import forms
 from django.apps import apps
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.forms import inlineformset_factory
 from django.forms.widgets import SelectDateWidget, TextInput
 from django.utils.translation import gettext_lazy as _
@@ -10,8 +11,8 @@ from django.utils.translation import gettext_lazy as _
 from integrations.models import Credential
 
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import Address, Offer, Price, offer_term_details_default
-from vendor.models.choice import PaymentTypes, TermType, Country, USAStateChoices
+from vendor.models import Address, Offer, Price, offer_term_details_default, CustomerProfile, Payment, Subscription
+from vendor.models.choice import PaymentTypes, TermType, Country, USAStateChoices, SubscriptionStatus
 from vendor.utils import get_site_from_request
 
 
@@ -102,6 +103,7 @@ class AddressForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(AddressForm, self).__init__(*args, **kwargs)
+
         self.fields['name'].hidden = True
         self.fields['first_name'].widget.attrs.update({'placeholder': _('Enter First Name')})
         self.fields['last_name'].widget.attrs.update({'placeholder': _('Enter Last Name')})
@@ -116,6 +118,7 @@ class AddressForm(forms.ModelForm):
         self.fields['postal_code'].label = _("Zip Code")
         self.fields['postal_code'].widget.attrs.update({'placeholder': _('Enter Zip')})
         self.fields['country'].choices = get_available_country_choices()
+        
         if 'instance' in kwargs:
             self.initial['country'] = kwargs['instance'].country
         else:
@@ -372,6 +375,7 @@ class DateRangeForm(forms.Form):
 
         return cleaned_data
 
+
 class DateTimeRangeForm(forms.Form):
     start_date = forms.DateTimeField(required=False, label=_("Start Date"), widget=SelectDateWidget())
     end_date = forms.DateTimeField(required=False, label=_("End Date"), widget=SelectDateWidget())
@@ -386,6 +390,62 @@ class DateTimeRangeForm(forms.Form):
             del(cleaned_data['end_date'])
 
         return cleaned_data
+
+
+class SiteSelectForm(forms.Form):
+    site = forms.ModelChoiceField(queryset=Site.objects.all())
+
+class OfferSiteSelectForm(SiteSelectForm):
+    offer = forms.ModelChoiceField(queryset=None, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if 'site' in self.initial or 'site' in self.data:
+            site = self.initial.get('site', self.data['site'])
+            self.fields['offer'].queryset = Offer.objects.filter(site=site)
+        else:
+            self.fields['offer'].widget = forms.HiddenInput()
+
+
+class SubscriptionForm(forms.Form):
+    site = forms.ModelChoiceField(queryset=Site.objects.all())
+    profile = forms.ModelChoiceField(queryset=None)
+    subscription_id = forms.CharField(max_length=80)
+    status = forms.ChoiceField(choices=SubscriptionStatus.choices)
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if not ('site' in self.initial or 'site' in self.data):
+            raise KeyError("site needs to be inluded in either initial or data attributes")
+
+        site = self.initial.get('site', self.data['site'])
+            
+        self.fields['site'].widget = forms.HiddenInput()
+        self.fields['profile'].queryset = CustomerProfile.objects.filter(site=site).order_by('user__username').select_related('user')
+
+
+class SubscriptionAddPaymentForm(forms.ModelForm):
+    offer = forms.ModelChoiceField(queryset=None)
+    
+    class Meta:
+        model = Payment
+        fields = ['subscription', 'profile', 'submitted_date', 'transaction', 'amount', 'success', 'status', 'payee_full_name']
+
+    def __init__(self, *args, **kwargs):
+        offers_queryset = None
+        if 'site' in kwargs:
+            offers_queryset = Offer.objects.filter(site=kwargs.get('site'))
+            del(kwargs['site'])
+
+        super().__init__(*args, **kwargs)
+
+        self.fields['offer'].widget = forms.HiddenInput()
+        self.fields['offer'].queryset = offers_queryset
+        self.fields['submitted_date'].widget.attrs['class'] = 'datepicker'
+        self.fields['subscription'].widget = forms.HiddenInput()
+        self.fields['profile'].widget = forms.HiddenInput()
 
 ##########
 # From Sets
