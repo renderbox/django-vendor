@@ -226,7 +226,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for invoice in object.invoices.all %}
+      {% for invoice in invoices %}
       <tr class="table-secondary">
         <th>{{invoice.pk }}</th>
         <th>{{invoice.created|date:'Y-m-d' }}</th>
