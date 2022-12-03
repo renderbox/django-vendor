@@ -420,7 +420,7 @@ class SubscriptionForm(forms.Form):
         if not ('site' in self.initial or 'site' in self.data):
             raise KeyError("site needs to be inluded in either initial or data attributes")
 
-        site = self.initial.get('site', self.data['site'])
+        site = self.initial.get('site', self.data.get('site'))
             
         self.fields['site'].widget = forms.HiddenInput()
         self.fields['profile'].queryset = CustomerProfile.objects.filter(site=site).order_by('user__username').select_related('user')

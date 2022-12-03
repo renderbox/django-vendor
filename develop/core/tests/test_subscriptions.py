@@ -83,7 +83,7 @@ class SubscriptionViewTests(TestCase):
         self.assertEquals(response.status_code, 200)
         self.assertNotContains(response, 'gateway_id')
 
-    def test_admin_subscription_create__apply_site_filter_success(self):
+    def test_admin_subscription_create_apply_site_filter_success(self):
         response = self.client.get(f"{self.subscription_create_uri}?site=1")
 
         self.assertEquals(response.status_code, 200)
