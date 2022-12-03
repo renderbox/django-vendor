@@ -73,7 +73,7 @@
             </form>
             {% endif %}
             <div class="align-itmes-center">
-              <a class="btn btn-primary" href="{% url 'vendor_admin:manager-subscription-add-payment' object.uuid object.profile.uuid %}">Add Payment</a>
+              <a class="btn btn-primary" href="{% url 'vendor_admin:manager-subscription-add-payment' object.uuid object.profile.uuid %}">{% trans 'Add Payment' %}</a>
             </div>
           </div>
         </div>
@@ -277,7 +277,7 @@
               <th>{% trans 'Submitted Date' %}</th>
               <th>{% trans 'Amount' %}</th>
               <th>{% trans 'Status' %}</th>
-              <th>{% trans 'Succedded' %}</th>
+              <th>{% trans 'Succeded' %}</th>
               <th></th>
             </tr>
           </thead>

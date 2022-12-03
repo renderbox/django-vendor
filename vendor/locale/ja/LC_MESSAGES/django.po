@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-02 19:51+0000\n"
+"POT-Creation-Date: 2022-12-03 00:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2593,6 +2593,7 @@ msgid "Add Payments"
 msgstr "支払いを追加"
 
 #: templates/vendor/manage/subscription_add_payment.html:20
+#: templates/vendor/manage/subscription_detail.html:76
 msgid "Add Payment"
 msgstr "支払いを追加"
 
@@ -2637,7 +2638,7 @@ msgid "Submitted Date"
 msgstr "提出日"
 
 #: templates/vendor/manage/subscription_detail.html:281
-msgid "Succedded"
+msgid "Succeded"
 msgstr "成功した"
 
 #: templates/vendor/manage/subscription_detail.html:312
@@ -2884,6 +2885,7 @@ msgstr "無効なカード"
 #: views/vendor.py:319
 msgid "Payment gateway error: {processor.transaction_info.get('errors', '')}"
 msgstr ""
+"支払いゲートウェイ エラー: {processor.transaction_info.get('errors', '')}"
 
 #: views/vendor.py:322
 msgid "Success: Payment Updated"
