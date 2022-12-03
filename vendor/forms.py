@@ -402,7 +402,7 @@ class OfferSiteSelectForm(SiteSelectForm):
         super().__init__(*args, **kwargs)
 
         if 'site' in self.initial or 'site' in self.data:
-            site = self.initial.get('site') if self.initial.get('site', None) else self.data['site']
+            site = self.initial.get('site', self.data['site'])
             self.fields['offer'].queryset = Offer.objects.filter(site=site)
         else:
             self.fields['offer'].widget = forms.HiddenInput()
@@ -420,7 +420,7 @@ class SubscriptionForm(forms.Form):
         if not ('site' in self.initial or 'site' in self.data):
             raise KeyError("site needs to be inluded in either initial or data attributes")
 
-        site = self.initial.get('site') if self.initial.get('site', None) else self.data['site']
+        site = self.initial.get('site', self.data['site'])
             
         self.fields['site'].widget = forms.HiddenInput()
         self.fields['profile'].queryset = CustomerProfile.objects.filter(site=site).order_by('user__username').select_related('user')
