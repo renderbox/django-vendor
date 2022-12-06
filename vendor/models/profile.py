@@ -118,6 +118,20 @@ class CustomerProfile(CreateUpdateModelBase):
         """
         return bool(self.filter_products(products).count())
 
+    def has_future_access(self, products):
+        now = timezone.now()
+
+        # Queryset or List of model records
+        if isinstance(products, QuerySet) or isinstance(products, list):
+            return bool(self.receipts.filter(Q(products__in=products),
+                                        Q(deleted=False),
+                                        Q(start_date__gte=now) | Q(start_date=None)).count())
+
+        # Single model record
+        return bool(self.receipts.filter(Q(products=products),
+                                    Q(deleted=False),
+                                    Q(start_date__gte=now) | Q(start_date=None)).count())
+
     def has_owned_product(self, products):
         # Queryset or List of model records
         if isinstance(products, QuerySet) or isinstance(products, list):
