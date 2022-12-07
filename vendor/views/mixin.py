@@ -29,7 +29,7 @@ class ProductRequiredMixin:
         """
         Verify that the current user owns the product.  Checks on all HTTP methods.
         """
-        self.future_access()
+        self.has_future_access()
         if not self.user_has_product():
             return self.handle_no_product()
         return super().dispatch(request, *args, **kwargs)
