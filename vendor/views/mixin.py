@@ -23,11 +23,13 @@ class ProductRequiredMixin:
     product_model = None
     product_redirect = "/"
     product_owned = False
+    future_access = False
 
     def dispatch(self, request, *args, **kwargs):
         """
         Verify that the current user owns the product.  Checks on all HTTP methods.
         """
+        self.has_future_access()
         if not self.user_has_product():
             return self.handle_no_product()
         return super().dispatch(request, *args, **kwargs)
@@ -36,6 +38,8 @@ class ProductRequiredMixin:
         context = super().get_context_data(**kwargs)
         # Variable set by ProductRequiredMixin
         context['product_owned'] = self.product_owned
+        context['future_access'] = self.future_access
+        
         return context
 
     def user_has_product(self):
@@ -49,9 +53,21 @@ class ProductRequiredMixin:
         else:
             products = self.get_product_queryset()
             self.product_owned = self.request.user.customer_profile.filter(
-                site=get_site_from_request(self.request)).get().has_product(products)
+                    site=get_site_from_request(self.request)
+                ).get().has_product(products)
 
         return self.product_owned
+
+    def has_future_access(self):
+        if self.request.user.is_anonymous:
+            self.future_access = False
+        else:
+            products = self.get_product_queryset()
+            self.future_access = self.request.user.customer_profile.filter(
+                    site=get_site_from_request(self.request)
+                ).get().has_future_access(products)
+        
+        return self.future_access
 
     def get_product_queryset(self):
         """
