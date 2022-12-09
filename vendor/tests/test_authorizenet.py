@@ -694,6 +694,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         if active_subscriptions:
             self.processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+            self.processor.payment_info.is_valid()
             self.processor.subscription_update_payment(subscription)
             subscription.refresh_from_db()
             print(f'\ntest_subscription_update_payment\nMessage: {self.processor.transaction_info}\nResponse: {self.processor.transaction_response}\nSubscription ID: {subscription.gateway_id}\n')

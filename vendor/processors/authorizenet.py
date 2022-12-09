@@ -159,9 +159,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Creates and credit card payment type instance form the payment information set.
         """
         creditCard = apicontractsv1.creditCardType()
-        creditCard.cardNumber = self.payment_info.data.get('card_number')
-        creditCard.expirationDate = "-".join([self.payment_info.data.get('expire_year'), self.payment_info.data.get('expire_month')])
-        creditCard.cardCode = str(self.payment_info.data.get('cvv_number'))
+        creditCard.cardNumber = self.payment_info.cleaned_data.get('card_number')
+        creditCard.expirationDate = "-".join([self.payment_info.cleaned_data.get('expire_year'), self.payment_info.cleaned_data.get('expire_month')])
+        creditCard.cardCode = str(self.payment_info.cleaned_data.get('cvv_number'))
         return creditCard
 
     def create_bank_account_payment(self):
@@ -179,7 +179,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         payment = apicontractsv1.paymentType()
         payment.creditCard = self.payment_type_switch[int(
-            self.payment_info.data.get('payment_type'))]()
+            self.payment_info.cleaned_data.get('payment_type'))]()
         return payment
 
     def create_customer_data(self):
@@ -236,19 +236,19 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Creates Billing address to improve security in transaction
         """
         billing_address = api_address_type
-        billing_address.firstName = " ".join(self.payment_info.data.get('full_name', "").split(" ")[:-1])[:50]
-        billing_address.lastName = (self.payment_info.data.get('full_name', "").split(" ")[-1])[:50]
-        billing_address.company = self.billing_address.data.get('billing-company', "")[:50]
-        address_lines = self.billing_address.data.get('billing-address_1', "")
+        billing_address.firstName = " ".join(self.payment_info.cleaned_data.get('full_name', "").split(" ")[:-1])[:50]
+        billing_address.lastName = (self.payment_info.cleaned_data.get('full_name', "").split(" ")[-1])[:50]
+        billing_address.company = self.billing_address.cleaned_data.get('company', "")[:50]
+        address_lines = self.billing_address.cleaned_data.get('address_1', "")
 
-        if self.billing_address.data['billing-address_2']:
-            address_lines += f", {self.billing_address.data['billing-address_2']}"
+        if self.billing_address.cleaned_data.get('address_2'):
+            address_lines += f", {self.billing_address.cleaned_data['address_2']}"
 
         billing_address.address = address_lines
-        billing_address.city = self.billing_address.data.get("billing-locality", "")[:40]
-        billing_address.state = self.billing_address.data.get("billing-state", "")[:40]
-        billing_address.zip = self.billing_address.data.get("billing-postal_code")[:20]
-        country = Country(int(self.billing_address.data.get("billing-country")))
+        billing_address.city = self.billing_address.cleaned_data.get("locality", "")[:40]
+        billing_address.state = self.billing_address.cleaned_data.get("state", "")[:40]
+        billing_address.zip = self.billing_address.cleaned_data.get("postal_code")[:20]
+        country = Country(int(self.billing_address.cleaned_data.get("country")))
         billing_address.country = str(country.name)
         
         return billing_address
