@@ -486,21 +486,21 @@ class StripeProcessor(PaymentProcessorBase):
         return {
             'type': 'card',
             'card': {
-                'number': self.payment_info.data.get('card_number'),
-                'exp_month': self.payment_info.data.get('expire_month'),
-                'exp_year': self.payment_info.data.get('expire_year'),
-                'cvc': self.payment_info.data.get('cvv_number'),
+                'number': self.payment_info.cleaned_data.get('card_number'),
+                'exp_month': self.payment_info.cleaned_data.get('expire_month'),
+                'exp_year': self.payment_info.cleaned_data.get('expire_year'),
+                'cvc': self.payment_info.cleaned_data.get('cvv_number'),
             },
             'billing_details': {
                 'address': {
-                    'line1': self.billing_address.data.get('billing-address_1', None),
-                    'line2': self.billing_address.data.get('billing-address_2', None),
-                    'city': self.billing_address.data.get("billing-locality", ""),
-                    'state': self.billing_address.data.get("billing-state", ""),
-                    'country': Country.names[Country.values.index(int(self.billing_address.data.get("billing-country")))],
-                    'postal_code': self.billing_address.data.get("billing-postal_code")
+                    'line1': self.billing_address.cleaned_data.get('address_1', None),
+                    'line2': self.billing_address.cleaned_data.get('address_2', None),
+                    'city': self.billing_address.cleaned_data.get("locality", ""),
+                    'state': self.billing_address.cleaned_data.get("state", ""),
+                    'country': Country.names[Country.values.index(int(self.billing_address.cleaned_data.get("country")))],
+                    'postal_code': self.billing_address.cleaned_data.get("postal_code")
                 },
-                'name': self.payment_info.data.get('full_name', None),
+                'name': self.payment_info.cleaned_data.get('full_name', None),
                 'email': self.invoice.profile.user.email
             }
         }
