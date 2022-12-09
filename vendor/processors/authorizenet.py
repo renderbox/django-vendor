@@ -938,6 +938,7 @@ def sync_subscriptions(site):
 
         if hasattr(subscription_info.subscription.profile, 'email'):
             email = subscription_info.subscription.profile.email.text
+            logger.info(f"sync_subscriptions subscription id: {subscription_id} subscription name: {subscription_info.subscription.name} for email {email}")
 
             try:
                 customer_profile = CustomerProfile.objects.get(site=site, user__email__iexact=email)
