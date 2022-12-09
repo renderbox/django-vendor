@@ -720,7 +720,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.parse_success()
         
         if self.transaction_succeeded:
-            self.payment.transaction = self.transaction_info['data'].get('trans_id', "")
+            self.payment.transaction = self.transaction_info['data'].get('transId', "")
             self.payment.save()
             self.void_payment(self.payment.transaction)
 
