@@ -3,13 +3,10 @@ from django.conf import settings
 from django import forms
 from django.db.models import TextChoices
 from django.contrib.sites.models import Site
-from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext_lazy as _
 
+from vendor.forms import SiteSelectForm
 from siteconfigs.config import SiteConfigBaseClass
-from siteconfigs.models import SiteConfigModel
-
-from vendor.utils import get_site_from_request
 
 
 class SupportedPaymentProcessor(TextChoices):
@@ -31,8 +28,14 @@ class PaymentProcessorSiteSelectForm(PaymentProcessorForm):
         self.fields['site'].widget = forms.Select(choices=[(site.pk, site.domain) for site in Site.objects.all()])
 
 
+class StripeConnectAccountForm(SiteSelectForm):
+    account_number = forms.CharField(max_length=120)
+
+class VendorSiteComissionForm(SiteSelectForm):
+    comission = forms.IntegerField(min_value=0, max_value=100)
+
 class PaymentProcessorSiteConfig(SiteConfigBaseClass):
-    label = _("Promo Code Processor")
+    label = _("Payment Processor")
     default = {"payment_processor": "base.PaymentProcessorBase"}
     form_class = PaymentProcessorForm
     key = ""
@@ -66,8 +69,8 @@ class PaymentProcessorSiteConfig(SiteConfigBaseClass):
 
 
 class PaymentProcessorSiteSelectSiteConfig(PaymentProcessorSiteConfig):
-    label = _("Promo Code Processor")
-    default = {"payment_processor": "base.PromoProcessorBase"}
+    label = _("Payment Processor")
+    default = {"payment_processor": "base.PaymentProcessorBase"}
     form_class = PaymentProcessorSiteSelectForm
     key = ""
     instance = None
@@ -78,6 +81,21 @@ class PaymentProcessorSiteSelectSiteConfig(PaymentProcessorSiteConfig):
         
         return initial
 
+class StripeConnectAccountConfig(SiteConfigBaseClass):
+    label = _("Stripe Connect Account")
+    default = {'stripe_connect_account': None}
+    form_class = StripeConnectAccountForm
+    key = 'stripe_connect_account'
+    instance = None
+
+
+
+class VendorSiteComissionConfig(SiteConfigBaseClass):
+    label = _("Vendor Site Comission")
+    default = {'comission': None}
+    form_class = VendorSiteComissionForm
+    key = 'comission'
+    instance = None
 
 VENDOR_PRODUCT_MODEL = getattr(settings, "VENDOR_PRODUCT_MODEL", "vendor.Product")
 
@@ -91,3 +109,5 @@ VENDOR_STATE = getattr(settings, "VENDOR_STATE", "DEBUG")
 
 # Encryption settings
 VENDOR_DATA_ENCODER = getattr(settings, "VENDOR_DATA_ENCODER", "vendor.encrypt.cleartext")
+
+

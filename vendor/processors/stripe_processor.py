@@ -1,28 +1,20 @@
 """
 Payment processor for Stripe.
 """
-import django.dispatch
 import json
 import logging
 import stripe
-import uuid
 
 from math import modf
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.utils import timezone
 from vendor.config import DEFAULT_CURRENCY
 from vendor.integrations import StripeIntegration
 from vendor.models import Offer, CustomerProfile
 from vendor.models.choice import (
     Country,
-    SubscriptionStatus,
-    TransactionTypes,
-    PaymentTypes,
     TermType,
     TermDetailUnits,
-    InvoiceStatus,
-    PurchaseStatus
 )
 from vendor.processors.base import PaymentProcessorBase
 
