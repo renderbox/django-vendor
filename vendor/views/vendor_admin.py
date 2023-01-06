@@ -3,32 +3,27 @@ import logging
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.sites.models import Site
 from django.db import IntegrityError, DatabaseError, transaction
 from django.db.models import Count, Q
-from django.shortcuts import redirect, render, get_object_or_404
-from django.urls import reverse, reverse_lazy
-from django.views.generic import View, TemplateView
+from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
+from django.views.generic import TemplateView
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, UpdateView, FormView, ProcessFormView, FormMixin, ModelFormMixin
+from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-from vendor.config import VENDOR_PRODUCT_MODEL, PaymentProcessorSiteConfig,\
-    PaymentProcessorSiteSelectSiteConfig, PaymentProcessorForm, PaymentProcessorSiteSelectForm
+from vendor.config import VENDOR_PRODUCT_MODEL
 
 from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm,\
-    AuthorizeNetIntegrationForm, StripeIntegrationForm, SubscriptionForm,\
-    SiteSelectForm, SubscriptionAddPaymentForm, OfferSiteSelectForm
+    SubscriptionForm, SiteSelectForm, SubscriptionAddPaymentForm, OfferSiteSelectForm
 
-from vendor.integrations import AuthorizeNetIntegration, StripeIntegration
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment, Subscription
-from vendor.models.choice import TermType, PaymentTypes, InvoiceStatus, PurchaseStatus, SubscriptionStatus
+from vendor.models.choice import PaymentTypes, InvoiceStatus, PurchaseStatus
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
 from vendor.processors import get_site_payment_processor
 from vendor.utils import get_subscription_start_date, get_payment_scheduled_end_date
-from siteconfigs.models import SiteConfigModel
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 logger = logging.getLogger(__name__)
@@ -500,107 +495,3 @@ class PaymentWithNoOrderItemsListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['title'] = _("Payments with no Order Items")
         return context
-
-
-class PaymentProcessorSiteConfigsListView(ListView):
-    template_name = 'vendor/manage/processor_site_config_list.html'
-    model = SiteConfigModel
-
-    def get_queryset(self):
-        payment_processor = PaymentProcessorSiteConfig()
-
-        return SiteConfigModel.objects.filter(key=payment_processor.key)
-
-
-class PaymentProcessorSiteFormView(SiteOnRequestFilterMixin, FormView):
-    template_name = 'vendor/manage/processor_site_config.html'
-    form_class = PaymentProcessorForm
-
-    def get_success_url(self):
-        return reverse('vendor_admin:vendor-site-processor')
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-
-        site = get_site_from_request(self.request)
-        processor_config = PaymentProcessorSiteConfig(site)
-        context['form'] = processor_config.get_form()
-
-        return context
-
-    def form_valid(self, form):
-        site = get_site_from_request(self.request)
-        processor_config = PaymentProcessorSiteConfig(site)
-        processor_config.save(form.cleaned_data["payment_processor"], "payment_processor")
-
-        return redirect('vendor_admin:vendor-processor-lists')
-
-
-class PaymentProcessorSiteSelectFormView(FormView):
-    template_name = 'vendor/manage/processor_site_config.html'
-    form_class = PaymentProcessorSiteSelectForm
-
-    def get_success_url(self):
-        return reverse('vendor_admin:processor-lists')
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-
-        if self.kwargs.get('domain'):
-            site = Site.objects.get(domain=self.kwargs.get('domain'))
-            processor_config = PaymentProcessorSiteSelectSiteConfig(site)
-        else:
-            processor_config = PaymentProcessorSiteSelectSiteConfig()
-        context['form'] = processor_config.get_form()
-
-        return context
-
-    def form_valid(self, form):
-        site = Site.objects.get(pk=form.cleaned_data['site'])
-        processor_config = PaymentProcessorSiteSelectSiteConfig(site)
-        processor_config.save(form.cleaned_data["payment_processor"], "payment_processor")
-        
-        return redirect('vendor_admin:vendor-processor-lists')
-
-
-class AuthorizeNetIntegrationView(FormView):
-    template_name = "vendor/integration_form.html"
-    form_class = AuthorizeNetIntegrationForm
-    success_url = reverse_lazy('authorizenet-integration')
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(**kwargs)
-        authorizenet_integration = AuthorizeNetIntegration(get_site_from_request(self.request))
-        context['integration_name'] = _("AuthorizeNet Integration")
-
-        context['form'] = AuthorizeNetIntegrationForm(instance=authorizenet_integration.instance)
-
-        return context
-    
-    def form_valid(self, form):
-        authorizenet_integration = AuthorizeNetIntegration(get_site_from_request(self.request))
-        authorizenet_integration.save(form.cleaned_data)
-
-        return super().form_valid(form)
-
-
-class StripeIntegrationView(FormView):
-    template_name = "vendor/integration_form.html"
-    form_class = StripeIntegrationForm
-    success_url = reverse_lazy('stripe-integration')
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(**kwargs)
-        stripe_integration = StripeIntegration(get_site_from_request(self.request))
-        context['integration_name'] = _("Stripe Integration")
-
-        context['form'] = StripeIntegrationForm(instance=stripe_integration.instance)
-
-        return context
-    
-    def form_valid(self, form):
-        stripe_integration = StripeIntegration(get_site_from_request(self.request))
-        stripe_integration.save(form.cleaned_data)
-
-        return super().form_valid(form)
-

@@ -31,8 +31,8 @@ class PaymentProcessorSiteSelectForm(PaymentProcessorForm):
 class StripeConnectAccountForm(SiteSelectForm):
     account_number = forms.CharField(max_length=120)
 
-class VendorSiteComissionForm(SiteSelectForm):
-    comission = forms.IntegerField(min_value=0, max_value=100)
+class VendorSiteCommissionForm(SiteSelectForm):
+    commission = forms.IntegerField(min_value=0, max_value=100)
 
 class PaymentProcessorSiteConfig(SiteConfigBaseClass):
     label = _("Payment Processor")
@@ -90,11 +90,11 @@ class StripeConnectAccountConfig(SiteConfigBaseClass):
 
 
 
-class VendorSiteComissionConfig(SiteConfigBaseClass):
-    label = _("Vendor Site Comission")
-    default = {'comission': None}
-    form_class = VendorSiteComissionForm
-    key = 'comission'
+class VendorSiteCommissionConfig(SiteConfigBaseClass):
+    label = _("Vendor Site Commission")
+    default = {'commission': None}
+    form_class = VendorSiteCommissionForm
+    key = 'commission'
     instance = None
 
 VENDOR_PRODUCT_MODEL = getattr(settings, "VENDOR_PRODUCT_MODEL", "vendor.Product")

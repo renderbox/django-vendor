@@ -1,6 +1,8 @@
 from django.urls import path
 
 from vendor.views import vendor_admin as admin_views
+from vendor.views import config as config_views
+from vendor.views import integration as integrations_views
 from vendor.views import report as report_views
 
 app_name = "vendor_admin"
@@ -25,13 +27,20 @@ urlpatterns = [
     path('payments/no/receipt/', admin_views.PaymentWithNoReceiptListView.as_view(), name="manager-payment-no-receipt"),
     path('payments/no/orderitems/', admin_views.PaymentWithNoOrderItemsListView.as_view(), name="manager-payment-no-receipt"),
     path("processors/", admin_views.PaymentProcessorSiteConfigsListView.as_view(), name="vendor-processor-lists"),
-    path("processor/site/", admin_views.PaymentProcessorSiteFormView.as_view(), name="vendor-site-processor"),
-    path("processor/new/site/", admin_views.PaymentProcessorSiteSelectFormView.as_view(), name="vendor-new-site-processor"),
-    path("processor/edit/<domain>/site/processors/", admin_views.PaymentProcessorSiteSelectFormView.as_view(), name="vendor-sites-processors"),
+
+    # Reports
+    path('reports/receipts/download/', report_views.ReceiptListCSV.as_view(), name="manager-receipt-download"),
+    path('reports/invoices/download/', report_views.InvoiceListCSV.as_view(), name="manager-invoice-download"),
+
+    # Integrations
     path("authorizenet/integration/", admin_views.AuthorizeNetIntegrationView.as_view(), name="authorizenet-integration"),
     path("stripe/integration/", admin_views.StripeIntegrationView.as_view(), name="stripe-integration"),
 
-    # reports
-    path('reports/receipts/download/', report_views.ReceiptListCSV.as_view(), name="manager-receipt-download"),
-    path('reports/invoices/download/', report_views.InvoiceListCSV.as_view(), name="manager-invoice-download"),
+    # Configs
+    path('configs/stripe/connect/', config_views.InvoiceListCSV.as_view(), name="manager-invoice-download"),
+    path('configs/vendor/commission/', config_views.InvoiceListCSV.as_view(), name="manager-invoice-download"),
+    path("config/processor/site/", admin_views.PaymentProcessorSiteFormView.as_view(), name="vendor-site-processor"),
+    path("config/processor/new/site/", admin_views.PaymentProcessorSiteSelectFormView.as_view(), name="vendor-new-site-processor"),
+    path("config/processor/edit/<domain>/site/processors/", admin_views.PaymentProcessorSiteSelectFormView.as_view(), name="vendor-sites-processors"),
+    
 ]
