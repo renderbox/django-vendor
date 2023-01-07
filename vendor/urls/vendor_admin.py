@@ -26,21 +26,23 @@ urlpatterns = [
     path('product/<uuid:uuid>/renew', admin_views.AdminManualSubscriptionRenewal.as_view(), name="manager-product-renew"),
     path('payments/no/receipt/', admin_views.PaymentWithNoReceiptListView.as_view(), name="manager-payment-no-receipt"),
     path('payments/no/orderitems/', admin_views.PaymentWithNoOrderItemsListView.as_view(), name="manager-payment-no-receipt"),
-    path("processors/", admin_views.PaymentProcessorSiteConfigsListView.as_view(), name="vendor-processor-lists"),
 
     # Reports
     path('reports/receipts/download/', report_views.ReceiptListCSV.as_view(), name="manager-receipt-download"),
     path('reports/invoices/download/', report_views.InvoiceListCSV.as_view(), name="manager-invoice-download"),
 
     # Integrations
-    path("authorizenet/integration/", admin_views.AuthorizeNetIntegrationView.as_view(), name="authorizenet-integration"),
-    path("stripe/integration/", admin_views.StripeIntegrationView.as_view(), name="stripe-integration"),
+    path("authorizenet/integration/", integrations_views.AuthorizeNetIntegrationView.as_view(), name="authorizenet-integration"),
+    path("stripe/integration/", integrations_views.StripeIntegrationView.as_view(), name="stripe-integration"),
 
     # Configs
-    path('configs/stripe/connect/', config_views.InvoiceListCSV.as_view(), name="manager-invoice-download"),
-    path('configs/vendor/commission/', config_views.InvoiceListCSV.as_view(), name="manager-invoice-download"),
-    path("config/processor/site/", admin_views.PaymentProcessorSiteFormView.as_view(), name="vendor-site-processor"),
-    path("config/processor/new/site/", admin_views.PaymentProcessorSiteSelectFormView.as_view(), name="vendor-new-site-processor"),
-    path("config/processor/edit/<domain>/site/processors/", admin_views.PaymentProcessorSiteSelectFormView.as_view(), name="vendor-sites-processors"),
+    path('config/stripe/connect/list/', config_views.StripeConnectAccountCongifListView.as_view(), name="manager-config-stripe-connect-list"),
+    path('config/stripe/connect/create/', config_views.StripeConnectAccountCreateConfigView.as_view(), name="manager-config-stripe-connect-create"),
+    # path('config/stripe/connect/edit/', config_views.StripeConnectAccountConfigView.as_view(), name="manager-config-stripe-connect"),
+    # path('config/vendor/commission/', config_views.InvoiceListCSV.as_view(), name="manager-invoice-download"),
+    path("config/processors/", config_views.PaymentProcessorSiteConfigsListView.as_view(), name="vendor-processor-lists"),
+    path("config/processor/site/", config_views.PaymentProcessorSiteFormView.as_view(), name="vendor-site-processor"),
+    path("config/processor/new/site/", config_views.PaymentProcessorSiteSelectFormView.as_view(), name="vendor-new-site-processor"),
+    path("config/processor/edit/<domain>/site/processors/", config_views.PaymentProcessorSiteSelectFormView.as_view(), name="vendor-sites-processors"),
     
 ]
