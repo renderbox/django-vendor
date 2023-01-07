@@ -14,7 +14,7 @@ from django.views.generic.list import ListView
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-from vendor.config import VENDOR_PRODUCT_MODEL
+from vendor.config import VENDOR_PRODUCT_MODEL, SiteSelectForm
 
 from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm,\
     SubscriptionForm, SiteSelectForm, SubscriptionAddPaymentForm, OfferSiteSelectForm

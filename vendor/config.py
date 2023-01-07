@@ -5,9 +5,10 @@ from django.db.models import TextChoices
 from django.contrib.sites.models import Site
 from django.utils.translation import gettext_lazy as _
 
-from vendor.forms import SiteSelectForm
 from siteconfigs.config import SiteConfigBaseClass
 
+class SiteSelectForm(forms.Form):
+    site = forms.ModelChoiceField(queryset=Site.objects.all())
 
 class SupportedPaymentProcessor(TextChoices):
     PROMO_CODE_BASE = ("base.PaymentProcessorBase", _("Default Processor"))
@@ -28,11 +29,9 @@ class PaymentProcessorSiteSelectForm(PaymentProcessorForm):
         self.fields['site'].widget = forms.Select(choices=[(site.pk, site.domain) for site in Site.objects.all()])
 
 
-class StripeConnectAccountForm(SiteSelectForm):
-    account_number = forms.CharField(max_length=120)
-
 class VendorSiteCommissionForm(SiteSelectForm):
     commission = forms.IntegerField(min_value=0, max_value=100)
+
 
 class PaymentProcessorSiteConfig(SiteConfigBaseClass):
     label = _("Payment Processor")
@@ -81,14 +80,26 @@ class PaymentProcessorSiteSelectSiteConfig(PaymentProcessorSiteConfig):
         
         return initial
 
+
+class StripeConnectAccountForm(SiteSelectForm):
+    account_number = forms.CharField(max_length=120)
+
+
 class StripeConnectAccountConfig(SiteConfigBaseClass):
     label = _("Stripe Connect Account")
     default = {'stripe_connect_account': None}
     form_class = StripeConnectAccountForm
-    key = 'stripe_connect_account'
+    key = ''
     instance = None
 
+    def __init__(self, site=None):
+        
+        if site is None:
+            site = Site.objects.get_current()
 
+        self.key = ".".join([__name__, __class__.__name__])
+        super().__init__(site, self.key)
+        
 
 class VendorSiteCommissionConfig(SiteConfigBaseClass):
     label = _("Vendor Site Commission")
