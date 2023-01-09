@@ -38,11 +38,10 @@ urlpatterns = [
     # Configs
     path('config/stripe/connect/list/', config_views.StripeConnectAccountCongifListView.as_view(), name="manager-config-stripe-connect-list"),
     path('config/stripe/connect/create/', config_views.StripeConnectAccountCreateConfigView.as_view(), name="manager-config-stripe-connect-create"),
-    path('config/stripe/connect/<int:pk>/edit/', config_views.StripeConnectAccountUpdateConfigView.as_view(), name="manager-config-stripe-connect-edit"),
+    path('config/stripe/connect/update/<int:pk>/', config_views.StripeConnectAccountUpdateConfigView.as_view(), name="manager-config-stripe-connect-update"),
     # path('config/vendor/commission/', config_views.InvoiceListCSV.as_view(), name="manager-invoice-download"),
-    path("config/processors/", config_views.PaymentProcessorSiteConfigsListView.as_view(), name="vendor-processor-lists"),
-    path("config/processor/site/", config_views.PaymentProcessorSiteFormView.as_view(), name="vendor-site-processor"),
-    path("config/processor/new/site/", config_views.PaymentProcessorSiteSelectFormView.as_view(), name="vendor-new-site-processor"),
-    path("config/processor/edit/<domain>/site/processors/", config_views.PaymentProcessorSiteSelectFormView.as_view(), name="vendor-sites-processors"),
+    path("config/processor/list/", config_views.PaymentProcessorSiteConfigsListView.as_view(), name="manager-config-processor-list"),
+    path("config/processor/create/", config_views.PaymentProcessorCreateConfigView.as_view(), name="manager-config-processor-create"),
+    path("config/processor/update/<int:pk>", config_views.PaymentProcessorUpdateConfigView.as_view(), name="manager-config-processor-update"),
     
 ]

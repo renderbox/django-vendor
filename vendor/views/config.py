@@ -1,17 +1,18 @@
-from django.utils.translation import gettext_lazy as _
 from django.contrib.sites.models import Site
 from django.views.generic.list import ListView
 from django.urls import reverse
-from vendor.config import PaymentProcessorSiteConfig, PaymentProcessorSiteSelectSiteConfig,\
-    PaymentProcessorForm, PaymentProcessorSiteSelectForm, StripeConnectAccountConfig, StripeConnectAccountForm
-from siteconfigs.models import SiteConfigModel
-from vendor.views.mixin import SiteOnRequestFilterMixin, get_site_from_request
+from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import FormView, UpdateView
-from django.shortcuts import redirect
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+
+from vendor.views.mixin import SiteOnRequestFilterMixin, get_site_from_request
+from vendor.config import PaymentProcessorSiteConfig, PaymentProcessorForm,\
+    StripeConnectAccountConfig, StripeConnectAccountForm
+from siteconfigs.models import SiteConfigModel
+
 
 class PaymentProcessorSiteConfigsListView(ListView):
-    template_name = 'vendor/manage/processor_site_config_list.html'
+    template_name = 'vendor/manage/config_list.html'
     model = SiteConfigModel
 
     def get_queryset(self):
@@ -19,56 +20,83 @@ class PaymentProcessorSiteConfigsListView(ListView):
 
         return SiteConfigModel.objects.filter(key=payment_processor.key)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        processot_config = PaymentProcessorSiteConfig()
 
-class PaymentProcessorSiteFormView(SiteOnRequestFilterMixin, FormView):
-    template_name = 'vendor/manage/processor_site_config.html'
+        context['title'] = 'Payment Processors Configured'
+        context['config_key'] = processot_config.key
+        context['new_url'] = reverse('vendor_admin:manager-config-processor-create')
+
+        return context
+
+
+class PaymentProcessorCreateConfigView(FormView):
+    template_name = 'vendor/manage/config.html'
     form_class = PaymentProcessorForm
 
-    def get_success_url(self):
-        return reverse('vendor_admin:vendor-site-processor')
-
     def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+        context = super().get_context_data(**kwargs)
+        processor_config = PaymentProcessorSiteConfig()
+        form = self.get_form()
 
-        site = get_site_from_request(self.request)
-        processor_config = PaymentProcessorSiteConfig(site)
-        context['form'] = processor_config.get_form()
+        existing_stripe_configs = SiteConfigModel.objects.filter(key=processor_config.key)
+        sites = Site.objects.exclude(pk__in=[config.site.pk for config in existing_stripe_configs])
+        form.fields['site'].queryset = sites
+
+        context['title'] = _("Payment Processor Config")
+        context['form'] = form
+        context['cancel_url'] = reverse('vendor_admin:manager-config-processor-list')
 
         return context
 
     def form_valid(self, form):
-        site = get_site_from_request(self.request)
+        site = form.cleaned_data['site']
+
         processor_config = PaymentProcessorSiteConfig(site)
         processor_config.save(form.cleaned_data["payment_processor"], "payment_processor")
-
-        return redirect('vendor_admin:vendor-processor-lists')
-
-
-class PaymentProcessorSiteSelectFormView(FormView):
-    template_name = 'vendor/manage/processor_site_config.html'
-    form_class = PaymentProcessorSiteSelectForm
-
-    def get_success_url(self):
-        return reverse('vendor_admin:processor-lists')
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
         
-        if self.kwargs.get('domain'):
-            site = Site.objects.get(domain=self.kwargs.get('domain'))
-            processor_config = PaymentProcessorSiteSelectSiteConfig(site)
-        else:
-            processor_config = PaymentProcessorSiteSelectSiteConfig()
-        context['form'] = processor_config.get_form()
+        return redirect('vendor_admin:manager-config-processor-list')
+
+
+class PaymentProcessorUpdateConfigView(UpdateView):
+    template_name = 'vendor/manage/config.html'
+    model = SiteConfigModel
+    form_class = PaymentProcessorForm
+
+    def get_form(self, **kwargs):
+        return PaymentProcessorForm()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        config_model = self.get_object()
+        processor_config = PaymentProcessorSiteConfig(config_model.site)
+
+        context['title'] = _("Edit Payment Processor Config")
+        context['form'] = PaymentProcessorForm(initial={'site': config_model.site, 'payment_processor': processor_config.get_key_value('payment_processor')})
+        context['form'].fields['site'].disabled = True
+        context['cancel_url'] = reverse('vendor_admin:manager-config-processor-list')
 
         return context
 
-    def form_valid(self, form):
-        site = Site.objects.get(pk=form.cleaned_data['site'])
-        processor_config = PaymentProcessorSiteSelectSiteConfig(site)
-        processor_config.save(form.cleaned_data["payment_processor"], "payment_processor")
+
+    def post(self, request, *args, **kwargs):
+        # Get the SiteConfigModel instance passed through the url
+        self.object = self.get_object()
+        context = super().get_context_data(**kwargs)
+
+        form = self.get_form_class()(request.POST)
+        # Make this site field required False since you can only update the account_number
+        form.fields['site'].required = False
+
+        if not form.is_valid():
+            context['form'] = form
+            return render(request, self.template_name, context)
         
-        return redirect('vendor_admin:vendor-processor-lists')
+        processor_config = PaymentProcessorSiteConfig(self.object.site)
+        processor_config.save(form.cleaned_data['payment_processor'], "payment_processor")
+
+        return redirect("vendor_admin:manager-config-processor-list")
 
 
 class StripeConnectAccountCreateConfigView(FormView):
@@ -86,6 +114,7 @@ class StripeConnectAccountCreateConfigView(FormView):
 
         context['title'] = _("Stripe Connect Account")
         context['form'] = form
+        context['cancel_url'] = reverse('vendor_admin:manager-config-stripe-connect-list')
 
         return context
 
@@ -113,6 +142,7 @@ class StripeConnectAccountCongifListView(ListView):
 
         context['title'] = 'Stripe Connect Accounts'
         context['config_key'] = stripe_config.key
+        context['new_url'] = reverse('vendor_admin:manager-config-stripe-connect-create')
 
         return context
 
@@ -133,6 +163,7 @@ class StripeConnectAccountUpdateConfigView(UpdateView):
         context['title'] = _("Stripe Connect Account")
         context['form'] = StripeConnectAccountForm(initial={'site': config_model.site, 'account_number': stripe_config.get_key_value('stripe_connect_account')})
         context['form'].fields['site'].disabled = True
+        context['cancel_url'] = reverse('vendor_admin:manager-config-stripe-connect-list')
 
         return context
 
