@@ -8,7 +8,7 @@
 <form method="POST" >
     {% csrf_token %}
     {{ form.as_p }}
-    <a class="btn btn-danger" href="{% url 'vendor_admin:manager-config-stripe-connect-list' %}">Cancel</a>
+    <a class="btn btn-danger" href="{{ cancel_url}}">Cancel</a>
     <input type="submit" value="Save" class="btn btn-primary">
 </form>
 {% endblock %}

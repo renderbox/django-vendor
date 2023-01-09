@@ -1,6 +1,6 @@
 {% extends "vendor/manage/base.html" %}
 {% load i18n %}
-
+{% load admin_tags %}
 
 {% block title %}{{ title|default:"Config List" }}{% endblock %}
 
@@ -15,7 +15,7 @@
                 <tr>
                     <th>Site</th>
                     <th>Value</th>
-                    <th><a class="btn btn-sm btn-success" href="{% url 'vendor_admin:manager-config-stripe-connect-create' %}">New</a></th>
+                    <th><a class="btn btn-sm btn-success" href="{{ new_url }}">New</a></th>
                 </tr>
             </thead>
             <tbody>
@@ -23,7 +23,9 @@
                 <tr>
                     <td>{{config.site}}</td>
                     <td>{{config.value}}</td>
-                    <td><a class="btn btn-sm btn-primary" href="{% url 'vendor_admin:manager-config-stripe-connect-edit' config.pk %}">Edit</a></td>
+                    <td>
+                        {% config_edit_link config_key=config_key config_pk=config.pk %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

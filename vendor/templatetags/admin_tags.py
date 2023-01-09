@@ -9,7 +9,6 @@ register = template.Library()
 @register.inclusion_tag('vendor/includes/edit_link.html')
 def config_edit_link(config_key, config_pk):
     config = SiteConfigModel.objects.get(pk=config_pk)
-
     link = ''
 
     if config.key == PaymentProcessorSiteConfig().key:
