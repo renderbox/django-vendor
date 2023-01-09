@@ -690,5 +690,17 @@
         "subscription": 1,
         "deleted": false
     }
+},
+{
+    "model": "siteconfigs.siteconfigmodel",
+    "pk": 1,
+    "fields": {
+        "key": "vendor.config.StripeConnectAccountConfig",
+        "site": 1,
+        "deleted": false,
+        "value": {
+            "stripe_connect_account": "cav"
+        }
+    }
 }
 ]

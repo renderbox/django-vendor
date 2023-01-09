@@ -97,6 +97,7 @@ class StripeConnectAccountCreateConfigView(FormView):
 
         return redirect("vendor_admin:manager-config-stripe-connect-list")
 
+
 class StripeConnectAccountCongifListView(ListView):
     template_name = 'vendor/manage/config_list.html'
     model = SiteConfigModel
