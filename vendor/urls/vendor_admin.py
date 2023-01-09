@@ -38,7 +38,7 @@ urlpatterns = [
     # Configs
     path('config/stripe/connect/list/', config_views.StripeConnectAccountCongifListView.as_view(), name="manager-config-stripe-connect-list"),
     path('config/stripe/connect/create/', config_views.StripeConnectAccountCreateConfigView.as_view(), name="manager-config-stripe-connect-create"),
-    # path('config/stripe/connect/edit/', config_views.StripeConnectAccountConfigView.as_view(), name="manager-config-stripe-connect"),
+    path('config/stripe/connect/<int:pk>/edit/', config_views.StripeConnectAccountUpdateConfigView.as_view(), name="manager-config-stripe-connect-edit"),
     # path('config/vendor/commission/', config_views.InvoiceListCSV.as_view(), name="manager-invoice-download"),
     path("config/processors/", config_views.PaymentProcessorSiteConfigsListView.as_view(), name="vendor-processor-lists"),
     path("config/processor/site/", config_views.PaymentProcessorSiteFormView.as_view(), name="vendor-site-processor"),

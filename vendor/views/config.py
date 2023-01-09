@@ -6,8 +6,9 @@ from vendor.config import PaymentProcessorSiteConfig, PaymentProcessorSiteSelect
     PaymentProcessorForm, PaymentProcessorSiteSelectForm, StripeConnectAccountConfig, StripeConnectAccountForm
 from siteconfigs.models import SiteConfigModel
 from vendor.views.mixin import SiteOnRequestFilterMixin, get_site_from_request
-from django.views.generic.edit import FormView
+from django.views.generic.edit import FormView, UpdateView
 from django.shortcuts import redirect
+from django.shortcuts import render
 
 class PaymentProcessorSiteConfigsListView(ListView):
     template_name = 'vendor/manage/processor_site_config_list.html'
@@ -113,3 +114,45 @@ class StripeConnectAccountCongifListView(ListView):
         context['config_key'] = stripe_config.key
 
         return context
+
+
+class StripeConnectAccountUpdateConfigView(UpdateView):
+    template_name = 'vendor/manage/config.html'
+    model = SiteConfigModel
+    form_class = StripeConnectAccountForm
+
+    def get_form(self, **kwargs):
+        return StripeConnectAccountForm()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        config_model = self.get_object()
+        stripe_config = StripeConnectAccountConfig(config_model.site)
+
+        context['title'] = _("Stripe Connect Account")
+        context['form'] = StripeConnectAccountForm(initial={'site': config_model.site, 'account_number': stripe_config.get_key_value('stripe_connect_account')})
+        context['form'].fields['site'].disabled = True
+
+        return context
+
+
+    def post(self, request, *args, **kwargs):
+        # Get the SiteConfigModel instance passed through the url
+        self.object = self.get_object()
+        context = super().get_context_data(**kwargs)
+
+        form = self.get_form_class()(request.POST)
+        # Make this site field required False since you can only update the account_number
+        form.fields['site'].required = False
+
+        if not form.is_valid():
+            context['form'] = form
+            return render(request, self.template_name, context)
+        
+        stripe_connect = StripeConnectAccountConfig(self.object.site)
+        stripe_connect.save(form.cleaned_data['account_number'], "stripe_connect_account")
+
+        return redirect("vendor_admin:manager-config-stripe-connect-list")
+
+
+

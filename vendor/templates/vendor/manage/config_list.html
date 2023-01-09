@@ -23,7 +23,7 @@
                 <tr>
                     <td>{{config.site}}</td>
                     <td>{{config.value}}</td>
-                    <td><a class="btn btn-sm btn-primary">Edit</a></td>
+                    <td><a class="btn btn-sm btn-primary" href="{% url 'vendor_admin:manager-config-stripe-connect-edit' config.pk %}">Edit</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
