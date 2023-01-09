@@ -702,5 +702,17 @@
             "stripe_connect_account": "cav"
         }
     }
+},
+{
+    "model": "siteconfigs.siteconfigmodel",
+    "pk": 2,
+    "fields": {
+        "key": "vendor.config.PaymentProcessorSiteConfig",
+        "site": 1,
+        "deleted": false,
+        "value": {
+            "payment_processor": "base.PaymentProcessorBase"
+        }
+    }
 }
 ]
