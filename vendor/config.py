@@ -12,10 +12,6 @@ class SiteSelectForm(forms.Form):
     site = forms.ModelChoiceField(queryset=Site.objects.all())
 
 
-class VendorSiteCommissionForm(SiteSelectForm):
-    commission = forms.IntegerField(min_value=0, max_value=100)
-
-
 class SupportedPaymentProcessor(TextChoices):
     PROMO_CODE_BASE = ("base.PaymentProcessorBase", _("Default Processor"))
     AUTHORIZE_NET = ("authorizenet.AuthorizeNetProcessor", _("Authorize.Net"))
@@ -85,12 +81,24 @@ class StripeConnectAccountConfig(SiteConfigBaseClass):
         super().__init__(site, self.key)
         
 
+class VendorSiteCommissionForm(SiteSelectForm):
+    commission = forms.IntegerField(min_value=0, max_value=100)
+
+
 class VendorSiteCommissionConfig(SiteConfigBaseClass):
     label = _("Vendor Site Commission")
     default = {'commission': None}
     form_class = VendorSiteCommissionForm
-    key = 'commission'
+    key = ''
     instance = None
+
+    def __init__(self, site=None):
+        
+        if site is None:
+            site = Site.objects.get_current()
+
+        self.key = ".".join([__name__, __class__.__name__])
+        super().__init__(site, self.key)
 
 
 VENDOR_PRODUCT_MODEL = getattr(settings, "VENDOR_PRODUCT_MODEL", "vendor.Product")

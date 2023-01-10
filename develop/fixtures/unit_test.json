@@ -714,5 +714,17 @@
             "payment_processor": "base.PaymentProcessorBase"
         }
     }
+},
+{
+    "model": "siteconfigs.siteconfigmodel",
+    "pk": 3,
+    "fields": {
+        "key": "vendor.config.VendorSiteCommissionConfig",
+        "site": 1,
+        "deleted": false,
+        "value": {
+            "commission": 32
+        }
+    }
 }
 ]

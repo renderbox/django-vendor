@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.test import TestCase, Client
 from django.urls import reverse
-from vendor.config import PaymentProcessorSiteConfig, StripeConnectAccountConfig, SupportedPaymentProcessor
+from vendor.config import PaymentProcessorSiteConfig, StripeConnectAccountConfig, SupportedPaymentProcessor, VendorSiteCommissionConfig
 from vendor.models import CustomerProfile
 from siteconfigs.models import SiteConfigModel
 
@@ -120,5 +120,64 @@ class SiteProcessorConfigTests(TestCase):
         payment_config = PaymentProcessorSiteConfig(Site.objects.get(pk=1))
 
         self.assertEquals(payment_config.value.get('payment_processor'), config_data['payment_processor'])
+        self.assertEquals(response.status_code, 302)
+
+
+
+class VendorSiteCommissionConfigTests(TestCase):
+
+    fixtures = ['user', 'unit_test']
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.get(pk=1)
+        self.client.force_login(self.user)
+        self.customer_profile = CustomerProfile.objects.get(pk=1)
+        self.commission_config = SiteConfigModel.objects.get(pk=3)
+
+    def test_vendor_site_commission_config_list_success(self):
+        url = reverse('vendor_admin:manager-config-commission-list')
+
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 200)
+
+    def test_vendor_site_commission_config_create_get_success(self):
+        url = reverse('vendor_admin:manager-config-commission-create')
+
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, 200)
+
+    def test_vendor_site_commission_config_create_post_success(self):
+        url = reverse('vendor_admin:manager-config-commission-create')
+
+        site = Site.objects.get(pk=2)
+        config_data = {
+            'site': site.pk,
+            'commission': 33
+        }
+
+        response = self.client.post(url, data=config_data)
+        commission_config = VendorSiteCommissionConfig(site)
+        
+        self.assertEquals(commission_config.value.get('commission'), config_data['commission'])
+        self.assertEquals(response.status_code, 302)
+
+    def test_vendor_site_commission_config_edit_get_success(self):
+        url = reverse('vendor_admin:manager-config-commission-update', kwargs={'pk': self.commission_config.pk})
+        
+        response = self.client.post(url)
+        self.assertEquals(response.status_code, 200)
+
+    def test_vendor_site_commission_config_edit_post_success(self):
+        url = reverse('vendor_admin:manager-config-commission-update', kwargs={'pk': self.commission_config.pk})
+        
+        config_data = {
+            'commission': 55
+        }
+
+        response = self.client.post(url, data=config_data)
+        commission_config = VendorSiteCommissionConfig(Site.objects.get(pk=1))
+
+        self.assertEquals(commission_config.value.get('commission'), config_data['commission'])
         self.assertEquals(response.status_code, 302)
 

@@ -7,7 +7,8 @@ from django.shortcuts import redirect, render
 
 from vendor.views.mixin import SiteOnRequestFilterMixin, get_site_from_request
 from vendor.config import PaymentProcessorSiteConfig, PaymentProcessorForm,\
-    StripeConnectAccountConfig, StripeConnectAccountForm
+    StripeConnectAccountConfig, StripeConnectAccountForm,\
+    VendorSiteCommissionForm, VendorSiteCommissionConfig
 from siteconfigs.models import SiteConfigModel
 
 
@@ -127,7 +128,7 @@ class StripeConnectAccountCreateConfigView(FormView):
         return redirect("vendor_admin:manager-config-stripe-connect-list")
 
 
-class StripeConnectAccountCongifListView(ListView):
+class StripeConnectAccountConfigListView(ListView):
     template_name = 'vendor/manage/config_list.html'
     model = SiteConfigModel
 
@@ -185,6 +186,95 @@ class StripeConnectAccountUpdateConfigView(UpdateView):
         stripe_connect.save(form.cleaned_data['account_number'], "stripe_connect_account")
 
         return redirect("vendor_admin:manager-config-stripe-connect-list")
+
+
+class VendorSiteCommissionCreateConfigView(FormView):
+    template_name = 'vendor/manage/config.html'
+    form_class = VendorSiteCommissionForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        commission_config = VendorSiteCommissionConfig()
+        form = self.get_form()
+
+        existing_commission_configs = SiteConfigModel.objects.filter(key=commission_config.key)
+        sites = Site.objects.exclude(pk__in=[config.site.pk for config in existing_commission_configs])
+        form.fields['site'].queryset = sites
+
+        context['title'] = _("Vendor Site Commission")
+        context['form'] = form
+        context['cancel_url'] = reverse('vendor_admin:manager-config-commission-list')
+
+        return context
+
+    def form_valid(self, form):
+        site = form.cleaned_data['site']
+        
+        commission = VendorSiteCommissionConfig(site)
+        commission.save(form.cleaned_data['commission'], "commission")
+
+        return redirect("vendor_admin:manager-config-commission-list")
+
+
+class VendorSiteCommissionConfigListView(ListView):
+    template_name = 'vendor/manage/config_list.html'
+    model = SiteConfigModel
+
+    def get_queryset(self):
+        commission_config = VendorSiteCommissionConfig()
+        
+        return self.model.objects.filter(key=commission_config.key)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        commission_config = VendorSiteCommissionConfig()
+
+        context['title'] = 'Vendor Commissions'
+        context['config_key'] = commission_config.key
+        context['new_url'] = reverse('vendor_admin:manager-config-commission-create')
+
+        return context
+
+
+class VendorSiteCommissionUpdateConfigView(UpdateView):
+    template_name = 'vendor/manage/config.html'
+    model = SiteConfigModel
+    form_class = VendorSiteCommissionForm
+
+    def get_form(self, **kwargs):
+        return VendorSiteCommissionForm()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        config_model = self.get_object()
+        commission_config = VendorSiteCommissionConfig(config_model.site)
+
+        context['title'] = _("Vendor Commission")
+        context['form'] = VendorSiteCommissionForm(initial={'site': config_model.site, 'commission': commission_config.get_key_value('commission')})
+        context['form'].fields['site'].disabled = True
+        context['cancel_url'] = reverse('vendor_admin:manager-config-commission-list')
+
+        return context
+
+
+    def post(self, request, *args, **kwargs):
+        # Get the SiteConfigModel instance passed through the url
+        self.object = self.get_object()
+        context = super().get_context_data(**kwargs)
+
+        form = self.get_form_class()(request.POST)
+        # Make this site field required False since you can only update the commission
+        form.fields['site'].required = False
+
+        if not form.is_valid():
+            context['form'] = form
+            return render(request, self.template_name, context)
+        
+        stripe_connect = VendorSiteCommissionConfig(self.object.site)
+        stripe_connect.save(form.cleaned_data['commission'], "commission")
+
+        return redirect("vendor_admin:manager-config-commission-list")
+
 
 
 
