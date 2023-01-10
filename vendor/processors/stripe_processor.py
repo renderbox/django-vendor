@@ -332,7 +332,7 @@ class StripeProcessor(PaymentProcessorBase):
         vendor_site_commission = VendorSiteCommissionConfig(self.site)
 
         if vendor_site_commission.instance:
-            return vendor_site_commission.get_key_value('commission')
+            return self.convert_decimal_to_integer((vendor_site_commission.get_key_value('commission')*self.invoice.total)/100)
 
         return None
 
