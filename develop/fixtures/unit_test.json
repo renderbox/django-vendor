@@ -690,41 +690,5 @@
         "subscription": 1,
         "deleted": false
     }
-},
-{
-    "model": "siteconfigs.siteconfigmodel",
-    "pk": 1,
-    "fields": {
-        "key": "vendor.config.StripeConnectAccountConfig",
-        "site": 1,
-        "deleted": false,
-        "value": {
-            "stripe_connect_account": "cav"
-        }
-    }
-},
-{
-    "model": "siteconfigs.siteconfigmodel",
-    "pk": 2,
-    "fields": {
-        "key": "vendor.config.PaymentProcessorSiteConfig",
-        "site": 1,
-        "deleted": false,
-        "value": {
-            "payment_processor": "base.PaymentProcessorBase"
-        }
-    }
-},
-{
-    "model": "siteconfigs.siteconfigmodel",
-    "pk": 3,
-    "fields": {
-        "key": "vendor.config.VendorSiteCommissionConfig",
-        "site": 1,
-        "deleted": false,
-        "value": {
-            "commission": 32
-        }
-    }
 }
 ]

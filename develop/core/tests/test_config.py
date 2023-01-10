@@ -9,7 +9,7 @@ from siteconfigs.models import SiteConfigModel
 
 class StripeConnectAccountConfigTests(TestCase):
 
-    fixtures = ['user', 'unit_test']
+    fixtures = ['user', 'unit_test', 'site_config']
 
     def setUp(self):
         self.client = Client()
