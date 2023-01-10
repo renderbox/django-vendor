@@ -67,7 +67,7 @@ class StripeConnectAccountConfigTests(TestCase):
 
 class SiteProcessorConfigTests(TestCase):
 
-    fixtures = ['user', 'unit_test']
+    fixtures = ['user', 'unit_test', 'site_config']
 
     def setUp(self):
         self.client = Client()
@@ -126,7 +126,7 @@ class SiteProcessorConfigTests(TestCase):
 
 class VendorSiteCommissionConfigTests(TestCase):
 
-    fixtures = ['user', 'unit_test']
+    fixtures = ['user', 'unit_test', 'site_config']
 
     def setUp(self):
         self.client = Client()
