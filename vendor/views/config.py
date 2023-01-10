@@ -23,10 +23,10 @@ class PaymentProcessorSiteConfigsListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        processot_config = PaymentProcessorSiteConfig()
+        processor_config = PaymentProcessorSiteConfig()
 
-        context['title'] = 'Payment Processors Configured'
-        context['config_key'] = processot_config.key
+        context['title'] = _('Payment Processors Configured')
+        context['config_key'] = processor_config.key
         context['new_url'] = reverse('vendor_admin:manager-config-processor-create')
 
         return context
@@ -141,7 +141,7 @@ class StripeConnectAccountConfigListView(ListView):
         context = super().get_context_data(**kwargs)
         stripe_config = StripeConnectAccountConfig()
 
-        context['title'] = 'Stripe Connect Accounts'
+        context['title'] = _('Stripe Connect Accounts')
         context['config_key'] = stripe_config.key
         context['new_url'] = reverse('vendor_admin:manager-config-stripe-connect-create')
 
@@ -229,7 +229,7 @@ class VendorSiteCommissionConfigListView(ListView):
         context = super().get_context_data(**kwargs)
         commission_config = VendorSiteCommissionConfig()
 
-        context['title'] = 'Vendor Commissions'
+        context['title'] = _('Vendor Commissions')
         context['config_key'] = commission_config.key
         context['new_url'] = reverse('vendor_admin:manager-config-commission-create')
 

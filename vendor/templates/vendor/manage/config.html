@@ -8,7 +8,7 @@
 <form method="POST" >
     {% csrf_token %}
     {{ form.as_p }}
-    <a class="btn btn-danger" href="{{ cancel_url}}">Cancel</a>
+    <a class="btn btn-danger" href="{{ cancel_url}}">{% trans 'Cancel' %}</a>
     <input type="submit" value="Save" class="btn btn-primary">
 </form>
 {% endblock %}
