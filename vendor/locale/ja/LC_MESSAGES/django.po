@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-01-09 23:20+0000\n"
+"POT-Creation-Date: 2023-01-10 19:01+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -92,31 +92,31 @@ msgstr "顧客プロファイルにオファーが追加されました"
 msgid "Product availability Changed"
 msgstr "製品の入手可能性が変更されました"
 
-#: config.py:20
+#: config.py:16
 msgid "Default Processor"
 msgstr "デフォルトのプロセッサ"
 
-#: config.py:21
+#: config.py:17
 msgid "Authorize.Net"
 msgstr "Authorize.Net"
 
-#: config.py:22
+#: config.py:18
 msgid "Stripe"
 msgstr "Stripe"
 
-#: config.py:26 config.py:30
+#: config.py:22 config.py:26
 msgid "Payment Processor"
 msgstr "支払い処理業者"
 
-#: config.py:73 views/config.py:115 views/config.py:163
+#: config.py:69 views/config.py:116 views/config.py:164
 msgid "Stripe Connect Account"
 msgstr "ストライプ コネクト アカウント"
 
-#: config.py:89
+#: config.py:89 views/config.py:204
 msgid "Vendor Site Commission"
 msgstr "ベンダー サイト コミッション"
 
-#: config.py:102
+#: config.py:110
 msgid "USD Dollars"
 msgstr "米ドル"
 
@@ -381,7 +381,8 @@ msgid "Name"
 msgstr "名前"
 
 #: models/base.py:80 models/invoice.py:33 models/offer.py:48
-#: models/profile.py:31 templates/vendor/manage/payment_list.html:21
+#: models/profile.py:31 templates/vendor/manage/config_list.html:16
+#: templates/vendor/manage/payment_list.html:21
 #: templates/vendor/manage/processor_site_config_list.html:18
 #: templates/vendor/manage/profile_list.html:50
 msgid "Site"
@@ -2179,6 +2180,23 @@ msgstr "日付"
 msgid "No Orders"
 msgstr "注文なし"
 
+#: templates/vendor/manage/config.html:11
+#: templates/vendor/manage/processor_site_config.html:11
+#: templates/vendor/manage/profile_detail.html:200
+#: templates/vendor/manage/subscription_detail.html:144
+#: templates/vendor/manage/subscription_detail.html:162
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: templates/vendor/manage/config_list.html:17
+msgid "Value"
+msgstr "価値"
+
+#: templates/vendor/manage/config_list.html:18
+#: templates/vendor/manage/processor_site_config_list.html:20
+msgid "New"
+msgstr "新しい"
+
 #: templates/vendor/manage/dashboard.html:9
 msgid "Admin Purchase Dashboard"
 msgstr "管理者購入ダッシュボード"
@@ -2270,13 +2288,6 @@ msgstr "プロフィール"
 msgid "No Payments"
 msgstr "支払いなし"
 
-#: templates/vendor/manage/processor_site_config.html:11
-#: templates/vendor/manage/profile_detail.html:200
-#: templates/vendor/manage/subscription_detail.html:144
-#: templates/vendor/manage/subscription_detail.html:162
-msgid "Cancel"
-msgstr "キャンセル"
-
 #: templates/vendor/manage/processor_site_config_list.html:11
 msgid "Processor Per Site"
 msgstr "サイトごとのプロセッサ"
@@ -2284,10 +2295,6 @@ msgstr "サイトごとのプロセッサ"
 #: templates/vendor/manage/processor_site_config_list.html:19
 msgid "Processor"
 msgstr "プロセッサー"
-
-#: templates/vendor/manage/processor_site_config_list.html:20
-msgid "New"
-msgstr "新しい"
 
 #: templates/vendor/manage/processor_site_config_list.html:29
 msgid "Edit Processor and Site"
@@ -2778,13 +2785,29 @@ msgstr "払い戻しリクエスト"
 msgid "Reason"
 msgstr "理由"
 
-#: views/config.py:47
+#: views/config.py:28
+msgid "Payment Processors Configured"
+msgstr "構成された支払い処理業者"
+
+#: views/config.py:48
 msgid "Payment Processor Config"
 msgstr "支払い処理業者の設定"
 
-#: views/config.py:75
+#: views/config.py:76
 msgid "Edit Payment Processor Config"
 msgstr "支払い処理業者の設定を編集"
+
+#: views/config.py:144
+msgid "Stripe Connect Accounts"
+msgstr "ストライプ コネクト アカウント"
+
+#: views/config.py:232
+msgid "Vendor Commissions"
+msgstr "ベンダー手数料"
+
+#: views/config.py:252
+msgid "Vendor Commission"
+msgstr "ベンダー委員会"
 
 #: views/integration.py:19
 msgid "AuthorizeNet Integration"
