@@ -65,10 +65,10 @@ class PaymentProcessorUpdateConfigView(UpdateView):
     model = SiteConfigModel
     form_class = PaymentProcessorForm
 
-    def get_form(self, **kwargs):
+    def get_form(self):
         return PaymentProcessorForm()
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self):
         context = super().get_context_data(**kwargs)
         config_model = self.get_object()
         processor_config = PaymentProcessorSiteConfig(config_model.site)
@@ -153,7 +153,7 @@ class StripeConnectAccountUpdateConfigView(UpdateView):
     model = SiteConfigModel
     form_class = StripeConnectAccountForm
 
-    def get_form(self, **kwargs):
+    def get_form(self):
         return StripeConnectAccountForm()
 
     def get_context_data(self, **kwargs):
@@ -241,7 +241,7 @@ class VendorSiteCommissionUpdateConfigView(UpdateView):
     model = SiteConfigModel
     form_class = VendorSiteCommissionForm
 
-    def get_form(self, **kwargs):
+    def get_form(self):
         return VendorSiteCommissionForm()
 
     def get_context_data(self, **kwargs):
