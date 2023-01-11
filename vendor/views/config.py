@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.models import Site
 from django.views.generic.list import ListView
 from django.urls import reverse
@@ -5,14 +6,13 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import FormView, UpdateView
 from django.shortcuts import redirect, render
 
-from vendor.views.mixin import SiteOnRequestFilterMixin, get_site_from_request
 from vendor.config import PaymentProcessorSiteConfig, PaymentProcessorForm,\
     StripeConnectAccountConfig, StripeConnectAccountForm,\
     VendorSiteCommissionForm, VendorSiteCommissionConfig
 from siteconfigs.models import SiteConfigModel
 
 
-class PaymentProcessorSiteConfigsListView(ListView):
+class PaymentProcessorSiteConfigsListView(LoginRequiredMixin, ListView):
     template_name = 'vendor/manage/config_list.html'
     model = SiteConfigModel
 
@@ -32,7 +32,7 @@ class PaymentProcessorSiteConfigsListView(ListView):
         return context
 
 
-class PaymentProcessorCreateConfigView(FormView):
+class PaymentProcessorCreateConfigView(LoginRequiredMixin, FormView):
     template_name = 'vendor/manage/config.html'
     form_class = PaymentProcessorForm
 
@@ -60,12 +60,15 @@ class PaymentProcessorCreateConfigView(FormView):
         return redirect('vendor_admin:manager-config-processor-list')
 
 
-class PaymentProcessorUpdateConfigView(UpdateView):
+class PaymentProcessorUpdateConfigView(LoginRequiredMixin, UpdateView):
     template_name = 'vendor/manage/config.html'
     model = SiteConfigModel
     form_class = PaymentProcessorForm
 
-    def get_context_data(self):
+    def get_form(self):
+        return PaymentProcessorForm()
+
+    def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         config_model = self.get_object()
         processor_config = PaymentProcessorSiteConfig(config_model.site)
@@ -97,7 +100,7 @@ class PaymentProcessorUpdateConfigView(UpdateView):
         return redirect("vendor_admin:manager-config-processor-list")
 
 
-class StripeConnectAccountCreateConfigView(FormView):
+class StripeConnectAccountCreateConfigView(LoginRequiredMixin, FormView):
     template_name = 'vendor/manage/config.html'
     form_class = StripeConnectAccountForm
 
@@ -125,7 +128,7 @@ class StripeConnectAccountCreateConfigView(FormView):
         return redirect("vendor_admin:manager-config-stripe-connect-list")
 
 
-class StripeConnectAccountConfigListView(ListView):
+class StripeConnectAccountConfigListView(LoginRequiredMixin, ListView):
     template_name = 'vendor/manage/config_list.html'
     model = SiteConfigModel
 
@@ -145,10 +148,13 @@ class StripeConnectAccountConfigListView(ListView):
         return context
 
 
-class StripeConnectAccountUpdateConfigView(UpdateView):
+class StripeConnectAccountUpdateConfigView(LoginRequiredMixin, UpdateView):
     template_name = 'vendor/manage/config.html'
     model = SiteConfigModel
     form_class = StripeConnectAccountForm
+
+    def get_form(self):
+        return StripeConnectAccountForm()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -182,7 +188,7 @@ class StripeConnectAccountUpdateConfigView(UpdateView):
         return redirect("vendor_admin:manager-config-stripe-connect-list")
 
 
-class VendorSiteCommissionCreateConfigView(FormView):
+class VendorSiteCommissionCreateConfigView(LoginRequiredMixin, FormView):
     template_name = 'vendor/manage/config.html'
     form_class = VendorSiteCommissionForm
 
@@ -210,7 +216,7 @@ class VendorSiteCommissionCreateConfigView(FormView):
         return redirect("vendor_admin:manager-config-commission-list")
 
 
-class VendorSiteCommissionConfigListView(ListView):
+class VendorSiteCommissionConfigListView(LoginRequiredMixin, ListView):
     template_name = 'vendor/manage/config_list.html'
     model = SiteConfigModel
 
@@ -230,10 +236,13 @@ class VendorSiteCommissionConfigListView(ListView):
         return context
 
 
-class VendorSiteCommissionUpdateConfigView(UpdateView):
+class VendorSiteCommissionUpdateConfigView(LoginRequiredMixin, UpdateView):
     template_name = 'vendor/manage/config.html'
     model = SiteConfigModel
     form_class = VendorSiteCommissionForm
+
+    def get_form(self):
+        return VendorSiteCommissionForm()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -264,7 +273,3 @@ class VendorSiteCommissionUpdateConfigView(UpdateView):
         stripe_connect.save(form.cleaned_data['commission'], "commission")
 
         return redirect("vendor_admin:manager-config-commission-list")
-
-
-
-

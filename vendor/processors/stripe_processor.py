@@ -316,7 +316,7 @@ class StripeProcessor(PaymentProcessorBase):
         stripe_connect = StripeConnectAccountConfig(self.site)
 
         if stripe_connect.instance:
-            return stripe_connect.get_key_value('stripe_account')
+            return stripe_connect.get_key_value('stripe_connect_account')
 
         return None
 
@@ -437,6 +437,13 @@ class StripeProcessor(PaymentProcessorBase):
         
     # Stripe Object Builders
     ##########
+    def build_transfer_data(self):
+        return {
+            'destination': self.get_stripe_connect_account(),
+            # Not required if you are using the application_fee parameter
+            # 'amount_percent': 100 - self.get_application_fee_percent()
+        }
+
     def build_customer(self, customer_profile):
         return {
             'name': f"{customer_profile.user.first_name} {customer_profile.user.last_name}",
@@ -525,7 +532,6 @@ class StripeProcessor(PaymentProcessorBase):
             'amount': amount,
             'currency': currency,
             'application_fee_percent': self.get_application_fee_amount(),
-            'on_behalf_of': self.get_stripe_connect_account(),
             'transfer_data': self.get_stripe_connect_account()
         }
 
@@ -547,8 +553,7 @@ class StripeProcessor(PaymentProcessorBase):
             'metadata': {'site': self.invoice.site},
             'trial_period_days': subscription.offer.get_trial_days(),
             'application_fee_percent': self.get_application_fee_percent(),
-            'on_behalf_of': self.get_stripe_connect_account(),
-            'transfer_data': self.get_stripe_connect_account()
+            'transfer_data': self.build_transfer_data()
         }
 
     def build_invoice_line_item(self, order_item, invoice_id):
