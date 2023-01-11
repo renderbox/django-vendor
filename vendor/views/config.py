@@ -65,9 +65,6 @@ class PaymentProcessorUpdateConfigView(UpdateView):
     model = SiteConfigModel
     form_class = PaymentProcessorForm
 
-    def get_form(self):
-        return PaymentProcessorForm()
-
     def get_context_data(self):
         context = super().get_context_data(**kwargs)
         config_model = self.get_object()
@@ -84,13 +81,13 @@ class PaymentProcessorUpdateConfigView(UpdateView):
     def post(self, request, *args, **kwargs):
         # Get the SiteConfigModel instance passed through the url
         self.object = self.get_object()
-        context = super().get_context_data(**kwargs)
 
         form = self.get_form_class()(request.POST)
         # Make this site field required False since you can only update the account_number
         form.fields['site'].required = False
 
         if not form.is_valid():
+            context = super().get_context_data(**kwargs)
             context['form'] = form
             return render(request, self.template_name, context)
         
@@ -153,9 +150,6 @@ class StripeConnectAccountUpdateConfigView(UpdateView):
     model = SiteConfigModel
     form_class = StripeConnectAccountForm
 
-    def get_form(self):
-        return StripeConnectAccountForm()
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         config_model = self.get_object()
@@ -172,13 +166,13 @@ class StripeConnectAccountUpdateConfigView(UpdateView):
     def post(self, request, *args, **kwargs):
         # Get the SiteConfigModel instance passed through the url
         self.object = self.get_object()
-        context = super().get_context_data(**kwargs)
 
         form = self.get_form_class()(request.POST)
         # Make this site field required False since you can only update the account_number
         form.fields['site'].required = False
 
         if not form.is_valid():
+            context = super().get_context_data(**kwargs)
             context['form'] = form
             return render(request, self.template_name, context)
         
@@ -241,9 +235,6 @@ class VendorSiteCommissionUpdateConfigView(UpdateView):
     model = SiteConfigModel
     form_class = VendorSiteCommissionForm
 
-    def get_form(self):
-        return VendorSiteCommissionForm()
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         config_model = self.get_object()
@@ -256,17 +247,16 @@ class VendorSiteCommissionUpdateConfigView(UpdateView):
 
         return context
 
-
     def post(self, request, *args, **kwargs):
         # Get the SiteConfigModel instance passed through the url
         self.object = self.get_object()
-        context = super().get_context_data(**kwargs)
 
         form = self.get_form_class()(request.POST)
         # Make this site field required False since you can only update the commission
         form.fields['site'].required = False
 
         if not form.is_valid():
+            context = super().get_context_data(**kwargs)
             context['form'] = form
             return render(request, self.template_name, context)
         
