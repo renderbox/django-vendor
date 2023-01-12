@@ -16,6 +16,7 @@ from vendor.models.choice import PaymentTypes, TermType, Country, USAStateChoice
 from vendor.utils import get_site_from_request
 
 
+from vendor.config import SiteSelectForm
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
 COUNTRY_CHOICE = getattr(settings, 'VENDOR_COUNTRY_CHOICE', Country)
@@ -391,9 +392,6 @@ class DateTimeRangeForm(forms.Form):
 
         return cleaned_data
 
-
-class SiteSelectForm(forms.Form):
-    site = forms.ModelChoiceField(queryset=Site.objects.all())
 
 class OfferSiteSelectForm(SiteSelectForm):
     offer = forms.ModelChoiceField(queryset=None, required=False)
