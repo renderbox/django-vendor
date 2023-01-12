@@ -1,28 +1,20 @@
 """
 Payment processor for Stripe.
 """
-import django.dispatch
 import json
 import logging
 import stripe
-import uuid
 
 from math import modf
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.utils import timezone
-from vendor.config import DEFAULT_CURRENCY
+from vendor.config import DEFAULT_CURRENCY, StripeConnectAccountConfig, VendorSiteCommissionConfig
 from vendor.integrations import StripeIntegration
 from vendor.models import Offer, CustomerProfile
 from vendor.models.choice import (
     Country,
-    SubscriptionStatus,
-    TransactionTypes,
-    PaymentTypes,
     TermType,
     TermDetailUnits,
-    InvoiceStatus,
-    PurchaseStatus
 )
 from vendor.processors.base import PaymentProcessorBase
 
@@ -320,10 +312,33 @@ class StripeProcessor(PaymentProcessorBase):
             
         return stripe_amount
 
+    def get_stripe_connect_account(self):
+        stripe_connect = StripeConnectAccountConfig(self.site)
+
+        if stripe_connect.instance:
+            return stripe_connect.get_key_value('stripe_connect_account')
+
+        return None
+
+    def get_application_fee_percent(self):
+        vendor_site_commission = VendorSiteCommissionConfig(self.site)
+
+        if vendor_site_commission.instance:
+            return vendor_site_commission.get_key_value('commission')
+
+        return None
+
+    def get_application_fee_amount(self):
+        vendor_site_commission = VendorSiteCommissionConfig(self.site)
+
+        if vendor_site_commission.instance:
+            return self.convert_decimal_to_integer((vendor_site_commission.get_key_value('commission')*self.invoice.total)/100)
+
+        return None
+
     ##########
     # CRUD Stripe Object
     ##########
-
     def stripe_create_object(self, stripe_object_class, object_data):
         stripe_object = self.stripe_call(stripe_object_class.create, object_data)
 
@@ -422,6 +437,13 @@ class StripeProcessor(PaymentProcessorBase):
         
     # Stripe Object Builders
     ##########
+    def build_transfer_data(self):
+        return {
+            'destination': self.get_stripe_connect_account(),
+            # Not required if you are using the application_fee parameter
+            # 'amount_percent': 100 - self.get_application_fee_percent()
+        }
+
     def build_customer(self, customer_profile):
         return {
             'name': f"{customer_profile.user.first_name} {customer_profile.user.last_name}",
@@ -508,7 +530,9 @@ class StripeProcessor(PaymentProcessorBase):
     def build_payment_intent(self, amount, currency=DEFAULT_CURRENCY):
         return {
             'amount': amount,
-            'currency': currency
+            'currency': currency,
+            'application_fee_percent': self.get_application_fee_amount(),
+            'transfer_data': self.get_stripe_connect_account()
         }
 
     def build_setup_intent(self, payment_method_id):
@@ -527,8 +551,9 @@ class StripeProcessor(PaymentProcessorBase):
             'items': [{'price': subscription.offer.meta['stripe']['price_id']}],
             'default_payment_method': payment_method_id,
             'metadata': {'site': self.invoice.site},
-            'trial_period_days': subscription.offer.get_trial_days()
-
+            'trial_period_days': subscription.offer.get_trial_days(),
+            'application_fee_percent': self.get_application_fee_percent(),
+            'transfer_data': self.build_transfer_data()
         }
 
     def build_invoice_line_item(self, order_item, invoice_id):
@@ -552,7 +577,6 @@ class StripeProcessor(PaymentProcessorBase):
     ##########
     # Customers
     ##########
-
     def get_stripe_customers(self, site, expand=None):
         """
         Returns all Stripe created customers for this site

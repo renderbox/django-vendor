@@ -1,0 +1,35 @@
+{% extends "vendor/manage/base.html" %}
+{% load i18n %}
+{% load admin_tags %}
+
+{% block title %}{{ title|default:"Config List" }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        {{ config_key }}
+    </div>
+    <div class="card-body">
+        <table class="table table-striped table-responsive-sm w-100">
+            <thead>
+                <tr>
+                    <th>{% trans 'Site' %}</th>
+                    <th>{% trans 'Value' %}</th>
+                    <th><a class="btn btn-sm btn-success" href="{{ new_url }}">{% trans 'New' %}</a></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for config in object_list %}
+                <tr>
+                    <td>{{config.site}}</td>
+                    <td>{{config.value}}</td>
+                    <td>
+                        {% config_edit_link config_key=config_key config_pk=config.pk %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
