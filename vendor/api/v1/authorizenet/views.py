@@ -87,7 +87,7 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
             total=transaction_detail.settleAmount.pyval,
             status=InvoiceStatus.COMPLETE
         )
-        invoice.add_offer(subscription.receipts.first().order_item.offer)
+        invoice.add_offer(subscription.get_offer())
         invoice.save()
 
         processor = AuthorizeNetProcessor(site, invoice)
