@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import logging
 
+from datetime import datetime
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, MultipleObjectsReturned, ObjectDoesNotExist
 from django.http import JsonResponse, HttpResponseRedirect
@@ -37,6 +38,7 @@ def update_payment(site, transaction_id, transaction_detail):
         payment.status = payment_status
         payment.success = payment_success
         payment.save()
+        
     except MultipleObjectsReturned as exce:
         logger.error(f"AuthorizeCaptureAPI update_payment multiple payments for transaction: {transaction_id} error: {exce}")
 
@@ -70,35 +72,22 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
 
     try:
         payment = subscription.payments.get(transaction=None, status=PurchaseStatus.QUEUED)
-        payment.transaction = transaction_id
-        payment.submitted_date = submitted_datetime
-        payment.result[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = payment_info
-        payment.status = payment_status
-        payment.success = payment_success
-        payment.save()
-        logger.info(f"AuthorizeCaptureAPI subscription_save_transaction: payment {payment.pk} updated")
-        
-        if payment_status == PurchaseStatus.SETTLED:
-            processor = AuthorizeNetProcessor(site, payment.invoice)
-            processor.payment = payment
-            processor.create_receipts(payment.invoice.order_items.all())
-            logger.info(f"AuthorizeCaptureAPI subscription_save_transaction: subscription renewed {subscription.pk}")
 
     except MultipleObjectsReturned as exce:
         # There should be none or only one payment with transaction None and status in Queue
         logger.error(f"AuthorizeCaptureAPI subscription_save_transaction multiple payments returned with None as Transaction, for {subscription_id} exce: {exce}")
-        return None
+        subscription.payments.filter(transaction=None, status=PurchaseStatus.QUEUED).delete()
 
     except ObjectDoesNotExist as exce:
         logger.info(f"AuthorizeCaptureAPI renew_subscription_task subscription {subscription.pk} renewed")
         invoice = Invoice.objects.create(
-            profile=customer_profile,
+            profile=subscription.profile,
             site=site,
             ordered_date=submitted_datetime,
             total=transaction_detail.settleAmount.pyval,
             status=InvoiceStatus.COMPLETE
         )
-        invoice.add_offer(offer)
+        invoice.add_offer(subscription.receipts.first().order_item.offer)
         invoice.save()
 
         processor = AuthorizeNetProcessor(site, invoice)
@@ -108,6 +97,20 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
         logger.info(f"AuthorizeCaptureAPI subscription_save_transaction creating new payment and receipt for subscription, for {subscription_id}")
         
         return None # No need to continue to create receipt as it is done in the above function
+    
+    payment.transaction = transaction_id
+    payment.submitted_date = submitted_datetime
+    payment.result[timezone.now().strftime("%Y-%m-%d_%H:%M:%S")] = payment_info
+    payment.status = payment_status
+    payment.success = payment_success
+    payment.save()
+    logger.info(f"AuthorizeCaptureAPI subscription_save_transaction: payment {payment.pk} updated")
+    
+    if payment_status == PurchaseStatus.SETTLED:
+        processor = AuthorizeNetProcessor(site, payment.invoice)
+        processor.payment = payment
+        processor.create_receipts(payment.invoice.order_items.all())
+        logger.info(f"AuthorizeCaptureAPI subscription_save_transaction: subscription renewed {subscription.pk}")
 
 def settle_authorizenet_transactions(site, start_date, end_date):
     processor = AuthorizeNetProcessor(site)
@@ -255,6 +258,6 @@ class GetSettledTransactionsView(FormMixin, View):
         site = get_site_from_request(self.request)
 
         if form.is_valid():
-            settle_authorizenet_transactions(site, start_date, end_date)
+            settle_authorizenet_transactions(site, form.cleaned_data['start_date'], form.cleaned_data['end_date'])
 
         return HttpResponseRedirect(self.request.META.get('HTTP_REFERER', self.get_success_url()))
