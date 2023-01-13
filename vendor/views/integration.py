@@ -1,4 +1,4 @@
-
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.translation import gettext as _
 from django.views.generic.edit import FormView
 from vendor.integrations import AuthorizeNetIntegration, StripeIntegration
@@ -8,10 +8,10 @@ from django.urls import reverse_lazy
 from vendor.views.mixin import get_site_from_request
 
 
-class AuthorizeNetIntegrationView(FormView):
+class AuthorizeNetIntegrationView(LoginRequiredMixin, FormView):
     template_name = "vendor/integration_form.html"
     form_class = AuthorizeNetIntegrationForm
-    success_url = reverse_lazy('authorizenet-integration')
+    success_url = reverse_lazy('vendor_admin:authorizenet-integration')
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -29,10 +29,10 @@ class AuthorizeNetIntegrationView(FormView):
         return super().form_valid(form)
 
 
-class StripeIntegrationView(FormView):
+class StripeIntegrationView(LoginRequiredMixin, FormView):
     template_name = "vendor/integration_form.html"
     form_class = StripeIntegrationForm
-    success_url = reverse_lazy('stripe-integration')
+    success_url = reverse_lazy('vendor_admin:stripe-integration')
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(**kwargs)
