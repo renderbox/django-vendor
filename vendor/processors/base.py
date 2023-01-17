@@ -212,7 +212,7 @@ class PaymentProcessorBase(object):
 
         start_date = order_item.offer.get_term_start_date()
 
-        self.payment = Payment.objects.create(
+        payment = Payment.objects.create(
             profile=self.invoice.profile,
             amount=0,
             provider=self.provider,
@@ -223,24 +223,24 @@ class PaymentProcessorBase(object):
             payee_full_name=" ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
         )
         
-        self.payment.transaction = f"{self.payment.uuid}-trial"
-        self.payment.save()
+        payment.transaction = f"{payment.uuid}-trial"
+        payment.save()
 
-        self.receipt = Receipt.objects.create(
+        receipt = Receipt.objects.create(
             profile=self.invoice.profile,
             order_item=order_item,
-            transaction=self.payment.transaction,
+            transaction=payment.transaction,
             start_date=start_date,
             end_date=get_future_date_days(start_date, order_item.offer.get_trial_days()),
             subscription=self.subscription
         )
 
         if order_item.offer.terms < TermType.PERPETUAL:
-            self.payment.subscription = self.subscription
-            self.payment.save()
+            payment.subscription = self.subscription
+            payment.save()
             
-            self.receipt.subscription = self.subscription
-            self.receipt.save()
+            receipt.subscription = self.subscription
+            receipt.save()
             
     def create_order_item_receipt(self, order_item):
         """
@@ -249,8 +249,8 @@ class PaymentProcessorBase(object):
         """
         for product in order_item.offer.products.all():
             self.create_receipt_by_term_type(order_item, order_item.offer.terms)
-            self.create_trial_receipt_payment(order_item)
             self.receipt.products.add(product)
+            self.create_trial_receipt_payment(order_item)
 
     def create_receipts(self, order_items):
         """
