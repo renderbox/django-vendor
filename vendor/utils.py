@@ -62,11 +62,13 @@ def get_payment_scheduled_end_date(offer, start_date=timezone.now()):
         return get_future_date_days(start_date, offer.get_period_length())
 
 def get_subscription_start_date(offer, profile, start_date=timezone.now()):
-    if profile.is_on_trial(offer):
-        return start_date + timedelta(days=offer.get_trial_days())
+    billing_date = offer.get_billing_date()
+
+    if profile.is_on_trial(offer) or not profile.has_owned_product(offer.products.all()):
+        if not billing_date:
+            return start_date + timedelta(days=offer.get_trial_days())
     
-    if not profile.has_owned_product(offer.products.all()):
-        return start_date + timedelta(days=offer.get_trial_days())
+        return datetime.fromtimestamp(billing_date)
 
     return start_date
         
