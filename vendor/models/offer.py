@@ -1,7 +1,9 @@
-import uuid
 import math
+import uuid
+
 from autoslug import AutoSlugField
 from django.contrib.sites.models import Site
+from datetime import timedelta
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
 from django.db.models import Q
@@ -10,7 +12,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from vendor.config import DEFAULT_CURRENCY
-from vendor.utils import get_payment_scheduled_end_date
+from vendor.utils import get_payment_scheduled_end_date, get_future_date_days, get_future_date_months
 
 from .base import CreateUpdateModelBase, SoftDeleteModelBase
 from .choice import TermType, TermDetailUnits
@@ -32,7 +34,7 @@ def offer_term_details_default():
         "term_units": TermDetailUnits.MONTH,
         "trial_occurrences": 0,
         "trial_amount": 0,
-        "trial_days": 0
+        "trial_days": 0,
     }
 
 
@@ -52,6 +54,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
     terms = models.IntegerField(_("Terms"), default=0, choices=TermType.choices)
     term_details = models.JSONField(_("Term Details"), default=offer_term_details_default, blank=True, null=True, help_text=_("term_units: 10/20(Day/Month), trial_occurrences: 1(defualt)"))
     term_start_date = models.DateTimeField(_("Term Start Date"), help_text=_("When is this product available to use?"), blank=True, null=True)  # Useful for Event Tickets or Pre-Orders
+    billing_start_date = models.DateTimeField(_("Billing Start Date"), blank=True, null=True, default=None, help_text=_("The start date to begin billing"))
     available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))
     bundle = models.BooleanField(_("Is a Bundle?"), default=False, help_text=_("Is this a product bundle? (auto-generated)"))  # Auto-generated based on if the count of the products is greater than 1.
     offer_description = models.TextField(_("Offer Description"), default=None, blank=True, null=True, help_text=_("You can enter a list of descriptions. Note: if you inputs something here the product description will not show up."))
@@ -202,9 +205,11 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
 
     def get_next_billing_date(self):
         start_date = timezone.now()
-        if self.term_start_date:
+
+        if self.term_start_date and self.term_start_date > start_date:
             start_date = self.term_start_date
-        return get_payment_scheduled_end_date(self, start_date)
+
+        return self.get_offer_end_date(start_date)
 
     def get_period_length(self):
         if self.terms == TermType.SUBSCRIPTION:
@@ -230,14 +235,38 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
 
     def has_any_discount_or_trial(self):
         if self.discount() or self.get_trial_amount() or\
-           self.get_trial_occurrences() or self.get_trial_days():
+           self.get_trial_occurrences() or self.get_trial_days() or\
+           (not self.billing_start_date and self.billing_start_date > timezone.now()):
             return True
             
         return False
     
-    def get_term_start_date(self, start_date=timezone.now()):
+    def get_offer_start_date(self, start_date=timezone.now()):
         if self.term_start_date and self.term_start_date > start_date:
             return self.term_start_date
         
         return start_date
+
+    def get_offer_end_date(self, start_date=timezone.now()):
+        """
+        Determines the start date offset so the payment gateway starts charging the monthly offer
+        """
+        units = self.term_details.get('term_units', TermDetailUnits.MONTH)
+        
+        if units == TermDetailUnits.MONTH:
+            return get_future_date_months(start_date, self.get_period_length())
+        
+        elif units == TermDetailUnits.DAY:
+            return get_future_date_days(start_date, self.get_period_length())
+    
+    def get_trial_end_date(self, start_date=timezone.now()):
+        if self.billing_start_date and self.billing_start_date > start_date:
+            return self.billing_start_date - timedelta(days=1)
+        
+        return start_date + timedelta(days=self.get_trial_days())
+    
+    def get_payment_start_date_trial_offset(self, start_date=timezone.now()):
+        return self.get_trial_end_date(start_date) + timedelta(days=1)
+
+
 
