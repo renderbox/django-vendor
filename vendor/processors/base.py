@@ -12,7 +12,7 @@ from vendor import config
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models import Payment, Invoice, Receipt, Subscription
 from vendor.models.choice import PurchaseStatus, SubscriptionStatus, TermType, InvoiceStatus, PaymentTypes
-from vendor.utils import get_payment_scheduled_end_date, get_subscription_start_date, get_future_date_days
+from vendor.utils import get_subscription_start_date, get_future_date_days
 
 ##########
 # SIGNALS

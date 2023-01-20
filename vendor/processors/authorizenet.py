@@ -7,11 +7,9 @@ import logging
 from datetime import datetime
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.db.models import IntegerChoices
-from django.utils import timezone
 from math import ceil
 from vendor.config import VENDOR_PAYMENT_PROCESSOR, VENDOR_STATE
-from vendor.utils import get_future_date_days, get_payment_scheduled_end_date
+from vendor.utils import get_future_date_days
 from vendor.integrations import AuthorizeNetIntegration
 
 logger = logging.getLogger(__name__)
@@ -297,7 +295,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             payment_schedule.startDate = CustomDate(start_date)
             payment_schedule.trialOccurrences = 0
         else:
-            payment_schedule.startDate = CustomDate(get_future_date_days(start_date, subscription.offer.get_trial_days()))
+            if start_date > subscription.offer.billing_start_date:
+                payment_schedule.startDate = subscription.offer.billing_start_date
+            else:
+                payment_schedule.startDate = CustomDate(get_future_date_days(start_date, subscription.offer.get_trial_days()))
+
             payment_schedule.trialOccurrences = subscription.offer.get_trial_occurrences()
                 
         return payment_schedule
@@ -1002,7 +1004,7 @@ def sync_subscriptions(site):
                             receipt.profile = customer_profile
                             receipt.order_item = invoice.order_items.first()
                             receipt.start_date = submitted_datetime
-                            receipt.end_date = get_payment_scheduled_end_date(offer, start_date=submitted_datetime)
+                            receipt.end_date = offer.get_offer_end_date(start_date=submitted_datetime)
                             receipt.transaction = payment.transaction
                             receipt.subscription = subscription
                             receipt.meta.update(payment.result)
@@ -1049,7 +1051,7 @@ def sync_subscriptions(site):
                                 receipt.profile = customer_profile
                                 receipt.order_item = invoice.order_items.first()
                                 receipt.start_date = submitted_datetime
-                                receipt.end_date = get_payment_scheduled_end_date(offer, start_date=submitted_datetime)
+                                receipt.end_date = offer.get_offer_end_date(start_date=submitted_datetime)
                                 receipt.transaction = payment.transaction
                                 receipt.subscription = subscription
                                 receipt.meta.update(payment.result)
@@ -1154,6 +1156,6 @@ def sync_subscriptions_and_create_missing_receipts(site):
                 receipt.save()
 
                 receipt.products.add(offer.products.first())
-                receipt.end_date = get_payment_scheduled_end_date(offer, start_date=receipt.start_date)
+                receipt.end_date = offer.get_offer_end_date(start_date=receipt.start_date)
                 receipt.subscription = subscription
                 receipt.save()

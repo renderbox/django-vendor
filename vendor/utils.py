@@ -50,25 +50,26 @@ def get_future_date_days(today, add_days):
     return today + timedelta(days=add_days)
 
 
-def get_payment_scheduled_end_date(offer, start_date=timezone.now()):
-    """
-    Determines the start date offset so the payment gateway starts charging the monthly offer
-    """
-    units = offer.term_details.get('term_units', TermDetailUnits.MONTH)
-
-    if units == TermDetailUnits.MONTH:
-        return get_future_date_months(start_date, offer.get_period_length())
-    elif units == TermDetailUnits.DAY:
-        return get_future_date_days(start_date, offer.get_period_length())
+# def get_payment_scheduled_end_date(offer, start_date=timezone.now()):
+#     """
+#     Determines the start date offset so the payment gateway starts charging the monthly offer
+#     """
+#     units = offer.term_details.get('term_units', TermDetailUnits.MONTH)
+    
+#     if units == TermDetailUnits.MONTH:
+#         return get_future_date_months(start_date, offer.get_period_length())
+    
+#     elif units == TermDetailUnits.DAY:
+#         return get_future_date_days(start_date, offer.get_period_length())
 
 def get_subscription_start_date(offer, profile, start_date=timezone.now()):
-    billing_date = offer.get_billing_date()
+    billing_date = offer.billing_start_date
 
     if profile.is_on_trial(offer) or not profile.has_owned_product(offer.products.all()):
         if not billing_date:
             return start_date + timedelta(days=offer.get_trial_days())
     
-        return datetime.fromtimestamp(billing_date)
+        return billing_date
 
     return start_date
         

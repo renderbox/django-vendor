@@ -9,7 +9,6 @@ from django.utils import timezone, dateformat
 
 from vendor.models.base import CreateUpdateModelBase, SoftDeleteModelBase
 from vendor.models.choice import SubscriptionStatus, PurchaseStatus
-from vendor.utils import get_payment_scheduled_end_date
 
 
 class SubscriptionReportModelManger(models.Manager):
