@@ -14,7 +14,7 @@ from django.urls import reverse
 
 from vendor.models.utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
-from vendor.utils import get_site_from_request, get_subscription_start_date
+from vendor.utils import get_site_from_request
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES, TermType, InvoiceStatus
 from .offer import Offer

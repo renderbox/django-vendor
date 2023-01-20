@@ -282,7 +282,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             term_units=10 (Day), trial_occurrences=7
             start_date = now + 7 days
         """
-        start_date = subscription.offer.get_term_start_date()
+        start_date = subscription.offer.get_offer_start_date()
 
         payment_schedule = apicontractsv1.paymentScheduleType()
         payment_schedule.interval = apicontractsv1.paymentScheduleTypeInterval()
