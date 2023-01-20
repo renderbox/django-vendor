@@ -23,7 +23,6 @@ from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment, Sub
 from vendor.models.choice import PaymentTypes, InvoiceStatus, PurchaseStatus
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
 from vendor.processors import get_site_payment_processor
-from vendor.utils import get_subscription_start_date
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 logger = logging.getLogger(__name__)
@@ -382,7 +381,7 @@ class AdminSubscriptionAddPaymentView(LoginRequiredMixin, TemplateView):
                         transaction=payment.transaction,
                         order_item=invoice.order_items.first(),
                         profile=payment.profile,
-                        start_date=get_subscription_start_date(offer, payment.profile, payment.submitted_date),
+                        start_date=offer.get_offer_start_date(payment.submitted_date),
                         end_date=offer.get_offer_end_date(payment.submitted_date),
                         subscription=payment.subscription
                     )

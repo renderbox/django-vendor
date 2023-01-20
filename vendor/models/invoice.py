@@ -206,37 +206,27 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         next_billing_dates.sort()
 
         return next_billing_dates[0]
-
-    def get_subscription_start_date(self):
-        """
-        Return the date the subscription will go into effect.
-        """
-        recurring_offers = self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)
-
-        if not recurring_offers.count():
-            return None
-
-        next_billing_dates = [get_subscription_start_date(order_item.offer, profile=self.profile) for order_item in recurring_offers]
-
-        next_billing_dates.sort()
-
-        return next_billing_dates[0]
     
     def get_billing_dates_and_prices(self):
         now = timezone.now()
-        payments_info = {now: self.get_one_time_transaction_total()}
+        payment_dates = {now: self.get_one_time_transaction_total()}
         
         for recurring_order_item in self.get_recurring_order_items():
             offer_total = (recurring_order_item.total - recurring_order_item.discounts)
+
             start_date = recurring_order_item.offer.get_offer_start_date(now)
-            subscription_start_date = get_subscription_start_date(recurring_order_item.offer, self.profile, start_date)
 
-            if subscription_start_date in payments_info:
-                payments_info.update({subscription_start_date: payments_info[subscription_start_date] + offer_total})
+            if (recurring_order_item.offer.has_trial() or recurring_order_item.offer.billing_start_date) and\
+               not self.profile.has_owned_product(recurring_order_item.offer.products.all()):
+                start_date = recurring_order_item.offer.get_payment_start_date_trial_offset(now)
+
+
+            if start_date in payment_dates:
+                payment_dates.update({start_date: payment_dates[start_date] + offer_total})
             else:
-                payments_info[subscription_start_date] = offer_total
+                payment_dates[start_date] = offer_total
 
-        sorted_payments = {key: payments_info[key] for key in sorted(payments_info.keys()) }
+        sorted_payments = {key: payment_dates[key] for key in sorted(payment_dates.keys()) }
         
         return sorted_payments
 
