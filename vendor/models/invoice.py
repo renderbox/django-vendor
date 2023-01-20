@@ -212,13 +212,19 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         payment_dates = {now: self.get_one_time_transaction_total()}
         
         for recurring_order_item in self.get_recurring_order_items():
-            offer_total = (recurring_order_item.total - recurring_order_item.discounts)
+            offer_total = recurring_order_item.total
+
+            if recurring_order_item.discounts:
+                offer_total = offer_total - recurring_order_item.discounts
 
             start_date = recurring_order_item.offer.get_offer_start_date(now)
 
             if (recurring_order_item.offer.has_trial() or recurring_order_item.offer.billing_start_date) and\
                not self.profile.has_owned_product(recurring_order_item.offer.products.all()):
                 start_date = recurring_order_item.offer.get_payment_start_date_trial_offset(now)
+                
+                if recurring_order_item.offer.get_trial_occurrences() > 1:
+                    offer_total = recurring_order_item.offer.get_trial_amount()
 
 
             if start_date in payment_dates:
@@ -271,9 +277,9 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
 
         discounts = sum([order_item.discounts for order_item in self.order_items.all() if not self.profile.has_owned_product(order_item.offer.products.all())])
 
-        trial_discounts = sum([order_item.price - order_item.trial_amount for order_item in self.order_items.all() if order_item.offer.has_trial_occurrences()])
+        trial_discounts = sum([order_item.trial_amount - order_item.price for order_item in self.order_items.all() if order_item.offer.has_trial_occurrences() or order_item.offer.get_trial_days()])
 
-        return discounts + trial_discounts
+        return discounts + abs(trial_discounts)
 
     def save_discounts_vendor_notes(self):
         """
@@ -341,6 +347,8 @@ class OrderItem(CreateUpdateModelBase):
                 return self.offer.get_trial_amount()
         else:
             if self.offer.has_trial_occurrences():
+                return self.offer.get_trial_amount()
+            elif self.offer.get_trial_days():
                 return self.offer.get_trial_amount()
         return self.offer.current_price()
 

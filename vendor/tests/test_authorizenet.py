@@ -675,8 +675,8 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertTrue(self.processor.transaction_succeeded)
         self.assertIn('subscriptionId', self.processor.transaction_info['data'])
         self.assertIsNotNone(self.processor.subscription)
-        self.assertFalse(self.processor.payment.transaction)
-        self.assertFalse(self.processor.receipt.transaction)
+        self.assertTrue(self.processor.payment.transaction)
+        self.assertTrue(self.processor.receipt.transaction)
 
     def test_subscription_update_payment(self):
         self.form_data['credit_card_form']['card_number'] = choice(self.VALID_CARD_NUMBERS)
@@ -794,9 +794,8 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor = AuthorizeNetProcessor(self.site, self.existing_invoice)
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
-        self.processor.is_data_valid()
-        self.processor.create_payment_model()
         is_valid = self.processor.is_card_valid()
+        self.processor.create_payment_model()
         print(f"Test is_card_valid_success\n")
         print(f"Transaction Submitted: {self.processor.transaction_succeeded}")
         print(f"Transaction Response: {self.processor.transaction_response}")

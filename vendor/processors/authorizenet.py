@@ -295,10 +295,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             payment_schedule.startDate = CustomDate(start_date)
             payment_schedule.trialOccurrences = 0
         else:
-            if start_date > subscription.offer.billing_start_date:
-                payment_schedule.startDate = subscription.offer.billing_start_date
+            if subscription.offer.has_trial():
+                payment_schedule.startDate = CustomDate(subscription.offer.get_payment_start_date_trial_offset(start_date))
             else:
-                payment_schedule.startDate = CustomDate(get_future_date_days(start_date, subscription.offer.get_trial_days()))
+                payment_schedule.startDate = CustomDate(start_date)
 
             payment_schedule.trialOccurrences = subscription.offer.get_trial_occurrences()
                 
