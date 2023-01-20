@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib.sites.models import Site
 from django.test import TestCase
 from django.utils import timezone
@@ -26,9 +28,10 @@ class ReceiptModelTests(TestCase):
 
     def test_receipt_is_on_trial_true(self):
         self.first_receipt.start_date = timezone.now()
-        self.first_receipt.end_date = self.first_receipt.order_item.offer.get_offer_end_date()
+        self.first_receipt.end_date = timezone.now() + timedelta(days=10)
+        self.first_receipt.transaction = 'trial'
         self.first_receipt.save()
-        self.assertTrue(self.new_receipt.is_on_trial())
+        self.assertTrue(self.first_receipt.is_on_trial())
 
     def test_receipt_is_on_trial_false(self):
         self.assertFalse(self.new_receipt.is_on_trial())

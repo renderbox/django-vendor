@@ -1,12 +1,11 @@
 import uuid
 
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
-from django.utils import timezone, dateformat
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from vendor.models.base import CreateUpdateModelBase, SoftDeleteModelBase
-from vendor.models.choice import PurchaseStatus
 
 
 class Receipt(SoftDeleteModelBase, CreateUpdateModelBase):
@@ -34,9 +33,9 @@ class Receipt(SoftDeleteModelBase, CreateUpdateModelBase):
     def get_absolute_url(self):
         return reverse('vendor:customer-receipt', kwargs={'uuid': self.uuid})
 
-    def is_on_trial(self):
-        first_payment = Receipt.objects.filter(transaction=self.transaction, order_item__offer__site=self.order_item.offer.site).order_by('start_date').first()
-        
-        if self.end_date <= first_payment.order_item.offer.get_offer_end_date(first_payment.start_date):
+    def is_on_trial(self, today=timezone.now()):
+
+        if 'trial' in self.transaction and self.end_date >= today:
             return True
+        
         return False

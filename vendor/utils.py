@@ -65,7 +65,7 @@ def get_future_date_days(today, add_days):
 def get_subscription_start_date(offer, profile, start_date=timezone.now()):
     billing_date = offer.billing_start_date
 
-    if profile.is_on_trial(offer) or not profile.has_owned_product(offer.products.all()):
+    if profile.is_offer_on_trial(offer) or not profile.has_owned_product(offer.products.all()):
         if not billing_date:
             return start_date + timedelta(days=offer.get_trial_days())
     

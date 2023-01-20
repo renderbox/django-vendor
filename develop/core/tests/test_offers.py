@@ -240,9 +240,11 @@ class ModelOfferTests(TestCase):
     def test_get_payment_start_date_trial_offset_delta_trial_days(self):
         today = timezone.now()
         monthly_offer = Offer.objects.get(pk=6)
+        monthly_offer.term_details['trial_days'] = 10
+        monthly_offer.save()
 
-        trial_start_date = monthly_offer.get_payment_start_date_trial_offset(today)
-        self.assertEqual(today + timedelta(days=1), trial_start_date)
+        first_payment_date = monthly_offer.get_payment_start_date_trial_offset(today)
+        self.assertEqual(today + timedelta(days=1) + timedelta(days=monthly_offer.term_details['trial_days']), first_payment_date)
     
     
     
