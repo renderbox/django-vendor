@@ -241,6 +241,16 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
             
         return False
     
+    def has_trial(self):
+        if self.get_trial_occurrences() or self.get_trial_days():
+            return True
+        return False
+    
+    def has_valid_billing_start_date(self, today=timezone.now()):
+        if self.billing_start_date and self.billing_start_date > today:
+            return True
+        return False
+    
     def get_offer_start_date(self, start_date=timezone.now()):
         if self.term_start_date and self.term_start_date > start_date:
             return self.term_start_date
@@ -266,7 +276,13 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         return start_date + timedelta(days=self.get_trial_days())
     
     def get_payment_start_date_trial_offset(self, start_date=timezone.now()):
-        return self.get_trial_end_date(start_date) + timedelta(days=1)
+        trial_end_date = self.get_trial_end_date(start_date)
+
+        if trial_end_date == start_date:
+            return start_date
+        
+        return trial_end_date + timedelta(days=1)
+    
 
 
 
