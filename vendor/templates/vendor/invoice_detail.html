@@ -44,7 +44,7 @@
         </li>
         {% endif %}
         
-        {% include "./includes/cost_overview.html" with invoice=invoice %}
+        {% include "./includes/cost_overview.html" with invoice=invoice future_billing_info=True %}
 
       </ul>
       {% if order_items and not user.is_anonymous %}

@@ -186,7 +186,7 @@
         <span class="text-muted">${{ item.total|default_if_none:"0.00"|floatformat:2 }}</span>
       </li>
       {% endfor %}
-      {% include "./includes/cost_overview.html" with invoice=invoice %}
+      {% include "./includes/cost_overview.html" with invoice=invoice future_billing_info=True %}
     </ul>
 
 
