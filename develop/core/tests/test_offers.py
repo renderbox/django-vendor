@@ -7,8 +7,9 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
 
+from vendor.models.choice import TermDetailUnits
 from vendor.models import Offer
-from vendor.utils import get_display_decimal
+from vendor.utils import get_display_decimal, get_future_date_days, get_future_date_months
 
 
 User = get_user_model()
@@ -170,6 +171,109 @@ class ModelOfferTests(TestCase):
         self.assertEqual(Offer.objects.all().count() - deleted_offer_difference, Offer.not_deleted.count())
         self.assertEquals(offer_count_before_deletion, Offer.objects.all().count())
 
+    def test_get_offer_start_date_returns_now(self):
+        today = timezone.now()
+        offer = Offer.objects.all().first()
+        offer.term_start_date = None
+        offer.save()
+
+        start_date = offer.get_offer_start_date(today)
+        self.assertEqual(today, start_date)
+
+        offer.term_start_date = today - timedelta(days=2)
+        offer.save()
+
+        start_date = offer.get_offer_start_date(today)
+        self.assertEqual(today, start_date)
+    
+    def test_get_offer_start_date_returns_term_start_date(self):
+        today = timezone.now()
+        offer = Offer.objects.all().first()
+        offer.term_start_date = today + timedelta(days=13)
+        offer.save()
+
+        start_date = offer.get_offer_start_date(today)
+        self.assertEqual(offer.term_start_date, start_date)
+    
+    def test_get_offer_end_date_month(self):
+        monthly_offer = Offer.objects.get(pk=6)
+        today = timezone.now()
+
+        end_date = monthly_offer.get_offer_end_date(today)
+        self.assertEqual(end_date, get_future_date_months(today, monthly_offer.get_period_length()))
+    
+    def test_get_offer_end_date_days(self):
+        monthly_offer = Offer.objects.get(pk=6)
+        monthly_offer.term_details['period_length'] = 7
+        monthly_offer.term_details['term_units'] = TermDetailUnits.DAY
+        monthly_offer.save()
+        today = timezone.now()
+
+        end_date = monthly_offer.get_offer_end_date(today)
+        self.assertEqual(end_date, get_future_date_days(today, monthly_offer.get_period_length()))
+
+    def test_get_trial_end_date_returns_billing_start_date(self):
+        today = timezone.now()
+        monthly_offer = Offer.objects.get(pk=6)
+        monthly_offer.billing_start_date = today + timedelta(days=10)
+        monthly_offer.save()
+
+        trial_end_date = monthly_offer.get_trial_end_date(today)
+        self.assertEqual(monthly_offer.billing_start_date - timedelta(days=1), trial_end_date)
+    
+    def test_get_trial_end_date_retunrs_delta_of_trial_days(self):
+        today = timezone.now()
+        monthly_offer = Offer.objects.get(pk=6)
+
+        trial_end_date = monthly_offer.get_trial_end_date(today)
+        self.assertEqual(today, trial_end_date)
+    
+    def test_get_payment_start_date_trial_offset_billing_start_date(self):
+        today = timezone.now()
+        monthly_offer = Offer.objects.get(pk=6)
+        monthly_offer.billing_start_date = today + timedelta(days=10)
+        monthly_offer.save()
+
+        trial_start_date = monthly_offer.get_payment_start_date_trial_offset(today)
+        self.assertEqual(monthly_offer.billing_start_date, trial_start_date)
+    
+    def test_get_payment_start_date_trial_offset_delta_trial_days(self):
+        today = timezone.now()
+        monthly_offer = Offer.objects.get(pk=6)
+        monthly_offer.term_details['trial_days'] = 10
+        monthly_offer.save()
+
+        first_payment_date = monthly_offer.get_payment_start_date_trial_offset(today)
+        self.assertEqual(today + timedelta(days=1) + timedelta(days=monthly_offer.term_details['trial_days']), first_payment_date)
+
+    def test_has_any_discount_or_trial_true_has_discount(self):
+        offer = Offer.objects.get(pk=6)
+        offer.term_details['trial_amount'] = 10
+        offer.save()
+
+        self.assertTrue(offer.has_any_discount_or_trial())
+
+    def test_has_any_discount_or_trial_true_has_trial_days(self):
+        offer = Offer.objects.get(pk=6)
+        offer.term_details['trial_days'] = 10
+        offer.save()
+
+        self.assertTrue(offer.has_any_discount_or_trial())
+
+    def test_has_any_discount_or_trial_true_has_billing_start_date(self):
+        today = timezone.now()
+        offer = Offer.objects.get(pk=6)
+        offer.billing_start_date = today + timedelta(days=10)
+        offer.save()
+
+        self.assertTrue(offer.has_any_discount_or_trial())
+
+    def test_has_any_discount_or_trial_false(self):
+        offer = Offer.objects.get(pk=6)
+        offer.save()
+
+        self.assertFalse(offer.has_any_discount_or_trial())
+        
 
 class ViewOfferTests(TestCase):
 

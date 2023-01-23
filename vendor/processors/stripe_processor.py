@@ -563,7 +563,7 @@ class StripeProcessor(PaymentProcessorBase):
             'price': order_item.offer.meta['stripe'].get('price_id'),
         }
 
-        if order_item.offer.has_any_discount_or_trial():
+        if order_item.offer.has_trial() or order_item.offer.has_valid_billing_start_date() or order_item.offer.discount():
             line_item['discounts'] = [{'coupon': order_item.offer.meta['stripe'].get('coupon_id')}]
 
         return line_item
@@ -815,7 +815,7 @@ class StripeProcessor(PaymentProcessorBase):
                 # Handle Coupon
                 coupon_data = self.build_coupon(offer, DEFAULT_CURRENCY)
                 discount = self.convert_decimal_to_integer(offer.discount())
-                trial_days = offer.term_details.get('trial_days', 0)
+                trial_days = offer.get_trial_days()
 
                 # If this offer has a discount check if its on stripe to create, update, delete
                 if discount or trial_days:

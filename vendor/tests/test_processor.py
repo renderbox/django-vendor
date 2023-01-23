@@ -216,6 +216,14 @@ class BaseProcessorTests(TestCase):
 
     def test_renew_subscription(self):
         subscription = Subscription.objects.get(pk=1)
+        offer = subscription.get_offer()
+        offer.term_details['trial_occurrences'] = 0
+        offer.term_details['trial_days'] = 0
+        offer.save()
+        offer.refresh_from_db()
+        subscription.save()
+        subscription.refresh_from_db()
+
         submitted_datetime = timezone.now()
 
         invoice = Invoice.objects.create(
@@ -246,6 +254,64 @@ class BaseProcessorTests(TestCase):
         subscription.refresh_from_db()
         self.assertIn('price_update', subscription.meta)
 
+    def test_subscription_payment_billing_start_date(self):
+        today = timezone.now()
+        self.subscription_offer.billing_start_date = today + timedelta(days=10)
+        self.subscription_offer.save()
+
+        self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
+        self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+        self.base_processor.is_data_valid()
+
+        self.base_processor.invoice.add_offer(self.subscription_offer)
+        self.base_processor.invoice.save()
+        self.base_processor.transaction_succeeded = True
+        self.base_processor.process_subscriptions()
+    
+        self.assertEqual(today.strftime("%y/%m/%d"), self.base_processor.trial_receipt.start_date.strftime("%y/%m/%d"))
+        self.assertEqual(self.subscription_offer.billing_start_date - timedelta(days=1), self.base_processor.trial_receipt.end_date)
+        self.assertEqual(self.subscription_offer.billing_start_date, self.base_processor.receipt.start_date)
+
+    def test_subscription_payment_term_start_date(self):
+        today = timezone.now()
+        self.subscription_offer.term_start_date = today + timedelta(days=10)
+        self.subscription_offer.term_details['trial_amount'] = 0
+        self.subscription_offer.term_details['trial_occurrences'] = 0
+        self.subscription_offer.term_details['trial_days'] = 0
+        self.subscription_offer.save()
+
+        self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
+        self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+        self.base_processor.is_data_valid()
+
+        self.base_processor.invoice.add_offer(self.subscription_offer)
+        self.base_processor.invoice.save()
+        self.base_processor.transaction_succeeded = True
+        self.base_processor.process_subscriptions()
+    
+        self.assertIsNone(self.base_processor.trial_receipt)
+        self.assertEqual(self.subscription_offer.term_start_date, self.base_processor.receipt.start_date)
+    
+    def test_subscription_payment_trial_days(self):
+        today = timezone.now()
+        self.subscription_offer.term_start_date = today + timedelta(days=10)
+        self.subscription_offer.term_details['trial_amount'] = 10
+        self.subscription_offer.term_details['trial_occurrences'] = 0
+        self.subscription_offer.term_details['trial_days'] = 7
+        self.subscription_offer.save()
+
+        self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
+        self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+        self.base_processor.is_data_valid()
+
+        self.base_processor.invoice.add_offer(self.subscription_offer)
+        self.base_processor.invoice.save()
+        self.base_processor.transaction_succeeded = True
+        self.base_processor.process_subscriptions()
+    
+        self.assertEqual(self.subscription_offer.term_start_date.strftime("%y/%m/%d"), self.base_processor.trial_receipt.start_date.strftime("%y/%m/%d"))
+        self.assertEqual((self.base_processor.trial_receipt.end_date + timedelta(days=1)).strftime("%y/%m/%d"), self.base_processor.receipt.start_date.strftime("%y/%m/%d"))
+    
     # def test_get_header_javascript_success(self):
     #     raise NotImplementedError()
 

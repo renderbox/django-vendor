@@ -9,7 +9,6 @@ from django.utils import timezone, dateformat
 
 from vendor.models.base import CreateUpdateModelBase, SoftDeleteModelBase
 from vendor.models.choice import SubscriptionStatus, PurchaseStatus
-from vendor.utils import get_payment_scheduled_end_date
 
 
 class SubscriptionReportModelManger(models.Manager):
@@ -102,10 +101,9 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
         if not self.receipts.filter(deleted=False).count():
             return False
 
-        receipt = self.receipts.filter(deleted=False).order_by('start_date').first()
-        trial_end_date = receipt.start_date + timedelta(days=receipt.order_item.offer.get_trial_days())
+        trial_receipt = self.receipts.filter(deleted=False, transaction__contains='trial').order_by('start_date').first()
 
-        if timezone.now() > trial_end_date:
+        if timezone.now() > trial_receipt.end_date:
             return False
         
         return True

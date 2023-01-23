@@ -29,7 +29,7 @@
     <div class='col-md-12 mb-3'>
         <h3 class="d-flex w-100 justify-content-start">{% trans 'Summary' %}</h3>
         <ul class="list-group mb-3 border-0 col-6">
-        {% include "./includes/cost_overview.html" with invoice=invoice %}
+        {% include "./includes/cost_overview.html" with invoice=invoice future_billing_info=False %}
         </ul>
 
     </div>

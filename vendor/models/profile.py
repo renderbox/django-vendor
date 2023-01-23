@@ -224,7 +224,7 @@ class CustomerProfile(CreateUpdateModelBase):
     def get_settled_payments(self):
         return self.payments.filter(deleted=False, status=PurchaseStatus.SETTLED).order_by('amount', 'submitted_date')
 
-    def is_on_trial(self, offer):
+    def is_offer_on_trial(self, offer):
 
         on_trial_receipt = next((receipt for receipt in self.get_active_offer_receipts(offer) if receipt.transaction and 'trial' in receipt.transaction), None)
 

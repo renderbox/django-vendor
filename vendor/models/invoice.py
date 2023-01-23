@@ -14,7 +14,7 @@ from django.urls import reverse
 
 from vendor.models.utils import set_default_site_id
 from vendor.config import DEFAULT_CURRENCY
-from vendor.utils import get_site_from_request, get_subscription_start_date
+from vendor.utils import get_site_from_request
 from .base import CreateUpdateModelBase
 from .choice import CURRENCY_CHOICES, TermType, InvoiceStatus
 from .offer import Offer
@@ -206,37 +206,33 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         next_billing_dates.sort()
 
         return next_billing_dates[0]
-
-    def get_subscription_start_date(self):
-        """
-        Return the date the subscription will go into effect.
-        """
-        recurring_offers = self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)
-
-        if not recurring_offers.count():
-            return None
-
-        next_billing_dates = [get_subscription_start_date(order_item.offer, profile=self.profile) for order_item in recurring_offers]
-
-        next_billing_dates.sort()
-
-        return next_billing_dates[0]
     
     def get_billing_dates_and_prices(self):
         now = timezone.now()
-        payments_info = {now: self.get_one_time_transaction_total()}
+        payment_dates = {now: self.get_one_time_transaction_total()}
         
         for recurring_order_item in self.get_recurring_order_items():
-            offer_total = (recurring_order_item.total - recurring_order_item.discounts)
-            start_date = recurring_order_item.offer.get_term_start_date(now)
-            subscription_start_date = get_subscription_start_date(recurring_order_item.offer, self.profile, start_date)
+            offer_total = recurring_order_item.total
 
-            if subscription_start_date in payments_info:
-                payments_info.update({subscription_start_date: payments_info[subscription_start_date] + offer_total})
+            if recurring_order_item.discounts:
+                offer_total = offer_total - recurring_order_item.discounts
+
+            start_date = recurring_order_item.offer.get_offer_start_date(now)
+
+            if (recurring_order_item.offer.has_trial() or recurring_order_item.offer.billing_start_date) and\
+               not self.profile.has_owned_product(recurring_order_item.offer.products.all()):
+                start_date = recurring_order_item.offer.get_payment_start_date_trial_offset(now)
+                
+                if recurring_order_item.offer.get_trial_occurrences() > 1:
+                    offer_total = recurring_order_item.offer.get_trial_amount()
+
+
+            if start_date in payment_dates:
+                payment_dates.update({start_date: payment_dates[start_date] + offer_total})
             else:
-                payments_info[subscription_start_date] = offer_total
+                payment_dates[start_date] = offer_total
 
-        sorted_payments = {key: payments_info[key] for key in sorted(payments_info.keys()) }
+        sorted_payments = {key: payment_dates[key] for key in sorted(payment_dates.keys()) }
         
         return sorted_payments
 
@@ -281,9 +277,9 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
 
         discounts = sum([order_item.discounts for order_item in self.order_items.all() if not self.profile.has_owned_product(order_item.offer.products.all())])
 
-        trial_discounts = sum([order_item.price - order_item.trial_amount for order_item in self.order_items.all() if order_item.offer.has_trial_occurrences()])
+        trial_discounts = sum([order_item.trial_amount - order_item.price for order_item in self.order_items.all() if order_item.offer.has_trial_occurrences() or order_item.offer.get_trial_days()])
 
-        return discounts + trial_discounts
+        return discounts + abs(trial_discounts)
 
     def save_discounts_vendor_notes(self):
         """
@@ -351,6 +347,8 @@ class OrderItem(CreateUpdateModelBase):
                 return self.offer.get_trial_amount()
         else:
             if self.offer.has_trial_occurrences():
+                return self.offer.get_trial_amount()
+            elif self.offer.get_trial_days():
                 return self.offer.get_trial_amount()
         return self.offer.current_price()
 
