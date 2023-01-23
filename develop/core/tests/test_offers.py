@@ -245,10 +245,35 @@ class ModelOfferTests(TestCase):
 
         first_payment_date = monthly_offer.get_payment_start_date_trial_offset(today)
         self.assertEqual(today + timedelta(days=1) + timedelta(days=monthly_offer.term_details['trial_days']), first_payment_date)
-    
-    
-    
-    
+
+    def test_has_any_discount_or_trial_true_has_discount(self):
+        offer = Offer.objects.get(pk=6)
+        offer.term_details['trial_amount'] = 10
+        offer.save()
+
+        self.assertTrue(offer.has_any_discount_or_trial())
+
+    def test_has_any_discount_or_trial_true_has_trial_days(self):
+        offer = Offer.objects.get(pk=6)
+        offer.term_details['trial_days'] = 10
+        offer.save()
+
+        self.assertTrue(offer.has_any_discount_or_trial())
+
+    def test_has_any_discount_or_trial_true_has_billing_start_date(self):
+        today = timezone.now()
+        offer = Offer.objects.get(pk=6)
+        offer.billing_start_date = today + timedelta(days=10)
+        offer.save()
+
+        self.assertTrue(offer.has_any_discount_or_trial())
+
+    def test_has_any_discount_or_trial_false(self):
+        offer = Offer.objects.get(pk=6)
+        offer.save()
+
+        self.assertFalse(offer.has_any_discount_or_trial())
+        
 
 class ViewOfferTests(TestCase):
 

@@ -236,7 +236,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
     def has_any_discount_or_trial(self):
         if self.discount() or self.get_trial_amount() or\
            self.get_trial_occurrences() or self.get_trial_days() or\
-           (not self.billing_start_date and self.billing_start_date > timezone.now()):
+           (self.billing_start_date and self.billing_start_date > timezone.now()):
             return True
             
         return False
