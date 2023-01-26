@@ -43,6 +43,7 @@ dev = [
     "django-site-configs",
     "django-integrations",
     "django-allauth",
+    "toml",
 ]
 stripe = [ "stripe", ] # Packages needed for Stripe
 authorizenet = [ "authorizenet", ]
