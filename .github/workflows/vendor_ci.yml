@@ -2,10 +2,9 @@ name: Django Vendor CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
-
   test-and-build:
     runs-on: ubuntu-latest
     strategy:
@@ -34,49 +33,49 @@ jobs:
           --health-retries 5
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install mistune==0.8.4
-        python -m pip install m2r
-        python -m pip install -e .[dev,authorizenet,stripe,test,build]
-    - name: Run Core Tests
-      run: |
-        cd develop
-        python manage.py test
-        python manage.py makemigrations --check --dry-run
-      env: 
-        DJANGO_DEBUG: 1
-        DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
-    - name: Run Base Processor Tests
-      run: |
-        cd develop
-        python manage.py test vendor.tests.test_processor.BaseProcessorTests
-      env: 
-        DJANGO_DEBUG: 1
-        DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
-    # - name: Run Authorize.Net Tests
-    #   run: |
-    #     cd develop
-    #     python manage.py test vendor.tests.test_processor.AuthorizeNetProcessorTests --exclude-tag external
-    #   env: 
-    #     DJANGO_DEBUG: 1
-    #     DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
-    #     AUTHORIZE_NET_API_ID: ${{ secrets.AUTHORIZE_NET_API_ID }}
-    #     AUTHORIZE_NET_TRANSACTION_KEY: ${{ secrets.AUTHORIZE_NET_TRANSACTION_KEY }}
-    #     AUTHORIZE_NET_TRANSACTION_TYPE_DEFAULT: "authCaptureTransaction"
-    #     VENDOR_PAYMENT_PROCESSOR: "authorizenet.AuthorizeNetProcessor"
-    - name: Build Package
-      run: |
-        python setup.py sdist bdist_wheel
-    - name: Publish a Python distribution to PyPI
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.pypi_password }}
-      
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install mistune==0.8.4
+          python -m pip install m2r
+          python -m pip install -e .[dev,authorizenet,stripe,test,build]
+      - name: Run Core Tests
+        run: |
+          cd develop
+          python manage.py test
+          python manage.py makemigrations --check --dry-run
+        env:
+          DJANGO_DEBUG: 1
+          DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
+      - name: Run Base Processor Tests
+        run: |
+          cd develop
+          python manage.py test vendor.tests.test_processor.BaseProcessorTests
+        env:
+          DJANGO_DEBUG: 1
+          DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
+      # - name: Run Authorize.Net Tests
+      #   run: |
+      #     cd develop
+      #     python manage.py test vendor.tests.test_processor.AuthorizeNetProcessorTests --exclude-tag external
+      #   env:
+      #     DJANGO_DEBUG: 1
+      #     DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/vendor
+      #     AUTHORIZE_NET_API_ID: ${{ secrets.AUTHORIZE_NET_API_ID }}
+      #     AUTHORIZE_NET_TRANSACTION_KEY: ${{ secrets.AUTHORIZE_NET_TRANSACTION_KEY }}
+      #     AUTHORIZE_NET_TRANSACTION_TYPE_DEFAULT: "authCaptureTransaction"
+      #     VENDOR_PAYMENT_PROCESSOR: "authorizenet.AuthorizeNetProcessor"
+      - name: Build Package
+        run: |
+          python -m pip install --upgrade build
+          python3 -m build
+      - name: Publish a Python distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.pypi_password }}
