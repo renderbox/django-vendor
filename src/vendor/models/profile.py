@@ -183,7 +183,9 @@ class CustomerProfile(CreateUpdateModelBase):
         return Product.objects.filter(receipts__profile=self)
 
     def get_active_products(self):
-        return set([receipt.products.first() for receipt in self.get_active_receipts() if receipt.products.first()])
+        return set([receipt.products.first() 
+                    for receipt in self.get_active_receipts() 
+                    if receipt.products.first()])
 
     def get_active_offer_receipts(self, offer):
         return self.receipts.filter(Q(deleted=False),
