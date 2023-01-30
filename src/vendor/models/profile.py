@@ -1,20 +1,21 @@
 import uuid
 
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
+from django.contrib.sites.models import Site
 from django.db import models
-from django.db.models import Q, QuerySet, Count, Sum
+from django.db.models import Count, Q, QuerySet, Sum
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from .base import CreateUpdateModelBase
-from .choice import CURRENCY_CHOICES, TermType, PurchaseStatus, SubscriptionStatus
-from .invoice import Invoice
-from .utils import set_default_site_id
-from vendor.config import DEFAULT_CURRENCY
 
+from vendor.config import DEFAULT_CURRENCY
 from vendor.models.base import get_product_model
 from vendor.models.choice import InvoiceStatus
+
+from .base import CreateUpdateModelBase
+from .choice import (CURRENCY_CHOICES, PurchaseStatus, SubscriptionStatus,
+                     TermType)
+from .utils import set_default_site_id
 
 
 #####################
@@ -124,13 +125,13 @@ class CustomerProfile(CreateUpdateModelBase):
         # Queryset or List of model records
         if isinstance(products, QuerySet) or isinstance(products, list):
             return bool(self.receipts.filter(Q(products__in=products),
-                                        Q(deleted=False),
-                                        Q(start_date__gte=now) | Q(start_date=None)).count())
+                                             Q(deleted=False),
+                                             Q(start_date__gte=now) | Q(start_date=None)).count())
 
         # Single model record
         return bool(self.receipts.filter(Q(products=products),
-                                    Q(deleted=False),
-                                    Q(start_date__gte=now) | Q(start_date=None)).count())
+                                         Q(deleted=False),
+                                         Q(start_date__gte=now) | Q(start_date=None)).count())
 
     def has_owned_product(self, products):
         # Queryset or List of model records
@@ -158,7 +159,17 @@ class CustomerProfile(CreateUpdateModelBase):
         return cart.order_items.all().count()
 
     def get_or_create_address(self, address):
-        address, created = self.addresses.get_or_create(name=address.address_1, first_name=address.first_name, last_name=address.last_name, address_1=address.address_1, address_2=address.address_2, locality=address.locality, state=address.state, country=address.country, postal_code=address.postal_code, profile=self)
+        address, created = self.addresses.get_or_create(
+            name=address.address_1,
+            first_name=address.first_name,
+            last_name=address.last_name,
+            address_1=address.address_1,
+            address_2=address.address_2,
+            locality=address.locality,
+            state=address.state,
+            country=address.country,
+            postal_code=address.postal_code,
+            profile=self)
         return address, created
 
     def has_previously_owned_products(self, products):
@@ -172,10 +183,12 @@ class CustomerProfile(CreateUpdateModelBase):
         return Product.objects.filter(receipts__profile=self)
 
     def get_active_products(self):
-         return set([receipt.products.first()  for receipt in self.get_active_receipts()])
+        return set([receipt.products.first() for receipt in self.get_active_receipts() if receipt.products.first()])
 
     def get_active_offer_receipts(self, offer):
-        return self.receipts.filter(Q(deleted=False), Q(order_item__offer=offer), Q(end_date__gte=timezone.now()) | Q(end_date=None))
+        return self.receipts.filter(Q(deleted=False),
+                                    Q(order_item__offer=offer),
+                                    Q(end_date__gte=timezone.now()) | Q(end_date=None))
 
     def get_active_receipts(self):
         return self.receipts.filter(Q(end_date__gte=timezone.now()) | Q(end_date=None))
@@ -187,7 +200,9 @@ class CustomerProfile(CreateUpdateModelBase):
         """
         Returns a tuple product and offer tuple that are related to the active receipt
         """
-        return [(receipt.products.first(), receipt.order_item.offer) for receipt in self.receipts.filter(Q(deleted=False), Q(end_date__gte=timezone.now()) | Q(end_date=None))]
+        return [(receipt.products.first(), receipt.order_item.offer)
+                for receipt in self.receipts.filter(Q(deleted=False), Q(end_date__gte=timezone.now()) | Q(end_date=None))
+                if receipt.products.first()]
 
     def get_subscriptions(self):
         return self.subscriptions.all()
