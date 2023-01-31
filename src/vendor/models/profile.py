@@ -184,16 +184,14 @@ class CustomerProfile(CreateUpdateModelBase):
 
     def get_active_products(self):
         return set([receipt.products.first()
-                    for receipt in self.get_active_receipts()
-                    if receipt.products.first()])
+                    for receipt in self.get_active_receipts()])
 
     def get_active_offer_receipts(self, offer):
-        return self.receipts.filter(Q(deleted=False),
-                                    Q(order_item__offer=offer),
-                                    Q(end_date__gte=timezone.now()) | Q(end_date=None))
+        return self.get_active_receipts().filter(Q(order_item__offer=offer))
 
     def get_active_receipts(self):
-        return self.receipts.filter(Q(end_date__gte=timezone.now()) | Q(end_date=None))
+        return self.receipts.filter(Q(deleted=False),
+                                    Q(end_date__gte=timezone.now()) | Q(end_date=None)).exclude(products=None)
 
     def get_inactive_receipts(self):
         return self.receipts.filter(end_date__lt=timezone.now())
@@ -203,8 +201,7 @@ class CustomerProfile(CreateUpdateModelBase):
         Returns a tuple product and offer tuple that are related to the active receipt
         """
         return [(receipt.products.first(), receipt.order_item.offer)
-                for receipt in self.receipts.filter(Q(deleted=False), Q(end_date__gte=timezone.now()) | Q(end_date=None))
-                if receipt.products.first()]
+                for receipt in self.get_active_receipts()]
 
     def get_subscriptions(self):
         return self.subscriptions.all()
