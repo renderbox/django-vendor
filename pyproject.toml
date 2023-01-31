@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.distutils.bdist_wheel]
+universal = true
+
+[project]
+name = "django-vendor"
+version = "0.3.14"
+
+authors = [
+  { name="Grant Viklund", email="renderbox@gmail.com" },
+  { name="Roberto Himmelbauer" }
+]
+description = "Django App Toolkit for selling digital and physical goods online."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3 :: Only",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+keywords = ["django", "app"]
+dependencies = [
+    "Django>=3.0,<4.0",
+    "django-autoslug",
+    "django-extensions",
+    "iso4217",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "flake8",
+    "flake8-black",
+    "mypy",
+    "bandit",
+    "isort",
+    "dj-database-url",
+    "psycopg2-binary",
+    "django-crispy-forms",
+    "django-site-configs",
+    "django-integrations",
+    "django-allauth",
+    "toml",
+]
+stripe = [ "stripe", ] # Packages needed for Stripe
+authorizenet = [ "authorizenet", ]
+docs= [
+    "recommonmark",
+    "m2r",
+    "django_extensions",
+    "coverage",
+    "Sphinx",
+    "rstcheck",
+    "sphinx-rtd-theme",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/renderbox/django-vendor"
+"Bug Tracker" = "https://github.com/renderbox/django-vendor/issues"
+
+[tool.setuptools.package-data]
+vendor = ["templates/vendor/*.html", "templates/vendor/*/*.html"]

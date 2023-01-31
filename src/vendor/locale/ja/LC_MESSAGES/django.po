@@ -1808,11 +1808,11 @@ msgstr "この製品はいつ使用できますか？"
 
 #: models/offer.py:57
 msgid "Billing Start Date"
-msgstr "開始日"
+msgstr "請求開始日"
 
 #: models/offer.py:57
 msgid "The start date to begin billing"
-msgstr ""
+msgstr "請求開始日"
 
 #: models/offer.py:59
 msgid "Is a Bundle?"
