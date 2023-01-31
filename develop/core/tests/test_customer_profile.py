@@ -168,6 +168,7 @@ class ModelCustomerProfileTests(TestCase):
                           start_date=timezone.now(),
                           transaction="123")
         receipt.save()
+        receipt.products.add(offer.products.first())
         self.assertTrue(len(self.customer_profile.get_active_offer_receipts(offer)) > 0)
 
     def test_get_active_offer_receipts_empty(self):
