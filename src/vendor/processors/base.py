@@ -476,6 +476,13 @@ class PaymentProcessorBase(object):
         self.subscription_id = 'Test ID'
         ...
 
+    def charge_customer_profile(self):
+        """
+        Call handels charging a specific Customer Profile that is already saved
+        in the Payment Processor.
+        """
+        ...
+
     def create_subscription_model(self):
         self.subscription = Subscription.objects.create(
             gateway_id=self.subscription_id,

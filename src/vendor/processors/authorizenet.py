@@ -179,6 +179,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         payment.creditCard = self.payment_type_switch[int(
             self.payment_info.cleaned_data.get('payment_type'))]()
         return payment
+    
+    def create_customer_profile(self):
+        profile_to_charge = apicontractsv1.customerProfilePaymentType()
+        profile_to_charge.customerProfileId = self.invoice.profile.meta['authorizenet']['customerProfileId']
+        profile_to_charge.paymentProfile = apicontractsv1.paymentProfile()
+        profile_to_charge.paymentProfile.paymentProfileId = self.invoice.profile.meta['authorizenet']['customerPaymentProfile']
 
     def create_customer_data(self):
         customerData = apicontractsv1.customerDataType()
@@ -535,6 +541,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         if self.transaction_succeeded:
             self.payment.status = PurchaseStatus.CAPTURED
+            if self.transaction_response.profile:
+                self.invoice.profile.meta['authorizenet'] = {}
+                self.invoice.profile.meta['authorizenet']['customerPaymentProfile'] = self.transaction_response.profile.customerPaymentProfileId.text
+                self.invoice.profile.meta['authorizenet']['customerProfileId'] = self.transaction_response.profile.customerProfileId.text
+                self.invoice.profile.save()
         else:
             self.payment.status = PurchaseStatus.DECLINED
 
@@ -575,6 +586,48 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         if self.transaction_succeeded:
             self.subscription_id = self.transaction_info['data'].get('subscription_id', "")
+            if self.transaction_response.profile:
+                self.invoice.profile.meta['authorizenet'] = {}
+                self.invoice.profile.meta['authorizenet']['customerPaymentProfile'] = self.transaction_response.profile.customerPaymentProfileId.text
+                self.invoice.profile.meta['authorizenet']['customerProfileId'] = self.transaction_response.profile.customerProfileId.text
+                self.invoice.profile.save()
+
+    def charge_customer_profile(self):
+        # Init transaction
+        self.transaction = self.create_transaction()
+        self.transaction_type = self.create_transaction_type(settings.AUTHORIZE_NET_TRANSACTION_TYPE_DEFAULT)
+        self.transaction_type.amount = self.to_valid_decimal(self.invoice.total())
+        self.transaction_type.payment = self.create_authorize_payment()
+        self.transaction_type.profile = self.create_customer_profile()
+
+        # Optional items for make it easier to read and use on the Authorize.net portal.
+        if self.invoice.order_items:
+            self.transaction_type.lineItems = self.create_line_item_array(self.invoice.order_items.all())
+
+        # You set the request to the transaction
+        self.transaction.transactionRequest = self.transaction_type
+        self.controller = createTransactionController(self.transaction)
+        self.set_controller_api_endpoint()
+        self.controller.execute()
+
+        # You execute and get the response
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_payment_response)
+        self.parse_success()
+
+        self.transaction_id = self.transaction_info['data'].get('transId', "")
+
+        if self.transaction_succeeded:
+            self.payment.status = PurchaseStatus.CAPTURED
+            if self.transaction_response.profile:
+                self.invoice.profile.meta['authorizenet'] = {}
+                self.invoice.profile.meta['authorizenet']['customerPaymentProfile'] = self.transaction_response.profile.customerPaymentProfileId.text
+                self.invoice.profile.meta['authorizenet']['customerProfileId'] = self.transaction_response.profile.customerProfileId.text
+                self.invoice.profile.save()
+        else:
+            self.payment.status = PurchaseStatus.DECLINED
+
+        self.payment.save()
 
     def subscription_update_payment(self, subscription):
         """
