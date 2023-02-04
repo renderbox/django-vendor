@@ -11,7 +11,7 @@ CURRENCY_CHOICES = [(c.name, c.value) for c in Currency]
 
 
 class InvoiceStatus(models.IntegerChoices):
-    CART = 0, _("Cart")               # total = subtotal = sum(OrderItems.Offer.Price + Product.TaxClassifier). Avalara
+    CART     = 0, _("Cart")               # total = subtotal = sum(OrderItems.Offer.Price + Product.TaxClassifier). Avalara
     CHECKOUT = 10, _("Checkout")      # total = subtotal + shipping + Tax against Addrr if any.
     COMPLETE = 20, _("Complete")      # Payment Processor Completed Transaction.
 
@@ -37,6 +37,7 @@ class PurchaseStatus(models.IntegerChoices):
     DECLINED = 40, _("Declined")
     ERROR = 45, _("Error")
     VOID = 50, _('Void')
+
 
 class SubscriptionStatus(models.IntegerChoices):
     PAUSED = 10, _('Pause')
