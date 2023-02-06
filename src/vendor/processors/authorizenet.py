@@ -184,7 +184,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         profile_to_charge = apicontractsv1.customerProfilePaymentType()
         profile_to_charge.customerProfileId = self.invoice.profile.meta['authorizenet']['customerProfileId']
         profile_to_charge.paymentProfile = apicontractsv1.paymentProfile()
-        profile_to_charge.paymentProfile.paymentProfileId = self.invoice.profile.meta['authorizenet']['customerPaymentProfile']
+        profile_to_charge.paymentProfile.paymentProfileId = self.invoice.profile.meta['authorizenet']['customerPaymentProfileId']
 
     def create_customer_data(self):
         customerData = apicontractsv1.customerDataType()
@@ -541,11 +541,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         if self.transaction_succeeded:
             self.payment.status = PurchaseStatus.CAPTURED
-            if self.transaction_response.profile:
-                self.invoice.profile.meta['authorizenet'] = {}
-                self.invoice.profile.meta['authorizenet']['customerPaymentProfile'] = self.transaction_response.profile.customerPaymentProfileId.text
-                self.invoice.profile.meta['authorizenet']['customerProfileId'] = self.transaction_response.profile.customerProfileId.text
-                self.invoice.profile.save()
         else:
             self.payment.status = PurchaseStatus.DECLINED
 
@@ -596,7 +591,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         # Init transaction
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(settings.AUTHORIZE_NET_TRANSACTION_TYPE_DEFAULT)
-        self.transaction_type.amount = self.to_valid_decimal(self.invoice.total())
+        self.transaction_type.amount = self.to_valid_decimal(self.invoice.total)
         self.transaction_type.payment = self.create_authorize_payment()
         self.transaction_type.profile = self.create_customer_profile()
 
@@ -619,11 +614,6 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         if self.transaction_succeeded:
             self.payment.status = PurchaseStatus.CAPTURED
-            if self.transaction_response.profile:
-                self.invoice.profile.meta['authorizenet'] = {}
-                self.invoice.profile.meta['authorizenet']['customerPaymentProfile'] = self.transaction_response.profile.customerPaymentProfileId.text
-                self.invoice.profile.meta['authorizenet']['customerProfileId'] = self.transaction_response.profile.customerProfileId.text
-                self.invoice.profile.save()
         else:
             self.payment.status = PurchaseStatus.DECLINED
 
@@ -846,6 +836,60 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
             if self.transaction_succeeded and self.transaction_response.paymentProfiles:
                 customer_profile_ids.extend([customer_profile.customerProfileId.text for customer_profile in self.transaction_response.paymentProfiles.paymentProfile])
+
+        return customer_profile_ids
+    
+    def get_customer_and_payemnt_id_for_expiring_cards(self, month):
+        paging = apicontractsv1.Paging()
+        paging.limit = 10
+        paging.offset = 1
+
+        sorting = apicontractsv1.CustomerPaymentProfileSorting()
+        sorting.orderBy = apicontractsv1.CustomerPaymentProfileOrderFieldEnum.id
+        sorting.orderDescending = "false"
+
+        self.transaction = apicontractsv1.getCustomerPaymentProfileListRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+
+        self.transaction.searchType = apicontractsv1.CustomerPaymentProfileSearchTypeEnum.cardsExpiringInMonth
+        self.transaction.month = month
+        self.transaction.sorting = sorting
+        self.transaction.paging = paging
+
+        self.controller = getCustomerPaymentProfileListController(self.transaction)
+        self.controller.execute()
+
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_transaction_response)
+        self.parse_success()
+
+        customer_profile_ids = []
+        last_page = 1
+        
+        if self.transaction_succeeded and self.transaction_response.paymentProfiles:
+            last_page = ceil(self.transaction_response.totalNumInResultSet.pyval / paging.limit)
+            customer_profile_ids.extend(
+                [{
+                "customerProfileId": customer_profile.customerProfileId.text,
+                "customerPaymentProfileId": self.transaction_response.paymentProfiles.paymentProfile.customerPaymentProfileId.text
+                } for customer_profile in self.transaction_response.paymentProfiles.paymentProfile])
+
+        for previous_page in range(1, last_page):
+            paging.offset = previous_page + 1
+
+            self.transaction.paging = paging
+            self.controller = getCustomerPaymentProfileListController(self.transaction)
+            self.controller.execute()
+            self.transaction_response = self.controller.getresponse()
+            self.parse_response(self.parse_transaction_response)
+            self.parse_success()
+
+            if self.transaction_succeeded and self.transaction_response.paymentProfiles:
+                customer_profile_ids.extend(
+                    [{
+                    "customerProfileId": customer_profile.customerProfileId.text,
+                    "customerPaymentProfileId": self.transaction_response.paymentProfiles.paymentProfile.customerPaymentProfileId.text}
+                    for customer_profile in self.transaction_response.paymentProfiles.paymentProfile])
 
         return customer_profile_ids
     
