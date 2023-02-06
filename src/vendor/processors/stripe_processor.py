@@ -1253,3 +1253,5 @@ class StripeProcessor(PaymentProcessorBase):
 
         self.subscription_id = stripe_subscription.id
 
+    def charge_customer_profile(self):
+        ...
