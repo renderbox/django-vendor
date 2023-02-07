@@ -1,20 +1,20 @@
 import stripe
-from random import randrange
-from django.conf import settings
-from django.test import TestCase, Client, tag
-from django.contrib.sites.models import Site
-from django.db.models import signals
-from django.utils import timezone
-from django.db.models import Q
-from siteconfigs.models import SiteConfigModel
-from unittest import skipIf
-from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.processors import StripeProcessor
-from django.contrib.auth import get_user_model
-from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem, Subscription
+
 from core.models import Product
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
+from django.db.models import Q, signals
+from django.test import Client, TestCase
+from django.utils import timezone
+from random import randrange
+from siteconfigs.models import SiteConfigModel
+
+from unittest import skipIf
+from vendor.forms import BillingAddressForm, CreditCardForm
+from vendor.models import CustomerProfile, Invoice, Offer, Price
 from vendor.models.choice import InvoiceStatus
-from factory.django import mute_signals
+from vendor.processors import StripeProcessor
 
 User = get_user_model()
 
