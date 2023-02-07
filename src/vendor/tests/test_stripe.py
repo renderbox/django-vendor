@@ -14,7 +14,7 @@ from django.contrib.auth import get_user_model
 from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem, Subscription
 from core.models import Product
 from vendor.models.choice import InvoiceStatus
-
+from factory.django import mute_signals
 
 User = get_user_model()
 
@@ -98,7 +98,6 @@ class StripeProcessorTests(TestCase):
         self.pri_monthly = {"currency": "usd", "unit_amount": 1024,
                             "recurring": {"interval": "month", "interval_count": 1, "usage_type": "licensed"},
                             'metadata': self.valid_metadata}
-
 
     def test_environment_variables_set(self):
         self.assertIsNotNone(settings.STRIPE_PUBLIC_KEY)
@@ -415,7 +414,6 @@ class StripeProcessorTests(TestCase):
         self.assertIn(offer1, vendor_offers_in_stripe)
         self.assertIn(offer2, vendor_offers_in_stripe)
 
-
     def test_get_vendor_offers_not_in_stripe(self):
         offers = self.processor.get_site_offers(self.site)
         #stripe_offer_names = [product['name'] for product in offers]
@@ -513,7 +511,6 @@ class StripeProcessorTests(TestCase):
         self.assertIsNotNone(vendor_customer1.meta.get('stripe_id', None))
         self.assertIsNotNone(vendor_customer2.meta.get('stripe_id', None))
 
-
     def test_update_stripe_customers(self):
         stripe_customer1 = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
         stripe_customer2 = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd2)
@@ -568,6 +565,31 @@ class StripeProcessorTests(TestCase):
 
         self.assertIn(product_id, stripe_offer_ids)
 
+    def test_get_customer_payment_methods(self):
+        payment_methods = self.processor.get_customer_payment_methods("cus_Mt98i0KskNWP0X")
+
+        self.assertTrue(payment_methods)
+
+    def test_charge_customer_profile_success(self):
+        self.processor.invoice.profile.meta['stripe_id'] = "cus_Mt98i0KskNWP0X"
+        self.processor.invoice.profile.save()
+        self.processor.invoice.profile.refresh_from_db()
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.invoice.total = randrange(1, 1000)
+
+        for recurring_order_items in self.processor.invoice.get_recurring_order_items():
+            self.processor.invoice.remove_offer(recurring_order_items.offer)
+
+        self.processor.set_stripe_payment_source()
+        self.processor.transaction_succeeded = False
+
+        self.processor.process_customer_profile_payment()
+
+        self.assertIsNotNone(self.processor.payment)
+        self.assertTrue(self.processor.payment.success)
+        self.assertEquals(InvoiceStatus.COMPLETE, self.processor.invoice.status)
+    
 
     """
     Commenting out since stripe doesnt allow you to delete Price objects (weird)

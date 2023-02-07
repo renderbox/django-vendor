@@ -387,9 +387,6 @@ class PaymentProcessorBase(object):
         vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()
 
-
-        #TODO: Set the status based on the result from the process_payment()
-
     def pre_authorization(self):
         """
         Called before the authorization begins.
@@ -562,6 +559,12 @@ class PaymentProcessorBase(object):
 
     # -------------------
     # Charge a Customer Profile
+    def charge_customer_profile(self):
+        """
+        Each processor need to implement this functions
+        """
+        ...
+        
     def process_customer_profile_payment(self):
         """
         This runs the chain of events in a transaction.
