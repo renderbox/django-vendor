@@ -837,6 +837,26 @@ class AuthorizeNetProcessorTests(TestCase):
     ##########
     # Charge Customer Profile Tests
     ##########
+    def test_create_customer_profile(self):
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.is_data_valid()
+        self.processor.create_customer_profile()
+
+        self.assertIn('authorizenet', self.processor.invoice.profile.meta)
+        self.assertTrue(self.processor.get_customer_profile_id())
+
+    def test_create_customer_payment_profile(self):
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.is_data_valid()
+        self.processor.create_customer_profile()
+        self.processor.create_customer_profile_payment_id(self.processor.get_customer_profile_id())
+
+        self.assertIn('authorizenet', self.processor.invoice.profile.meta)
+        self.assertTrue(self.processor.get_customer_payment_profile_id())
+
+
     def test_charge_customer_profile(self):
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
         self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)

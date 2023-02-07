@@ -9,7 +9,6 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from math import ceil
 from vendor.config import VENDOR_PAYMENT_PROCESSOR, VENDOR_STATE
-from vendor.utils import get_future_date_days
 from vendor.integrations import AuthorizeNetIntegration
 
 logger = logging.getLogger(__name__)
@@ -127,6 +126,32 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     ##########
     # Authorize.net Object creations
     ##########
+    def save_customer_profile_id(self, customer_profile_id):
+        if 'authorizenet' not in self.invoice.profile.meta:
+            self.invoice.profile.meta['authorizenet'] = {}
+        
+        self.invoice.profile.meta['authorizenet']['customerProfileId'] = customer_profile_id
+        self.invoice.profile.save()
+    
+    def save_customer_payment_profile_id(self, customer_payment_profile_id):
+        if 'authorizenet' not in self.invoice.profile.meta:
+            self.invoice.profile.meta['authorizenet'] = {}
+        
+        self.invoice.profile.meta['authorizenet']['customerPaymentProfile'] = customer_payment_profile_id
+        self.invoice.profile.save()
+
+    def get_customer_profile_id(self):
+        if 'authorizenet' not in self.invoice.profile.meta:
+            return None
+        
+        return self.invoice.profile.meta['authorizenet'].get('customerProfileId')
+    
+    def get_customer_payment_profile_id(self):
+        if 'authorizenet' not in self.invoice.profile.meta:
+            return None
+        
+        return self.invoice.profile.meta['authorizenet'].get('customerPaymentProfile')
+
     def set_controller_api_endpoint(self):
         """
         Sets the endpoint for the controller to point to test or production.
@@ -182,9 +207,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     
     def create_customer_profile_charge(self):
         profile_to_charge = apicontractsv1.customerProfilePaymentType()
-        profile_to_charge.customerProfileId = self.invoice.profile.meta['authorizenet']['customerProfileId']
+        profile_to_charge.customerProfileId = self.get_customer_profile_id()
         profile_to_charge.paymentProfile = apicontractsv1.paymentProfile()
-        profile_to_charge.paymentProfile.paymentProfileId = self.invoice.profile.meta['authorizenet']['customerPaymentProfileId']
+        profile_to_charge.paymentProfile.paymentProfileId = self.get_customer_payment_profile_id()
 
     def create_customer_data(self):
         customerData = apicontractsv1.customerDataType()
@@ -522,6 +547,18 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
     ##########
     # Base Processor Transaction Implementations
     ##########
+    def pre_authorization(self):
+        """
+        Called before the authorization begins.
+        """
+        if 'authorizenet' not in self.invoice.profile.meta and VENDOR_STATE != 'DEBUG':
+            self.create_customer_profile()
+            self.create_customer_profile_payment_id(self.get_customer_profile_id())
+
+        self.transaction_succeeded = False
+        self.transaction_info = None
+        self.transaction_response = None
+
     def process_payment(self):
         # Init transaction
         self.transaction = self.create_transaction()
@@ -589,12 +626,10 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.parse_success()
 
         if self.transaction_succeeded:
-            self.subscription_id = self.transaction_info['data'].get('subscription_id', "")
-            if self.transaction_response.profile:
-                self.invoice.profile.meta['authorizenet'] = {}
-                self.invoice.profile.meta['authorizenet']['customerPaymentProfile'] = self.transaction_response.profile.customerPaymentProfileId.text
-                self.invoice.profile.meta['authorizenet']['customerProfileId'] = self.transaction_response.profile.customerProfileId.text
-                self.invoice.profile.save()
+            self.subscription_id = self.transaction_info['data'].get('subscriptionId', "")
+            if self.transaction_response.profile and 'authorizenet' not in self.invoice.profile.meta:
+                self.save_customer_profile_id(self.transaction_response.profile.customerProfileId.text)
+                self.save_customer_payment_profile_id(self.transaction_response.profile.customerPaymentProfileId.text)
 
     def charge_customer_profile(self):
         # Init transaction
@@ -957,10 +992,50 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         if self.transaction_succeeded:
             if self.transaction_response.customerProfileId:
-                self.invoice.profile.meta['authorizenet'] = {}
-                self.invoice.profile.meta['authorizenet']['customerPaymentProfile'] = self.transaction_response.customerPaymentProfileIdList[0].numericString.text
-                self.invoice.profile.meta['authorizenet']['customerProfileId'] = self.transaction_response.customerProfileId.text
-                self.invoice.profile.save()
+                self.save_customer_profile_id(self.transaction_response.customerProfileId.text)
+                self.save_customer_payment_profile_id(self.transaction_response.customerPaymentProfileIdList[0].numericString.text)
+
+    def create_customer_profile(self):
+        self.transaction = apicontractsv1.createCustomerProfileRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.profile = self.create_customer_profile_data()
+
+        self.controller = createCustomerProfileController(self.transaction)
+        self.set_controller_api_endpoint()
+        self.controller.execute()
+
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_transaction_response)
+        self.parse_success()
+
+        if self.transaction_succeeded:
+            if self.transaction_response.customerProfileId:
+                self.save_customer_profile_id(self.transaction_response.customerProfileId.text)
+        else:
+            logger.error(f"create_customer_profile error {self.transaction_info['errors']}")
+
+    def create_customer_profile_payment_id(self, customer_profile_id):
+        self.transaction = apicontractsv1.createCustomerPaymentProfileRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.paymentProfile = apicontractsv1.customerPaymentProfileType()
+        self.transaction.customerProfileId = customer_profile_id
+        
+        self.transaction.paymentProfile.payment = self.create_authorize_payment()
+        self.transaction.paymentProfile.payment.creditCard = self.create_credit_card_payment()
+        self.transaction.paymentProfile.billTo = self.create_billing_address(apicontractsv1.customerAddressType())
+        self.transaction.validationMode = 'liveMode'
+
+        self.controller = createCustomerPaymentProfileController(self.transaction)
+        self.set_controller_api_endpoint()
+        self.controller.execute()
+
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_transaction_response)
+        self.parse_success()
+
+        if self.transaction_succeeded:
+            if self.transaction_response.customerProfileId:
+                self.save_customer_payment_profile_id(self.transaction_response.customerPaymentProfileId.text)
 
     ##########
     # Reporting API, for transaction retrieval information
