@@ -180,7 +180,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             self.payment_info.cleaned_data.get('payment_type'))]()
         return payment
     
-    def create_customer_profile(self):
+    def create_customer_profile_charge(self):
         profile_to_charge = apicontractsv1.customerProfilePaymentType()
         profile_to_charge.customerProfileId = self.invoice.profile.meta['authorizenet']['customerProfileId']
         profile_to_charge.paymentProfile = apicontractsv1.paymentProfile()
@@ -191,7 +191,16 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         customerData.type = "individual"
         customerData.id = str(self.invoice.profile.user.pk)
         customerData.email = self.invoice.profile.user.email
+        
         return customerData
+    
+    def create_customer_profile_data(self):
+        customerProfileData = apicontractsv1.customerProfileType()
+        customerProfileData.email = self.invoice.profile.user.email
+        customerProfileData.description = self.invoice.site.domain
+        customerProfileData.merchantCustomerId = str(self.invoice.profile.pk)[:20]
+
+        return customerProfileData
 
     def create_customer_data_recurring(self):
         customerData = apicontractsv1.customerType()
@@ -593,7 +602,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_type = self.create_transaction_type(settings.AUTHORIZE_NET_TRANSACTION_TYPE_DEFAULT)
         self.transaction_type.amount = self.to_valid_decimal(self.invoice.total)
         self.transaction_type.payment = self.create_authorize_payment()
-        self.transaction_type.profile = self.create_customer_profile()
+        self.transaction_type.profile = self.create_customer_profile_charge()
 
         # Optional items for make it easier to read and use on the Authorize.net portal.
         if self.invoice.order_items:
@@ -933,6 +942,25 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             except ObjectDoesNotExist as exce:
                 logger.error(f"update_payments_to_settled payment for transaction: {settled_transaction.transId.text} was not found for site: {site}")
 
+    def create_customer_profile_by_transaction(self, transaction_id):
+        self.transaction = apicontractsv1.createCustomerProfileFromTransactionRequest()
+        self.transaction.merchantAuthentication = self.merchant_auth
+        self.transaction.transId = transaction_id
+
+        self.controller = createCustomerProfileFromTransactionController(self.transaction)
+        self.set_controller_api_endpoint()
+        self.controller.execute()
+
+        self.transaction_response = self.controller.getresponse()
+        self.parse_response(self.parse_transaction_response)
+        self.parse_success()
+
+        if self.transaction_succeeded:
+            if self.transaction_response.customerProfileId:
+                self.invoice.profile.meta['authorizenet'] = {}
+                self.invoice.profile.meta['authorizenet']['customerPaymentProfile'] = self.transaction_response.customerPaymentProfileIdList[0].numericString.text
+                self.invoice.profile.meta['authorizenet']['customerProfileId'] = self.transaction_response.customerProfileId.text
+                self.invoice.profile.save()
 
     ##########
     # Reporting API, for transaction retrieval information
