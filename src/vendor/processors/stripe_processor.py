@@ -21,6 +21,7 @@ from vendor.processors.base import PaymentProcessorBase
 
 logger = logging.getLogger(__name__)
 
+
 class StripeQueryBuilder:
     """
     Query builder that adheres to Stripe search rules found here https://stripe.com/docs/search
@@ -196,7 +197,6 @@ class StripeQueryBuilder:
                 return query
 
         return query
-
 
 class StripeProcessor(PaymentProcessorBase):
     """ 
@@ -642,6 +642,10 @@ class StripeProcessor(PaymentProcessorBase):
                 CustomerProfile.objects.filter(pk=profile.pk).update(meta=profile_meta)
             else:
                 self.create_stripe_customers([profile])
+    
+    def get_customer_payment_methods(self, type, customer_id):
+        ...
+    
     ##########
     # Offers/Products
     ##########
