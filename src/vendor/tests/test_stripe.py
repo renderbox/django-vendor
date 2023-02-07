@@ -651,8 +651,6 @@ class StripeProcessorTests(TestCase):
         self.assertTrue(stripe_meta.get('price_id'))
 
 
-
-
 @skipIf((settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None, "Strip enviornment variables not set, skipping tests")
 class StripeCRUDObjectTests(TestCase):
 

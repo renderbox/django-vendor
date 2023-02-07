@@ -1264,13 +1264,8 @@ class StripeProcessor(PaymentProcessorBase):
         if not stripe_invoice:
             return None
 
-        payment_method_data = self.build_payment_method()
-        stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
-        if not stripe_payment_method:
-            return None
-
-        self.stripe_call(stripe_payment_method.attach, {'customer': self.invoice.profile.meta.get('stripe_id')})
-        if not self.transaction_succeeded:
+        stripe_customer_payment_methods = self.get_customer_payment_methods(self.invoice.profile.meta['stripe_id'])
+        if not stripe_customer_payment_methods:
             return None
         
         self.invoice.vendor_notes['stripe_id'] = stripe_invoice.id
@@ -1291,7 +1286,7 @@ class StripeProcessor(PaymentProcessorBase):
         if not stripe_payment_intent:
             return None
 
-        self.stripe_call(stripe_invoice.pay, {"payment_method": stripe_payment_method.id})
+        self.stripe_call(stripe_invoice.pay, {"payment_method": stripe_customer_payment_methods[0].id})
 
         if self.transaction_succeeded:
             self.transaction_id = stripe_invoice.payment_intent
