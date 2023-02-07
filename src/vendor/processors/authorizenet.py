@@ -883,7 +883,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         return customer_profile_ids
     
-    def get_customer_and_payemnt_id_for_expiring_cards(self, month):
+    def get_customer_and_payment_id_for_expiring_cards(self, month):
         paging = apicontractsv1.Paging()
         paging.limit = 10
         paging.offset = 1

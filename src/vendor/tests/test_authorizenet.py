@@ -865,7 +865,7 @@ class AuthorizeNetProcessorTests(TestCase):
         for recurring_order_items in self.processor.invoice.get_recurring_order_items():
             self.processor.invoice.remove_offer(recurring_order_items.offer)
 
-        customer_profiles = self.processor.get_customer_and_payemnt_id_for_expiring_cards("2024-01")
+        customer_profiles = self.processor.get_customer_and_payment_id_for_expiring_cards("2024-01")
 
         self.processor.invoice.profile.meta = {}
         self.processor.invoice.profile.meta['authorizenet'] = {}
