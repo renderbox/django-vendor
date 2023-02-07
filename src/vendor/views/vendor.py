@@ -219,7 +219,6 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         processor.authorize_payment()
 
         if processor.transaction_succeeded:
-            self.processor.create_customer_profile_by_transaction(self.processor.payment.transaction)
             return redirect('vendor:purchase-summary', uuid=invoice.uuid)
         else:
             logger.warning(f"Payment gateway did not authorize payment {processor.transaction_info}")
