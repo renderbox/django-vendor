@@ -595,12 +595,6 @@ class PaymentProcessorBase(object):
         vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()
 
-    def charge_customer_profile(self):
-        """
-        Call handels charging a specific Customer Profile that is already saved
-        in the Payment Processor.
-        """
-        ...
     ##########
     # Signals
     ##########
