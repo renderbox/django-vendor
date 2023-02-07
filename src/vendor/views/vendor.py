@@ -3,20 +3,22 @@ import logging
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.shortcuts import render, redirect, Http404
-from django.utils.translation import gettext as _
+from django.shortcuts import Http404, redirect, render
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView, View, FormView
-from django.views.generic.edit import UpdateView
+from django.utils.translation import gettext as _
+from django.views.generic import FormView, TemplateView
 from django.views.generic.detail import DetailView
+from django.views.generic.edit import UpdateView
 from django.views.generic.list import ListView
 
-
-from vendor.forms import BillingAddressForm, CreditCardForm, AccountInformationForm, AddressForm
-from vendor.models import Offer, Invoice, Address, OrderItem, Receipt, Subscription
-from vendor.models.choice import TermType, PurchaseStatus, InvoiceStatus
+from vendor.forms import (AccountInformationForm, AddressForm,
+                          BillingAddressForm, CreditCardForm)
+from vendor.models import (Address, Invoice, Offer, OrderItem, Receipt,
+                           Subscription)
+from vendor.models.choice import InvoiceStatus, TermType
 from vendor.processors import get_site_payment_processor
-from vendor.utils import get_site_from_request, get_or_create_session_cart, clear_session_purchase_data
+from vendor.utils import (clear_session_purchase_data,
+                          get_or_create_session_cart, get_site_from_request)
 
 logger = logging.getLogger(__name__)
 
@@ -217,6 +219,7 @@ class ReviewCheckoutView(LoginRequiredMixin, TemplateView):
         processor.authorize_payment()
 
         if processor.transaction_succeeded:
+            self.processor.create_customer_profile_by_transaction(self.processor.payment.transaction)
             return redirect('vendor:purchase-summary', uuid=invoice.uuid)
         else:
             logger.warning(f"Payment gateway did not authorize payment {processor.transaction_info}")
