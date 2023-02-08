@@ -833,6 +833,66 @@ class AuthorizeNetProcessorTests(TestCase):
         else:
             print("No active Subscriptions, Skipping Test")
 
+
+    ##########
+    # Charge Customer Profile Tests
+    ##########
+    def test_create_customer_profile(self):
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.is_data_valid()
+        self.processor.create_customer_profile()
+
+        self.assertIn('authorizenet', self.processor.invoice.profile.meta)
+        self.assertTrue(self.processor.get_customer_profile_id())
+
+    def test_create_customer_payment_profile(self):
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        self.processor.is_data_valid()
+        self.processor.create_customer_profile()
+        self.processor.create_customer_profile_payment_id(self.processor.get_customer_profile_id())
+
+        self.assertIn('authorizenet', self.processor.invoice.profile.meta)
+        self.assertTrue(self.processor.get_customer_payment_profile_id())
+
+
+    def test_charge_customer_profile(self):
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
+        self.processor.invoice.total = randrange(1, 1000)
+        for recurring_order_items in self.processor.invoice.get_recurring_order_items():
+            self.processor.invoice.remove_offer(recurring_order_items.offer)
+
+        customer_profiles = self.processor.get_customer_and_payment_id_for_expiring_cards("2024-01")
+
+        self.processor.invoice.profile.meta = {}
+        self.processor.invoice.profile.meta['authorizenet'] = {}
+        self.processor.invoice.profile.meta['authorizenet']['customerProfileId'] = customer_profiles[0]['customerProfileId']
+        self.processor.invoice.profile.meta['authorizenet']['customerPaymentProfileId'] = customer_profiles[0]['customerPaymentProfileId']
+        self.processor.invoice.profile.save()
+        self.processor.is_data_valid()
+
+        self.processor.process_customer_profile_payment()
+
+        self.assertTrue(self.processor.transaction_succeeded)
+    
+    def test_create_customer_profile_by_transaction(self):
+        self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
+        self.processor.set_payment_info_form_data(self.form_data.get('credit_card_form'), CreditCardForm)
+        
+        self.processor.invoice.total = randrange(1, 1000)
+        for recurring_order_items in self.processor.invoice.get_recurring_order_items():
+            self.processor.invoice.remove_offer(recurring_order_items.offer)
+
+        self.processor.is_data_valid()
+        self.processor.authorize_payment()
+
+        self.processor.create_customer_profile_by_transaction(self.processor.payment.transaction)
+
+        self.assertIn('authorizenet', self.processor.invoice.profile.meta)
+    
     ##########
     # Report details
     ##########

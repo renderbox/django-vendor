@@ -1,6 +1,3 @@
-"""
-Payment processor for Stripe.
-"""
 import json
 import logging
 import stripe
@@ -18,8 +15,8 @@ from vendor.models.choice import (
 )
 from vendor.processors.base import PaymentProcessorBase
 
-
 logger = logging.getLogger(__name__)
+
 
 class StripeQueryBuilder:
     """
@@ -196,7 +193,6 @@ class StripeQueryBuilder:
                 return query
 
         return query
-
 
 class StripeProcessor(PaymentProcessorBase):
     """ 
@@ -531,8 +527,9 @@ class StripeProcessor(PaymentProcessorBase):
         return {
             'amount': amount,
             'currency': currency,
+            'customer': self.invoice.profile.meta['stripe_id'],
             'application_fee_percent': self.get_application_fee_amount(),
-            'transfer_data': self.get_stripe_connect_account()
+            'transfer_data': self.get_stripe_connect_account(),
         }
 
     def build_setup_intent(self, payment_method_id):
@@ -642,6 +639,15 @@ class StripeProcessor(PaymentProcessorBase):
                 CustomerProfile.objects.filter(pk=profile.pk).update(meta=profile_meta)
             else:
                 self.create_stripe_customers([profile])
+    
+    def get_customer_payment_methods(self, customer_id):
+        payment_methods = self.stripe_call(self.stripe.Customer.list_payment_methods, customer_id)
+
+        if not payment_methods.data:
+            return None
+
+        return payment_methods.data
+    
     ##########
     # Offers/Products
     ##########
@@ -1199,14 +1205,13 @@ class StripeProcessor(PaymentProcessorBase):
         if not self.transaction_succeeded:
             return None
         
-        stripe_invoice
         self.invoice.vendor_notes['stripe_id'] = stripe_invoice.id
         self.invoice.save()
         
         stripe_line_items = []
         for order_item in self.invoice.get_one_time_transaction_order_items():
             line_item_data = self.build_invoice_line_item(order_item, stripe_invoice.id)
-            stripe_line_item = self.stripe_create_object(self.stripe.InvoiceItem, line_item_data) 
+            stripe_line_item = self.stripe_create_object(self.stripe.InvoiceItem, line_item_data)
             stripe_line_items.append(stripe_line_item)
         
         stripe_invoice.lines = stripe_line_items
@@ -1253,3 +1258,35 @@ class StripeProcessor(PaymentProcessorBase):
 
         self.subscription_id = stripe_subscription.id
 
+    def charge_customer_profile(self):
+        invoice_data = self.build_invoice()
+        stripe_invoice = self.stripe_create_object(self.stripe.Invoice, invoice_data)
+        if not stripe_invoice:
+            return None
+
+        stripe_customer_payment_methods = self.get_customer_payment_methods(self.invoice.profile.meta['stripe_id'])
+        if not stripe_customer_payment_methods:
+            return None
+        
+        self.invoice.vendor_notes['stripe_id'] = stripe_invoice.id
+        self.invoice.save()
+        
+        stripe_line_items = []
+        for order_item in self.invoice.get_one_time_transaction_order_items():
+            line_item_data = self.build_invoice_line_item(order_item, stripe_invoice.id)
+            stripe_line_item = self.stripe_create_object(self.stripe.InvoiceItem, line_item_data)
+            stripe_line_items.append(stripe_line_item)
+        
+        stripe_invoice.lines = stripe_line_items
+
+        amount = self.convert_decimal_to_integer(self.invoice.get_one_time_transaction_total())
+        payment_intent_data = self.build_payment_intent(amount)
+        stripe_payment_intent = self.stripe_create_object(self.stripe.PaymentIntent, payment_intent_data)
+
+        if not stripe_payment_intent:
+            return None
+
+        self.stripe_call(stripe_invoice.pay, {"payment_method": stripe_customer_payment_methods[0].id})
+
+        if self.transaction_succeeded:
+            self.transaction_id = stripe_invoice.payment_intent

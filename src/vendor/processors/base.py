@@ -387,9 +387,6 @@ class PaymentProcessorBase(object):
         vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
         self.post_authorization()
 
-
-        #TODO: Set the status based on the result from the process_payment()
-
     def pre_authorization(self):
         """
         Called before the authorization begins.
@@ -559,6 +556,47 @@ class PaymentProcessorBase(object):
             status = PurchaseStatus.DECLINED,
             payee_full_name=" ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
         )
+
+    # -------------------
+    # Charge a Customer Profile
+    def charge_customer_profile(self):
+        """
+        Each processor need to implement this functions
+        """
+        ...
+        
+    def process_customer_profile_payment(self):
+        """
+        This runs the chain of events in a transaction.
+        This should not be overriden.  Override one of the methods it calls if you need to.
+        """
+        self.invoice.ordered_date = timezone.now()
+        self.invoice.save()
+        if not self.invoice.calculate_subtotal():
+            self.free_payment()
+            return None
+
+        if not self.is_data_valid():
+            return None
+
+        self.status = PurchaseStatus.QUEUED     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
+        vendor_pre_authorization.send(sender=self.__class__, invoice=self.invoice)
+
+        self.pre_authorization()
+
+        self.status = PurchaseStatus.ACTIVE     # TODO: Set the status on the invoice.  Processor status should be the invoice's status.
+        vendor_process_payment.send(sender=self.__class__, invoice=self.invoice)
+
+        self.create_payment_model()
+        self.charge_customer_profile()
+        self.save_payment_transaction_result()
+        self.update_invoice_status(InvoiceStatus.COMPLETE)
+        if self.is_transaction_and_invoice_complete():
+            self.invoice.save_discounts_vendor_notes()
+            self.create_receipts(self.invoice.get_one_time_transaction_order_items())
+
+        vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
+        self.post_authorization()
 
     ##########
     # Signals
