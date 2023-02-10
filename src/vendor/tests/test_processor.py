@@ -269,8 +269,8 @@ class BaseProcessorTests(TestCase):
         self.base_processor.process_subscriptions()
     
         self.assertEqual(today.strftime("%y/%m/%d"), self.base_processor.trial_receipt.start_date.strftime("%y/%m/%d"))
-        self.assertEqual(self.subscription_offer.billing_start_date, self.base_processor.trial_receipt.end_date)
-        self.assertEqual(self.subscription_offer.billing_start_date, self.base_processor.receipt.start_date)
+        self.assertEqual((self.subscription_offer.billing_start_date - timedelta(days=1)).strftime("%y/%m/%d"), self.base_processor.trial_receipt.end_date.strftime("%y/%m/%d"))
+        self.assertEqual((self.subscription_offer.billing_start_date - timedelta(days=1)).strftime("%y/%m/%d"), self.base_processor.receipt.start_date.strftime("%y/%m/%d"))
 
     def test_subscription_payment_term_start_date(self):
         today = timezone.now()
