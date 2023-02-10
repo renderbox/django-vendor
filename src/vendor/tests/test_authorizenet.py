@@ -1,3 +1,4 @@
+from uuid import uuid4
 from core.models import Product
 from datetime import timedelta
 
@@ -11,6 +12,7 @@ from django.test import TestCase, Client, tag
 from unittest import skipIf
 from random import randrange, choice
 from siteconfigs.models import SiteConfigModel
+from vendor.api.v1.authorizenet.views import subscription_save_transaction, update_payment
 from vendor.forms import CreditCardForm, BillingAddressForm
 from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem, Subscription
 from vendor.models.choice import PurchaseStatus, InvoiceStatus, SubscriptionStatus
@@ -833,7 +835,6 @@ class AuthorizeNetProcessorTests(TestCase):
         else:
             print("No active Subscriptions, Skipping Test")
 
-
     ##########
     # Charge Customer Profile Tests
     ##########
@@ -855,7 +856,6 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertIn('authorizenet', self.processor.invoice.profile.meta)
         self.assertTrue(self.processor.get_customer_payment_profile_id())
-
 
     def test_charge_customer_profile(self):
         self.processor.set_billing_address_form_data(self.form_data.get('billing_address_form'), BillingAddressForm)
@@ -907,6 +907,7 @@ class AuthorizeNetProcessorTests(TestCase):
         settled_transactions = self.processor.get_settled_transactions(start_date, end_date)
 
         self.assertTrue(settled_transactions)
+    
     ##########
     # Transaction View Tests
     ##########
@@ -975,4 +976,75 @@ class AuthorizeNetProcessorTests(TestCase):
             emails.append(processor.get_customer_email(cp_id))
 
         self.assertTrue(emails)
+    
+    ##########
+    # AutheCaputre functions
+    ##########
+    def test_subscription_save_transaction_success(self):
+        subscription = Subscription.objects.get(gateway_id="7127667")
+        transaction_id = '40060834171'
+        self.processor = AuthorizeNetProcessor(self.site, self.existing_invoice)
+        transaction_detail = self.processor.get_transaction_detail(transaction_id)
+        subscription_save_transaction(self.site, transaction_id, transaction_detail)
+
+        self.assertTrue(subscription.receipts.count())
+
+    def test_subscription_save_transaction_multiple_subscriptions(self):
+        subscription = Subscription.objects.get(gateway_id="7127667")
+        sub_a = Subscription.objects.create(
+            gateway_id="7127667",
+            profile=self.existing_invoice.profile,
+            status=SubscriptionStatus.ACTIVE
+        )
+        transaction_id = '40060834171'
+        self.processor = AuthorizeNetProcessor(self.site, self.existing_invoice)
+        transaction_detail = self.processor.get_transaction_detail(transaction_id)
+        subscription_save_transaction(self.site, transaction_id, transaction_detail)
+
+        self.assertTrue(subscription.receipts.count())
+
+    def test_subscription_save_transaction_subscription_not_found(self):
+        subscription_counter = Subscription.objects.all().count()
+        transaction_id = '40060834171'
+        self.processor = AuthorizeNetProcessor(self.site, self.existing_invoice)
+        transaction_detail = self.processor.get_transaction_detail(transaction_id)
+        subscription_save_transaction(self.site, transaction_id, transaction_detail)
+
+        self.assertEqual(subscription_counter, Subscription.objects.all().count())
+
+    def test_subscription_save_transaction_payment_not_found(self):
+        subscription = Subscription.objects.get(gateway_id="7127667")
+        Payment.objects.filter(pk=3).delete()
+        transaction_id = '40060834171'
+        self.processor = AuthorizeNetProcessor(self.site, self.existing_invoice)
+        transaction_detail = self.processor.get_transaction_detail(transaction_id)
+        subscription_save_transaction(self.site, transaction_id, transaction_detail)
+
+        self.assertEqual(1, subscription.payments.count())
+
+    def test_subscription_save_transaction_multiple_payments(self):
+        subscription = Subscription.objects.get(gateway_id="7127667")
+        duplicate_payment = Payment.objects.get(pk=3)
+        duplicate_payment.uuid = uuid4()
+        duplicate_payment.pk = None
+        duplicate_payment.save()
+        transaction_id = '40060834171'
+        self.processor = AuthorizeNetProcessor(self.site, self.existing_invoice)
+        transaction_detail = self.processor.get_transaction_detail(transaction_id)
+        subscription_save_transaction(self.site, transaction_id, transaction_detail)
+
+        self.assertEqual(1, subscription.payments.count())
+
+    def test_update_payment_success(self):
+        payment = Payment.objects.get(pk=3)
+        payment.transaction = '40060834171'
+        payment.save()
+        transaction_id = '40060834171'
+        self.processor = AuthorizeNetProcessor(self.site, self.existing_invoice)
+        transaction_detail = self.processor.get_transaction_detail(transaction_id)
+        update_payment(self.site, transaction_id, transaction_detail)
         
+        payment.refresh_from_db()
+        self.assertEqual(payment.status, PurchaseStatus.SETTLED)
+
+
