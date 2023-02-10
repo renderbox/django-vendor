@@ -140,7 +140,7 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
         invoice.save()
 
         processor = StripeProcessor(site, invoice)
-        processor.renew_subscription(subscription, stripe_invoice.charge, PurchaseStatus.SETTLED, payment_success=True)
+        processor.renew_subscription(subscription, stripe_invoice.charge, PurchaseStatus.SETTLED, payment_success=True, submitted_date=paid_date)
 
         return HttpResponse(status=200)
 

@@ -195,10 +195,14 @@ class PaymentProcessorBase(object):
         self.receipt.meta.update(self.payment.result)
         self.receipt.meta['payment_amount'] = self.payment.amount
 
-        start_date = order_item.offer.get_offer_start_date(today)
+        if today > (self.payment.submitted_date - timedelta(hours=1)) or today < (self.payment.submitted_date + timedelta(hours=1)):
+            start_date = order_item.offer.get_offer_start_date(self.payment.submitted_date)
+        else:
+            start_date = order_item.offer.get_offer_start_date(today)
+
 
         if self.trial_receipt:
-            start_date = self.trial_receipt.end_date + timedelta(days=1)
+            start_date = self.trial_receipt.end_date
 
         self.receipt.start_date = start_date
         self.receipt.save()
@@ -212,7 +216,17 @@ class PaymentProcessorBase(object):
     def create_trial_receipt_payment(self, order_item):
         today = timezone.now()
 
-        start_date = order_item.offer.get_offer_start_date(today)
+        if today > (self.payment.submitted_date - timedelta(hours=1)) or today < (self.payment.submitted_date + timedelta(hours=1)):
+            start_date = order_item.offer.get_offer_start_date(self.payment.submitted_date)
+        else:
+            start_date = order_item.offer.get_offer_start_date(today)
+
+        end_date = order_item.offer.get_trial_end_date(start_date)
+
+        if end_date == start_date:
+            self.trial_payment = None
+            self.trial_receipt = None
+            return None   # There is something wrong if both start and end date are the same
 
         self.trial_payment = Payment.objects.create(
             profile=self.invoice.profile,
@@ -233,7 +247,7 @@ class PaymentProcessorBase(object):
             order_item=order_item,
             transaction=self.trial_payment.transaction,
             start_date=start_date,
-            end_date=order_item.offer.get_trial_end_date(start_date),
+            end_date=end_date,
             subscription=self.subscription
         )
 
@@ -253,7 +267,8 @@ class PaymentProcessorBase(object):
             if (order_item.offer.has_trial() or order_item.offer.has_valid_billing_start_date()) and\
                 not self.invoice.profile.has_owned_product(order_item.offer.products.all()):
                 self.create_trial_receipt_payment(order_item)
-                self.trial_receipt.products.add(product)
+                if self.trial_receipt:
+                    self.trial_receipt.products.add(product)
 
             self.create_receipt_by_term_type(order_item, order_item.offer.terms)
             self.receipt.products.add(product)
@@ -410,7 +425,8 @@ class PaymentProcessorBase(object):
                                amount=self.invoice.total,
                                provider=self.provider,
                                invoice=self.invoice,
-                               created=timezone.now()
+                               created=timezone.now(),
+                               submitted_date=timezone.now()
                                )
         self.payment.save()
         self.transaction_succeeded = True
@@ -506,12 +522,11 @@ class PaymentProcessorBase(object):
         """
         return True
 
-    def renew_subscription(self, subscription, payment_transaction_id="", payment_status=PurchaseStatus.QUEUED, payment_success=True):
+    def renew_subscription(self, subscription, payment_transaction_id="", payment_status=PurchaseStatus.QUEUED, payment_success=True, submitted_date=timezone.now()):
         """
         Function to renew already paid subscriptions form the payment gateway provider.
         """
         self.subscription = subscription
-        submitted_date = timezone.now()
 
         self.payment = Payment.objects.create(
             profile=subscription.profile,
@@ -522,7 +537,7 @@ class PaymentProcessorBase(object):
             amount=self.invoice.total,
             success=payment_success,
             status=payment_status,
-            payee_full_name = " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+            payee_full_name=" ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
         )
 
         self.create_receipts(self.invoice.order_items.all())
@@ -553,7 +568,7 @@ class PaymentProcessorBase(object):
             invoice=self.invoice,
             submitted_date=self.invoice.ordered_date,
             transaction=transaction_id,
-            status = PurchaseStatus.DECLINED,
+            status=PurchaseStatus.DECLINED,
             payee_full_name=" ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
         )
 

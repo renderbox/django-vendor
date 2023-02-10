@@ -462,7 +462,7 @@ class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
         transaction_id = timezone.now().strftime("%Y-%m-%d_%H-%M-%S-Manual-Renewal")
 
         processor = get_site_payment_processor(invoice.site)(invoice.site, invoice)
-        processor.renew_subscription(subscription, transaction_id, PurchaseStatus.CAPTURED)
+        processor.renew_subscription(subscription, transaction_id, PurchaseStatus.CAPTURED, submitted_datetime)
 
         messages.info(request, _("Subscription Renewed"))
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
