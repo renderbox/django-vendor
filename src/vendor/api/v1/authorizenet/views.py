@@ -3,6 +3,9 @@ import hashlib
 import hmac
 import logging
 
+
+
+from django.db.models import Q
 from datetime import datetime
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, MultipleObjectsReturned, ObjectDoesNotExist
@@ -80,12 +83,12 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
         return None
 
     try:
-        payment = subscription.payments.get(transaction=None, status=PurchaseStatus.QUEUED)
+        payment = subscription.payments.get(Q(transaction="") | Q(transaction=None), Q(status=PurchaseStatus.QUEUED))
 
     except MultipleObjectsReturned as exce:
         # There should be none or only one payment with transaction None and status in Queue
         logger.error(f"AuthorizeCaptureAPI MultipleObjectsReturned subscription_save_transaction multiple payments returned with None as Transaction, for {subscription_id} exce: {exce}")
-        subscription.payments.filter(transaction=None, status=PurchaseStatus.QUEUED).delete()
+        subscription.payments.filter(Q(transaction="") | Q(transaction=None), Q(status=PurchaseStatus.QUEUED)).delete()
         logger.info(f"AuthorizeCaptureAPI renew_subscription_task subscription {subscription.pk} renewed")
         invoice = Invoice.objects.create(
             profile=subscription.profile,
