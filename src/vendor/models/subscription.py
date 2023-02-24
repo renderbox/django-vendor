@@ -1,14 +1,13 @@
 import uuid
 
-from datetime import timedelta
 from django.db import models
 from django.db.models import Q
-from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
-from django.utils import timezone, dateformat
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from vendor.models.base import CreateUpdateModelBase, SoftDeleteModelBase
-from vendor.models.choice import SubscriptionStatus, PurchaseStatus
+from vendor.models.choice import PurchaseStatus, SubscriptionStatus
 
 
 class SubscriptionReportModelManger(models.Manager):
@@ -125,5 +124,3 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
             return None
         
         return receipt.order_item.offer
-
-

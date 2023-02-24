@@ -929,11 +929,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             self.parse_success()
 
             if self.transaction_succeeded and self.transaction_response.paymentProfiles:
-                customer_profile_ids.extend(
-                    [{
+                customer_profile_ids.extend([{
                     "customerProfileId": customer_profile.customerProfileId.text,
                     "customerPaymentProfileId": self.transaction_response.paymentProfiles.paymentProfile.customerPaymentProfileId.text}
-                    for customer_profile in self.transaction_response.paymentProfiles.paymentProfile])
+                    for customer_profile in self.transaction_response.paymentProfiles.paymentProfile
+                ])
 
         return customer_profile_ids
     
@@ -963,7 +963,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         
         for batch in batch_list:
             transaction_list = self.get_transaction_batch_list(str(batch.batchId))
-            successfull_transactions.extend([ transaction for transaction in transaction_list if transaction['transactionStatus'] == 'settledSuccessfully' ])
+            successfull_transactions.extend([transaction for transaction in transaction_list if transaction['transactionStatus'] == 'settledSuccessfully'])
 
         return successfull_transactions
     
@@ -974,8 +974,14 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
                 payment.status = PurchaseStatus.SETTLED
                 payment.submitted_date = settled_transaction.submitTimeUTC.pyval
                 payment.save()
-            except ObjectDoesNotExist as exce:
+            except ObjectDoesNotExist:
                 logger.error(f"update_payments_to_settled payment for transaction: {settled_transaction.transId.text} was not found for site: {site}")
+            except MultipleObjectsReturned:
+                logger.error(f"update_payments_to_settled multiple objects returned for transaction: {settled_transaction.transId.text}")
+                payment = Payment.objects.filter(profile__site=site, transaction=settled_transaction.transId.text).first()
+                payment.status = PurchaseStatus.SETTLED
+                payment.submitted_date = settled_transaction.submitTimeUTC.pyval
+                payment.save()
 
     def create_customer_profile_by_transaction(self, transaction_id):
         self.transaction = apicontractsv1.createCustomerProfileFromTransactionRequest()
