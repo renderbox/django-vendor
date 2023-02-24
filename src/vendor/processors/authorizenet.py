@@ -974,8 +974,14 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
                 payment.status = PurchaseStatus.SETTLED
                 payment.submitted_date = settled_transaction.submitTimeUTC.pyval
                 payment.save()
-            except ObjectDoesNotExist as exce:
+            except ObjectDoesNotExist:
                 logger.error(f"update_payments_to_settled payment for transaction: {settled_transaction.transId.text} was not found for site: {site}")
+            except MultipleObjectsReturned:
+                logger.error(f"update_payments_to_settled multiple objects returned for transaction: {settled_transaction.transId.text}")
+                payment = Payment.objects.filter(profile__site=site, transaction=settled_transaction.transId.text).first()
+                payment.status = PurchaseStatus.SETTLED
+                payment.submitted_date = settled_transaction.submitTimeUTC.pyval
+                payment.save()
 
     def create_customer_profile_by_transaction(self, transaction_id):
         self.transaction = apicontractsv1.createCustomerProfileFromTransactionRequest()
