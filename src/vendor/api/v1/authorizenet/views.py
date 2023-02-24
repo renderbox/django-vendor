@@ -1,26 +1,26 @@
-import json
 import hashlib
 import hmac
+import json
 import logging
 
-
-
-from django.db.models import Q
 from datetime import datetime
 from django.conf import settings
-from django.core.exceptions import PermissionDenied, MultipleObjectsReturned, ObjectDoesNotExist
-from django.http import JsonResponse, HttpResponseRedirect
-from django.views import View
-from django.views.generic.edit import FormMixin
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
+from django.core.exceptions import (MultipleObjectsReturned,
+                                    ObjectDoesNotExist, PermissionDenied)
+from django.db.models import Q
+from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic.edit import FormMixin
 
 from vendor.forms import DateTimeRangeForm
 from vendor.integrations import AuthorizeNetIntegration
-from vendor.models import Invoice, Subscription, Payment
+from vendor.models import Invoice, Payment, Subscription
 from vendor.models.choice import InvoiceStatus, PurchaseStatus
-from vendor.processors.authorizenet import AuthorizeNetProcessor, sync_subscriptions
+from vendor.processors.authorizenet import (AuthorizeNetProcessor,
+                                            sync_subscriptions)
 from vendor.utils import get_site_from_request
 
 logger = logging.getLogger(__name__)
@@ -50,14 +50,15 @@ def update_payment(site, transaction_id, transaction_detail):
         payment.save()
         
     except MultipleObjectsReturned as exce:
-        logger.error(f"AuthorizeCaptureAPI update_payment multiple payments for transaction: {transaction_id} error: {exce}")
+        logger.error(f"ERROR AuthorizeCaptureAPI update_payment multiple payments for transaction: {transaction_id} error: {exce}")
 
     except ObjectDoesNotExist as exce:
-        logger.error(f"AuthorizeCaptureAPI update_payment payment does not exist for transaction: {transaction_id} error: {exce}")
+        logger.error(f"ERROR AuthorizeCaptureAPI update_payment payment does not exist for transaction: {transaction_id} error: {exce}")
 
     except Exception as exce:
-        logger.error(f"AuthorizeCaptureAPI update_payment error: {exce}")
-        
+        logger.error(f"ERROR AuthorizeCaptureAPI update_payment transaction: {transaction_id}, error: {exce}")
+
+
 def subscription_save_transaction(site, transaction_id, transaction_detail):
     processor = AuthorizeNetProcessor(site)
 
@@ -75,11 +76,15 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
         subscription = Subscription.objects.get(gateway_id=subscription_id, profile__site=site)
 
     except MultipleObjectsReturned as exce:
-        logger.error(f"AuthorizeCaptureAPI subscription_save_transaction multiple subscription for id: {subscription_id} error: {exce}")
+        logger.error(f"ERROR AuthorizeCaptureAPI subscription_save_transaction multiple subscription for id: {subscription_id} error: {exce}")
         subscription = Subscription.objects.filter(gateway_id=subscription_id, profile__site=site).first()
 
     except ObjectDoesNotExist as exce:
-        logger.error(f"subscription_save_transaction subscription does not exist {subscription_id} exce: {exce}")
+        logger.error(f"ERROR AuthorizeCaptureAPI subscription_save_transaction subscription does not exist {subscription_id} exce: {exce}")
+        return None
+
+    if not subscription.get_offer():
+        logger.error(f"ERROR AuthorizeCaptureAPI subscription_save_transaction subscription does not have an Offer, subscription: {subscription.pk} - {subscription.gateway_id}")
         return None
 
     try:
@@ -87,7 +92,7 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
 
     except MultipleObjectsReturned as exce:
         # There should be none or only one payment with transaction None and status in Queue
-        logger.error(f"AuthorizeCaptureAPI MultipleObjectsReturned subscription_save_transaction multiple payments returned with None as Transaction, for {subscription_id} exce: {exce}")
+        logger.error(f"ERROR AuthorizeCaptureAPI MultipleObjectsReturned subscription_save_transaction multiple payments returned with None as Transaction, for {subscription_id} exce: {exce}")
         subscription.payments.filter(Q(transaction="") | Q(transaction=None), Q(status=PurchaseStatus.QUEUED)).delete()
         logger.info(f"AuthorizeCaptureAPI renew_subscription_task subscription {subscription.pk} renewed")
         invoice = Invoice.objects.create(
@@ -192,7 +197,7 @@ class AuthorizeNetBaseAPI(View):
                 return True
 
         except TypeError as exce:
-            logger.error(f'AuthorizeNetBaseAPI is_valid_post: TypeError Exception: {exce}')
+            logger.error(f'ERROR AuthorizeNetBaseAPI is_valid_post: TypeError Exception: {exce}')
 
         return False
 
@@ -208,11 +213,11 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
             return False
 
         if not request_data.get('payload', {}).get('id'):
-            logger.error(f"AuthorizeCaptureAPI post: No transaction id request data: {request_data}")
+            logger.error(f"ERROR AuthorizeCaptureAPI post: No transaction id request data: {request_data}")
             return False
             
         if not self.is_valid_post(site):
-            logger.error(f"AuthorizeCaptureAPI post: Request was denied: {self.request}")
+            logger.error(f"ERROR AuthorizeCaptureAPI post: Request was denied: {self.request}")
             return False
 
         return True
@@ -243,7 +248,7 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
             logger.info(f"AuthorizeCaptureAPI post: saving subscription transaction: {transaction_id}")
             subscription_save_transaction(site, transaction_id, transaction_detail)
         else:
-            logger.error(f"AuthorizeCaptureAPI post: No transaction detail for transaction: {transaction_id}")
+            logger.error(f"ERROR AuthorizeCaptureAPI post: No transaction detail for transaction: {transaction_id}")
 
         return JsonResponse({"msg": "AuthorizeCaptureAPI post event finished"})
 
@@ -260,14 +265,14 @@ class VoidAPI(AuthorizeNetBaseAPI):
             return JsonResponse({"msg": "VoidAPI post: Webhook event has no body"})
 
         if not self.is_valid_post(site):
-            logger.error(f"VoidAPI post: Request was denied: {self.request}")
+            logger.error(f"ERROR VoidAPI post: Request was denied: {self.request}")
             raise PermissionDenied()
         
         request_data = json.loads(self.request.body)
         logger.info(f"VoidAPI post: request data: {request_data}")
 
         if request_data.get('eventType') != 'net.authorize.payment.void.created':
-            logger.error(f"VoidAPI post: wrong event type: {request_data.get('eventType')}")
+            logger.error(f"ERROR VoidAPI post: wrong event type: {request_data.get('eventType')}")
             return JsonResponse({"msg": "Event type is incorrect"})
         
         Payment.objects.filter(profile__site=site, transaction=request_data.get('payload').get('id')).update(status=PurchaseStatus.VOID)
