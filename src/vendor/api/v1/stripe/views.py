@@ -117,7 +117,7 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
             customer_profile.save()
 
         try:
-            subscription = Subscription.objects.get(meta__stripe_id=stripe_invoice.subscription, profile=customer_profile)
+            subscription = Subscription.objects.get(gateway_id=stripe_invoice.subscription, profile=customer_profile)
         except ObjectDoesNotExist:
             logger.error(f"StripeSubscriptionInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
             return HttpResponse(status=400, content=f"StripeSubscriptionInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
@@ -173,7 +173,7 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
             customer_profile.save()
 
         try:
-            subscription = Subscription.objects.get(meta__stripe_id=stripe_invoice.subscription, profile=customer_profile)
+            subscription = Subscription.objects.get(gateway_id=stripe_invoice.subscription, profile=customer_profile)
         except ObjectDoesNotExist:
             logger.error(f"StripeSubscriptionPaymentFailed customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
             return HttpResponse(status=400, content=f"StripeSubscriptionPaymentFailed customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}")
