@@ -99,7 +99,7 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
 
         if not self.is_incoming_event_correct_and_recurring(self.event, StripeEvents.INVOICE_PAID):
             logger.error(f"StripeSubscriptionInvoicePaid error: invalid event: {self.event}")
-            return HttpResponse(status=400, content=f"StripeSubscriptionInvoicePaid error: invalid event: {self.event}")
+            return HttpResponse(status=200, content=f"StripeSubscriptionInvoicePaid error: invalid event: {self.event}")
 
         stripe_invoice = self.event.data.object
         paid_date = timezone.datetime.fromtimestamp(stripe_invoice.status_transitions.paid_at)
@@ -156,7 +156,7 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
 
         if not self.is_incoming_event_correct_and_recurring(self.event, StripeEvents.INVOICE_PAYMENT_FAILED):
             logger.error(f"StripeSubscriptionPaymentFailed error: invalid event: {self.event}")
-            return HttpResponse(status=400, content=f"StripeSubscriptionPaymentFailed error: invalid event: {self.event}")
+            return HttpResponse(status=200, content=f"StripeSubscriptionPaymentFailed error: invalid event: {self.event}")
 
         stripe_invoice = self.event.data.object
         paid_date = timezone.datetime.fromtimestamp(stripe_invoice.status_transitions.paid_at)
@@ -213,7 +213,7 @@ class StripeInvoicePaid(StripeBaseAPI):
 
         if not self.is_incoming_event_correct(self.event, StripeEvents.INOVICE_PAYMENT_SUCCEEDED):
             logger.error(f"StripeInvoicePaid error: invalid event {self.event}")
-            return HttpResponse(status=400, content=f"StripeInvoicePaid error: invalid event {self.event}")
+            return HttpResponse(status=200, content=f"StripeInvoicePaid error: invalid event {self.event}")
 
         stripe_invoice = self.event.data.object
 
@@ -261,7 +261,7 @@ class StripeCardExpiring(StripeBaseAPI):
 
         if not self.is_incoming_event_correct(self.event, StripeEvents.SOURCE_EXPIRED):
             logger.error(f"StripeCardExpiring error: invalid event {self.event}")
-            return HttpResponse(status=400, content=f"StripeCardExpiring error: invalid event {self.event}")
+            return HttpResponse(status=200, content=f"StripeCardExpiring error: invalid event {self.event}")
 
         stripe_card = self.event.data.object
 
