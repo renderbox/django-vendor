@@ -314,7 +314,7 @@ class SubscriptionUpdatePaymentView(LoginRequiredMixin, FormView):
             return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
         processor = get_site_payment_processor(subscription.profile.site)(subscription.profile.site)
-        processor.set_payment_info_form_data(request.POST, CreditCardForm)
+        processor.payment_info = payment_form
         processor.subscription_update_payment(subscription)
 
         if not processor.transaction_succeeded:

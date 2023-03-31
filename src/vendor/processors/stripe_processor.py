@@ -1290,3 +1290,8 @@ class StripeProcessor(PaymentProcessorBase):
 
         if self.transaction_succeeded:
             self.transaction_id = stripe_invoice.payment_intent
+
+
+    def subscription_cancel(self, subscription):
+        super().subscription_cancel(subscription)
+        self.stripe_delete_object(self.stripe.Subscription, subscription.gateway_id)
