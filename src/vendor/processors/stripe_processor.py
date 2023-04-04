@@ -1291,7 +1291,75 @@ class StripeProcessor(PaymentProcessorBase):
         if self.transaction_succeeded:
             self.transaction_id = stripe_invoice.payment_intent
 
-
     def subscription_cancel(self, subscription):
         super().subscription_cancel(subscription)
         self.stripe_delete_object(self.stripe.Subscription, subscription.gateway_id)
+
+    def subscription_update_payment(self, subscription):
+        """
+        Updates the credit card information for the subscription in stripe
+        and updates the subscription model in vendor.
+        """
+
+        stripe_subscription_object = self.stripe_get_object(self.stripe.Subscription, subscription.gateway_id)
+        if not stripe_subscription_object:
+            return None
+
+        current_payment_method = self.stripe.Customer.retrieve_payment_method(
+            stripe_subscription_object.customer,
+            stripe_subscription_object.default_payment_method
+        )
+
+        payment_method_data = {
+            'type': 'card',
+            'card': {
+                'number': self.payment_info.cleaned_data.get('card_number'),
+                'exp_month': self.payment_info.cleaned_data.get('expire_month'),
+                'exp_year': self.payment_info.cleaned_data.get('expire_year'),
+                'cvc': self.payment_info.cleaned_data.get('cvv_number'),
+            },
+            'billing_details': {
+                'name': self.payment_info.cleaned_data.get('full_name', None),
+                'email': subscription.profile.user.email
+            }
+        }
+        # keep previous address
+        if current_payment_method:
+            payment_method_data['billing_details']['address'] = current_payment_method.billing_details.get("address")
+
+        # create payment method using new card
+        stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
+        if not stripe_payment_method:
+            return None
+
+        setup_intent_object = {
+            'customer': subscription.profile.meta['stripe_id'],
+            'confirm': True,
+            'payment_method_types': ['card'],
+            'payment_method': stripe_payment_method.id,
+            'metadata': {'site': subscription.profile.site}
+        }
+
+        # validate
+        stripe_setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_object)
+        if not stripe_setup_intent:
+            return None
+
+        # update subscription
+        self.stripe.Subscription.modify(
+            subscription.gateway_id,
+            default_payment_method=stripe_payment_method
+        )
+
+        # save payment info to subscription model
+        payment_info = {}
+        account_number = payment_method_data.get("card", {}).get("number", "")[-4:]
+        account_type = stripe_payment_method.card.get("brand", "")
+
+        if account_number:
+            payment_info['account_number'] = account_number
+
+        if account_type:
+            payment_info['account_type'] = account_type
+
+        subscription.save_payment_info(payment_info)
