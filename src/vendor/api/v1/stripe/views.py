@@ -102,7 +102,7 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
             return HttpResponse(status=200, content=f"StripeSubscriptionInvoicePaid error: invalid event: {self.event}")
 
         stripe_invoice = self.event.data.object
-        paid_date = timezone.datetime.fromtimestamp(stripe_invoice.status_transitions.paid_at)
+        paid_date = timezone.datetime.fromtimestamp(stripe_invoice.status_transitions.paid_at, tz=timezone.utc)
         amount_paid = convert_integer_to_float(stripe_invoice.total)
 
         # TODO nice to move this try/except blocks inside a generic function in the StripeBaseAPI class
@@ -159,7 +159,7 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
             return HttpResponse(status=200, content=f"StripeSubscriptionPaymentFailed error: invalid event: {self.event}")
 
         stripe_invoice = self.event.data.object
-        paid_date = timezone.datetime.fromtimestamp(stripe_invoice.status_transitions.paid_at)
+        paid_date = timezone.datetime.fromtimestamp(stripe_invoice.status_transitions.paid_at, tz=timezone.utc)
 
         # TODO nice to move this try/except blocks inside a generic function in the StripeBaseAPI class
         try:
@@ -238,14 +238,16 @@ class StripeInvoicePaid(StripeBaseAPI):
 
         if not payment and not receipt:
             logger.warning(f"There are no payments to update for subscription: {subscription}. Stripe Invoice: {stripe_invoice.id}")
-            return HttpResponse(status=400, content=f"There are no payments to update for subscription: {subscription}. Stripe Invoice: {stripe_invoice.id}")
+            return HttpResponse(status=200, content=f"There are no payments to update for subscription: {subscription}. Stripe Invoice: {stripe_invoice.id}")
         
-        payment.transaction = stripe_invoice.charge
-        payment.status = PurchaseStatus.SETTLED
-        payment.save()
+        if payment:
+            payment.transaction = stripe_invoice.charge
+            payment.status = PurchaseStatus.SETTLED
+            payment.save()
 
-        receipt.transaction = stripe_invoice.charge
-        receipt.save()
+        if receipt:
+            receipt.transaction = stripe_invoice.charge
+            receipt.save()
 
         return HttpResponse(status=200)
 
