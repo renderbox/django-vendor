@@ -233,6 +233,10 @@ class PaymentProcessorBase(object):
             amount=order_item.offer.get_trial_amount(),
             provider=self.provider,
             invoice=self.invoice,
+            defaults={
+                "submitted_date": start_date,
+                "payee_full_name": " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+            }
         )
         
         self.trial_payment.transaction = f"{self.trial_payment.uuid}-trial"
