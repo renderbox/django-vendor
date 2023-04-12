@@ -228,18 +228,20 @@ class PaymentProcessorBase(object):
             self.trial_receipt = None
             return None   # There is something wrong if both start and end date are the same
 
-        self.trial_payment = Payment.objects.create(
+        self.trial_payment, created = Payment.objects.get_or_create(
             profile=self.invoice.profile,
             amount=order_item.offer.get_trial_amount(),
             provider=self.provider,
             invoice=self.invoice,
-            submitted_date=start_date,
-            success=True,
-            status=PurchaseStatus.SETTLED,
-            payee_full_name=" ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+            defaults={
+                "submitted_date": start_date,
+                "payee_full_name": " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+            }
         )
         
         self.trial_payment.transaction = f"{self.trial_payment.uuid}-trial"
+        self.trial_payment.status = PurchaseStatus.SETTLED
+        self.trial_payment.success = True
         self.trial_payment.save()
 
         self.trial_receipt = Receipt.objects.create(
@@ -269,9 +271,9 @@ class PaymentProcessorBase(object):
                 self.create_trial_receipt_payment(order_item)
                 if self.trial_receipt:
                     self.trial_receipt.products.add(product)
-
-            self.create_receipt_by_term_type(order_item, order_item.offer.terms)
-            self.receipt.products.add(product)
+            else:
+                self.create_receipt_by_term_type(order_item, order_item.offer.terms)
+                self.receipt.products.add(product)
 
     def create_receipts(self, order_items):
         """

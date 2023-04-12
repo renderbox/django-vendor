@@ -7,7 +7,7 @@ from django.utils import timezone
 from core.models import Product
 
 from vendor.models import Offer, Price, Invoice, Receipt, CustomerProfile
-from vendor.models.choice import PurchaseStatus, TermType, InvoiceStatus
+from vendor.models.choice import TermType, InvoiceStatus
 
 
 class ModelCustomerProfileTests(TestCase):

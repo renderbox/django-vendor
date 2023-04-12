@@ -273,8 +273,18 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         if self.billing_start_date and self.billing_start_date > start_date:
             return self.billing_start_date - timedelta(days=1)
         
+        trial_occurrences = self.get_trial_occurrences()
+        if trial_occurrences:
+            units = self.term_details.get('term_units', TermDetailUnits.MONTH)
+
+            if units == TermDetailUnits.MONTH:
+                return get_future_date_months(start_date, self.get_period_length() * trial_occurrences)
+
+            elif units == TermDetailUnits.DAY:
+                return get_future_date_days(start_date, self.get_period_length() * trial_occurrences)
+
         return start_date + timedelta(days=self.get_trial_days())
-    
+
     def get_payment_start_date_trial_offset(self, start_date=timezone.now()):
         trial_end_date = self.get_trial_end_date(start_date)
 
