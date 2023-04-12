@@ -132,10 +132,10 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
             profile=customer_profile,
             site=site,
             ordered_date=paid_date,
-            total=amount_paid,
             status=InvoiceStatus.COMPLETE
         )
         invoice.add_offer(offer)
+        invoice.total = amount_paid
         invoice.vendor_notes = {'stripe_id': stripe_invoice.stripe_id}
         invoice.save()
 
