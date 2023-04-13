@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from vendor.config import VENDOR_PRODUCT_MODEL, DEFAULT_CURRENCY
@@ -121,7 +122,12 @@ class ProductModelBase(CreateUpdateModelBase):
         """
         Gets currently active reciepts by checking if the customer owns the product
         """
-        return [receipt for receipt in self.receipts.all() if receipt.profile.has_product(self)]
+        now = timezone.now()
+        return self.receipts.select_related("profile").filter(
+            models.Q(deleted=False),
+            models.Q(start_date__lte=now) | models.Q(start_date=None),
+            models.Q(end_date__gte=now) | models.Q(end_date=None)
+        )
     
     def owners(self):
         """
@@ -134,7 +140,11 @@ class ProductModelBase(CreateUpdateModelBase):
         """
         Gets a list of reciepts for customers that no longer own the product.
         """
-        return [receipt for receipt in self.receipts.all() if not receipt.profile.has_product(self)]
+        now = timezone.now()
+        return self.receipts.select_related("profile").filter(deleted=False).exclude(
+            models.Q(start_date__lte=now) | models.Q(start_date=None),
+            models.Q(end_date__gte=now) | models.Q(end_date=None)
+        )
 
     def expired_owners(self):
         """
