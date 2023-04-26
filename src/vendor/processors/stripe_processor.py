@@ -530,6 +530,7 @@ class StripeProcessor(PaymentProcessorBase):
             'customer': self.invoice.profile.meta['stripe_id'],
             'application_fee_percent': self.get_application_fee_amount(),
             'transfer_data': self.get_stripe_connect_account(),
+            'on_behalf_of': self.get_stripe_connect_account()
         }
 
     def build_setup_intent(self, payment_method_id):
@@ -538,7 +539,8 @@ class StripeProcessor(PaymentProcessorBase):
             'confirm': True,
             'payment_method_types': ['card'],
             'payment_method': payment_method_id,
-            'metadata': {'site': self.invoice.site}
+            'metadata': {'site': self.invoice.site},
+            'on_behalf_of': self.get_stripe_connect_account()
         }
     
     def build_subscription(self, subscription, payment_method_id):
@@ -550,7 +552,8 @@ class StripeProcessor(PaymentProcessorBase):
             'metadata': {'site': self.invoice.site},
             'trial_period_days': subscription.offer.get_trial_days(),
             'application_fee_percent': self.get_application_fee_percent(),
-            'transfer_data': self.build_transfer_data()
+            'transfer_data': self.build_transfer_data(),
+            'on_behalf_of': self.get_stripe_connect_account()
         }
 
     def build_invoice_line_item(self, order_item, invoice_id):
