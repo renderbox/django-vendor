@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.exceptions import (MultipleObjectsReturned,
                                     ObjectDoesNotExist, PermissionDenied)
 from django.db.models import Q
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View
@@ -223,34 +223,40 @@ class AuthorizeCaptureAPI(AuthorizeNetBaseAPI):
         return True
 
     def post(self, *args, **kwargs):
-        logger.info(f"AuthorizeCaptureAPI post: Event webhook: {self.request.body}")
+        try:
+            logger.info(f"AuthorizeCaptureAPI post: Event webhook: {self.request.body}")
 
-        site = get_site_from_request(self.request)
-        logger.info(f"AuthorizeCaptureAPI post: site: {site}")
+            site = get_site_from_request(self.request)
+            logger.info(f"AuthorizeCaptureAPI post: site: {site}")
 
-        request_data = json.loads(self.request.body)
-        logger.info(f"AuthorizeCaptureAPI post: request data: {request_data}")
+            request_data = json.loads(self.request.body)
+            logger.info(f"AuthorizeCaptureAPI post: request data: {request_data}")
 
-        if not self.is_request_valid(site, request_data):
-            return JsonResponse({"msg": "AuthorizeCaptureAPI post: Request is invalid"})
+            if not self.is_request_valid(site, request_data):
+                logger.error("AuthorizeCaptureAPI post: Request is invalid")
+                return HttpResponse(status=200, content="AuthorizeCaptureAPI post: Request is invalid")
 
-        transaction_id = request_data.get('payload').get('id')
-        logger.info(f"AuthorizeCaptureAPI post: Getting transaction detail for id: {transaction_id}")
+            transaction_id = request_data.get('payload').get('id')
+            logger.info(f"AuthorizeCaptureAPI post: Getting transaction detail for id: {transaction_id}")
 
-        processor = AuthorizeNetProcessor(site)
-        transaction_detail = processor.get_transaction_detail(transaction_id)
+            processor = AuthorizeNetProcessor(site)
+            transaction_detail = processor.get_transaction_detail(transaction_id)
 
-        if not hasattr(transaction_detail, 'subscription'):
-            logger.info(f"AuthorizeCaptureAPI post: updating payment for transaction: {transaction_id}")
-            update_payment(site, transaction_id, transaction_detail)
+            if not hasattr(transaction_detail, 'subscription'):
+                logger.info(f"AuthorizeCaptureAPI post: updating payment for transaction: {transaction_id}")
+                update_payment(site, transaction_id, transaction_detail)
 
-        elif transaction_detail:
-            logger.info(f"AuthorizeCaptureAPI post: saving subscription transaction: {transaction_id}")
-            subscription_save_transaction(site, transaction_id, transaction_detail)
-        else:
-            logger.error(f"ERROR AuthorizeCaptureAPI post: No transaction detail for transaction: {transaction_id}")
+            elif transaction_detail:
+                logger.info(f"AuthorizeCaptureAPI post: saving subscription transaction: {transaction_id}")
+                subscription_save_transaction(site, transaction_id, transaction_detail)
+            else:
+                logger.error(f"ERROR AuthorizeCaptureAPI post: No transaction detail for transaction: {transaction_id}")
 
-        return JsonResponse({"msg": "AuthorizeCaptureAPI post event finished"})
+        except Exception as exce:
+            logger.error(f"ERROR AuthorizeCaptureAPI post: exception: {exce}")
+            
+        logger.info("AuthorizeCaptureAPI post event finished")
+        return HttpResponse(status=200, content="AuthorizeCaptureAPI post event finished")
 
 
 class VoidAPI(AuthorizeNetBaseAPI):
