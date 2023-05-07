@@ -60,6 +60,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
     offer_description = models.TextField(_("Offer Description"), default=None, blank=True, null=True, help_text=_("You can enter a list of descriptions. Note: if you inputs something here the product description will not show up."))
     list_bundle_items = models.BooleanField(_("List Bundled Items"), default=False, help_text=_("When showing to customers, display the included items in a list?"))
     allow_multiple = models.BooleanField(_("Allow Multiple Purchase"), default=False, help_text=_("Confirm the user wants to buy multiples of the product where typically there is just one purchased at a time."))
+    is_promotional = models.BooleanField(_("Is Promotional"), default=False, help_text=_("You can mark this offer as promotional to help identify it between normal priced and discount priced offers."))
     meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)
 
     objects = models.Manager()
