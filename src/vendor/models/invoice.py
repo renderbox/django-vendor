@@ -41,6 +41,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
     total = models.FloatField(blank=True, null=True)                            # Set on purchase
     currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY)      # User's default currency
     shipping_address = models.ForeignKey("vendor.Address", verbose_name=_("Shipping Address"), on_delete=models.CASCADE, blank=True, null=True)
+    global_discount = models.FloatField(_("Global Discount"), blank=True, null=True, default=0)  # Any value that is set in this field will be subtracted
 
     objects = models.Manager()
     on_site = CurrentSiteManager()
@@ -130,7 +131,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         """
         Get the total amount of the offer, which could be a set price or the products MSRP
         """
-        return sum([item.total for item in self.order_items.all() ])
+        return sum([item.total for item in self.order_items.all()])
 
     def update_totals(self):
         """
@@ -141,7 +142,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         discounts = self.get_discounts()
         self.calculate_shipping()
         self.calculate_tax()
-        self.total = (self.subtotal - discounts) + self.tax + self.shipping
+        self.total = (self.subtotal - (discounts + self.global_discount)) + self.tax + self.shipping
         if self.total < 0:
             self.total = 0
 
