@@ -46,6 +46,21 @@ class AddToCartView(View):
             session_cart[offer_key]['quantity'] = 1
 
         return session_cart
+    
+    def add_offer_to_customer_profile_cart(self, customer_profile, offer):
+        cart = customer_profile.get_cart_or_checkout_cart()
+
+        if cart.status == InvoiceStatus.CHECKOUT:
+            cart.status = InvoiceStatus.CART
+            cart.save()
+
+        if customer_profile.has_product(offer.products.all()) and not offer.allow_multiple:
+            messages.info(self.request, _("You Have Already Purchased This Item"))
+        elif cart.order_items.filter(offer__products__in=offer.products.all()).count() and not offer.allow_multiple:
+            messages.info(self.request, _("You already have this product in you cart. You can only buy one"))
+        else:
+            messages.info(self.request, _("Added item to cart."))
+            cart.add_offer(offer)
 
     def post(self, request, *args, **kwargs):
         try:
@@ -56,22 +71,28 @@ class AddToCartView(View):
 
         if not request.user.is_authenticated:
             request.session['session_cart'] = self.session_cart(request, offer)
-        else:
-            profile, created = self.request.user.customer_profile.get_or_create(site=get_site_from_request(request))
+            return redirect('vendor:cart')      # Redirect to cart on success
 
-            cart = profile.get_cart_or_checkout_cart()
+        profile, created = self.request.user.customer_profile.get_or_create(site=get_site_from_request(request))
 
-            if cart.status == InvoiceStatus.CHECKOUT:
-                cart.status = InvoiceStatus.CART
-                cart.save()
+        self.add_offer_to_customer_profile_cart(profile, offer)
 
-            if profile.has_product(offer.products.all()) and not offer.allow_multiple:
-                messages.info(self.request, _("You Have Already Purchased This Item"))
-            elif cart.order_items.filter(offer__products__in=offer.products.all()).count() and not offer.allow_multiple:
-                messages.info(self.request, _("You already have this product in you cart. You can only buy one"))
-            else:
-                messages.info(self.request, _("Added item to cart."))
-                cart.add_offer(offer)
+        return redirect('vendor:cart')      # Redirect to cart on success
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            offer = Offer.objects.get(site=get_site_from_request(request), slug=self.kwargs["slug"], available=True)
+        except ObjectDoesNotExist:
+            messages.error(_("Offer does not exist or is unavailable"))
+            return redirect('vendor:cart')
+
+        if not request.user.is_authenticated:
+            request.session['session_cart'] = self.session_cart(request, offer)
+            return redirect('vendor:cart')      # Redirect to cart on success
+
+        profile, created = self.request.user.customer_profile.get_or_create(site=get_site_from_request(request))
+
+        self.add_offer_to_customer_profile_cart(profile, offer)
 
         return redirect('vendor:cart')      # Redirect to cart on success
 
