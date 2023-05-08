@@ -268,6 +268,12 @@ class ModelInvoiceTests(TestCase):
     def test_get_next_billing_price(self):
         pass
 
+    def test_global_discount_success(self):
+        pass
+
+    def test_global_discount_fail(self):
+        pass
+
 
 
 
