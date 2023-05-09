@@ -49,14 +49,15 @@ class AddToCartView(View):
     
     def add_offer_to_customer_profile_cart(self, customer_profile, offer):
         cart = customer_profile.get_cart_or_checkout_cart()
+        all_products = offer.products.all()
 
         if cart.status == InvoiceStatus.CHECKOUT:
             cart.status = InvoiceStatus.CART
             cart.save()
 
-        if customer_profile.has_product(offer.products.all()) and not offer.allow_multiple:
+        if customer_profile.has_product(all_products) and not offer.allow_multiple:
             messages.info(self.request, _("You Have Already Purchased This Item"))
-        elif cart.order_items.filter(offer__products__in=offer.products.all()).count() and not offer.allow_multiple:
+        elif cart.order_items.filter(offer__products__in=all_products).exists() and not offer.allow_multiple:
             messages.info(self.request, _("You already have this product in you cart. You can only buy one"))
         else:
             messages.info(self.request, _("Added item to cart."))
