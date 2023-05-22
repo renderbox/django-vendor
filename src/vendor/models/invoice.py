@@ -283,7 +283,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
 
         trial_discounts = sum([order_item.trial_amount - order_item.price for order_item in self.order_items.all() if order_item.offer.has_trial_occurrences() or order_item.offer.get_trial_days()])
 
-        return discounts + abs(trial_discounts) + self.global_discount
+        return discounts + math.fabs(trial_discounts) + math.fabs(self.global_discount)
 
     def save_discounts_vendor_notes(self):
         """

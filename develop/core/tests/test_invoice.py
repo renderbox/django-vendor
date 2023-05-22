@@ -240,22 +240,25 @@ class ModelInvoiceTests(TestCase):
 
     def test_invoice_global_discount(self):
         month_offer = Offer.objects.get(pk=6)
-        self.new_invoice.global_discount = 10
-        self.new_invoice.save()
         self.new_invoice.add_offer(month_offer)
+        self.new_invoice.global_discount = 10
+        self.new_invoice.update_totals()
+        self.new_invoice.save()
         self.assertEqual(self.new_invoice.total, month_offer.current_price() - self.new_invoice.global_discount)
 
     def test_invoice_negative_global_discount(self):
         month_offer = Offer.objects.get(pk=6)
-        self.new_invoice.global_discount = -10
-        self.new_invoice.save()
         self.new_invoice.add_offer(month_offer)
+        self.new_invoice.global_discount = -10
+        self.new_invoice.update_totals()
+        self.new_invoice.save()
         self.assertEqual(self.new_invoice.total, month_offer.current_price() + self.new_invoice.global_discount)
     
     def test_invoice_global_discount_no_less_than_zero(self):
         month_offer = Offer.objects.get(pk=6)
         self.new_invoice.add_offer(month_offer)
-        self.new_invoice.global_discount = 100
+        self.new_invoice.global_discount = 101
+        self.new_invoice.update_totals()
         self.new_invoice.save()
         self.assertEqual(self.new_invoice.total, 0)
 
