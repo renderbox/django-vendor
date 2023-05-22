@@ -546,7 +546,7 @@ class StripeProcessor(PaymentProcessorBase):
     def build_subscription(self, subscription, payment_method_id):
         return {
             'customer': self.invoice.profile.meta['stripe_id'],
-            'coupon': self.invoice.order_items.filter(offer__is_promotional=True).first().offer.promo.meta.get('stripe_id'),
+            'coupon': self.invoice.order_items.filter(offer__is_promotional=True).first().offer.promotionalcampaign_set.first().meta.get('stripe_id'),
             'items': [{'price': subscription.offer.meta['stripe']['price_id']}],
             'default_payment_method': payment_method_id,
             'metadata': {'site': self.invoice.site},
