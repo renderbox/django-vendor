@@ -68,6 +68,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         return _(f"{self.profile.user.username} Invoice ({self.created:%Y-%m-%d %H:%M})")
 
     def add_offer(self, offer, quantity=1):
+        self.global_discount = 0
 
         order_item, created = self.order_items.get_or_create(offer=offer)
         
@@ -82,6 +83,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         return order_item
 
     def remove_offer(self, offer, clear=False):
+        self.global_discount = 0
         try:
             order_item = self.order_items.get(offer=offer)      # Get the order item if it's present
         except ObjectDoesNotExist:
@@ -132,7 +134,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         """
         Get the total amount of the offer, which could be a set price or the products MSRP
         """
-        return sum([item.total for item in self.order_items.all()])
+        return sum([item.total for item in self.order_items.exclude(offer__is_promotional=True)])
 
     def update_totals(self):
         """
@@ -143,7 +145,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         discounts = self.get_discounts()
         self.calculate_shipping()
         self.calculate_tax()
-        self.total = (self.subtotal - (discounts + math.fabs(self.global_discount))) + self.tax + self.shipping
+        self.total = (self.subtotal - discounts) + self.tax + self.shipping
 
         if self.total < 0:
             self.total = 0
@@ -281,7 +283,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
 
         trial_discounts = sum([order_item.trial_amount - order_item.price for order_item in self.order_items.all() if order_item.offer.has_trial_occurrences() or order_item.offer.get_trial_days()])
 
-        return discounts + abs(trial_discounts)
+        return discounts + abs(trial_discounts) + self.global_discount
 
     def save_discounts_vendor_notes(self):
         """

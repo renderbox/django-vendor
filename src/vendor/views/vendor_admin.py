@@ -404,7 +404,6 @@ class AdminProfileListView(LoginRequiredMixin, TableFilterMixin, SiteOnRequestFi
     model = CustomerProfile
     paginate_by = 100
 
-
     def search_filter(self, queryset):
         search_value = self.request.GET.get('search_filter')
         return queryset.filter(Q(pk__icontains=search_value) | \
@@ -413,7 +412,7 @@ class AdminProfileListView(LoginRequiredMixin, TableFilterMixin, SiteOnRequestFi
 
     def get_paginated_by(self, queryset):
         if 'paginate_by' in self.request.kwargs:
-            return kwargs['paginate_by']
+            return self.kwargs['paginate_by']
         return self.paginate_by
     
     def get_queryset(self):
