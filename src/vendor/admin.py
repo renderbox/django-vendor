@@ -7,7 +7,7 @@ from vendor.models import TaxClassifier, Offer, Price, CustomerProfile, \
     Invoice, OrderItem, Receipt, Wishlist, WishlistItem, Address, Payment, \
     Subscription
 from vendor.models.choice import InvoiceStatus
-
+from vendor.models.base import get_product_model
 
 logger = logging.getLogger(__name__)
 
