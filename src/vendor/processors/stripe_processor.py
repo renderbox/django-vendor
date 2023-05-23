@@ -546,7 +546,7 @@ class StripeProcessor(PaymentProcessorBase):
     def build_subscription(self, subscription, payment_method_id):
         return {
             'customer': self.invoice.profile.meta['stripe_id'],
-            'coupon': self.invoice.order_items.filter(offer__is_promotional=True).first().offer.promotionalcampaign_set.first().meta.get('stripe_id'),
+            'promotion_code': self.invoice.coupon_code.first().meta['stripe_id'] if self.invoice.coupon_code.count() else None,
             'items': [{'price': subscription.offer.meta['stripe']['price_id']}],
             'default_payment_method': payment_method_id,
             'metadata': {'site': self.invoice.site},
@@ -1250,7 +1250,6 @@ class StripeProcessor(PaymentProcessorBase):
         
         if not stripe_subscription or stripe_subscription.status == 'incomplete':
             self.transaction_succeeded = False
-            self.transaction_info['errors'] = "Subscription was not settled"
             return None
 
         if self.invoice.vendor_notes is None:

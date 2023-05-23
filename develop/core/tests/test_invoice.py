@@ -291,7 +291,10 @@ class ModelInvoiceTests(TestCase):
     def test_get_next_billing_price(self):
         pass
 
-
+    def test_clear_promos_when_last_item_is_removed(self):
+        ...
+        pass
+    
 
 class CartViewTests(TestCase):
 
