@@ -1,5 +1,6 @@
 import itertools
 import uuid
+import math
 
 from allauth.account.signals import user_logged_in
 
@@ -41,6 +42,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
     total = models.FloatField(blank=True, null=True)                            # Set on purchase
     currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY)      # User's default currency
     shipping_address = models.ForeignKey("vendor.Address", verbose_name=_("Shipping Address"), on_delete=models.CASCADE, blank=True, null=True)
+    global_discount = models.FloatField(_("Global Discount"), blank=True, null=True, default=0)  # Any value that is set in this field will be subtracted
 
     objects = models.Manager()
     on_site = CurrentSiteManager()
@@ -66,6 +68,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         return _(f"{self.profile.user.username} Invoice ({self.created:%Y-%m-%d %H:%M})")
 
     def add_offer(self, offer, quantity=1):
+        self.global_discount = 0
 
         order_item, created = self.order_items.get_or_create(offer=offer)
         
@@ -80,6 +83,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         return order_item
 
     def remove_offer(self, offer, clear=False):
+        self.global_discount = 0
         try:
             order_item = self.order_items.get(offer=offer)      # Get the order item if it's present
         except ObjectDoesNotExist:
@@ -94,6 +98,11 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
 
         self.update_totals()
         self.save()
+
+        if not (self.get_recurring_order_items().count() or self.get_one_time_transaction_order_items().count()):
+            for order_item in self.order_items.all():
+                order_item.delete()
+
         return order_item
 
     def swap_offer(self, existing_offer, new_offer):
@@ -130,7 +139,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         """
         Get the total amount of the offer, which could be a set price or the products MSRP
         """
-        return sum([item.total for item in self.order_items.all() ])
+        return sum([item.total for item in self.order_items.exclude(offer__is_promotional=True)])
 
     def update_totals(self):
         """
@@ -142,6 +151,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         self.calculate_shipping()
         self.calculate_tax()
         self.total = (self.subtotal - discounts) + self.tax + self.shipping
+
         if self.total < 0:
             self.total = 0
 
@@ -160,34 +170,34 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         """
         Gets the recurring order items in the invoice
         """
-        return self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)
+        return self.order_items.filter(offer__terms__lt=TermType.PERPETUAL, offer__is_promotional=False)
 
     def get_recurring_total(self):
         """
         Gets the total price for all recurring order items in the invoice and subtracting any discounts.
         """
         recurring_time_order_items = self.get_recurring_order_items()
-        return sum([ (order_item.total - order_item.discounts) for order_item in recurring_time_order_items.all()])
+        return sum([(order_item.total - order_item.discounts) for order_item in recurring_time_order_items.all()])
 
     def get_one_time_transaction_order_items(self):
         """
         Gets one time transation order items in the invoice
         """
-        return self.order_items.filter(offer__terms__gte=TermType.PERPETUAL)
+        return self.order_items.filter(offer__terms__gte=TermType.PERPETUAL, offer__is_promotional=False)
 
     def get_one_time_transaction_total(self):
         """
         Gets the total price for order items that will be purchased on a single transation. It also subtracts any discounts
         """
         one_time_order_items = self.get_one_time_transaction_order_items()
-        return sum([ (order_item.total - order_item.discounts) for order_item in one_time_order_items.all()])
+        return sum([(order_item.total - order_item.discounts) for order_item in one_time_order_items.all()])
 
     def empty_cart(self):
         """
         Remove any offer/order_item if the invoice is in Cart State.
         """
         offers = []
-        offers = list(itertools.chain.from_iterable([ [order_item.offer] * order_item.quantity for order_item in self.order_items.all()]))
+        offers = list(itertools.chain.from_iterable([[order_item.offer] * order_item.quantity for order_item in self.order_items.all()]))
         for offer in offers:
             self.remove_offer(offer)
 
@@ -196,7 +206,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         Return the next billing date, if an invoice has two different billing dates it will return
         the upcoming one.
         """
-        recurring_offers = self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)
+        recurring_offers = self.order_items.filter(offer__terms__lt=TermType.PERPETUAL, offer__is_promotional=False)
 
         if not recurring_offers.count():
             return None
@@ -214,8 +224,8 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         for recurring_order_item in self.get_recurring_order_items():
             offer_total = recurring_order_item.total
 
-            if recurring_order_item.discounts:
-                offer_total = offer_total - recurring_order_item.discounts
+            if recurring_order_item.discounts or self.global_discount:
+                offer_total = offer_total - (recurring_order_item.discounts + math.fabs(self.global_discount))
 
             start_date = recurring_order_item.offer.get_offer_start_date(now)
 
@@ -225,7 +235,6 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
                 
                 if recurring_order_item.offer.get_trial_occurrences() > 1:
                     offer_total = recurring_order_item.offer.get_trial_amount()
-
 
             if start_date in payment_dates:
                 payment_dates.update({start_date: payment_dates[start_date] + offer_total})
@@ -240,7 +249,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         """
         Returns the price corresponding to the upcoming billing date.
         """
-        recurring_offers = self.order_items.filter(offer__terms__lt=TermType.PERPETUAL)
+        recurring_offers = self.order_items.filter(offer__terms__lt=TermType.PERPETUAL, offer__is_promotional=False)
 
         if not recurring_offers.count():
             return None
@@ -279,7 +288,20 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
 
         trial_discounts = sum([order_item.trial_amount - order_item.price for order_item in self.order_items.all() if order_item.offer.has_trial_occurrences() or order_item.offer.get_trial_days()])
 
-        return discounts + abs(trial_discounts)
+        return discounts + math.fabs(trial_discounts) + math.fabs(self.global_discount)
+    
+    def get_discounts_display(self):
+        """
+        Only return promotional, and global discounts. If their is a trial period price it is not added to the display.
+        """
+        if 'discounts' in self.vendor_notes:
+            return self.vendor_notes['discounts']
+
+        discounts = 0
+
+        discounts = sum([order_item.discounts for order_item in self.order_items.all() if not self.profile.has_owned_product(order_item.offer.products.all())])
+
+        return discounts + math.fabs(self.global_discount)
 
     def save_discounts_vendor_notes(self):
         """

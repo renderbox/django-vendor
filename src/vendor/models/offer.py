@@ -1,10 +1,10 @@
 import math
 import uuid
+from datetime import timedelta
 
 from autoslug import AutoSlugField
-from django.contrib.sites.models import Site
-from datetime import timedelta
 from django.contrib.sites.managers import CurrentSiteManager
+from django.contrib.sites.models import Site
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
@@ -15,9 +15,10 @@ from vendor.config import DEFAULT_CURRENCY
 from vendor.utils import get_future_date_days, get_future_date_months
 
 from .base import CreateUpdateModelBase, SoftDeleteModelBase
-from .choice import TermType, TermDetailUnits
-from .utils import set_default_site_id, is_currency_available
-from .modelmanagers import ActiveManager, ActiveCurrentSiteManager, CurrentSiteSoftDeleteManager
+from .choice import TermDetailUnits, TermType
+from .modelmanagers import (ActiveCurrentSiteManager, ActiveManager,
+                            CurrentSiteSoftDeleteManager)
+from .utils import is_currency_available, set_default_site_id
 
 
 #########
@@ -46,7 +47,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
     a single Offer on the site.
     '''
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)                                # Used to track the product
-    slug = AutoSlugField(populate_from='name', unique_with='site__id')                                               # SEO friendly
+    slug = AutoSlugField(populate_from='name', unique_with='site__id', editable=True)                                               # SEO friendly
     site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="product_offers")                      # For multi-site support
     name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
     start_date = models.DateTimeField(_("Start Date"), help_text=_("What date should this offer become available?"))
@@ -60,6 +61,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
     offer_description = models.TextField(_("Offer Description"), default=None, blank=True, null=True, help_text=_("You can enter a list of descriptions. Note: if you inputs something here the product description will not show up."))
     list_bundle_items = models.BooleanField(_("List Bundled Items"), default=False, help_text=_("When showing to customers, display the included items in a list?"))
     allow_multiple = models.BooleanField(_("Allow Multiple Purchase"), default=False, help_text=_("Confirm the user wants to buy multiples of the product where typically there is just one purchased at a time."))
+    is_promotional = models.BooleanField(_("Is Promotional"), default=False, help_text=_("You can mark this offer as promotional to help identify it between normal priced and discount priced offers."))
     meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)
 
     objects = models.Manager()
@@ -226,9 +228,6 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
 
     def get_trial_occurrences(self):
         return self.term_details.get('trial_occurrences', 0)
-
-    def get_trial_amount(self):
-        return self.term_details.get('trial_amount', 0)
     
     def get_trial_days(self):
         return self.term_details.get('trial_days', 0)
@@ -292,7 +291,3 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
             return start_date
         
         return trial_end_date + timedelta(days=1)
-    
-
-
-
