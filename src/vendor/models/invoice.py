@@ -299,7 +299,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
 
         discounts = 0
 
-        discounts = sum([order_item.discounts for order_item in self.order_items.all() ])
+        discounts = sum([order_item.discounts for order_item in self.order_items.all() if not self.profile.has_owned_product(order_item.offer.products.all())])
 
         return discounts + math.fabs(self.global_discount)
 
