@@ -92,7 +92,10 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         """
         currency = self.get_best_currency(currency)
 
-        return sum([product.get_msrp(currency) for product in self.products.all()])
+        if self.products.count():
+            return sum([product.get_msrp(currency) for product in self.products.all()])
+        else:
+            return 0
 
     def current_price(self, currency=DEFAULT_CURRENCY):
         '''
@@ -147,6 +150,9 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         """
         Gets the savings between the difference between the product's msrp and the current price
         """
+        if self.is_promotional:
+            return math.fabs(self.current_price())
+        
         discount = self.get_msrp(currency) - self.current_price(currency)
 
         if discount <= 0:

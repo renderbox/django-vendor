@@ -67,7 +67,7 @@ class AddToCartView(View):
         try:
             offer = Offer.objects.get(site=get_site_from_request(request), slug=self.kwargs["slug"], available=True)
         except ObjectDoesNotExist:
-            messages.error(_("Offer does not exist or is unavailable"))
+            messages.error(request, _("Offer does not exist or is unavailable"))
             return redirect('vendor:cart')
 
         if not request.user.is_authenticated:
