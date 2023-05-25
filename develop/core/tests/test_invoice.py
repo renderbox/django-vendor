@@ -294,6 +294,11 @@ class ModelInvoiceTests(TestCase):
     def test_clear_promos_when_last_item_is_removed(self):
         ...
         pass
+
+    def test_invoice_get_products(self):
+        products = self.existing_invoice.get_products()
+
+        self.assertTrue(products)
     
 
 class CartViewTests(TestCase):
