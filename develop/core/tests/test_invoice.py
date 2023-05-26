@@ -292,14 +292,37 @@ class ModelInvoiceTests(TestCase):
         pass
 
     def test_clear_promos_when_last_item_is_removed(self):
-        ...
-        pass
+        promo_offer = Offer.objects.get(pk=8)
+        promo_offer.is_promotional = True
+        promo_offer.save()
+        self.existing_invoice.add_offer(promo_offer)
+
+        not_promotional_order_item_offers_in_invoice = self.existing_invoice.order_items.filter(offer__is_promotional=False)
+
+        for order_item in not_promotional_order_item_offers_in_invoice:
+            self.existing_invoice.remove_offer(order_item.offer, clear=True)
+
+        self.existing_invoice.refresh_from_db()
+        self.assertFalse(self.existing_invoice.order_items.count())
 
     def test_invoice_get_products(self):
         products = self.existing_invoice.get_products()
 
         self.assertTrue(products)
-    
+
+    def test_invoice_clear_promos(self):
+        promo_offer = Offer.objects.get(pk=8)
+        promo_offer.is_promotional = True
+        promo_offer.save()
+        self.existing_invoice.add_offer(promo_offer)
+        item_counter = self.existing_invoice.order_items.count()
+
+        self.existing_invoice.clear_promos()
+        self.existing_invoice.refresh_from_db()
+
+        self.assertEquals(self.existing_invoice.order_items.count(), item_counter - 1)
+        self.assertFalse(self.existing_invoice.order_items.filter(offer=promo_offer).exists())
+        
 
 class CartViewTests(TestCase):
 
