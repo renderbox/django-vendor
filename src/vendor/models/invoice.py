@@ -324,10 +324,15 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
             return ""
         return self.vendor_notes['promos'].keys()
 
+    def clear_promos(self):
+        for order_item in self.order_item.filter(offer__is_promotional=True):
+            order_item.delete()
+
     def get_products(self):
         invoice_products = set([product for order_item in self.order_items.all() for product in order_item.offer.products.all()])
 
         return list(invoice_products)
+
 
 
 class OrderItem(CreateUpdateModelBase):
