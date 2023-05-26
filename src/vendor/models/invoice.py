@@ -96,12 +96,12 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         else:
             order_item.save()
 
-        self.update_totals()
-        self.save()
-
         if not (self.get_recurring_order_items().count() or self.get_one_time_transaction_order_items().count()):
             for order_item in self.order_items.all():
                 order_item.delete()
+
+        self.update_totals()
+        self.save()
 
         return order_item
 
@@ -323,6 +323,10 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         if 'promos' not in self.vendor_notes or not len(self.vendor_notes.get('promos', [])):
             return ""
         return self.vendor_notes['promos'].keys()
+
+    def clear_promos(self):
+        for order_item in self.order_items.filter(offer__is_promotional=True):
+            self.remove_offer(order_item.offer, clear=True)
 
     def get_products(self):
         invoice_products = set([product for order_item in self.order_items.all() for product in order_item.offer.products.all()])
