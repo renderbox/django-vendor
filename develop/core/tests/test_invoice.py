@@ -297,7 +297,7 @@ class ModelInvoiceTests(TestCase):
         promo_offer.save()
         self.existing_invoice.add_offer(promo_offer)
 
-        not_promotional_order_item_offers_in_invoice = self.existing_invoice.order_itmes.filter(offer__is_promotional=False)
+        not_promotional_order_item_offers_in_invoice = self.existing_invoice.order_items.filter(offer__is_promotional=False)
 
         for order_item in not_promotional_order_item_offers_in_invoice:
             self.existing_invoice.remove_offer(order_item.offer)
