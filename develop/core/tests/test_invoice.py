@@ -300,7 +300,7 @@ class ModelInvoiceTests(TestCase):
         not_promotional_order_item_offers_in_invoice = self.existing_invoice.order_items.filter(offer__is_promotional=False)
 
         for order_item in not_promotional_order_item_offers_in_invoice:
-            self.existing_invoice.remove_offer(order_item.offer)
+            self.existing_invoice.remove_offer(order_item.offer, clear=True)
 
         self.existing_invoice.refresh_from_db()
         self.assertFalse(self.existing_invoice.order_items.count())
@@ -318,9 +318,10 @@ class ModelInvoiceTests(TestCase):
         item_counter = self.existing_invoice.order_items.count()
 
         self.existing_invoice.clear_promos()
+        self.existing_invoice.refresh_from_db()
 
-        self.assertEquals(self.existing_invoice.order_items.count() - 1, item_counter)
-        self.assertFalse(self.existing_invoice.order_items(offer=promo_offer))
+        self.assertEquals(self.existing_invoice.order_items.count(), item_counter - 1)
+        self.assertFalse(self.existing_invoice.order_items.filter(offer=promo_offer).exists())
         
 
 class CartViewTests(TestCase):
