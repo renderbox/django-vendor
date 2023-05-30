@@ -217,15 +217,28 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
 
         return next_billing_dates[0]
     
+    def get_coupon_code_order_item(self):
+        return self.order_items.filter(offer__is_promotional=True).first() if self.order_items.filter(offer__is_promotional=True).exists() else None
+    
     def get_billing_dates_and_prices(self):
         now = timezone.now()
         payment_dates = {now: self.get_one_time_transaction_total()}
         
+        coupon_order_item = self.get_coupon_code_order_item()
+        
         for recurring_order_item in self.get_recurring_order_items():
             offer_total = recurring_order_item.total
+            
+            if coupon_order_item:
+                if next((product for product in coupon_order_item.offer.products.all() if product in recurring_order_item.offer.products.all()), False):
+                    if coupon_order_item.offer.promo_campaign.first().is_percent_off:
+                        offer_total = offer_total - ((offer_total * coupon_order_item.offer.current_price()) / 100)
+                        # offer_total = offer_total - (recurring_order_item.discounts + ((offer_total * coupon_order_item.offer.current_price()) / 100))
+                    else:
+                        offer_total = offer_total - math.fabs(coupon_order_item.offer.current_price())
 
-            if recurring_order_item.discounts or self.global_discount:
-                offer_total = offer_total - (recurring_order_item.discounts + math.fabs(self.global_discount))
+            # if recurring_order_item.discounts or self.global_discount:
+            #     offer_total = offer_total - (recurring_order_item.discounts + math.fabs(self.global_discount))
 
             start_date = recurring_order_item.offer.get_offer_start_date(now)
 
@@ -286,7 +299,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
 
         discounts = sum([order_item.discounts for order_item in self.order_items.all() if not self.profile.has_owned_product(order_item.offer.products.all())])
 
-        trial_discounts = sum([order_item.trial_amount - order_item.price for order_item in self.order_items.all() if order_item.offer.has_trial_occurrences() or order_item.offer.get_trial_days()])
+        trial_discounts = sum([order_item.trial_amount - order_item.price for order_item in self.order_items.all() if not self.profile.has_owned_product(order_item.offer.products.all()) and (order_item.offer.has_trial_occurrences() or order_item.offer.get_trial_days())])
 
         return discounts + math.fabs(trial_discounts) + math.fabs(self.global_discount)
     
@@ -296,10 +309,14 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         """
         if 'discounts' in self.vendor_notes:
             return self.vendor_notes['discounts']
-
+        
         discounts = 0
+        coupon_code_order_item = self.get_coupon_code_order_item()
 
         discounts = sum([order_item.discounts for order_item in self.order_items.all() if not self.profile.has_owned_product(order_item.offer.products.all())])
+
+        # if coupon_code_order_item and coupon_code_order_item.offer.promo_campaign.first().is_percent_off:
+        #     discounts += coupon_code_order_item.offer.current_price()
 
         return discounts + math.fabs(self.global_discount)
 
