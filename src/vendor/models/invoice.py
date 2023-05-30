@@ -220,12 +220,23 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
     def get_billing_dates_and_prices(self):
         now = timezone.now()
         payment_dates = {now: self.get_one_time_transaction_total()}
+        coupon_order_item = self.order_items.filter(offer__is_promotional=True).first() if self.order_items.filter(offer__is_promotional=True).exists() else None
         
         for recurring_order_item in self.get_recurring_order_items():
             offer_total = recurring_order_item.total
+            
+            if next((product for product in coupon_order_item.offer.products.all() if product in recurring_order_item.offer.products.all()), False):
+                print(True)
 
-            if recurring_order_item.discounts or self.global_discount:
-                offer_total = offer_total - (recurring_order_item.discounts + math.fabs(self.global_discount))
+            if recurring_order_item.offer.filter(products__in=coupon_order_item.offer.products).exists():
+                if coupon_order_item.offer.is_percent_off:
+                    offer_total = offer_total - ((offer_total * coupon_order_item.offer.current_price()) / 100)
+                    # offer_total = offer_total - (recurring_order_item.discounts + ((offer_total * coupon_order_item.offer.current_price()) / 100))
+                else:
+                    offer_total = offer_total - coupon_order_item.offer.current_price()
+
+            # if recurring_order_item.discounts or self.global_discount:
+            #     offer_total = offer_total - (recurring_order_item.discounts + math.fabs(self.global_discount))
 
             start_date = recurring_order_item.offer.get_offer_start_date(now)
 
