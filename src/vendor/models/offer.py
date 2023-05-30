@@ -150,8 +150,10 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         """
         Gets the savings between the difference between the product's msrp and the current price
         """
-        if self.is_promotional:
+        if self.is_promotional and self.current_price() < 0:
             return math.fabs(self.current_price())
+        elif self.is_promotional and self.current_price() > 0:
+            return 0
         
         discount = self.get_msrp(currency) - self.current_price(currency)
 
