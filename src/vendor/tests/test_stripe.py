@@ -33,7 +33,7 @@ class StripeProcessorTests(TestCase):
         self.processor_site_config = SiteConfigModel()
         self.processor_site_config.site = self.existing_invoice.site
         self.processor_site_config.key = 'vendor.config.PaymentProcessorSiteConfig'
-        self.processor_site_config.value = {"payment_processor": "stripe_processor.StripeProcessor"}
+        self.processor_site_config.value = {"payment_processor": "stripe.StripeProcessor"}
         self.processor_site_config.save()
 
     def setup_user_client(self):
@@ -284,7 +284,7 @@ class StripeProcessorTests(TestCase):
 
         self.processor.invoice.total = randrange(1, 1000)
         self.processor.authorize_payment()
-        
+
         self.assertFalse(self.processor.transaction_succeeded)
 
     def test_process_payment_postal_code_check_fails(self):
@@ -589,11 +589,11 @@ class StripeProcessorTests(TestCase):
         self.assertIsNotNone(self.processor.payment)
         self.assertTrue(self.processor.payment.success)
         self.assertEquals(InvoiceStatus.COMPLETE, self.processor.invoice.status)
-    
+
 
     """
     Commenting out since stripe doesnt allow you to delete Price objects (weird)
-    
+
     def test_check_price_does_exist(self):
         stripe_product = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
         self.pri_monthly['product'] = stripe_product.id
@@ -657,9 +657,9 @@ class StripeCRUDObjectTests(TestCase):
     def init_test_objects(self):
         self.valid_metadata = {'site': 'sc', 'pk':1}
         self.valid_addr = {'city': "na",'country': "US",'line1': "Salvatierra walk",'postal_code': "90321",'state': 'CA'}
-        
+
         self.cus_norrin_radd = {'name': 'Norrin Radd', 'email': 'norrin@radd.com', 'metadata': self.valid_metadata}
-        
+
         self.pro_monthly_license = {'name': "Monthly License", 'metadata': self.valid_metadata}
         self.pro_annual_license = {"name": "Annual Subscription", 'metadata': self.valid_metadata}
 
@@ -720,7 +720,7 @@ class StripeCRUDObjectTests(TestCase):
 
     def test_create_product_no_name_fail(self):
         del(self.pro_monthly_license['name'])
-        
+
         stripe_product = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_monthly_license)
         self.assertFalse(self.processor.transaction_succeeded)
 
@@ -771,7 +771,7 @@ class StripeCRUDObjectTests(TestCase):
         self.pri_monthly['type'] = "This is not a valid field"
 
         stripe_price = self.processor.stripe_create_object(self.processor.stripe.Price, self.pri_monthly)
-        
+
         self.assertFalse(self.processor.transaction_succeeded)
 
     ##########
@@ -787,7 +787,7 @@ class StripeCRUDObjectTests(TestCase):
     # Subscription CRUD
     def test_create_subscription_success(self):
         stripe_cus_norrin_radd = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
-        
+
         stripe_payment_method = self.processor.stripe_create_object(self.processor.stripe.PaymentMethod, self.payment_method)
 
         setup_intent_object = {
@@ -798,12 +798,12 @@ class StripeCRUDObjectTests(TestCase):
             'metadata': self.valid_metadata
         }
         stripe_setup_intent = self.processor.stripe_create_object(self.processor.stripe.SetupIntent, setup_intent_object)
-        
+
         stripe_pro_monthly = self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_monthly_license)
-        
+
         self.pri_monthly['product'] = stripe_pro_monthly.id
         stripe_price = self.processor.stripe_create_object(self.processor.stripe.Price, self.pri_monthly)
-        
+
         subscription_obj = {
             'customer': stripe_cus_norrin_radd.id,
             'items': [{'price': stripe_price.id}],
@@ -818,7 +818,7 @@ class StripeCRUDObjectTests(TestCase):
     ##########
     # Invoice CRUD
     # def test_create_invoice_success(self):
-        
+
         # setup_intent_object = {
         #     'customer': stripe_cus_norrin_radd.id,
         #     'confirm': True,
@@ -826,10 +826,10 @@ class StripeCRUDObjectTests(TestCase):
         #     'payment_method': stripe_payment_method.id,
         #     'metadata': self.valid_metadata
         # }
-        
-        
+
+
         # self.pri_monthly['product'] = stripe_pro_monthly.id
-        
+
         # subscription_obj = {
         #     'customer': stripe_cus_norrin_radd.id,
         #     'items': [{'price': stripe_price.id}],
@@ -837,7 +837,7 @@ class StripeCRUDObjectTests(TestCase):
         #     'metadata': self.valid_metadata,
 
         # }
-            
+
         # stripe_invoice_object = {
         #     'metadata': self.valid_metadata,
         #     'subscription': stripe_sub.id,
@@ -847,14 +847,14 @@ class StripeCRUDObjectTests(TestCase):
 
 
         # self.assertIsNotNone(stripe_invoice.id)
-        
+
     ##########
     # Setup Intent CRUD
     def test_create_setup_intent_success(self):
 
         stripe_cus_norrin_radd = self.processor.stripe_create_object(self.processor.stripe.Customer, self.cus_norrin_radd)
         stripe_payment_method = self.processor.stripe_create_object(self.processor.stripe.PaymentMethod, self.payment_method)
-        
+
         setup_intent_object = {
             'customer': stripe_cus_norrin_radd.id,
             'confirm': True,
@@ -863,7 +863,7 @@ class StripeCRUDObjectTests(TestCase):
             'metadata': self.valid_metadata
         }
         stripe_setup_intent = self.processor.stripe_create_object(self.processor.stripe.SetupIntent, setup_intent_object)
-        
+
         self.assertIsNotNone(stripe_setup_intent.id)
 
 
@@ -884,7 +884,7 @@ class StripeBuildObjectTests(TestCase):
 
         customer_data = self.processor.build_customer(customer_profile)
         stripe_customer = self.processor.stripe_create_object(self.processor.stripe.Customer, customer_data)
-        
+
         self.assertIsNotNone(stripe_customer.id)
         self.assertEqual(f"{customer_profile.user.first_name} {customer_profile.user.last_name}", stripe_customer.name)
         self.assertEqual(customer_profile.user.email, stripe_customer.email)
@@ -922,7 +922,7 @@ class StripeBuildObjectTests(TestCase):
 
         coupon_data = self.processor.build_coupon(offer, price)
         stripe_coupon = self.processor.stripe_create_object(self.processor.stripe.Coupon, coupon_data)
-        
+
         self.assertIsNotNone(stripe_coupon.id)
         self.assertEqual("".join([str(stripe_coupon.amount_off)[:-2], ".", str(stripe_coupon.amount_off)[-2:]]), str((offer.get_msrp() - price.cost)))
 
