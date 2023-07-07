@@ -4,7 +4,7 @@
 #
 #    pip-compile --extra=dev --no-emit-index-url --output-file=requirements.dev.txt pyproject.toml
 #
-asgiref==3.6.0
+asgiref==3.7.2
     # via django
 bandit==1.7.5
     # via django-vendor (pyproject.toml)
@@ -12,15 +12,15 @@ black==23.3.0
     # via
     #   django-vendor (pyproject.toml)
     #   flake8-black
-certifi==2022.12.7
+certifi==2023.5.7
     # via requests
 cffi==1.15.1
     # via cryptography
 charset-normalizer==3.1.0
     # via requests
-click==8.1.3
+click==8.1.4
     # via black
-cryptography==40.0.2
+cryptography==41.0.1
     # via
     #   django-fernet-fields
     #   pyjwt
@@ -28,7 +28,7 @@ defusedxml==0.7.1
     # via python3-openid
 dj-database-url==2.0.0
     # via django-vendor (pyproject.toml)
-django==3.2.19
+django==3.2.20
     # via
     #   dj-database-url
     #   django-allauth
@@ -45,7 +45,7 @@ django-autoslug==1.9.9
     # via django-vendor (pyproject.toml)
 django-crispy-forms==2.0
     # via django-vendor (pyproject.toml)
-django-extensions==3.2.1
+django-extensions==3.2.3
     # via django-vendor (pyproject.toml)
 django-fernet-fields==0.6
     # via django-integrations
@@ -71,13 +71,13 @@ iso4217==1.11.20220401
     # via django-vendor (pyproject.toml)
 isort==5.12.0
     # via django-vendor (pyproject.toml)
-markdown-it-py==2.2.0
+markdown-it-py==3.0.0
     # via rich
 mccabe==0.7.0
     # via flake8
 mdurl==0.1.2
     # via markdown-it-py
-mypy==1.2.0
+mypy==1.4.1
     # via django-vendor (pyproject.toml)
 mypy-extensions==1.0.0
     # via
@@ -91,7 +91,7 @@ pathspec==0.11.1
     # via black
 pbr==5.11.1
     # via stevedore
-platformdirs==3.5.0
+platformdirs==3.8.1
     # via black
 psycopg2-binary==2.9.6
     # via django-vendor (pyproject.toml)
@@ -103,7 +103,7 @@ pyflakes==3.0.1
     # via flake8
 pygments==2.15.1
     # via rich
-pyjwt[crypto]==2.6.0
+pyjwt[crypto]==2.7.0
     # via django-allauth
 python3-openid==3.2.0
     # via django-allauth
@@ -119,13 +119,13 @@ requests==2.31.0
     #   requests-oauthlib
 requests-oauthlib==1.3.1
     # via django-allauth
-rich==13.3.5
+rich==13.4.2
     # via bandit
 smmap==5.0.0
     # via gitdb
 sqlparse==0.4.4
     # via django
-stevedore==5.0.0
+stevedore==5.1.0
     # via bandit
 toml==0.10.2
     # via django-vendor (pyproject.toml)
@@ -134,10 +134,11 @@ tomli==2.0.1
     #   black
     #   flake8-black
     #   mypy
-typing-extensions==4.5.0
+typing-extensions==4.7.1
     # via
+    #   asgiref
     #   black
     #   dj-database-url
     #   mypy
-urllib3==2.0.2
+urllib3==2.0.3
     # via requests
