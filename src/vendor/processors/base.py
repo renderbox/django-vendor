@@ -473,7 +473,7 @@ class PaymentProcessorBase(object):
             return None
 
         for subscription in self.invoice.get_recurring_order_items():
-            self.create_payment_model()
+            self.create_payment_model(amount=self.to_valid_decimal(subscription.total - subscription.discounts))
             self.subscription_payment(subscription)
             self.save_payment_transaction_result()
             self.update_invoice_status(InvoiceStatus.COMPLETE)
