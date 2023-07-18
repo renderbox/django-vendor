@@ -599,7 +599,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         """
         # Setting subscription details
         self.transaction_type = apicontractsv1.ARBSubscriptionType()
-        self.transaction_type.name = subscription.offer.name
+        self.transaction_type.name = subscription.offer.name[:25]
         self.transaction_type.paymentSchedule = self.create_payment_scheduale_interval_type(subscription, subscription.offer.terms)
         self.transaction_type.amount = self.to_valid_decimal(subscription.total - subscription.discounts)
         self.transaction_type.trialAmount = self.to_valid_decimal(subscription.offer.get_trial_amount())
