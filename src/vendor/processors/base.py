@@ -193,7 +193,7 @@ class PaymentProcessorBase(object):
         self.receipt.order_item = order_item
         self.receipt.transaction = self.payment.transaction
         self.receipt.meta.update(self.payment.result)
-        self.receipt.meta['payment_amount'] = self.to_valid_decimal(self.payment.amount)
+        self.receipt.meta['payment_amount'] = str(self.to_valid_decimal(self.payment.amount))
 
         if today > (self.payment.submitted_date - timedelta(hours=1)) or today < (self.payment.submitted_date + timedelta(hours=1)):
             start_date = order_item.offer.get_offer_start_date(self.payment.submitted_date)
