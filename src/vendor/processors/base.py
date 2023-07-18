@@ -193,7 +193,7 @@ class PaymentProcessorBase(object):
         self.receipt.order_item = order_item
         self.receipt.transaction = self.payment.transaction
         self.receipt.meta.update(self.payment.result)
-        self.receipt.meta['payment_amount'] = self.payment.amount
+        self.receipt.meta['payment_amount'] = str(self.to_valid_decimal(self.payment.amount))
 
         if today > (self.payment.submitted_date - timedelta(hours=1)) or today < (self.payment.submitted_date + timedelta(hours=1)):
             start_date = order_item.offer.get_offer_start_date(self.payment.submitted_date)
@@ -473,7 +473,7 @@ class PaymentProcessorBase(object):
             return None
 
         for subscription in self.invoice.get_recurring_order_items():
-            self.create_payment_model()
+            self.create_payment_model(amount=self.to_valid_decimal(subscription.total - subscription.discounts))
             self.subscription_payment(subscription)
             self.save_payment_transaction_result()
             self.update_invoice_status(InvoiceStatus.COMPLETE)
