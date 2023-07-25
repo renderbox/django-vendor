@@ -385,6 +385,7 @@ class AdminSubscriptionAddPaymentView(LoginRequiredMixin, TemplateView):
                         end_date=offer.get_offer_end_date(payment.submitted_date),
                         subscription=payment.subscription
                     )
+                    receipt.products.add(offer.products.first())
 
             messages.info(request, _("Payment Added to Subscription"))
 
