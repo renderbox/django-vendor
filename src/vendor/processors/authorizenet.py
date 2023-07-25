@@ -1150,7 +1150,7 @@ def sync_subscriptions(site):
 
             try:
                 customer_profile = CustomerProfile.objects.get(site=site, user__email__iexact=email)
-                offers = Offer.objects.filter(site=site, name=subscription_info.subscription.name)
+                offers = Offer.objects.filter(site=site, name__contains=subscription_info.subscription.name)
 
                 if not offers.count():
                     raise ObjectDoesNotExist()
@@ -1328,7 +1328,7 @@ def sync_subscriptions_and_create_missing_receipts(site):
                     logger.error(f"sync_subscriptions_and_create_missing_receipts error {exce}")
                     submitted_datetime = datetime.strptime(trans_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S%z')
 
-                offer = Offer.objects.get(site=site, name=subscription_info.subscription.name)
+                offer = Offer.objects.get(site=site, name__contains=subscription_info.subscription.name)
                 
                 invoice = Invoice.objects.create(
                     status=InvoiceStatus.COMPLETE,
