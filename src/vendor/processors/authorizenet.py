@@ -1150,7 +1150,7 @@ def sync_subscriptions(site):
 
             try:
                 customer_profile = CustomerProfile.objects.get(site=site, user__email__iexact=email)
-                offers = Offer.objects.filter(site=site, name=subscription_info.subscription.name)
+                offers = Offer.objects.filter(site=site, name__contains=subscription_info.subscription.name)
 
                 if not offers.count():
                     raise ObjectDoesNotExist()
@@ -1169,8 +1169,14 @@ def sync_subscriptions(site):
                 for transaction in subscription_transactions:
                     transaction_id = transaction.transId.text
                     transaction_detail = processor.get_transaction_detail(transaction_id)
+                
+                    try:
+                        submitted_datetime = datetime.strptime(transaction_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S.%f%z')
                     
-                    submitted_datetime = datetime.strptime(transaction_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S.%f%z')
+                    except ValueError as exce:
+                        logger.error(f"sync_subscriptions_and_create_missing_receipts error {exce}")
+                        submitted_datetime = datetime.strptime(transaction_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S%z')
+                        
                     payment_info = processor.get_payment_info(transaction_detail)
                     payment_status = processor.get_payment_status(transaction_detail.transactionStatus.text)
                     payment_success = processor.get_payment_success(transaction_detail.responseCode.text)
@@ -1314,8 +1320,15 @@ def sync_subscriptions_and_create_missing_receipts(site):
                 trans_processor = AuthorizeNetProcessor(site)
 
                 trans_detail = trans_processor.get_transaction_detail(transaction_id)
-                submitted_datetime = datetime.strptime(trans_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S.%f%z')
-                offer = Offer.objects.get(site=site, name=subscription_info.subscription.name)
+
+                try:
+                    submitted_datetime = datetime.strptime(trans_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S.%f%z')
+                
+                except ValueError as exce:
+                    logger.error(f"sync_subscriptions_and_create_missing_receipts error {exce}")
+                    submitted_datetime = datetime.strptime(trans_detail.submitTimeUTC.pyval, '%Y-%m-%dT%H:%M:%S%z')
+
+                offer = Offer.objects.get(site=site, name__contains=subscription_info.subscription.name)
                 
                 invoice = Invoice.objects.create(
                     status=InvoiceStatus.COMPLETE,
