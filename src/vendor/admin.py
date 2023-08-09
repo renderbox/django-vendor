@@ -177,6 +177,13 @@ class SubscriptionAdmin(admin.ModelAdmin):
     inlines = [PaymentInline, ReceiptInline]
 
 
+class PriceAdmin(admin.ModelAdmin):
+    readonly_fields = ('offer')
+    list_display = ('pk', 'offer', 'cost', 'start_date', 'end_date' 'offer__site')
+    list_filter = ('offer', 'offer__site')
+    search_fields = ('pk', 'cost')
+
+
 class TaxClassifierAdmin(admin.ModelAdmin):
     pass
 
@@ -201,3 +208,4 @@ admin.site.register(Receipt, ReceiptAdmin)
 admin.site.register(Payment, PaymentAdmin)
 admin.site.register(Subscription, SubscriptionAdmin)
 admin.site.register(OrderItem)
+admin.site.register(Price, PriceAdmin)
