@@ -178,10 +178,10 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
 
 class PriceAdmin(admin.ModelAdmin):
-    readonly_fields = ('offer')
-    list_display = ('pk', 'offer', 'cost', 'start_date', 'end_date' 'offer__site')
+    readonly_fields = ('offer', )
+    list_display = ('pk', 'offer', 'cost')
     list_filter = ('offer', 'offer__site')
-    search_fields = ('pk', 'cost')
+    search_fields = ('pk', 'cost', 'offer__name')
 
 
 class TaxClassifierAdmin(admin.ModelAdmin):
