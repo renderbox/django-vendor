@@ -6,19 +6,17 @@ from math import modf
 from decimal import Decimal
 from django.conf import settings
 from django.utils import timezone
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from vendor.config import DEFAULT_CURRENCY, StripeConnectAccountConfig, VendorSiteCommissionConfig
 from vendor.integrations import StripeIntegration
-from vendor.models import Offer, CustomerProfile, Subscription, Invoice
+from vendor.models import Offer, CustomerProfile, Subscription, Invoice, Payment, Receipt
 from vendor.models.choice import (
     Country,
     TermType,
     TermDetailUnits,
     SubscriptionStatus,
     InvoiceStatus,
-    PurchaseStatus,
-    Payment,
-    Receipt
+    PurchaseStatus
 )
 from vendor.processors.base import PaymentProcessorBase
 
@@ -316,7 +314,10 @@ class StripeProcessor(PaymentProcessorBase):
         return stripe_amount
 
     def convert_integer_to_decimal(self, integer):
-        return Decimal(f"{integer.total[:-2]}.{integer.total[-2:]}")
+        if not integer:
+            return 0
+        
+        return Decimal(f"{str(integer)[:-2]}.{str(integer)[-2:]}")
     
     def get_stripe_connect_account(self):
         stripe_connect = StripeConnectAccountConfig(self.site)
@@ -695,7 +696,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         query = self.query_builder.build_search_query(self.stripe.Subscription, [clause])
 
-        subscription_search = self.get_all_stripe_list_objects(self.stripe.Subscription, {'query': query})
+        subscription_search = self.get_all_stripe_search_objects(self.stripe.Subscription, {'query': query})
 
         return subscription_search
 
@@ -1053,6 +1054,21 @@ class StripeProcessor(PaymentProcessorBase):
         return self.get_all_stripe_list_objects(self.stripe.Coupon) or []
 
     ##########
+    # Invoice
+    ##########
+    def get_subscription_invoices(self, subscription_id):
+        subscription_clause = self.query_builder.make_clause_template(
+            field='subscription',
+            value=subscription_id,
+            operator=self.query_builder.EXACT_MATCH
+        )
+
+        query = self.query_builder.build_search_query(self.stripe.Invoice, [subscription_clause, ])
+
+        invoices = self.stripe_query_object(self.stripe.Invoice, {'query': query})
+
+        return invoices.data
+    ##########
     # Sync Vendor and Stripe
     ##########
     def initialize_products(self, site):
@@ -1162,84 +1178,116 @@ class StripeProcessor(PaymentProcessorBase):
     def sync_stripe_subscriptions(self, site):
         logger.info("StripeProcessor sync_subscriptions Started")
         stripe_subscriptions = self.get_stripe_subscriptions(site)
+        subscriptions_created = []
+        invoices_created = []
+        payments_created = []
+        receipts_created = []
 
         for stripe_subscription in stripe_subscriptions:
             customer_profile = None
             offer = None
             
+            stripe_customer = self.stripe_get_object(self.stripe.Customer, stripe_subscription.customer)
             try:
-                customer_profile = CustomerProfile.objects.get(site=site, meta__stripe_id=stripe_subscription.customer)
+                customer_profile = CustomerProfile.objects.get(site=site, user__email=stripe_customer.email)
             except ObjectDoesNotExist:
                 logger.error(f"sync_stripe_subscriptions no customer profile found for subscription: {stripe_subscription.id}")
 
+            if 'stripe_id' not in customer_profile.meta:
+                customer_profile.meta.update({'stripe_id': stripe_customer.id})
+                customer_profile.save()
+            
             subscription, created = Subscription.objects.get_or_create(
-                site=site,
                 profile=customer_profile,
-                gatewayid=stripe_subscription.id,
+                gateway_id=stripe_subscription.id,
                 status=self.get_subscription_status(stripe_subscription.status))
+            
+            if created:
+                created = None
+                subscriptions_created.append(subscription.pk)
 
-            stripe_product = self.stripe_get_object(self.stripe.Product, stripe_subscription.items.data[0].product)
+            stripe_product = self.stripe_get_object(self.stripe.Product, stripe_subscription.plan.product)
             try:
-                offer = Offer.objects.get(pk=stripe_product.meta["pk"])
+                offer = Offer.objects.get(pk=int(stripe_product.metadata["pk"]))
             except Exception:
                 logger.error(f"sync_stripe_subscriptions no offer found for subscription: {stripe_subscription.id} invoice: {stripe_product.id}")
             
             if customer_profile and offer:
-                stripe_sub_invoices = self.get_all_stripe_search_objects(self.stripe.Invoice, {"subscription": stripe_subscription.id})
+                stripe_sub_invoices = self.get_subscription_invoices(stripe_subscription.id)
                 
                 for stripe_invoice in stripe_sub_invoices:
                     invoice, created = Invoice.objects.get_or_create(
                         site=site,
-                        metadata__has_key="stripe_id",
-                        metadata__stripe_id=stripe_invoice.id,
+                        vendor_notes__has_key="stripe_id",
+                        vendor_notes__stripe_id=stripe_invoice.id,
                         profile=customer_profile,
                         defaults={
-                                # "metadata": {'stripe_id': stripe_invoice.id},
-                                "status": self.get_invoice_status(stripe_invoice.status),
-                                "ordered_date": stripe_invoice.created
+                            "vendor_notes": {'stripe_id': stripe_invoice.id},
+                            "status": self.get_invoice_status(stripe_invoice.status),
+                            "ordered_date": timezone.datetime.fromtimestamp(stripe_invoice.created)
                         }
                     )
 
-                    invoice.empty_cart()
-                    invoice.add_offer(offer)
-                    invoice.total = self.convert_integer_to_decimal(stripe_invoice.total)
-                    invoice.save()
+                    if created:
+                        created = None
+                        invoices_created.append(invoice.pk)
+                        invoice.empty_cart()
+                        invoice.add_offer(offer)
+                        invoice.total = self.convert_integer_to_decimal(stripe_invoice.total)
+                        invoice.save()
 
-                    stripe_charge = self.stripe_get_object(self.stripe.Charge, stripe_invoice.charge)
-                    stripe_payment = self.stripe_get_object(self.stripe.PaymentMethod, stripe_charge.payment_method)
+                    if stripe_invoice.charge:
+                        stripe_charge = self.stripe_get_object(self.stripe.Charge, stripe_invoice.charge)
+                        stripe_payment = self.stripe_get_object(self.stripe.PaymentMethod, stripe_charge.payment_method)
 
-                    payment, created = Payment.objects.get_or_create(
-                        site=site,
-                        transaction=stripe_charge.id,
-                        defaults={
-                            "profile": customer_profile,
-                            "amount": self.convert_integer_to_decimal(stripe_charge.amount_captured),
-                            "invoice": invoice,
-                            "submitted_date": stripe_charge.created,
-                            "transaction": stripe_charge.id,
-                            "status": self.get_payment_status(stripe_charge.status),
-                            "subscription": subscription,
-                            "success": stripe_charge.paid,
-                            "payee_full_name": stripe_payment.billing_detail.name,
-                            "result": {
-                                'account_number': stripe_payment.card.last4 if stripe.card else "",
-                                'full_name': stripe_payment.billing_detail.name
-                            }
-                        }
-                    )
-
-                    if payment.status == PurchaseStatus.SETTLED:
-                        receipt = Receipt.object.create(
-                            profile=customer_profile,
-                            order_item=invoice.order_items.first(),
-                            start_date=stripe_charge.created,
-                            end_date=offer.get_offer_end_date(start_date=stripe_charge.created),
+                        payment, created = Payment.objects.get_or_create(
                             transaction=stripe_charge.id,
-                            subscription=subscription,
-                            meta=payment.result | {"payment_amount": payment.amount}
+                            defaults={
+                                "profile": customer_profile,
+                                "amount": self.convert_integer_to_decimal(stripe_charge.amount_captured),
+                                "invoice": invoice,
+                                "submitted_date": timezone.datetime.fromtimestamp(stripe_charge.created),
+                                "transaction": stripe_charge.id,
+                                "status": self.get_payment_status(stripe_charge.status),
+                                "subscription": subscription,
+                                "success": stripe_charge.paid,
+                                "payee_full_name": stripe_payment['billing_details']['name'],
+                                "result": {
+                                    'account_number': stripe_payment['card']['last4'] if "card" in stripe_payment else "",
+                                    'full_name': stripe_payment['billing_details']['name']
+                                }
+                            }
                         )
-                        receipt.products.add(offer.products.first())
-                
+                        if created:
+                            created = None
+                            payments_created.append(payment.pk)
+
+                        if payment.status == PurchaseStatus.SETTLED:
+                            try:
+                                receipt, created = Receipt.objects.get_or_create(
+                                    profile=customer_profile,
+                                    transaction=stripe_charge.id,
+                                    defaults={
+                                        "order_item": invoice.order_items.first(),
+                                        "start_date": timezone.datetime.fromtimestamp(stripe_charge.created),
+                                        "end_date": offer.get_offer_end_date(start_date=timezone.datetime.fromtimestamp(stripe_charge.created)),
+                                        "subscription": subscription,
+                                        "meta": payment.result | {"payment_amount": str(payment.amount)}
+                                    }
+                                )
+                            except MultipleObjectsReturned:
+                                created = False
+                                print(stripe_charge.id)
+
+                            if created:
+                                created = None
+                                receipts_created.append(receipt.pk)
+                                receipt.products.add(offer.products.first())
+
+        logger.info(f"Subscriptions Created: {subscriptions_created}")
+        logger.info(f"invoices Created: {invoices_created}")
+        logger.info(f"payments Created: {payments_created}")
+        logger.info(f"receipts Created: {receipts_created}")
 
     def sync_stripe_vendor_objects(self, site):
         """
