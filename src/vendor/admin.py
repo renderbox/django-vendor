@@ -122,7 +122,7 @@ class CustomerProfileAdmin(admin.ModelAdmin):
 
 class InvoiceAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid', 'shipping_address', 'profile')
-    list_display = ('__str__', 'profile', 'site', 'status', 'total', 'created', 'deleted')
+    list_display = ('pk', '__str__', 'profile', 'site', 'status', 'total', 'created', 'deleted')
     search_fields = ('uuid', 'profile__user__username', )
     list_filter = ('site__domain', )
     inlines = [
@@ -151,7 +151,7 @@ class PaymentAdmin(admin.ModelAdmin):
 
 
 class ReceiptAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', 'order_item', 'profile')
+    readonly_fields = ('uuid', 'order_item', 'profile', 'products')
     exclude = ('updated', )
     list_display = ('pk', 'transaction', 'subscription', 'created', 'profile', 'order_item', 'start_date', 'end_date', 'deleted')
     list_filter = ('profile__site__domain', 'products')
