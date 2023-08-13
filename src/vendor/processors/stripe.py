@@ -1178,140 +1178,201 @@ class StripeProcessor(PaymentProcessorBase):
         self.update_offers(offers_in_vendor_with_stripe_meta)
         logger.info("StripeProcessor sync_offers Finished")
 
-    def sync_stripe_subscriptions(self, site):
-        logger.info("StripeProcessor sync_subscriptions Started")
-        stripe_subscriptions = self.get_stripe_subscriptions(site)
-        subscriptions_created = []
-        invoices_created = []
-        payments_created = []
-        receipts_created = []
+    def get_customer_profile_from_stripe_customer(self, site, stripe_customer):
+        customer_profile = None
+        try:
+            customer_profile = CustomerProfile.objects.get(site=site, user__email=stripe_customer.email)
+        except ObjectDoesNotExist:
+            logger.error(f"get_customer_profile_from_stripe_customer CustomerProfile Not Found email:{stripe_customer.email} site: {site.domain}")
+        except MultipleObjectsReturned:
+            logger.error(f"get_customer_profile_from_stripe_customer Multiple CustomerProfiles returned for email:{stripe_customer.email} site: {site.domain}")
+        except Exception as exce:
+            logger.error(f"get_customer_profile_from_stripe_customer Exception: {exce} for email:{stripe_customer.email} site: {site.domain} ")
 
-        for stripe_subscription in stripe_subscriptions:
-            customer_profile = None
-            offer = None
+        if customer_profile and 'stripe_id' not in customer_profile.meta:
+            customer_profile.meta.update({'stripe_id': stripe_customer.id})
+            customer_profile.save()
+
+        return customer_profile
+        
+    def get_or_create_subscription_from_stripe_subscription(self, customer_profile, stripe_subscription):
+        created = False
+        subscription = None
+        try:
+            subscription, created = Subscription.objects.get_or_create(
+                profile=customer_profile,
+                gateway_id=stripe_subscription.id)
+        except MultipleObjectsReturned:
+            logger.error(f"get_or_create_subscription_from_stripe_subscription Multiple Subscriptions returned for customer_profile: {customer_profile} subscription: {stripe_subscription.id}")
+        except Exception as exce:
+            logger.error(f"get_or_create_subscription_from_stripe_subscription Exception {exce} for customer_profile: {customer_profile} subscription {stripe_subscription.id}")
+        
+        if subscription:
+            subscription.status = self.get_subscription_status(stripe_subscription.status)
+            subscription.save()
+
+        return subscription, created
+    
+    def get_offer_from_stripe_product(self, stripe_product):
+        offer = None
+
+        if "pk" not in stripe_product.metadata:
+            logger.error(f"get_offer_from_stripe_product stripe_product id: ({stripe_product.id}, {stripe_product.name}) does not have a pk in metadata")
+            return offer
+        
+        try:
+            offer = Offer.objects.get(pk=int(stripe_product.metadata["pk"]))
+        except ObjectDoesNotExist:
+            logger.error(f"get_offer_from_stripe_product Offer Does Not Exists for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}")
+        except MultipleObjectsReturned:
+            logger.error(f"get_offer_from_stripe_product Multiple Offers Found for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}")
+        except Exception as exce:
+            logger.error(f"get_offer_from_stripe_product Exception {exce} for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}")
+        
+        return offer
+
+    def get_or_create_invoice_from_stripe_invoice(self, stripe_invoice, offer, customer_profile):
+        invoice = None
+        created = False
+
+        try:
+            invoice, created = Invoice.objects.get_or_create(
+                site=customer_profile.site,
+                vendor_notes__has_key="stripe_id",
+                vendor_notes__stripe_id=stripe_invoice.id,
+                profile=customer_profile,
+                defaults={
+                    "vendor_notes": {'stripe_id': stripe_invoice.id},
+                    "status": self.get_invoice_status(stripe_invoice.status),
+                    "ordered_date": timezone.datetime.fromtimestamp(stripe_invoice.created, tz=timezone.utc)
+                }
+            )
+        except MultipleObjectsReturned:
+            logger.error(f"get_or_create_invoice_from_stripe_invoice Multiple Invoice for id: {stripe_invoice.id} customer_profile: {customer_profile.user.email}")
+            invoice = Invoice.objects.filter(
+                site=customer_profile.site,
+                vendor_notes__has_key="stripe_id",
+                vendor_notes__stripe_id=stripe_invoice.id,
+                profile=customer_profile,
+            ).first()
+        except Exception as exce:
+            logger.error(f"get_or_create_invoice_from_stripe_invoice Exception {exce} for id: {stripe_invoice.id} customer_profile: {customer_profile.user.email}")
+
+        if created:
+            created = None
+            invoice.empty_cart()
+            invoice.add_offer(offer)
+            invoice.total = self.convert_integer_to_decimal(stripe_invoice.total)
+        
+        invoice.status = self.get_invoice_status(stripe_invoice.status)
+        invoice.save()
+
+        return invoice, created
+
+    def get_or_create_payment_from_stripe_payment_and_charge(self, invoice, stripe_payment, stripe_charge):
+        payment = None
+        created = False
+
+        try:
+            payment, created = Payment.objects.get_or_create(
+                transaction=stripe_charge.id,
+                defaults={
+                    "profile": invoice.profile,
+                    "amount": self.convert_integer_to_decimal(stripe_charge.amount_captured),
+                    "invoice": invoice,
+                    "submitted_date": timezone.datetime.fromtimestamp(stripe_charge.created, tz=timezone.utc),
+                    "transaction": stripe_charge.id,
+                    "status": self.get_payment_status(stripe_charge.status, stripe_charge.refunded),
+                    "success": stripe_charge.paid,
+                    "payee_full_name": stripe_payment['billing_details']['name'],
+                    "result": {
+                        'account_number': stripe_payment['card']['last4'] if "card" in stripe_payment else "",
+                        'full_name': stripe_payment['billing_details']['name']
+                    }
+                }
+            )
+        except MultipleObjectsReturned:
+            dup_payments = Payment.objects.filter(transaction=stripe_charge.id)
+            payment = dup_payments.first()
+            logger.error(f"get_or_create_payment_from_stripe_payment_and_charge Multiple Payments for transaction: {stripe_charge.id} queryresult for payments: {dup_payments}")
+        except Exception as exce:
+            logger.error(f"get_or_create_payment_from_stripe_payment_and_charge Exception {exce} for stripe_charge id: {stripe_charge.id}")
+
+        return payment, created
+
+    def get_or_create_receipt_from_stripe_charge(self, invoice, payment, stripe_charge):
+        receipt = None
+        created = False
+        try:
+            receipt, created = Receipt.objects.get_or_create(
+                profile=invoice.profile,
+                transaction=stripe_charge.id,
+                defaults={
+                    "order_item": invoice.order_items.first(),
+                    "start_date": timezone.datetime.fromtimestamp(stripe_charge.created, tz=timezone.utc),
+                    "end_date": invoice.order_items.first().offer.get_offer_end_date(start_date=timezone.datetime.fromtimestamp(stripe_charge.created, tz=timezone.utc)),
+                    "subscription": payment.subscription,
+                    "meta": payment.result | {"payment_amount": str(payment.amount)}
+                }
+            )
+        except MultipleObjectsReturned:
+            dup_receipts = Receipt.objects.filter(profile=invoice.profile, transaction=stripe_charge.id)
+            receipt = dup_receipts.first()
+            logger.info(f"get_or_create_receipt_from_stripe_charge Multiple Receipts for transaction: {stripe_charge.id}, duplicated receipts: {dup_receipts}")
+        except Exception as exce:
+            logger.error(f"get_or_create_receipt_from_stripe_charge Exception {exce} for stripe_charge id: {stripe_charge.id}, subscriptions: ({payment.subscription.pk},{payment.subscription.gateway_id})")
+
+        if created:
+            receipt.products.add(invoice.order_items.first().offer.products.first())
+
+        return receipt, created
+    
+    def sync_stripe_subscription(self, site, stripe_subscription):
+        stripe_customer = self.stripe_get_object(self.stripe.Customer, stripe_subscription.customer)
+        customer_profile = self.get_customer_profile_from_stripe_customer(site, stripe_customer)
+        
+        if customer_profile:
+            subscription, created = self.get_or_create_subscription_from_stripe_subscription(customer_profile, stripe_subscription)
+
+            if created:
+                logger.info(f"Subscription Created: {subscription.pk}")
+
+            stripe_product = self.stripe_get_object(self.stripe.Product, stripe_subscription.plan.product)
+            offer = self.get_offer_from_stripe_product(stripe_product)
             
-            stripe_customer = self.stripe_get_object(self.stripe.Customer, stripe_subscription.customer)
-            try:
-                customer_profile = CustomerProfile.objects.get(site=site, user__email=stripe_customer.email)
-            except ObjectDoesNotExist:
-                logger.error(f"sync_stripe_subscriptions no customer profile found for subscription: {stripe_subscription.id}")
-
-            if customer_profile and 'stripe_id' not in customer_profile.meta:
-                customer_profile.meta.update({'stripe_id': stripe_customer.id})
-                customer_profile.save()
-            
-            if customer_profile:
-                subscription, created = Subscription.objects.get_or_create(
-                    profile=customer_profile,
-                    gateway_id=stripe_subscription.id)
+            if offer:
+                stripe_sub_invoices = self.get_subscription_invoices(stripe_subscription.id)
                 
-                if created:
-                    created = None
-                    subscriptions_created.append(subscription.pk)
+                for stripe_invoice in stripe_sub_invoices:
+                    invoice, created = self.get_or_create_invoice_from_stripe_invoice(stripe_invoice, offer, customer_profile)
                     
-                subscription.status = self.get_subscription_status(stripe_subscription.status)
-                subscription.save()
-
-                stripe_product = self.stripe_get_object(self.stripe.Product, stripe_subscription.plan.product)
-                try:
-                    offer = Offer.objects.get(pk=int(stripe_product.metadata["pk"]))
-                except Exception:
-                    logger.error(f"sync_stripe_subscriptions no offer found for subscription: {stripe_subscription.id} invoice: {stripe_product.id}")
-                
-                if customer_profile and offer:
-                    stripe_sub_invoices = self.get_subscription_invoices(stripe_subscription.id)
-                    
-                    for stripe_invoice in stripe_sub_invoices:
-                        try:
-                            invoice, created = Invoice.objects.get_or_create(
-                                site=site,
-                                vendor_notes__has_key="stripe_id",
-                                vendor_notes__stripe_id=stripe_invoice.id,
-                                profile=customer_profile,
-                                defaults={
-                                    "vendor_notes": {'stripe_id': stripe_invoice.id},
-                                    "status": self.get_invoice_status(stripe_invoice.status),
-                                    "ordered_date": timezone.datetime.fromtimestamp(stripe_invoice.created, tz=timezone.utc)
-                                }
-                            )
-                        except MultipleObjectsReturned:
-                            created = False
-                            logger.info(f"Multiple Invoice for id: {stripe_invoice.id} customer_profile: {customer_profile.user.email}")
-                            invoice = Invoice.objects.filter(
-                                site=site,
-                                vendor_notes__has_key="stripe_id",
-                                vendor_notes__stripe_id=stripe_invoice.id,
-                                profile=customer_profile,
-                            ).first()
-
-                        if created:
-                            created = None
-                            invoices_created.append(invoice.pk)
-                            invoice.empty_cart()
-                            invoice.add_offer(offer)
-                            invoice.total = self.convert_integer_to_decimal(stripe_invoice.total)
+                    if created:
+                        logger.info(f"invoice Created: {invoice.pk}")
+    
+                    if stripe_invoice.charge:
+                        stripe_charge = self.stripe_get_object(self.stripe.Charge, stripe_invoice.charge)
+                        stripe_payment = self.stripe_get_object(self.stripe.PaymentMethod, stripe_charge.payment_method)
                         
-                        invoice.status = self.get_invoice_status(stripe_invoice.status)
-                        invoice.save()
+                        payment, created = self.get_or_create_payment_from_stripe_payment_and_charge(invoice, stripe_payment, stripe_charge)
+                        if created:
+                            payment.subscription = subscription
+                            payment.save()
+                            logger.info(f"payment Created: {payment.pk}")
 
-                        if stripe_invoice.charge:
-                            stripe_charge = self.stripe_get_object(self.stripe.Charge, stripe_invoice.charge)
-                            stripe_payment = self.stripe_get_object(self.stripe.PaymentMethod, stripe_charge.payment_method)
-                            
-                            try:
-                                payment, created = Payment.objects.get_or_create(
-                                    transaction=stripe_charge.id,
-                                    defaults={
-                                        "profile": customer_profile,
-                                        "amount": self.convert_integer_to_decimal(stripe_charge.amount_captured),
-                                        "invoice": invoice,
-                                        "submitted_date": timezone.datetime.fromtimestamp(stripe_charge.created, tz=timezone.utc),
-                                        "transaction": stripe_charge.id,
-                                        "status": self.get_payment_status(stripe_charge.status, stripe_charge.refunded),
-                                        "subscription": subscription,
-                                        "success": stripe_charge.paid,
-                                        "payee_full_name": stripe_payment['billing_details']['name'],
-                                        "result": {
-                                            'account_number': stripe_payment['card']['last4'] if "card" in stripe_payment else "",
-                                            'full_name': stripe_payment['billing_details']['name']
-                                        }
-                                    }
-                                )
-                            except MultipleObjectsReturned:
-                                created = False
-                                logger.info(f"Multiple Payments for transaction: {stripe_charge.id}")
-                                payment = Payment.objects.filter(transaction=stripe_charge.id).first()
+                        if payment.status == PurchaseStatus.SETTLED:
+                            receipt, created = self.get_or_create_receipt_from_stripe_charge(invoice, payment, stripe_charge)
 
                             if created:
-                                created = None
-                                payments_created.append(payment.pk)
+                                logger.info(f"receipt Created: {receipt.pk}")
 
-                            if payment.status == PurchaseStatus.SETTLED:
-                                try:
-                                    receipt, created = Receipt.objects.get_or_create(
-                                        profile=customer_profile,
-                                        transaction=stripe_charge.id,
-                                        defaults={
-                                            "order_item": invoice.order_items.first(),
-                                            "start_date": timezone.datetime.fromtimestamp(stripe_charge.created, tz=timezone.utc),
-                                            "end_date": offer.get_offer_end_date(start_date=timezone.datetime.fromtimestamp(stripe_charge.created, tz=timezone.utc)),
-                                            "subscription": subscription,
-                                            "meta": payment.result | {"payment_amount": str(payment.amount)}
-                                        }
-                                    )
-                                except MultipleObjectsReturned:
-                                    created = False
-                                    logger.info(f"Multiple Receipt for transaction: {stripe_charge.id}")
+    def sync_stripe_subscriptions(self, site):
+        logger.info("sync_stripe_subscriptions Started")
+        stripe_subscriptions = self.get_stripe_subscriptions(site)
 
-                                if created:
-                                    created = None
-                                    receipts_created.append(receipt.pk)
-                                    receipt.products.add(offer.products.first())
+        for stripe_subscription in stripe_subscriptions:
+            self.sync_stripe_subscription(site, stripe_subscription)
 
-        logger.info(f"Subscriptions Created: {subscriptions_created}")
-        logger.info(f"invoices Created: {invoices_created}")
-        logger.info(f"payments Created: {payments_created}")
-        logger.info(f"receipts Created: {receipts_created}")
+        logger.info("sync_stripe_subscriptions Ended")
 
     def sync_stripe_vendor_objects(self, site):
         """
