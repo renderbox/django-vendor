@@ -242,9 +242,17 @@ class StripeProcessor(PaymentProcessorBase):
         if not stripe_customer:
             self.create_stripe_customers([self.invoice.profile])
 
-    def subscription_offer_setup(self):
+    def offer_setup(self):
         offers_to_sync = []
-        for order_item in self.invoice.order_items.all():
+        for order_item in self.invoice.get_ont_time_transaction_order_items():
+            if not order_item.offer.meta.get('stripe'):
+                offers_to_sync.append(order_item.offer)
+
+        self.create_offers(offers_to_sync)
+
+    def subscription_setup(self):
+        offers_to_sync = []
+        for order_item in self.invoice.get_recurring_order_items():
             if not order_item.offer.meta.get('stripe'):
                 offers_to_sync.append(order_item.offer)
 
@@ -1319,8 +1327,8 @@ class StripeProcessor(PaymentProcessorBase):
 
     def sync_offers(self, site):
         logger.info(f"StripeProcessor sync_offers Started")
-        products = self.get_site_stripe_products(site)
-        offer_pk_list = [product['metadata']['pk'] for product in products]
+        stripe_products = self.get_site_stripe_products(site)
+        offer_pk_list = [product['metadata']['pk'] for product in stripe_products]
 
         offers_in_vendor = self.get_vendor_offers_in_stripe(offer_pk_list, site)
 
@@ -1460,7 +1468,8 @@ class StripeProcessor(PaymentProcessorBase):
         Called before the authorization begins.
         """
         self.customer_setup()
-        self.subscription_offer_setup()
+        self.offer_setup()
+        self.subscription_setup()
         self.transaction_succeeded = False
 
     def process_payment(self):
