@@ -22,7 +22,6 @@ from vendor.processors.base import PaymentProcessorBase
 
 logger = logging.getLogger(__name__)
 
-
 class StripeQueryBuilder:
     """
     Query builder that adheres to Stripe search rules found here https://stripe.com/docs/search
@@ -199,6 +198,7 @@ class StripeQueryBuilder:
 
         return query
 
+
 class StripeProcessor(PaymentProcessorBase):
     """ 
     Implementation of Stripe SDK
@@ -233,7 +233,6 @@ class StripeProcessor(PaymentProcessorBase):
         # https://stripe.com/docs/libraries/set-version
         self.stripe.api_version = '2022-08-01'
 
-
     def customer_setup(self):
         if not self.invoice.profile.meta.get('stripe_id'):
             self.create_stripe_customers([self.invoice.profile])
@@ -259,7 +258,6 @@ class StripeProcessor(PaymentProcessorBase):
         Processes the transaction response
         """
         ...
-
 
     ##########
     # Stripe utils
@@ -493,6 +491,7 @@ class StripeProcessor(PaymentProcessorBase):
             'metadata': {'site': offer.site.domain, 'pk': offer.pk}
 
         }
+   
     # TODO: Try to reduce the number of arguments to max 3. 
     def build_price(self, offer, mspr, current_price, currency, price_pk=None):
         if 'stripe' not in offer.meta or 'product_id' not in offer.meta['stripe']:
@@ -689,19 +688,22 @@ class StripeProcessor(PaymentProcessorBase):
 
         return payment_methods.data
         
-    def get_stripe_subscriptions(self, site):
-        clause = self.query_builder.make_clause_template(
-            field="metadata",
-            key="site",
-            value=site.domain,
-            operator=self.query_builder.EXACT_MATCH
-        )
+    def get_customer_profile_from_stripe_customer(self, site, stripe_customer):
+        customer_profile = None
+        try:
+            customer_profile = CustomerProfile.objects.get(site=site, user__email=stripe_customer.email)
+        except ObjectDoesNotExist:
+            logger.error(f"get_customer_profile_from_stripe_customer CustomerProfile Not Found email:{stripe_customer.email} site: {site.domain}")
+        except MultipleObjectsReturned:
+            logger.error(f"get_customer_profile_from_stripe_customer Multiple CustomerProfiles returned for email:{stripe_customer.email} site: {site.domain}")
+        except Exception as exce:
+            logger.error(f"get_customer_profile_from_stripe_customer Exception: {exce} for email:{stripe_customer.email} site: {site.domain} ")
 
-        query = self.query_builder.build_search_query(self.stripe.Subscription, [clause])
+        if customer_profile and 'stripe_id' not in customer_profile.meta:
+            customer_profile.meta.update({'stripe_id': stripe_customer.id})
+            customer_profile.save()
 
-        subscription_search = self.get_all_stripe_search_objects(self.stripe.Subscription, {'query': query})
-
-        return subscription_search
+        return customer_profile
 
     ##########
     # Offers/Products
@@ -731,7 +733,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         return False
 
-    def get_site_offers(self, site):
+    def get_site_stripe_products(self, site):
         """
         Returns all Stripe created Products
         """
@@ -922,6 +924,24 @@ class StripeProcessor(PaymentProcessorBase):
         if search_data:
             return search_data['data'][0]['id']
         return None
+  
+    def get_offer_from_stripe_product(self, stripe_product):
+        offer = None
+
+        if "pk" not in stripe_product.metadata:
+            logger.error(f"get_offer_from_stripe_product stripe_product id: ({stripe_product.id}, {stripe_product.name}) does not have a pk in metadata")
+            return offer
+        
+        try:
+            offer = Offer.objects.get(pk=int(stripe_product.metadata["pk"]))
+        except ObjectDoesNotExist:
+            logger.error(f"get_offer_from_stripe_product Offer Does Not Exists for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}")
+        except MultipleObjectsReturned:
+            logger.error(f"get_offer_from_stripe_product Multiple Offers Found for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}")
+        except Exception as exce:
+            logger.error(f"get_offer_from_stripe_product Exception {exce} for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}")
+        
+        return offer
 
     ##########
     # Prices
@@ -1071,6 +1091,142 @@ class StripeProcessor(PaymentProcessorBase):
         invoices = self.stripe_query_object(self.stripe.Invoice, {'query': query})
 
         return invoices.data
+
+    def get_or_create_invoice_from_stripe_invoice(self, stripe_invoice, offer, customer_profile):
+        invoice = None
+        created = False
+
+        try:
+            invoice, created = Invoice.objects.get_or_create(
+                site=customer_profile.site,
+                vendor_notes__has_key="stripe_id",
+                vendor_notes__stripe_id=stripe_invoice.id,
+                profile=customer_profile,
+                defaults={
+                    "vendor_notes": {'stripe_id': stripe_invoice.id},
+                    "status": self.get_invoice_status(stripe_invoice.status),
+                    "ordered_date": timezone.datetime.fromtimestamp(stripe_invoice.created, tz=timezone.utc)
+                }
+            )
+        except MultipleObjectsReturned:
+            logger.error(f"get_or_create_invoice_from_stripe_invoice Multiple Invoice for id: {stripe_invoice.id} customer_profile: {customer_profile.user.email}")
+            invoice = Invoice.objects.filter(
+                site=customer_profile.site,
+                vendor_notes__has_key="stripe_id",
+                vendor_notes__stripe_id=stripe_invoice.id,
+                profile=customer_profile,
+            ).first()
+        except Exception as exce:
+            logger.error(f"get_or_create_invoice_from_stripe_invoice Exception {exce} for id: {stripe_invoice.id} customer_profile: {customer_profile.user.email}")
+
+        if created:
+            created = None
+            invoice.empty_cart()
+            invoice.add_offer(offer)
+            invoice.total = self.convert_integer_to_decimal(stripe_invoice.total)
+        
+        invoice.status = self.get_invoice_status(stripe_invoice.status)
+        invoice.save()
+
+        return invoice, created
+
+    ##########
+    # Payments and Receipts
+    ##########
+
+    def get_or_create_payment_from_stripe_payment_and_charge(self, invoice, stripe_payment, stripe_charge):
+        payment = None
+        created = False
+
+        try:
+            payment, created = Payment.objects.get_or_create(
+                transaction=stripe_charge.id,
+                defaults={
+                    "profile": invoice.profile,
+                    "amount": self.convert_integer_to_decimal(stripe_charge.amount_captured),
+                    "invoice": invoice,
+                    "submitted_date": timezone.datetime.fromtimestamp(stripe_charge.created, tz=timezone.utc),
+                    "transaction": stripe_charge.id,
+                    "status": self.get_payment_status(stripe_charge.status, stripe_charge.refunded),
+                    "success": stripe_charge.paid,
+                    "payee_full_name": stripe_payment['billing_details']['name'],
+                    "result": {
+                        'account_number': stripe_payment['card']['last4'] if "card" in stripe_payment else "",
+                        'full_name': stripe_payment['billing_details']['name']
+                    }
+                }
+            )
+        except MultipleObjectsReturned:
+            dup_payments = Payment.objects.filter(transaction=stripe_charge.id)
+            payment = dup_payments.first()
+            logger.error(f"get_or_create_payment_from_stripe_payment_and_charge Multiple Payments for transaction: {stripe_charge.id} queryresult for payments: {dup_payments}")
+        except Exception as exce:
+            logger.error(f"get_or_create_payment_from_stripe_payment_and_charge Exception {exce} for stripe_charge id: {stripe_charge.id}")
+
+        return payment, created
+
+    def get_or_create_receipt_from_stripe_charge(self, invoice, payment, stripe_charge):
+        receipt = None
+        created = False
+        try:
+            receipt, created = Receipt.objects.get_or_create(
+                profile=invoice.profile,
+                transaction=stripe_charge.id,
+                defaults={
+                    "order_item": invoice.order_items.first(),
+                    "start_date": timezone.datetime.fromtimestamp(stripe_charge.created, tz=timezone.utc),
+                    "end_date": invoice.order_items.first().offer.get_offer_end_date(start_date=timezone.datetime.fromtimestamp(stripe_charge.created, tz=timezone.utc)),
+                    "subscription": payment.subscription,
+                    "meta": payment.result | {"payment_amount": str(payment.amount)}
+                }
+            )
+        except MultipleObjectsReturned:
+            dup_receipts = Receipt.objects.filter(profile=invoice.profile, transaction=stripe_charge.id)
+            receipt = dup_receipts.first()
+            logger.info(f"get_or_create_receipt_from_stripe_charge Multiple Receipts for transaction: {stripe_charge.id}, duplicated receipts: {dup_receipts}")
+        except Exception as exce:
+            logger.error(f"get_or_create_receipt_from_stripe_charge Exception {exce} for stripe_charge id: {stripe_charge.id}, subscriptions: ({payment.subscription.pk},{payment.subscription.gateway_id})")
+
+        if created:
+            receipt.products.add(invoice.order_items.first().offer.products.first())
+
+        return receipt, created
+    
+    ##########
+    # Subscriptions
+    ##########
+    def get_stripe_subscriptions(self, site):
+        clause = self.query_builder.make_clause_template(
+            field="metadata",
+            key="site",
+            value=site.domain,
+            operator=self.query_builder.EXACT_MATCH
+        )
+
+        query = self.query_builder.build_search_query(self.stripe.Subscription, [clause])
+
+        subscription_search = self.get_all_stripe_search_objects(self.stripe.Subscription, {'query': query})
+
+        return subscription_search
+
+    def get_or_create_subscription_from_stripe_subscription(self, customer_profile, stripe_subscription):
+        created = False
+        subscription = None
+        try:
+            subscription, created = Subscription.objects.get_or_create(
+                profile=customer_profile,
+                gateway_id=stripe_subscription.id)
+        except MultipleObjectsReturned:
+            logger.error(f"get_or_create_subscription_from_stripe_subscription Multiple Subscriptions returned for customer_profile: {customer_profile} subscription: {stripe_subscription.id}")
+        except Exception as exce:
+            logger.error(f"get_or_create_subscription_from_stripe_subscription Exception {exce} for customer_profile: {customer_profile} subscription {stripe_subscription.id}")
+        
+        if subscription:
+            subscription.status = self.get_subscription_status(stripe_subscription.status)
+            subscription.save()
+
+        return subscription, created
+  
     ##########
     # Sync Vendor and Stripe
     ##########
@@ -1163,7 +1319,7 @@ class StripeProcessor(PaymentProcessorBase):
 
     def sync_offers(self, site):
         logger.info(f"StripeProcessor sync_offers Started")
-        products = self.get_site_offers(site)
+        products = self.get_site_stripe_products(site)
         offer_pk_list = [product['metadata']['pk'] for product in products]
 
         offers_in_vendor = self.get_vendor_offers_in_stripe(offer_pk_list, site)
@@ -1178,155 +1334,6 @@ class StripeProcessor(PaymentProcessorBase):
         self.update_offers(offers_in_vendor_with_stripe_meta)
         logger.info("StripeProcessor sync_offers Finished")
 
-    def get_customer_profile_from_stripe_customer(self, site, stripe_customer):
-        customer_profile = None
-        try:
-            customer_profile = CustomerProfile.objects.get(site=site, user__email=stripe_customer.email)
-        except ObjectDoesNotExist:
-            logger.error(f"get_customer_profile_from_stripe_customer CustomerProfile Not Found email:{stripe_customer.email} site: {site.domain}")
-        except MultipleObjectsReturned:
-            logger.error(f"get_customer_profile_from_stripe_customer Multiple CustomerProfiles returned for email:{stripe_customer.email} site: {site.domain}")
-        except Exception as exce:
-            logger.error(f"get_customer_profile_from_stripe_customer Exception: {exce} for email:{stripe_customer.email} site: {site.domain} ")
-
-        if customer_profile and 'stripe_id' not in customer_profile.meta:
-            customer_profile.meta.update({'stripe_id': stripe_customer.id})
-            customer_profile.save()
-
-        return customer_profile
-        
-    def get_or_create_subscription_from_stripe_subscription(self, customer_profile, stripe_subscription):
-        created = False
-        subscription = None
-        try:
-            subscription, created = Subscription.objects.get_or_create(
-                profile=customer_profile,
-                gateway_id=stripe_subscription.id)
-        except MultipleObjectsReturned:
-            logger.error(f"get_or_create_subscription_from_stripe_subscription Multiple Subscriptions returned for customer_profile: {customer_profile} subscription: {stripe_subscription.id}")
-        except Exception as exce:
-            logger.error(f"get_or_create_subscription_from_stripe_subscription Exception {exce} for customer_profile: {customer_profile} subscription {stripe_subscription.id}")
-        
-        if subscription:
-            subscription.status = self.get_subscription_status(stripe_subscription.status)
-            subscription.save()
-
-        return subscription, created
-    
-    def get_offer_from_stripe_product(self, stripe_product):
-        offer = None
-
-        if "pk" not in stripe_product.metadata:
-            logger.error(f"get_offer_from_stripe_product stripe_product id: ({stripe_product.id}, {stripe_product.name}) does not have a pk in metadata")
-            return offer
-        
-        try:
-            offer = Offer.objects.get(pk=int(stripe_product.metadata["pk"]))
-        except ObjectDoesNotExist:
-            logger.error(f"get_offer_from_stripe_product Offer Does Not Exists for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}")
-        except MultipleObjectsReturned:
-            logger.error(f"get_offer_from_stripe_product Multiple Offers Found for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}")
-        except Exception as exce:
-            logger.error(f"get_offer_from_stripe_product Exception {exce} for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}")
-        
-        return offer
-
-    def get_or_create_invoice_from_stripe_invoice(self, stripe_invoice, offer, customer_profile):
-        invoice = None
-        created = False
-
-        try:
-            invoice, created = Invoice.objects.get_or_create(
-                site=customer_profile.site,
-                vendor_notes__has_key="stripe_id",
-                vendor_notes__stripe_id=stripe_invoice.id,
-                profile=customer_profile,
-                defaults={
-                    "vendor_notes": {'stripe_id': stripe_invoice.id},
-                    "status": self.get_invoice_status(stripe_invoice.status),
-                    "ordered_date": timezone.datetime.fromtimestamp(stripe_invoice.created, tz=timezone.utc)
-                }
-            )
-        except MultipleObjectsReturned:
-            logger.error(f"get_or_create_invoice_from_stripe_invoice Multiple Invoice for id: {stripe_invoice.id} customer_profile: {customer_profile.user.email}")
-            invoice = Invoice.objects.filter(
-                site=customer_profile.site,
-                vendor_notes__has_key="stripe_id",
-                vendor_notes__stripe_id=stripe_invoice.id,
-                profile=customer_profile,
-            ).first()
-        except Exception as exce:
-            logger.error(f"get_or_create_invoice_from_stripe_invoice Exception {exce} for id: {stripe_invoice.id} customer_profile: {customer_profile.user.email}")
-
-        if created:
-            created = None
-            invoice.empty_cart()
-            invoice.add_offer(offer)
-            invoice.total = self.convert_integer_to_decimal(stripe_invoice.total)
-        
-        invoice.status = self.get_invoice_status(stripe_invoice.status)
-        invoice.save()
-
-        return invoice, created
-
-    def get_or_create_payment_from_stripe_payment_and_charge(self, invoice, stripe_payment, stripe_charge):
-        payment = None
-        created = False
-
-        try:
-            payment, created = Payment.objects.get_or_create(
-                transaction=stripe_charge.id,
-                defaults={
-                    "profile": invoice.profile,
-                    "amount": self.convert_integer_to_decimal(stripe_charge.amount_captured),
-                    "invoice": invoice,
-                    "submitted_date": timezone.datetime.fromtimestamp(stripe_charge.created, tz=timezone.utc),
-                    "transaction": stripe_charge.id,
-                    "status": self.get_payment_status(stripe_charge.status, stripe_charge.refunded),
-                    "success": stripe_charge.paid,
-                    "payee_full_name": stripe_payment['billing_details']['name'],
-                    "result": {
-                        'account_number': stripe_payment['card']['last4'] if "card" in stripe_payment else "",
-                        'full_name': stripe_payment['billing_details']['name']
-                    }
-                }
-            )
-        except MultipleObjectsReturned:
-            dup_payments = Payment.objects.filter(transaction=stripe_charge.id)
-            payment = dup_payments.first()
-            logger.error(f"get_or_create_payment_from_stripe_payment_and_charge Multiple Payments for transaction: {stripe_charge.id} queryresult for payments: {dup_payments}")
-        except Exception as exce:
-            logger.error(f"get_or_create_payment_from_stripe_payment_and_charge Exception {exce} for stripe_charge id: {stripe_charge.id}")
-
-        return payment, created
-
-    def get_or_create_receipt_from_stripe_charge(self, invoice, payment, stripe_charge):
-        receipt = None
-        created = False
-        try:
-            receipt, created = Receipt.objects.get_or_create(
-                profile=invoice.profile,
-                transaction=stripe_charge.id,
-                defaults={
-                    "order_item": invoice.order_items.first(),
-                    "start_date": timezone.datetime.fromtimestamp(stripe_charge.created, tz=timezone.utc),
-                    "end_date": invoice.order_items.first().offer.get_offer_end_date(start_date=timezone.datetime.fromtimestamp(stripe_charge.created, tz=timezone.utc)),
-                    "subscription": payment.subscription,
-                    "meta": payment.result | {"payment_amount": str(payment.amount)}
-                }
-            )
-        except MultipleObjectsReturned:
-            dup_receipts = Receipt.objects.filter(profile=invoice.profile, transaction=stripe_charge.id)
-            receipt = dup_receipts.first()
-            logger.info(f"get_or_create_receipt_from_stripe_charge Multiple Receipts for transaction: {stripe_charge.id}, duplicated receipts: {dup_receipts}")
-        except Exception as exce:
-            logger.error(f"get_or_create_receipt_from_stripe_charge Exception {exce} for stripe_charge id: {stripe_charge.id}, subscriptions: ({payment.subscription.pk},{payment.subscription.gateway_id})")
-
-        if created:
-            receipt.products.add(invoice.order_items.first().offer.products.first())
-
-        return receipt, created
-    
     def sync_stripe_subscription(self, site, stripe_subscription):
         stripe_customer = self.stripe_get_object(self.stripe.Customer, stripe_subscription.customer)
         customer_profile = self.get_customer_profile_from_stripe_customer(site, stripe_customer)
