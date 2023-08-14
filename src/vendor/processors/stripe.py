@@ -233,7 +233,7 @@ class StripeProcessor(PaymentProcessorBase):
         # https://stripe.com/docs/libraries/set-version
         self.stripe.api_version = '2022-08-01'
 
-    def customer_setup(self):
+    def validate_invoice_customer_in_stripe(self):
         if not self.invoice.profile.meta.get('stripe_id'):
             self.create_stripe_customers([self.invoice.profile])
         
@@ -242,7 +242,7 @@ class StripeProcessor(PaymentProcessorBase):
         if not stripe_customer:
             self.create_stripe_customers([self.invoice.profile])
 
-    def offer_setup(self):
+    def validate_invoice_offer_in_stripe(self):
         offers_to_sync = []
         for order_item in self.invoice.get_ont_time_transaction_order_items():
             if not order_item.offer.meta.get('stripe'):
@@ -250,7 +250,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         self.create_offers(offers_to_sync)
 
-    def subscription_setup(self):
+    def validate_invoice_subscriptions_in_stripe(self):
         offers_to_sync = []
         for order_item in self.invoice.get_recurring_order_items():
             if not order_item.offer.meta.get('stripe'):
@@ -1467,9 +1467,9 @@ class StripeProcessor(PaymentProcessorBase):
         """
         Called before the authorization begins.
         """
-        self.customer_setup()
-        self.offer_setup()
-        self.subscription_setup()
+        self.validate_invoice_customer_in_stripe()
+        self.validate_invoice_offer_in_stripe()
+        self.validate_invoice_subscriptions_in_stripe()
         self.transaction_succeeded = False
 
     def process_payment(self):
