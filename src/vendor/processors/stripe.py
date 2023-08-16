@@ -245,7 +245,7 @@ class StripeProcessor(PaymentProcessorBase):
 
     def validate_invoice_offer_in_stripe(self):
         offer_to_create = []
-        for order_item in self.invoice.get_ont_time_transaction_order_items():
+        for order_item in self.invoice.get_one_time_transaction_order_items():
             if not order_item.offer.meta.get('stripe'):
                 offer_to_create.append(order_item.offer)
 
@@ -588,10 +588,11 @@ class StripeProcessor(PaymentProcessorBase):
         }
     
     def build_subscription(self, subscription, payment_method_id):
+        price = subscription.offer.get_current_price_instance()
         return {
             'customer': self.invoice.profile.meta['stripe_id'],
             'promotion_code': self.invoice.coupon_code.first().meta['stripe_id'] if self.invoice.coupon_code.count() else None,
-            'items': [{'price': subscription.offer.meta['stripe']['price_id']}],
+            'items': [{'price': subscription.offer.meta['stripe']['prices'][str(price.pk)]}],
             'default_payment_method': payment_method_id,
             'metadata': {'site': self.invoice.site},
             'trial_period_days': subscription.offer.get_trial_days(),
@@ -669,6 +670,7 @@ class StripeProcessor(PaymentProcessorBase):
 
             if new_stripe_customer:
                 profile.meta.update({'stripe_id': new_stripe_customer['id']})
+                profile.save()
                 logger.info(f"create_stripe_customers: Stripe Customer created: {new_stripe_customer['id']} from profile: {profile} site: {profile.site}")
 
     def update_stripe_customers(self, customers):
@@ -679,6 +681,7 @@ class StripeProcessor(PaymentProcessorBase):
 
             if existing_stripe_customer:
                 profile.meta.update({'stripe_id': existing_stripe_customer['id']})
+                profile.save()
                 logger.info(f"update_stripe_customers: Stipe Customer updated: {existing_stripe_customer['id']} from profile: {profile} site: {profile.site}")
             else:
                 self.create_stripe_customers([profile])
@@ -1011,6 +1014,8 @@ class StripeProcessor(PaymentProcessorBase):
             price_data.pop('currency', None)
             price_data.pop('recurring', None)
             self.stripe_update_object(self.stripe.Price, stripe_price.id, price_data)
+            logger.info(f"sync_offer_prices: Stripe Price Updated: ({stripe_price.id}, {price.pk})")
+
         
     ##########
     # Coupons
