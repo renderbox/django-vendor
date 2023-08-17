@@ -233,7 +233,7 @@ class StripeProcessor(PaymentProcessorBase):
         # TODO handle this better, but needed to get passed this error message
         # Search is not supported on api version 2016-07-06. Update your API version, or set the API Version of this request to 2020-08-27 or greater.
         # https://stripe.com/docs/libraries/set-version
-        self.stripe.api_version = '2022-08-01'
+        self.stripe.api_version = '2023-08-16'
 
     def validate_invoice_customer_in_stripe(self):
         if not self.invoice.profile.meta.get('stripe_id'):
@@ -752,18 +752,10 @@ class StripeProcessor(PaymentProcessorBase):
         email_clause = query_builder.make_clause_template(
             field='email',
             value=email,
-            operator=query_builder.EXACT_MATCH,
-            next_operator=query_builder.AND
-        )
-
-        metadata_clause = query_builder.make_clause_template(
-            field='metadata',
-            key='site',
-            value=self.site.domain,
             operator=query_builder.EXACT_MATCH
         )
-
-        query = query_builder.build_search_query(self.stripe.Customer, [email_clause, metadata_clause])
+        
+        query = query_builder.build_search_query(self.stripe.Customer, [email_clause])
         query_result = self.stripe_query_object(self.stripe.Customer, query)
 
         if len(query_result['data']) == 1:
@@ -779,6 +771,29 @@ class StripeProcessor(PaymentProcessorBase):
     ##########
     # Offers/Products
     ##########
+    def get_stripe_product(self, site, pk):
+        pk_clause = self.query_builder.make_clause_template(
+            field='metadata',
+            key='pk',
+            value=str(pk),
+            operator=self.query_builder.EXACT_MATCH,
+            next_operator=self.query_builder.AND
+        )
+        site_clause = self.query_builder.make_clause_template(
+            field='metadata',
+            key='site',
+            value=site.domain,
+            operator=self.query_builder.EXACT_MATCH
+        )
+
+        query = self.query_builder.build_search_query(self.stripe.Product, [pk_clause, site_clause])
+        search_data = self.stripe_query_object(self.stripe.Product, {'query': query})
+
+        if search_data:
+            return search_data.data[0]
+        
+        return None
+
     def does_product_exist(self, name, metadata):
         name_clause = self.query_builder.make_clause_template(
             field='name',
@@ -1011,6 +1026,7 @@ class StripeProcessor(PaymentProcessorBase):
             if not stripe_price:
                 logger.error(f"create_stripe_product_prices price not created: {self.transaction_info}")
                 return None
+            
             if 'stripe' not in offer.meta:
                 offer.meta = {'stripe': {'prices': {price.pk: stripe_price.id}}}
             elif 'prices' in offer.meta['stripe']:
@@ -1044,8 +1060,19 @@ class StripeProcessor(PaymentProcessorBase):
             price_data.pop('product', None)
             price_data.pop('currency', None)
             price_data.pop('recurring', None)
+
             self.stripe_update_object(self.stripe.Price, stripe_price.id, price_data)
+
+            if 'stripe' not in offer.meta:
+                offer.meta = {'stripe': {'prices': {price.pk: stripe_price.id}}}
+            elif 'prices' in offer.meta['stripe']:
+                offer.meta['stripe']['prices'].update({price.pk: stripe_price.id})
+            else:
+                offer.meta['stripe'].update({'prices': {price.pk: stripe_price.id}})
+            offer.save()
+            
             logger.info(f"sync_offer_prices: Stripe Price Updated: ({stripe_price.id}, {price.pk})")
+
 
         
     ##########
@@ -1227,7 +1254,7 @@ class StripeProcessor(PaymentProcessorBase):
             logger.info(f"get_or_create_subscription_from_stripe_subscription Subscription Created: ({subscription.pk}, {stripe_subscription.id})")
 
         return subscription, created
-  
+    
     ##########
     # Sync Vendor and Stripe
     ##########
@@ -1329,11 +1356,16 @@ class StripeProcessor(PaymentProcessorBase):
         offers_in_vendor_with_stripe_meta = offers_in_vendor.filter(meta__has_key='stripe')
         offers_in_vendor_without_stripe_meta = offers_in_vendor.exclude(meta__has_key='stripe')
         
-        offers_not_in_vendor = self.get_vendor_offers_not_in_stripe(offer_pk_list, site)
-        offers_to_create = offers_not_in_vendor | offers_in_vendor_without_stripe_meta
+        offers_to_create = self.get_vendor_offers_not_in_stripe(offer_pk_list, site)
+
+        for update_offer_meta in offers_in_vendor_without_stripe_meta:
+            for stripe_product in stripe_products:
+                if stripe_product['metadata']['pk'] == update_offer_meta.pk:
+                    update_offer_meta.meta.update({'stripe': {'product_id': stripe_product.id}})
+                    update_offer_meta.save()
 
         self.create_offers(offers_to_create)
-        self.update_offers(offers_in_vendor_with_stripe_meta)
+        self.update_offers(offers_in_vendor_with_stripe_meta | offers_in_vendor_without_stripe_meta)
         logger.info("StripeProcessor sync_offers Finished")
 
     def sync_stripe_subscription(self, site, stripe_subscription):
