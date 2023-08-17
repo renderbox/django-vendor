@@ -6,6 +6,7 @@ from math import modf
 from decimal import Decimal
 from django.conf import settings
 from django.utils import timezone
+from django.db.models.signals import post_save, post_delete
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from vendor.config import DEFAULT_CURRENCY, StripeConnectAccountConfig, VendorSiteCommissionConfig
 from vendor.integrations import StripeIntegration
@@ -367,7 +368,7 @@ class StripeProcessor(PaymentProcessorBase):
         elif stripe_status == "failed":
             return PurchaseStatus.DECLINED
 
-    def get_subscription_status(self, stripe_status):    
+    def get_subscription_status(self, stripe_status):
         if stripe_status == "active":
             return SubscriptionStatus.ACTIVE
         elif stripe_status == "paused":
@@ -745,6 +746,36 @@ class StripeProcessor(PaymentProcessorBase):
 
         return expired_cards_emails
 
+    def get_stripe_customer_from_email(self, email):
+        query_builder = StripeQueryBuilder()
+
+        email_clause = query_builder.make_clause_template(
+            field='email',
+            value=email,
+            operator=query_builder.EXACT_MATCH,
+            next_operator=query_builder.AND
+        )
+
+        metadata_clause = query_builder.make_clause_template(
+            field='metadata',
+            key='site',
+            value=self.site.domain,
+            operator=query_builder.EXACT_MATCH
+        )
+
+        query = query_builder.build_search_query(self.stripe.Customer, [email_clause, metadata_clause])
+        query_result = self.stripe_query_object(self.stripe.Customer, query)
+
+        if len(query_result['data']) == 1:
+            return query_result['data'][0]
+        elif len(query_result['data']) > 1:
+            logger.info(f"Multiple stripe customer found for email: {email} on site: {self.site}")
+        else:
+            logger.info(f"No Stripe Customer Found for email: {email} on site: {self.site}")
+        
+        return None
+
+        
     ##########
     # Offers/Products
     ##########
