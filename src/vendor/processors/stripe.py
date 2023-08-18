@@ -369,13 +369,13 @@ class StripeProcessor(PaymentProcessorBase):
             return PurchaseStatus.DECLINED
 
     def get_subscription_status(self, stripe_status):
-        if stripe_status == "active":
+        if stripe_status in ["active", "trialing"]:
             return SubscriptionStatus.ACTIVE
         elif stripe_status == "paused":
             return SubscriptionStatus.PAUSED
         elif stripe_status == "canceled":
             return SubscriptionStatus.CANCELED
-        elif stripe_status in ["past_due", "unpaid", "incomplete", "trialing"]:
+        elif stripe_status in ["past_due", "unpaid", "incomplete"]:
             return SubscriptionStatus.SUSPENDED
         elif stripe_status == "incomplete_expired":
             return SubscriptionStatus.EXPIRED
@@ -1141,7 +1141,6 @@ class StripeProcessor(PaymentProcessorBase):
             logger.error(f"get_or_create_invoice_from_stripe_invoice Exception {exce} for id: {stripe_invoice.id} customer_profile: {customer_profile.user.email}")
 
         if created:
-            created = None
             invoice.empty_cart()
             invoice.add_offer(offer)
             invoice.total = self.convert_integer_to_decimal(stripe_invoice.total)
