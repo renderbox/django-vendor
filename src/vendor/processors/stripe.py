@@ -1,24 +1,21 @@
 import json
 import logging
-import stripe
-
-from math import modf
 from decimal import Decimal
+from math import modf
+
+import stripe
 from django.conf import settings
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.utils import timezone
-from django.db.models.signals import post_save, post_delete
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from vendor.config import DEFAULT_CURRENCY, StripeConnectAccountConfig, VendorSiteCommissionConfig
+
+from vendor.config import (DEFAULT_CURRENCY, StripeConnectAccountConfig,
+                           VendorSiteCommissionConfig)
 from vendor.integrations import StripeIntegration
-from vendor.models import Offer, CustomerProfile, Subscription, Invoice, Payment, Receipt
-from vendor.models.choice import (
-    Country,
-    TermType,
-    TermDetailUnits,
-    SubscriptionStatus,
-    InvoiceStatus,
-    PurchaseStatus
-)
+from vendor.models import (CustomerProfile, Invoice, Offer, Payment, Receipt,
+                           Subscription)
+from vendor.models.choice import (Country, InvoiceStatus, PurchaseStatus,
+                                  SubscriptionStatus, TermDetailUnits,
+                                  TermType)
 from vendor.processors.base import PaymentProcessorBase
 
 logger = logging.getLogger(__name__)
