@@ -692,16 +692,27 @@ class StripeProcessor(PaymentProcessorBase):
 
         return payment_methods.data
         
-    def get_customer_profile_from_stripe_customer(self, site, stripe_customer):
+    def get_customer_profile(self, site, stripe_customer):
+        """Get's CustomerProfile if found.
+        Try's to get the CustomerProfile based on the stripe_customer.email and site.
+        If found and the CustomerProfile instance does not have the associated stripe_customer.id it addes it addes it to the meta field.
+
+        Args:
+            site: Site instance
+            stripe_customer: Stripe Customer Object
+
+        Returns:
+            CustomerProfile Instance or None
+        """
         customer_profile = None
         try:
             customer_profile = CustomerProfile.objects.get(site=site, user__email=stripe_customer.email)
         except ObjectDoesNotExist:
-            logger.error(f"get_customer_profile_from_stripe_customer CustomerProfile Not Found email:{stripe_customer.email} site: {site.domain}")
+            logger.error(f"get_customer_profile CustomerProfile Not Found email:{stripe_customer.email} site: {site.domain}")
         except MultipleObjectsReturned:
-            logger.error(f"get_customer_profile_from_stripe_customer Multiple CustomerProfiles returned for email:{stripe_customer.email} site: {site.domain}")
+            logger.error(f"get_customer_profile Multiple CustomerProfiles returned for email:{stripe_customer.email} site: {site.domain}")
         except Exception as exce:
-            logger.error(f"get_customer_profile_from_stripe_customer Exception: {exce} for email:{stripe_customer.email} site: {site.domain} ")
+            logger.error(f"get_customer_profile Exception: {exce} for email:{stripe_customer.email} site: {site.domain} ")
 
         if customer_profile and 'stripe_id' not in customer_profile.meta:
             customer_profile.meta.update({'stripe_id': stripe_customer.id})
@@ -1070,8 +1081,6 @@ class StripeProcessor(PaymentProcessorBase):
             
             logger.info(f"sync_offer_prices: Stripe Price Updated: ({stripe_price.id}, {price.pk})")
 
-
-        
     ##########
     # Coupons
     ##########
@@ -1366,7 +1375,7 @@ class StripeProcessor(PaymentProcessorBase):
 
     def sync_stripe_subscription(self, site, stripe_subscription):
         stripe_customer = self.stripe_get_object(self.stripe.Customer, stripe_subscription.customer)
-        customer_profile = self.get_customer_profile_from_stripe_customer(site, stripe_customer)
+        customer_profile = self.get_customer_profile(site, stripe_customer)
         
         if customer_profile:
             subscription, created = self.get_or_create_subscription_from_stripe_subscription(customer_profile, stripe_subscription)
