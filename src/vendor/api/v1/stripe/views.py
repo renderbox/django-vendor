@@ -87,7 +87,7 @@ class StripeBaseAPI(View):
 
         return True
 
-
+# Warning StripeSubscriptionInvoicePaid will removed in favor of StripeInvoicePaymentSuccededEvent
 class StripeSubscriptionInvoicePaid(StripeBaseAPI):
     
     def post(self, request, *args, **kwargs):
@@ -258,11 +258,13 @@ class StripeInvoicePaymentSuccededEvent(StripeBaseAPI):
             # Subscription Invoice
             return process_stripe_invoice_subscription_payment_succeded(stripe_invoice, site)
 
-
+# Warning StripeInvoicePaid will removed in favor of StripeInvoicePaymentSuccededEvent
 class StripeInvoicePaid(StripeBaseAPI):
 
     def post(self, request, *args, **kwargs):
         site = get_site_from_request(self.request)
+        processor = StripeProcessor(site)
+        
 
         if not self.is_valid_post(site):
             logger.error("StripeInvoicePaid error: invalid post")
