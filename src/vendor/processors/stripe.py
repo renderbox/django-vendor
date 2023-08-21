@@ -476,6 +476,19 @@ class StripeProcessor(PaymentProcessorBase):
 
         return object_list
         
+    def stripe_update_object_metadata(self, stripe_object_class, object_id, metadata):
+        object_data = {}
+        object_data['sid'] = object_id
+        object_data['metadata'] = metadata
+
+        stripe_object = self.stripe_call(stripe_object_class.modify, object_data)
+
+        if self.transaction_succeeded:
+            self.transaction_succeeded = False
+            return stripe_object
+
+        return None
+
     # Stripe Object Builders
     ##########
     def build_transfer_data(self):
@@ -1231,6 +1244,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         if created:
             logger.info(f"get_or_create_payment_from_stripe_payment_and_charge: Payment Created ({payment.pk},{stripe_charge.id})")
+            
         return payment, created
 
     def get_or_create_subscription_receipt_from_stripe_charge(self, invoice, payment, stripe_charge):
