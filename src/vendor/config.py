@@ -130,3 +130,5 @@ VENDOR_STATE = getattr(settings, "VENDOR_STATE", "DEBUG")
 VENDOR_DATA_ENCODER = getattr(
     settings, "VENDOR_DATA_ENCODER", "vendor.encrypt.cleartext"
 )
+
+ENABLE_STRIPE_SIGNALS = getattr(settings, 'ENABLE_STRIPE_SIGNALS', False)

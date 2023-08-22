@@ -114,7 +114,7 @@ class AddressAdmin(admin.ModelAdmin):
 
 
 class CustomerProfileAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', )
+    readonly_fields = ('uuid', 'user')
     list_display = ('pk', 'user', 'email', 'site', 'currency', 'created')
     search_fields = ('user__username', 'user__email')
     list_filter = ('site__domain', )
@@ -122,7 +122,7 @@ class CustomerProfileAdmin(admin.ModelAdmin):
 
 class InvoiceAdmin(admin.ModelAdmin):
     readonly_fields = ('uuid', 'shipping_address', 'profile')
-    list_display = ('__str__', 'profile', 'site', 'status', 'total', 'created', 'deleted')
+    list_display = ('pk', '__str__', 'profile', 'site', 'status', 'total', 'created', 'deleted')
     search_fields = ('uuid', 'profile__user__username', )
     list_filter = ('site__domain', )
     inlines = [
@@ -151,7 +151,7 @@ class PaymentAdmin(admin.ModelAdmin):
 
 
 class ReceiptAdmin(admin.ModelAdmin):
-    readonly_fields = ('uuid', 'order_item', 'profile')
+    readonly_fields = ('uuid', 'order_item', 'profile', 'products')
     exclude = ('updated', )
     list_display = ('pk', 'transaction', 'subscription', 'created', 'profile', 'order_item', 'start_date', 'end_date', 'deleted')
     list_filter = ('profile__site__domain', 'products')
@@ -175,6 +175,13 @@ class SubscriptionAdmin(admin.ModelAdmin):
     list_filter = ('profile__site__domain', )
     search_fields = ('pk', 'gateway_id', 'profile__user__username', )
     inlines = [PaymentInline, ReceiptInline]
+
+
+class PriceAdmin(admin.ModelAdmin):
+    readonly_fields = ('offer', )
+    list_display = ('pk', 'offer', 'cost')
+    list_filter = ('offer', 'offer__site')
+    search_fields = ('pk', 'cost', 'offer__name')
 
 
 class TaxClassifierAdmin(admin.ModelAdmin):
@@ -201,3 +208,4 @@ admin.site.register(Receipt, ReceiptAdmin)
 admin.site.register(Payment, PaymentAdmin)
 admin.site.register(Subscription, SubscriptionAdmin)
 admin.site.register(OrderItem)
+admin.site.register(Price, PriceAdmin)
