@@ -373,7 +373,7 @@ class StripeProcessorTests(TestCase):
     def test_get_stripe_offers(self):
         # Test will fail on initial run without products created on stripe. Dont create duplicates
 
-        offers = self.processor.get_site_offers(self.site)
+        offers = self.processor.get_site_stripe_products(self.site)
         stripe_offer_names = [product['name'] for product in offers]
         names = [self.pro_annual_license['name'], self.pro_annual_license2['name']]
 
@@ -383,7 +383,7 @@ class StripeProcessorTests(TestCase):
             self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license)
             self.processor.stripe_create_object(self.processor.stripe.Product, self.pro_annual_license2)
 
-        current_stripe_offers = self.processor.get_site_offers(self.site)
+        current_stripe_offers = self.processor.get_site_stripe_products(self.site)
         offer_names = [offer.name for offer in current_stripe_offers]
 
         self.assertIsNotNone(current_stripe_offers)
@@ -396,7 +396,7 @@ class StripeProcessorTests(TestCase):
         offer1 = Offer.objects.create(site=self.site, name=self.pro_annual_license['name'], start_date=timezone.now())
         offer2 = Offer.objects.create(site=self.site, name=self.pro_annual_license2['name'], start_date=timezone.now())
 
-        offers = self.processor.get_site_offers(self.site)
+        offers = self.processor.get_site_stripe_products(self.site)
         stripe_offer_names = [product['name'] for product in offers]
         vendor_offer_names = [offer1.name, offer2.name]
         offers_exist = [name for name in vendor_offer_names if name in stripe_offer_names] or False
@@ -415,7 +415,7 @@ class StripeProcessorTests(TestCase):
         self.assertIn(offer2, vendor_offers_in_stripe)
 
     def test_get_vendor_offers_not_in_stripe(self):
-        offers = self.processor.get_site_offers(self.site)
+        offers = self.processor.get_site_stripe_products(self.site)
         #stripe_offer_names = [product['name'] for product in offers]
         #vendor_offer_names = [self.pro_annual_license['name'], self.pro_annual_license2['name']]
 
@@ -533,7 +533,7 @@ class StripeProcessorTests(TestCase):
         self.assertEquals(updated_stripe_customer2.name, f'{user2.first_name} {user2.last_name}')
 
     def test_check_product_does_exist(self):
-        offers = self.processor.get_site_offers(self.site)
+        offers = self.processor.get_site_stripe_products(self.site)
         stripe_offer_names = [product['name'] for product in offers]
 
         offer_exists = self.pro_annual_license['name'] in stripe_offer_names
@@ -560,7 +560,7 @@ class StripeProcessorTests(TestCase):
         }
         product_id = self.processor.get_product_id_with_name(self.pro_annual_license['name'], metadata=metadata)
 
-        offers = self.processor.get_site_offers(self.site)
+        offers = self.processor.get_site_stripe_products(self.site)
         stripe_offer_ids = [product['id'] for product in offers]
 
         self.assertIn(product_id, stripe_offer_ids)

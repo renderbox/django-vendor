@@ -1,11 +1,13 @@
 from django.apps import AppConfig
+
+
 class VendorConfig(AppConfig):
     name = 'vendor'
 
     def ready(self):
-        from vendor.config import VENDOR_PAYMENT_PROCESSOR, SupportedPaymentProcessor
+        from vendor.config import ENABLE_STRIPE_SIGNALS
 
-        if VENDOR_PAYMENT_PROCESSOR == SupportedPaymentProcessor.STRIPE:
+        if ENABLE_STRIPE_SIGNALS:
             import vendor.signals.stripe_signals
     
     #  TODO: Would be better to find way to check if any sites have stripe configured instead of having to set the VENDOR_PAYMENT_PROCESSOR to stripe 

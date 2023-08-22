@@ -2,16 +2,14 @@ import logging
 
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-
-from stripe import Customer
+from vendor.config import PaymentProcessorSiteConfig, SupportedPaymentProcessor
 from vendor.models import CustomerProfile, Offer
-from vendor.config import PaymentProcessorSiteConfig, SupportedPaymentProcessor, DEFAULT_CURRENCY
 from vendor.processors import StripeProcessor, StripeQueryBuilder
-
 
 logger = logging.getLogger(__name__)
 
-@receiver(post_save, sender=CustomerProfile)
+
+@receiver(post_save, sender=CustomerProfile, dispatch_uid="stripe_customer_post_save")
 def stripe_create_customer_signal(sender, instance, created, **kwargs):
     site_configured_processor = PaymentProcessorSiteConfig(instance.site)
 
@@ -21,7 +19,6 @@ def stripe_create_customer_signal(sender, instance, created, **kwargs):
     
     if 'stripe_id' in instance.meta:
         return None
-
 
     processor = StripeProcessor(instance.site)
 
@@ -48,18 +45,19 @@ def stripe_create_customer_signal(sender, instance, created, **kwargs):
         logger.error(f"stripe_create_customer_signal: {processor.transactions_info}")
         return None 
 
+    post_save.disconnect(sender=CustomerProfile, dispatch_uid="stripe_customer_post_save")
     if query_result:
-        logger.info(f"stripe_create_customer_signal: updating customer")
+        logger.info(f"stripe_create_customer_signal: updating customer: {instance}")
         processor.update_stripe_customers([instance])
         if len(query_result.data) > 1:
             logger.warning(f"stripe_create_customer_signal: more than one customer found for email: {instance.user.email} on site: {instance.site.domain}")
-        return None
 
     processor.create_stripe_customers([instance])
+    post_save.connect(receiver=stripe_create_customer_signal, sender=CustomerProfile, dispatch_uid="stripe_customer_post_save")
     logger.info(f"stripe_create_customer_signal instance: {instance.pk} successfully created on Stripe")
 
 
-@receiver(post_delete, sender=CustomerProfile)
+@receiver(post_delete, sender=CustomerProfile, dispatch_uid="stripe_customer_post_delete")
 def stripe_delete_customer_signal(sender, instance, **kwargs):
     site_configured_processor = PaymentProcessorSiteConfig(instance.site)
 
@@ -72,11 +70,13 @@ def stripe_delete_customer_signal(sender, instance, **kwargs):
 
     processor = StripeProcessor(instance.site)
 
+    post_delete.disconnect(sender=CustomerProfile, dispatch_uid="stripe_customer_post_delete")
     processor.stripe_delete_object(processor.stripe.Customer, instance.meta['stripe_id'])
+    post_delete.connect(receiver=stripe_delete_customer_signal, sender=CustomerProfile, dispatch_uid="stripe_customer_post_delete")
     logger.info(f"stripe_delete_customer_signal instance: {instance.pk} was successfully deleted on Stripe")
 
 
-@receiver(post_save, sender=Offer)
+@receiver(post_save, sender=Offer, dispatch_uid="stripe_offer_post_save")
 def stripe_create_offer_signal(sender, instance, created, **kwargs):
     site_configured_processor = PaymentProcessorSiteConfig(instance.site)
 
@@ -111,16 +111,22 @@ def stripe_create_offer_signal(sender, instance, created, **kwargs):
         logger.error(f"stripe_create_offer_signal: {processor.transactions_info}")
         return None
 
-    if query_result['data']:
-        logger.info(f"stripe_create_offer_signal: updating the offer")
-        processor.update_offers([instance])
-        return None
+    post_save.disconnect(sender=Offer, dispatch_uid="stripe_offer_post_save")
+    if 'stripe' not in instance.meta:
+        instance.meta.update({'stripe': {'product_id': query_result['data'][0]['id']}})
+        instance.save()
 
-    processor.create_offers([instance])
+    if query_result['data']:
+        logger.info(f"stripe_create_offer_signal: updating the offer: {instance}")
+        processor.update_offers([instance])
+    else:
+        processor.create_offers([instance])
+
+    post_save.connect(receiver=stripe_create_offer_signal, sender=Offer, dispatch_uid="stripe_offer_post_save")
     logger.info(f"stripe_create_offer_signal instance: offer {instance.pk} successfully created on Stripe")
 
 
-@receiver(post_delete, sender=Offer)
+@receiver(post_delete, sender=Offer, dispatch_uid="stripe_offer_post_delete")
 def stripe_delete_offer_signal(sender, instance, **kwargs):
     site_configured_processor = PaymentProcessorSiteConfig(instance.site)
 
@@ -134,6 +140,7 @@ def stripe_delete_offer_signal(sender, instance, **kwargs):
 
     processor = StripeProcessor(instance.site)
 
+    post_delete.disconnect(sender=Offer, dispatch_uid="stripe_offer_post_delete")
     processor.stripe_delete_object(processor.stripe.Product, instance.meta['stripe']['product_id'])
     processor.stripe_update_object(processor.stripe.Price, instance.meta['stripe']['price_id'], {'active': False})
 
@@ -141,4 +148,5 @@ def stripe_delete_offer_signal(sender, instance, **kwargs):
         processor.stripe_delete_object(processor.stripe.Coupon, instance.meta['stripe']['coupon_id'])
         logger.info(f"stripe_delete_offer_signal instance: offer {instance.pk} coupon was successfully deleted on Stripe")
 
+    post_delete.connect(receiver=stripe_delete_offer_signal, sender=Offer, dispatch_uid="stripe_offer_post_delete")
     logger.info(f"stripe_delete_offer_signal instance: offer {instance.pk} was successfully deleted on Stripe")
