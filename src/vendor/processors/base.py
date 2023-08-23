@@ -530,19 +530,22 @@ class PaymentProcessorBase(object):
         """
         self.subscription = subscription
 
-        self.payment = Payment.objects.create(
+        self.payment, created = Payment.objects.get_or_create(
             profile=subscription.profile,
             invoice=self.invoice,
             transaction=payment_transaction_id,
-            submitted_date=submitted_date,
             subscription=subscription,
-            amount=self.invoice.total,
-            success=payment_success,
-            status=payment_status,
-            payee_full_name=" ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+            defaults={
+                "submitted_date": submitted_date,
+                "amount": self.invoice.total,
+                "success": payment_success,
+                "status": payment_status,
+                "payee_full_name": " ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
+            }
         )
 
-        self.create_receipts(self.invoice.order_items.all())
+        if payment_status == PurchaseStatus.SETTLED:
+            self.create_receipts(self.invoice.order_items.all())
 
     def subscription_update_price(self, subscription, new_price, user):
         """
