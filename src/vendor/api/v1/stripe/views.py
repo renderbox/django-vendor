@@ -318,8 +318,9 @@ def process_stripe_invoice_subscription_payment_succeded(stripe_invoice, site):
     subscription = processor.get_subscription(stripe_subscription)
 
     if not subscription:
-        logger.error(f"Stripe Subscription Invoice was not processed: stripe_invoice: {stripe_invoice}")
-        return HttpResponse(status=200)
+        msg = f"Stripe Subscription Invoice was not processed: stripe_invoice: {stripe_invoice}"
+        logger.error(msg)
+        return HttpResponse(status=200, content=msg)
     
     stripe_product = processor.stripe_get_object(processor.stripe.Product, stripe_subscription.plan.product)
     offer = processor.get_offer_from_stripe_product(stripe_product)
@@ -327,14 +328,15 @@ def process_stripe_invoice_subscription_payment_succeded(stripe_invoice, site):
     customer_profile, stripe_customer = processor.get_customer_profile_and_stripe_customer(stripe_invoice.customer)
 
     if not offer or not customer_profile:
-        logger.error(f"Stripe Subscription Invoice was not processed, stripe_invoice: {stripe_invoice.id} offer: {offer}, customer_profile: {customer_profile} stripe_customer: {stripe_customer}")
-        return HttpResponse(status=200)
+        msg = f"Stripe Subscription Invoice was not processed, stripe_invoice: {stripe_invoice.id} offer: {offer}, customer_profile: {customer_profile} stripe_customer: {stripe_customer}"
+        logger.error(msg)
+        return HttpResponse(status=200, content=msg)
 
     payment_status = processor.get_payment_status(stripe_charge.status, stripe_charge.refunded)
     processor.invoice, created = processor.get_or_create_invoice_from_stripe_invoice(stripe_invoice, offer, customer_profile)
     processor.renew_subscription(subscription, stripe_invoice.charge, payment_status, payment_success=True, submitted_date=paid_date)
 
-    return HttpResponse(status=200)
+    return HttpResponse(status=200, content=f"Subscription: {stripe_subscription.id} renewed invoice: {processor.invoice.pk}")
 
 
 class StripeInvoicePaymentSuccededEvent(StripeBaseAPI):
