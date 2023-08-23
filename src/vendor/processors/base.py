@@ -3,9 +3,11 @@ Base Payment processor used by all derived processors.
 """
 import logging
 from datetime import timedelta
+from decimal import Decimal
 
 import django.dispatch
 from django.utils import timezone
+
 from vendor import config
 from vendor.forms import BillingAddressForm, CreditCardForm
 from vendor.models import Payment, Receipt, Subscription
