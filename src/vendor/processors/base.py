@@ -3,9 +3,11 @@ Base Payment processor used by all derived processors.
 """
 import logging
 from datetime import timedelta
+from decimal import Decimal
 
 import django.dispatch
 from django.utils import timezone
+
 from vendor import config
 from vendor.forms import BillingAddressForm, CreditCardForm
 from vendor.models import Payment, Receipt, Subscription
@@ -558,7 +560,7 @@ class PaymentProcessorBase(object):
             payee_full_name=" ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
         )
             
-        if payment_status == PurchaseStatus.SETTLED:
+        if payment_status in [PurchaseStatus.QUEUED, PurchaseStatus.CAPTURED, PurchaseStatus.AUTHORIZED, PurchaseStatus.SETTLED]:
             self.create_receipts(self.invoice.order_items.all())
 
     def subscription_update_price(self, subscription, new_price, user):
