@@ -359,3 +359,4 @@ class StripeInvoicePaymentSuccededEvent(StripeBaseAPI):
         else:
             # Subscription Invoice
             return process_stripe_invoice_subscription_payment_succeded(stripe_invoice, site)
+
