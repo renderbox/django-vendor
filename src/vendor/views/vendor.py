@@ -396,16 +396,19 @@ class TransferExistingSubscriptionsToStripe(LoginRequiredMixin, TemplateView):
             messages.error("Stripe Processor not configured")
             return render(request, self.template_name, context)
         
+        stripe = get_site_payment_processor(self.request.site)(request.site, invoice)
+        
         for subscription in customer_profile.subscriptions.filter(status=SubscriptionStatus.ACTIVE):
             invoice = customer_profile.get_cart_or_checkout_cart()
             invoice.empty_cart()
             last_start_date = subscription.receipts.last().start_date
 
+            stripe_subscription = stripe.get_stripe_object(stripe.stripe.Subscription, subscription.gateway_id)
             offer = subscription.get_offer()
 
-            if offer:
+            if offer and not stripe_subscription:
                 invoice.add_offer(offer)
-                stripe = get_site_payment_processor(self.request.site)(request.site, invoice)
+
                 stripe.set_billing_address_form_data(request.POST, BillingAddressForm)
                 stripe.set_payment_info_form_data(request.POST, CreditCardForm)
 
@@ -416,5 +419,5 @@ class TransferExistingSubscriptionsToStripe(LoginRequiredMixin, TemplateView):
 
             subscription.status = SubscriptionStatus.CANCELED
             subscription.save()
-            
+
         return redirect(self.success_url)
