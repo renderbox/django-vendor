@@ -695,7 +695,7 @@ class StripeProcessor(PaymentProcessorBase):
         stripe_customer = None
         customer_profile = None
         
-        stripe_customer = self.stripe_get_object(stripe_customer_id)
+        stripe_customer = self.stripe_get_object(self.stripe.Customer, stripe_customer_id)
         if not stripe_customer:
             logger.info(f"Stripe Customer was not found: {stripe_customer_id}")
             return customer_profile, stripe_customer

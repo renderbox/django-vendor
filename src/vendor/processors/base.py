@@ -1,17 +1,21 @@
 """
 Base Payment processor used by all derived processors.
 """
-import django.dispatch
-
+import logging
 from datetime import timedelta
-from decimal import Decimal, ROUND_DOWN
-from django.conf import settings
+from decimal import Decimal
+
+import django.dispatch
 from django.utils import timezone
 
 from vendor import config
-from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models import Payment, Invoice, Receipt, Subscription
-from vendor.models.choice import PurchaseStatus, SubscriptionStatus, TermType, InvoiceStatus, PaymentTypes
+from vendor.forms import BillingAddressForm, CreditCardForm
+from vendor.models import Payment, Receipt, Subscription
+from vendor.models.choice import (InvoiceStatus, PaymentTypes, PurchaseStatus,
+                                  SubscriptionStatus, TermType)
+
+logger = logging.getLogger(__name__)
+
 
 ##########
 # SIGNALS
@@ -528,21 +532,36 @@ class PaymentProcessorBase(object):
         """
         Function to renew already paid subscriptions form the payment gateway provider.
         """
+        if Payment.objects.filter(
+                profile=subscription.profile,
+                invoice=self.invoice,
+                transaction=payment_transaction_id,
+                subscription=subscription).exists():
+            return None
+        
+        if Receipt.objects.filter(
+            transaction=payment_transaction_id,
+            profile=subscription.profile,
+            subscription=subscription
+        ).exists():
+            return None
+
         self.subscription = subscription
 
         self.payment = Payment.objects.create(
             profile=subscription.profile,
             invoice=self.invoice,
             transaction=payment_transaction_id,
-            submitted_date=submitted_date,
             subscription=subscription,
+            submitted_date=submitted_date,
             amount=self.invoice.total,
             success=payment_success,
             status=payment_status,
             payee_full_name=" ".join([self.invoice.profile.user.first_name, self.invoice.profile.user.last_name])
         )
-
-        self.create_receipts(self.invoice.order_items.all())
+            
+        if payment_status in [PurchaseStatus.QUEUED, PurchaseStatus.CAPTURED, PurchaseStatus.AUTHORIZED, PurchaseStatus.SETTLED]:
+            self.create_receipts(self.invoice.order_items.all())
 
     def subscription_update_price(self, subscription, new_price, user):
         """
