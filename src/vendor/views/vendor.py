@@ -11,11 +11,12 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import UpdateView
 from django.views.generic.list import ListView
 
+from vendor.config import SupportedPaymentProcessor
 from vendor.forms import (AccountInformationForm, AddressForm,
                           BillingAddressForm, CreditCardForm)
-from vendor.models import (Address, Invoice, Offer, OrderItem, Receipt,
-                           Subscription)
-from vendor.models.choice import InvoiceStatus, TermType
+from vendor.models import (Address, CustomerProfile, Invoice, Offer, OrderItem,
+                           Receipt, Subscription)
+from vendor.models.choice import InvoiceStatus, SubscriptionStatus, TermType
 from vendor.processors import get_site_payment_processor
 from vendor.utils import (clear_session_purchase_data,
                           get_or_create_session_cart, get_site_from_request)
@@ -292,7 +293,7 @@ class SubscriptionsListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         try:
-            receipts = self.request.user.customer_profile.get(site=get_site_from_request(self.request)).receipts.filter(auto_renew=True)
+            receipts = self.request.user.customer_profile.get(site=get_site_from_request(self.request)).receipts.filter(deleted=False)
         except ObjectDoesNotExist:
             raise Http404(_("Not Found"))
         
@@ -360,3 +361,60 @@ class ShippingAddressUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         messages.info(self.request, _("Shipping Address Updated"))
         return self.request.META.get('HTTP_REFERER', self.success_url)
+
+
+class TransferExistingSubscriptionsToStripe(LoginRequiredMixin, TemplateView):
+    template_name = "product/capture_billing_info.html"
+    success_url = reverse_lazy('vendor:vendor-home')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        is_stripe_configured = False
+        processor = get_site_payment_processor(self.request.site)
+
+        if processor.__class__ == SupportedPaymentProcessor.STRIPE:
+            is_stripe_configured = True
+
+        context['billing_form'] = BillingAddressForm()
+        context['credit_card_form'] = CreditCardForm()
+        context['is_stripe_configured'] = is_stripe_configured
+
+        return context
+
+    def post(self, request, **kwargs):
+        context = self.get_context_data(**kwargs)
+        billing_address_form = BillingAddressForm(request.POST)
+        credit_card_form = CreditCardForm(request.POST)
+        customer_profile = CustomerProfile.objects.get(site=request.site, user=request.user)
+
+        if not billing_address_form.is_valid() or not credit_card_form.is_valid():
+            context['billing_form'] = billing_address_form
+            context['credit_card_form'] = credit_card_form
+            return render(request, self.template_name, context)
+
+        if not context['is_stripe_configured']:
+            messages.error("Stripe Processor not configured")
+            return render(request, self.template_name, context)
+        
+        for subscription in customer_profile.subscriptions.filter(status=SubscriptionStatus.ACTIVE):
+            invoice = customer_profile.get_cart_or_checkout_cart()
+            invoice.empty_cart()
+            last_start_date = subscription.receipts.last().start_date
+
+            offer = subscription.get_offer()
+
+            if offer:
+                invoice.add_offer(offer)
+                stripe = get_site_payment_processor(self.request.site)(request.site, invoice)
+                stripe.set_billing_address_form_data(request.POST, BillingAddressForm)
+                stripe.set_payment_info_form_data(request.POST, CreditCardForm)
+
+                try:
+                    stripe.create_subscription(offer, last_start_date)
+                except Exception as exce:
+                    logger.error(f"Creating Subscription Failed, transaction_info: {stripe.transaction_info}, exception: {exce}")
+
+            subscription.status = SubscriptionStatus.CANCELED
+            subscription.save()
+            
+        return redirect(self.success_url)
