@@ -1751,8 +1751,14 @@ class StripeProcessor(PaymentProcessorBase):
             self.transaction_id = stripe_invoice.payment_intent
 
     def subscription_cancel(self, subscription):
+        stripe_subscription = self.stripe_delete_object(self.stripe.Subscription, subscription.gateway_id)
+        
+        if stripe_subscription.status != "canceled":
+            logger.error(f"Stripe Subscription Failed: subscription: {subscription.id} transaction info: {self.transaction_info}")
+            raise Exception("Stripe Subscription Failed")
+        
         super().subscription_cancel(subscription)
-        self.stripe_delete_object(self.stripe.Subscription, subscription.gateway_id)
+
 
     def subscription_update_payment(self, subscription):
         """
