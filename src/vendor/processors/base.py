@@ -514,11 +514,6 @@ class PaymentProcessorBase(object):
         pass
 
     def subscription_cancel(self, subscription):
-        settled_payments = subscription.payments.filter(status=PurchaseStatus.SETTLED).count()
-        
-        if not (settled_payments or subscription.is_on_trial()):
-            raise Exception("Need to be on trial or have a settled payment")
-
         subscription.cancel()
         vendor_subscription_cancel.send(sender=self.__class__, subscription=subscription)
 
