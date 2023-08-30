@@ -139,13 +139,12 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
 
         processor = get_site_payment_processor(subscription.profile.site)(subscription.profile.site)
         
-        try: 
+        try:
             processor.subscription_cancel(subscription)
-
             messages.info(self.request, _("Subscription Cancelled"))
 
-        except Exception as exce:
-            messages.warning(self.request, _("You can only cancel subscription if you are on trial or there has been at least one settled payment."))
+        except Exception:
+            messages.warning(self.request, _("Cancel Subscription Failed"))
 
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
