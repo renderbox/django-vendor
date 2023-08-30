@@ -131,7 +131,7 @@ class RemoveFromCartView(View):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-class SubscriptionCancelView(LoginRequiredMixin, View):
+class PaymentGatewaySubscriptionCancelView(LoginRequiredMixin, View):
     success_url = reverse_lazy('vendor:customer-subscriptions')
 
     def post(self, request, *args, **kwargs):
