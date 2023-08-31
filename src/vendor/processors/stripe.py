@@ -1443,10 +1443,11 @@ class StripeProcessor(PaymentProcessorBase):
             subscription.save()
             
         return transfer_result_msg
+    
     ##########
     # Sync Vendor and Stripe
     ##########
-    # TODO: function to deprecate. 
+    # TODO: function to deprecate.
     def initialize_products(self, site):
         """
         Grab all subscription offers on invoice and either create or fetch Stripe products.
