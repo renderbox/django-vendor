@@ -1415,7 +1415,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         return subscription
 
-    def transfer_existing_customer_subscription_to_stripe(customer_profile):
+    def transfer_existing_customer_subscription_to_stripe(self, customer_profile):
         transfer_result_msg = {"success": [], "failed": []}
         for subscription in customer_profile.subscriptions.filter(status=SubscriptionStatus.ACTIVE):
             invoice = customer_profile.get_cart_or_checkout_cart()
