@@ -149,13 +149,18 @@ class PaymentGatewaySubscriptionCancelView(LoginRequiredMixin, View):
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
 
-class ModelSubscriptionCancelView(LoginRequiredMixin, View):
+class CustomerSubscriptionsCancelModel(LoginRequiredMixin, View):
     success_url = reverse_lazy('vendor:customer-subscriptions')
 
     def post(self, request, **kwargs):
-        subscription = get_object_or_404(Subscription, uuid=self.kwargs["uuid"])
-        subscription.cancel()
-        
+        site = get_site_from_request(request)
+        customer_profile = CustomerProfile.objects.get(site=site, user=request.user)
+
+        for subscription in customer_profile.get_active_subscriptions():
+            subscription.cancel()
+
+        messages.info(self.request, _("Subscriptions Cancelled"))
+
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 
 

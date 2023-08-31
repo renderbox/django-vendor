@@ -21,6 +21,7 @@ from vendor.models.choice import InvoiceStatus
 from vendor.forms import BillingAddressForm, CreditCardForm
 
 from .vendor_admin import AdminDashboardView, AdminInvoiceDetailView, AdminInvoiceListView
+from .vendor import TransferExistingSubscriptionsToStripe
 
 ######################
 # Order History Views

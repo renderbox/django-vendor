@@ -11,7 +11,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import UpdateView
 from django.views.generic.list import ListView
 
-from vendor.config import SupportedPaymentProcessor
+from vendor.config import PaymentProcessorSiteConfig, SupportedPaymentProcessor
 from vendor.forms import (AccountInformationForm, AddressForm,
                           BillingAddressForm, CreditCardForm)
 from vendor.models import (Address, CustomerProfile, Invoice, Offer, OrderItem,
@@ -364,31 +364,37 @@ class ShippingAddressUpdateView(LoginRequiredMixin, UpdateView):
 
 
 class TransferExistingSubscriptionsToStripe(LoginRequiredMixin, TemplateView):
-    template_name = "product/capture_billing_info.html"
+    template_name = "vendor/capture_billing_info.html"
     success_url = reverse_lazy('vendor:vendor-home')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         is_stripe_configured = False
-        processor = get_site_payment_processor(self.request.site)
+        site = get_site_from_request(self.request)
+        site_configured_processor = PaymentProcessorSiteConfig(site)
 
-        if processor.__class__ == SupportedPaymentProcessor.STRIPE:
+        if site_configured_processor.get_key_value('payment_processor') == SupportedPaymentProcessor.STRIPE.value:
+            processor = get_site_payment_processor(site)
             is_stripe_configured = True
 
-        context['billing_form'] = BillingAddressForm()
-        context['credit_card_form'] = CreditCardForm()
+        context = processor(site=site).get_checkout_context(context=context)
         context['is_stripe_configured'] = is_stripe_configured
 
         return context
 
     def post(self, request, **kwargs):
+        site = get_site_from_request(request)
         context = self.get_context_data(**kwargs)
         billing_address_form = BillingAddressForm(request.POST)
         credit_card_form = CreditCardForm(request.POST)
-        customer_profile = CustomerProfile.objects.get(site=request.site, user=request.user)
+        customer_profile = CustomerProfile.objects.get(site=site, user=request.user)
 
-        if not billing_address_form.is_valid() or not credit_card_form.is_valid():
-            context['billing_form'] = billing_address_form
+        stripe = get_site_payment_processor(site)(site)
+        stripe.set_billing_address_form_data(request.POST, BillingAddressForm)
+        stripe.set_payment_info_form_data(request.POST, CreditCardForm)
+
+        if not stripe.billing_address.is_valid() or not stripe.payment_info.is_valid():
+            context['billing_address_form'] = billing_address_form
             context['credit_card_form'] = credit_card_form
             return render(request, self.template_name, context)
 
@@ -396,28 +402,6 @@ class TransferExistingSubscriptionsToStripe(LoginRequiredMixin, TemplateView):
             messages.error("Stripe Processor not configured")
             return render(request, self.template_name, context)
         
-        stripe = get_site_payment_processor(self.request.site)(request.site, invoice)
-        
-        for subscription in customer_profile.subscriptions.filter(status=SubscriptionStatus.ACTIVE):
-            invoice = customer_profile.get_cart_or_checkout_cart()
-            invoice.empty_cart()
-            last_start_date = subscription.receipts.last().start_date
+        context['transfer_result_msg'] = stripe.transfer_existing_customer_subscription_to_stripe(customer_profile)
 
-            stripe_subscription = stripe.get_stripe_object(stripe.stripe.Subscription, subscription.gateway_id)
-            offer = subscription.get_offer()
-
-            if offer and not stripe_subscription:
-                invoice.add_offer(offer)
-
-                stripe.set_billing_address_form_data(request.POST, BillingAddressForm)
-                stripe.set_payment_info_form_data(request.POST, CreditCardForm)
-
-                try:
-                    stripe.create_subscription(offer, last_start_date)
-                except Exception as exce:
-                    logger.error(f"Creating Subscription Failed, transaction_info: {stripe.transaction_info}, exception: {exce}")
-
-            subscription.status = SubscriptionStatus.CANCELED
-            subscription.save()
-
-        return redirect(self.success_url)
+        return render(request, self.template_name, context)

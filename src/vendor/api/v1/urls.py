@@ -11,11 +11,11 @@ urlpatterns = [
     path('cart/add/<slug:slug>/', api_views.AddToCartView.as_view(), name="add-to-cart"),
     path('cart/remove/<slug:slug>/', api_views.RemoveFromCartView.as_view(), name="remove-from-cart"),
     path('customer/subscription/<uuid:uuid>/cancel/', api_views.PaymentGatewaySubscriptionCancelView.as_view(), name="customer-subscription-cancel"),
+    path('customer/subscription/cancel/model/', api_views.CustomerSubscriptionsCancelModel.as_view(), name="manager-customer-subscriptions-cancel-model"),
     path('product/<uuid:uuid>/remove', api_views.VoidProductView.as_view(), name="manager-profile-remove-product"),
     path('profile/<uuid:uuid_profile>/offer/<uuid:uuid_offer>/add', api_views.AddOfferToProfileView.as_view(), name="manager-profile-add-offer"),
     path('product/<uuid:uuid>/availability', api_views.ProductAvailabilityToggleView.as_view(), name="manager-product-availablility"),
     path('subscription/price/update', api_views.SubscriptionPriceUpdateView.as_view(), name="manager-subscription-price-update"),
-    path('model/subscription/<uuid:uuid>/cancel/', api_views.ModelSubscriptionCancelView.as_view(), name="manager-model-subscription-cancel"),
     # AuthorizeNet
     path('authorizenet/authcapture', authorizenet_views.AuthorizeCaptureAPI.as_view(), name='api-authorizenet-authcapture'),
     path('authorizenet/void', authorizenet_views.VoidAPI.as_view(), name='api-authorizenet-void'),

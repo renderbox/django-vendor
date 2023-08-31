@@ -1388,21 +1388,21 @@ class StripeProcessor(PaymentProcessorBase):
         if not stripe_payment_method:
             raise Exception(f"Could not create stripe_payment_method transaction_info: {self.transaction_info}")
 
-        setup_intent_object = self.build_setup_intent(payment_method_data.id)
+        setup_intent_object = self.build_setup_intent(stripe_payment_method.id)
         stripe_setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_object)
         if not stripe_setup_intent:
             raise Exception(f"Could not create stripe_setup_intent transaction_info: {self.transaction_info}")
 
-        subscription_obj = self.build_subscription(self.invoice.order_items.first(), payment_method_data.id)
+        subscription_obj = self.build_subscription(self.invoice.order_items.first(), stripe_payment_method.id)
         if previous_start_date:
             trial_days = offer.get_offer_end_date(previous_start_date) - timezone.now()
             subscription_obj['trial_period_days'] = trial_days.days
             subscription_obj['billing_cycle_anchor'] = offer.get_offer_end_date(previous_start_date)
 
-        stripe_subscription = stripe.stripe_create_object(stripe.stripe.Subscription, subscription_obj)
+        stripe_subscription = self.stripe_create_object(self.stripe.Subscription, subscription_obj)
         if not stripe_subscription or stripe_subscription.status == 'incomplete':
-            stripe.transaction_succeeded = False
-            raise Exception(f"Subscription Failed to be created: {stripe.transaction_info}")
+            self.transaction_succeeded = False
+            raise Exception(f"Subscription Failed to be created: {self.transaction_info}")
 
         subscription = Subscription.objects.create(
             gateway_id=stripe_subscription.id,
@@ -1410,11 +1410,39 @@ class StripeProcessor(PaymentProcessorBase):
             auto_renew=True,
             status=SubscriptionStatus.ACTIVE
         )
-        subscription.meta['response'] = stripe.transaction_info
+        subscription.meta['response'] = self.transaction_info
         subscription.save()
 
         return subscription
 
+    def transfer_existing_customer_subscription_to_stripe(customer_profile):
+        transfer_result_msg = {"success": [], "failed": []}
+        for subscription in customer_profile.subscriptions.filter(status=SubscriptionStatus.ACTIVE):
+            invoice = customer_profile.get_cart_or_checkout_cart()
+            invoice.empty_cart()
+            stripe.invoice = invoice
+            last_start_date = subscription.receipts.last().start_date
+            stripe_subscription = stripe.stripe_get_object(stripe.stripe.Subscription, subscription.gateway_id)
+            offer = subscription.get_offer()
+
+            if offer and not stripe_subscription:
+                invoice.add_offer(offer)
+
+                try:
+                    stripe.pre_authorization()
+                    stripe.create_subscription(offer, last_start_date)
+                    transfer_result_msg['success'].append(f"Successfuly Transfered Subscription: {subscription.gateway_id}")
+                except Exception as exce:
+                    logger.error(f"Creating Subscription Failed, transaction_info: {stripe.transaction_info}, exception: {exce}")
+                    transfer_result_msg['failed'].append(f"Failed Transfer Subscription {subscription.gateway_id}, exception: {exce}")
+
+            # TODO: Need to loop throught the SupportedPaymentProcessor to cancel the previous subscription.
+            # But need to find a way in which we don't import the Processors to avoid having them to install
+            # all them as a dependency
+            subscription.status = SubscriptionStatus.CANCELED
+            subscription.save()
+            
+        return transfer_result_msg
     ##########
     # Sync Vendor and Stripe
     ##########
@@ -1758,7 +1786,6 @@ class StripeProcessor(PaymentProcessorBase):
             raise Exception("Stripe Subscription Failed")
         
         super().subscription_cancel(subscription)
-
 
     def subscription_update_payment(self, subscription):
         """

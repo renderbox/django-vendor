@@ -20,6 +20,20 @@
                     {% trans 'Stripe Processor not configured' %}
                 {% endif %}
             </div>
+            <div class="row">
+                {% if transfer_result_msg %}
+                    {% for msg in transfer_result_msg.success %}
+                        <p class="text-success">{{msg}}</p>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="row">
+                {% if transfer_result_msg %}
+                    {% for msg in transfer_result_msg.failed %}
+                        <p class="text-danger">{{msg}}</p>
+                    {% endfor %}
+                {% endif %}
+            </div>
         </div>
     </div>
     <div class="col-3"></div>
