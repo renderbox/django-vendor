@@ -1420,20 +1420,22 @@ class StripeProcessor(PaymentProcessorBase):
         for subscription in customer_profile.subscriptions.filter(status=SubscriptionStatus.ACTIVE):
             invoice = customer_profile.get_cart_or_checkout_cart()
             invoice.empty_cart()
-            stripe.invoice = invoice
+            self.invoice = invoice
             last_start_date = subscription.receipts.last().start_date
-            stripe_subscription = stripe.stripe_get_object(stripe.stripe.Subscription, subscription.gateway_id)
+            stripe_subscription = self.stripe_get_object(self.stripe.Subscription, subscription.gateway_id)
             offer = subscription.get_offer()
 
             if offer and not stripe_subscription:
                 invoice.add_offer(offer)
 
                 try:
-                    stripe.pre_authorization()
-                    stripe.create_subscription(offer, last_start_date)
+                    self.pre_authorization()
+                    self.create_subscription(offer, last_start_date)
                     transfer_result_msg['success'].append(f"Successfuly Transfered Subscription: {subscription.gateway_id}")
+                    self.update_invoice_status(InvoiceStatus.COMPLETE)
+                    
                 except Exception as exce:
-                    logger.error(f"Creating Subscription Failed, transaction_info: {stripe.transaction_info}, exception: {exce}")
+                    logger.error(f"Creating Subscription Failed, transaction_info: {self.transaction_info}, exception: {exce}")
                     transfer_result_msg['failed'].append(f"Failed Transfer Subscription {subscription.gateway_id}, exception: {exce}")
 
             # TODO: Need to loop throught the SupportedPaymentProcessor to cancel the previous subscription.
