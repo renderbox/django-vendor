@@ -33,7 +33,6 @@ def get_last_transaction_datetime(transactions, authorize_net):
     
     return convert_authorize_net_submitted_date(transactions[0].submitTimeUTC)
 
-
 def transfer_subscriptions_from_authorizenet_to_stripe(site):
     authorize_net = AuthorizeNetProcessor(site)
     stripe = StripeProcessor(site)
