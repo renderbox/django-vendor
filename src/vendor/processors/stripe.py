@@ -1354,10 +1354,102 @@ class StripeProcessor(PaymentProcessorBase):
             logger.error(f"Get Subscription Exception: {exce} for Stripe Subscription {stripe_subscription.id}")
         
         return subscription
+    
+    def create_subscription(self, offer, previous_start_date=None):
+        """Creates a Stripe Subscription from a Offer instance.
+
+        Creates a Stripe Subscription, which depending on the trail_days will be billed imidiately after excecution. 
+        This function should only be used when webhooks to caputre the payment have been set otherwise the user,
+        will not have access to the associated offer given that no payment or receipt will be created. For this,
+        it is recommended to use the checkout flow.
+
+        It is expected that before calling this method the `set_billing_address_form_data` and `set_payment_info_form_data`
+        have been called.
+
+        Args:
+            offer: Offer instance that will be added to an invoice to create the subscription
+
+            previous_start_date: DateTime instance. Helps to calcualate when the next billing cylce will start for
+            the subscription. If None it will start when the code is executed.
+        
+        Returns:
+            Subscription Instance
+
+        Exceptions:
+            Stripe Payment Method.
+
+            Stripe Setup Intent.
+
+            Subscription Failed to be created.
+
+        """
+        payment_method_data = self.build_payment_method()
+        stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
+        if not stripe_payment_method:
+            raise Exception(f"Could not create stripe_payment_method transaction_info: {self.transaction_info}")
+
+        setup_intent_object = self.build_setup_intent(stripe_payment_method.id)
+        stripe_setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_object)
+        if not stripe_setup_intent:
+            raise Exception(f"Could not create stripe_setup_intent transaction_info: {self.transaction_info}")
+
+        subscription_obj = self.build_subscription(self.invoice.order_items.first(), stripe_payment_method.id)
+        if previous_start_date:
+            trial_days = offer.get_offer_end_date(previous_start_date) - timezone.now()
+            subscription_obj['trial_period_days'] = trial_days.days
+            subscription_obj['billing_cycle_anchor'] = offer.get_offer_end_date(previous_start_date)
+
+        stripe_subscription = self.stripe_create_object(self.stripe.Subscription, subscription_obj)
+        if not stripe_subscription or stripe_subscription.status == 'incomplete':
+            self.transaction_succeeded = False
+            raise Exception(f"Subscription Failed to be created: {self.transaction_info}")
+
+        subscription = Subscription.objects.create(
+            gateway_id=stripe_subscription.id,
+            profile=self.invoice.profile,
+            auto_renew=True,
+            status=SubscriptionStatus.ACTIVE
+        )
+        subscription.meta['response'] = self.transaction_info
+        subscription.save()
+
+        return subscription
+
+    def transfer_existing_customer_subscription_to_stripe(self, customer_profile):
+        transfer_result_msg = {"success": [], "failed": []}
+        for subscription in customer_profile.subscriptions.filter(status=SubscriptionStatus.ACTIVE):
+            invoice = customer_profile.get_cart_or_checkout_cart()
+            invoice.empty_cart()
+            self.invoice = invoice
+            last_start_date = subscription.receipts.last().start_date
+            stripe_subscription = self.stripe_get_object(self.stripe.Subscription, subscription.gateway_id)
+            offer = subscription.get_offer()
+
+            if offer and not stripe_subscription:
+                invoice.add_offer(offer)
+
+                try:
+                    self.pre_authorization()
+                    self.create_subscription(offer, last_start_date)
+                    transfer_result_msg['success'].append(f"Successfuly Transfered Subscription: {subscription.gateway_id}")
+                    self.update_invoice_status(InvoiceStatus.COMPLETE)
+                    
+                except Exception as exce:
+                    logger.error(f"Creating Subscription Failed, transaction_info: {self.transaction_info}, exception: {exce}")
+                    transfer_result_msg['failed'].append(f"Failed Transfer Subscription {subscription.gateway_id}, exception: {exce}")
+
+            # TODO: Need to loop throught the SupportedPaymentProcessor to cancel the previous subscription.
+            # But need to find a way in which we don't import the Processors to avoid having them to install
+            # all them as a dependency
+            subscription.status = SubscriptionStatus.CANCELED
+            subscription.save()
+            
+        return transfer_result_msg
+    
     ##########
     # Sync Vendor and Stripe
     ##########
-    # TODO: function to deprecate. 
+    # TODO: function to deprecate.
     def initialize_products(self, site):
         """
         Grab all subscription offers on invoice and either create or fetch Stripe products.
@@ -1690,8 +1782,13 @@ class StripeProcessor(PaymentProcessorBase):
             self.transaction_id = stripe_invoice.payment_intent
 
     def subscription_cancel(self, subscription):
+        stripe_subscription = self.stripe_delete_object(self.stripe.Subscription, subscription.gateway_id)
+        
+        if stripe_subscription.status != "canceled":
+            logger.error(f"Stripe Subscription Failed: subscription: {subscription.id} transaction info: {self.transaction_info}")
+            raise Exception("Stripe Subscription Failed")
+        
         super().subscription_cancel(subscription)
-        self.stripe_delete_object(self.stripe.Subscription, subscription.gateway_id)
 
     def subscription_update_payment(self, subscription):
         """

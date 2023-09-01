@@ -131,7 +131,7 @@ class RemoveFromCartView(View):
         return redirect('vendor:cart')      # Redirect to cart on success
 
 
-class SubscriptionCancelView(LoginRequiredMixin, View):
+class PaymentGatewaySubscriptionCancelView(LoginRequiredMixin, View):
     success_url = reverse_lazy('vendor:customer-subscriptions')
 
     def post(self, request, *args, **kwargs):
@@ -139,13 +139,27 @@ class SubscriptionCancelView(LoginRequiredMixin, View):
 
         processor = get_site_payment_processor(subscription.profile.site)(subscription.profile.site)
         
-        try: 
+        try:
             processor.subscription_cancel(subscription)
-
             messages.info(self.request, _("Subscription Cancelled"))
 
-        except Exception as exce:
-            messages.warning(self.request, _("You can only cancel subscription if you are on trial or there has been at least one settled payment."))
+        except Exception:
+            messages.warning(self.request, _("Cancel Subscription Failed"))
+
+        return redirect(request.META.get('HTTP_REFERER', self.success_url))
+
+
+class CustomerSubscriptionsCancelModel(LoginRequiredMixin, View):
+    success_url = reverse_lazy('vendor:customer-subscriptions')
+
+    def post(self, request, **kwargs):
+        site = get_site_from_request(request)
+        customer_profile = CustomerProfile.objects.get(site=site, user=request.user)
+
+        for subscription in customer_profile.get_active_subscriptions():
+            subscription.cancel()
+
+        messages.info(self.request, _("Subscriptions Cancelled"))
 
         return redirect(request.META.get('HTTP_REFERER', self.success_url))
 

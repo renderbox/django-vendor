@@ -1,0 +1,41 @@
+{% extends "vendor/base.html" %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block vendor_content %}
+<div class="row">
+    <div class="col-3"></div>
+    <div class="col">
+        <div class="card">
+            <div class="card-header">{% trans 'Confirm Payment Method' %}</div>
+            <div class="card-body">
+                {% if is_stripe_configured %}
+                    <form method="post">
+                        {% include "./includes/billing_address_form.html" with billing_address_form=billing_address_form %}
+                        {% include "./includes/payment_form.html" with credit_card_form=credit_card_form %}
+                        <button class="btn btn-danger" type="submit">{% trans 'Cancel' %}</button>
+                        <button class="btn btn-primary" type="submit">{% trans 'Confirm' %}</button>
+                    </form>
+                {% else %}
+                    {% trans 'Stripe Processor not configured' %}
+                {% endif %}
+            </div>
+            <div class="row">
+                {% if transfer_result_msg %}
+                    {% for msg in transfer_result_msg.success %}
+                        <p class="text-success">{{msg}}</p>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="row">
+                {% if transfer_result_msg %}
+                    {% for msg in transfer_result_msg.failed %}
+                        <p class="text-danger">{{msg}}</p>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-3"></div>
+</div>
+{% endblock %}
