@@ -291,7 +291,8 @@ class StripeProcessor(PaymentProcessorBase):
                 'exception': f"{e}\n{func}\n{func_args}:user_message: {user_message}"
             }
             errors = {
-                'error': f"{e}"
+                'error': f"{e}",
+                'user_message': user_message
             }
             self.transaction_info = self.get_transaction_info(raw=raw, errors=errors)
             logger.error(self.transaction_info)
