@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 ##########
 # SIGNALS
-vendor_pre_authorization = dispatch.Signal()
+stripe_upcoming_invoice = dispatch.Signal()
 vendor_process_payment = dispatch.Signal()
 vendor_post_authorization = dispatch.Signal()
 vendor_subscription_cancel = dispatch.Signal()
