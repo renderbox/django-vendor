@@ -26,11 +26,7 @@ logger = logging.getLogger(__name__)
 
 ##########
 # SIGNALS
-stripe_upcoming_invoice = dispatch.Signal()
-vendor_process_payment = dispatch.Signal()
-vendor_post_authorization = dispatch.Signal()
-vendor_subscription_cancel = dispatch.Signal()
-vendor_customer_card_expiring = dispatch.Signal()
+stripe_invoice_upcoming = dispatch.Signal()
 
 
 class StripeEvents(TextChoices):
@@ -366,10 +362,10 @@ class StripeInvoicePaymentSuccededEvent(StripeBaseAPI):
             return process_stripe_invoice_subscription_payment_succeded(stripe_invoice, site)
 
 
-
 class StripeInvoiceUpcomingEvent(StripeBaseAPI):
     def post(self, request, *args, **kwargs):
-        site = get_site_from_request(self.request)
+        site = get_site_from_request(request)
+        processor = StripeProcessor(site)
 
         if not self.is_valid_post(site):
             logger.error("StripeInvoicePaid error: invalid post")
@@ -380,10 +376,11 @@ class StripeInvoiceUpcomingEvent(StripeBaseAPI):
             return HttpResponse(status=200, content=f"StripeInvoicePaid error: invalid event {self.event}")
 
         stripe_invoice = self.event.data.object
+        customer_profile, stripe_customer = processor.get_customer_profile_and_stripe_customer(stripe_invoice.customer)
+        if not customer_profile or not stripe_customer:
+            logger.error(f"error retrieving customer information for request: {self.event}")
+            return HttpResponse(status=200)
         
-        if 'subscription' not in stripe_invoice or not stripe_invoice['subscription']:
-            # Line Items Invoice
-            return process_stripe_invoice_line_items_payment_succeded(stripe_invoice, site)
-        else:
-            # Subscription Invoice
-            return process_stripe_invoice_subscription_payment_succeded(stripe_invoice, site)
+        logger.info(f"Upcoming Invoice for stripe_customer: {stripe_customer} customer_profile: {customer_profile}")
+
+        stripe_invoice_upcoming.send(sender=self.__class__, customer_profile=customer_profile)
