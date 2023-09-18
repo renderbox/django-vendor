@@ -37,7 +37,7 @@ class StripeEvents(TextChoices):
     PAYMENT_INTENT_SUCCEDED = 'payment_intent.succeeded', _("Payment Succeeded")
     CHARGE_SUCCEEDED = 'charge.succeeded', _('Charge Succeeded')
     SOURCE_EXPIRED = 'customer.source.expired', _('Source Expired')
-    SUBSCRIPTION_TRIAL_END = 'customer.subscription.trial_will_end', _('Trail Period Will End')
+    SUBSCRIPTION_TRIAL_END = 'customer.subscription.trial_will_end', _('Trial Period Will End')
 
 
 class StripeBaseAPI(View):
@@ -93,8 +93,6 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
     
     def post(self, request, *args, **kwargs):
         stripe_invoice = self.event.data.object
-
-
 
         site = get_site_from_request(self.request)
         processor = StripeProcessor(site)
