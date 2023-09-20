@@ -28,4 +28,5 @@ urlpatterns = [
     path('stripe/subscription/invoice/payment/failed/', stripe_views.StripeSubscriptionPaymentFailed.as_view(), name='api-stripe-subscription-invoice-payment-failed'),
     path('stripe/sync/objects/', stripe_views.StripeSyncObjects.as_view(), name='api-stripe-sync-objects'),
     path('stripe/card/expiring/', stripe_views.StripeCardExpiring.as_view(), name='api-stripe-card-expiring'),
+    path('stripe/invoice/upcoming/', stripe_views.StripeInvoiceUpcomingEvent.as_view(), name='api-stripe-invoice-upcoming'),
 ]
