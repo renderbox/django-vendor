@@ -159,7 +159,6 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
             logger.error(f"StripeSubscriptionPaymentFailed error: email: {stripe_invoice.customer_email} does not exist")
             return HttpResponse(status=200, content=f"StripeSubscriptionPaymentFailed error: email: {stripe_invoice.customer_email} does not exist")
 
-
         try:
             subscription = Subscription.objects.get(gateway_id=stripe_invoice.subscription, profile=customer_profile)
         except ObjectDoesNotExist:
@@ -195,7 +194,6 @@ class StripeInvoicePaid(StripeBaseAPI):
     def post(self, request, *args, **kwargs):
         site = get_site_from_request(self.request)
         processor = StripeProcessor(site)
-        
 
         if not self.is_valid_post(site):
             logger.error("StripeInvoicePaid error: invalid post")
@@ -312,7 +310,12 @@ def process_stripe_invoice_subscription_payment_succeded(stripe_invoice, site):
     processor = StripeProcessor(site)
 
     paid_date = timezone.datetime.fromtimestamp(stripe_invoice.status_transitions.paid_at, tz=timezone.utc)
-    stripe_charge = processor.stripe_get_object(processor.stripe.Charge, stripe_invoice.charge)
+    payment_status = PurchaseStatus.SETTLED
+
+    if stripe_invoice.charge:
+        stripe_charge = processor.stripe_get_object(processor.stripe.Charge, stripe_invoice.charge)
+        payment_status = processor.get_payment_status(stripe_charge.status, stripe_charge.refunded)
+
     stripe_subscription = processor.stripe_get_object(processor.stripe.Subscription, stripe_invoice.subscription)
     subscription = processor.get_subscription(stripe_subscription)
 
@@ -331,7 +334,6 @@ def process_stripe_invoice_subscription_payment_succeded(stripe_invoice, site):
         logger.error(msg)
         return HttpResponse(status=200, content=msg)
 
-    payment_status = processor.get_payment_status(stripe_charge.status, stripe_charge.refunded)
     processor.invoice, created = processor.get_or_create_invoice_from_stripe_invoice(stripe_invoice, offer, customer_profile)
     processor.renew_subscription(subscription, stripe_invoice.charge, payment_status, payment_success=True, submitted_date=paid_date)
 
