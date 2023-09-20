@@ -63,7 +63,7 @@ flake8-black==0.3.6
     # via django-vendor (pyproject.toml)
 gitdb==4.0.10
     # via gitpython
-gitpython==3.1.31
+gitpython==3.1.35
     # via bandit
 idna==3.4
     # via requests
