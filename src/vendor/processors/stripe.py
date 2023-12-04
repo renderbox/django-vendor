@@ -1,6 +1,6 @@
 import json
 import logging
-from decimal import Decimal
+from decimal import Decimal, ROUND_UP
 from math import modf
 
 import stripe
@@ -8,8 +8,7 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.utils import timezone
 
-from vendor.config import (DEFAULT_CURRENCY, StripeConnectAccountConfig,
-                           VendorSiteCommissionConfig)
+from vendor.config import DEFAULT_CURRENCY, StripeConnectAccountConfig, VendorSiteCommissionConfig, STRIPE_BASE_COMMISSION, STRIPE_RECURRING_COMMISSION
 from vendor.integrations import StripeIntegration
 from vendor.models import (CustomerProfile, Invoice, Offer, Payment, Receipt,
                            Subscription)
@@ -333,6 +332,17 @@ class StripeProcessor(PaymentProcessorBase):
 
         return None
 
+    def get_stripe_base_fee_amount(self, amount):
+        stripe_base_fee = 0
+
+        if hasattr(STRIPE_BASE_COMMISSION, 'percentage') and STRIPE_BASE_COMMISSION['percentage']:
+            stripe_base_fee = (amount * STRIPE_BASE_COMMISSION['percentage']) / 100
+
+        if hasattr(STRIPE_BASE_COMMISSION, 'fixed') and STRIPE_BASE_COMMISSION['fixed']:
+            stripe_base_fee += STRIPE_BASE_COMMISSION['fixed']
+
+        return stripe_base_fee
+
     def get_application_fee_percent(self):
         vendor_site_commission = VendorSiteCommissionConfig(self.site)
 
@@ -340,14 +350,43 @@ class StripeProcessor(PaymentProcessorBase):
             return vendor_site_commission.get_key_value('commission')
 
         return None
-
-    def get_application_fee_amount(self):
+  
+    def get_application_fee_amount(self, amount):
         vendor_site_commission = VendorSiteCommissionConfig(self.site)
 
         if vendor_site_commission.instance:
-            return self.convert_decimal_to_integer((vendor_site_commission.get_key_value('commission')*self.invoice.total)/100)
+            return self.convert_decimal_to_integer((vendor_site_commission.get_key_value('commission') * amount) / 100)
 
         return None
+  
+    def calculate_application_fee_and_stripe_base_fee_percentage(self):
+        total_fee_percentage = None
+        total_fee_amount = self.get_stripe_base_fee_amount(self.invoice.total)
+        application_fee_amount = self.get_application_fee_amount()
+
+        if application_fee_amount:
+            total_fee_amount += application_fee_amount
+        
+        total_fee_percentage = (total_fee_amount * 100) / self.invoice.total
+
+        return Decimal(total_fee_percentage).quantize(Decimal('.00'), rounding=ROUND_UP)
+
+    def get_recurring_fee_amount(self, amount):
+        fee = 0
+
+        if hasattr(STRIPE_RECURRING_COMMISSION, 'percentage') and STRIPE_RECURRING_COMMISSION['percentage']:
+            fee = (amount * STRIPE_BASE_COMMISSION['percentage']) / 100
+
+        if hasattr(STRIPE_RECURRING_COMMISSION, 'fixed') and STRIPE_RECURRING_COMMISSION['fixed']:
+            fee += STRIPE_BASE_COMMISSION['fixed']
+        
+        return fee
+    
+    def calculate_fee_percentage(self, invoice_amount, fees):
+
+        total_fee_percentage = (fees * 100) / invoice_amount
+
+        return Decimal(total_fee_percentage).quantize(Decimal('.00'), rounding=ROUND_UP)        
 
     def get_invoice_status(self, stripe_status):
         if stripe_status in ["draft", ]:
@@ -580,11 +619,16 @@ class StripeProcessor(PaymentProcessorBase):
         }
 
     def build_payment_intent(self, amount, currency=DEFAULT_CURRENCY):
+        stripe_base_fee = self.get_stripe_base_fee_amount(amount)
+        application_fee = self.get_application_fee_amount(amount)
+
+        fee_percentage = self.calculate_fee_percentage(amount, stripe_base_fee + application_fee)
+
         return {
             'amount': amount,
             'currency': currency,
             'customer': self.invoice.profile.meta['stripe_id'],
-            'application_fee_percent': self.get_application_fee_amount(),
+            'application_fee_percent': fee_percentage,
             'transfer_data': self.get_stripe_connect_account(),
             'on_behalf_of': self.get_stripe_connect_account()
         }
@@ -601,6 +645,13 @@ class StripeProcessor(PaymentProcessorBase):
     
     def build_subscription(self, subscription, payment_method_id):
         price = subscription.offer.get_current_price_instance()
+
+        stripe_base_fee = self.get_stripe_base_fee_amount(self.invoice.total)
+        stripe_recurring_fee = self.get_recurring_fee_amount(self.invoice.total)
+        application_fee = self.get_application_fee_amount(self.invoice.total)
+
+        total_fee_percentage = self.calculate_fee_percentage(self.invoice.total, stripe_base_fee + stripe_recurring_fee + application_fee)
+
         return {
             'customer': self.invoice.profile.meta['stripe_id'],
             'promotion_code': self.invoice.coupon_code.first().meta['stripe_id'] if self.invoice.coupon_code.count() else None,
@@ -608,7 +659,7 @@ class StripeProcessor(PaymentProcessorBase):
             'default_payment_method': payment_method_id,
             'metadata': {'site': self.invoice.site},
             'trial_period_days': subscription.offer.get_trial_days(),
-            'application_fee_percent': self.get_application_fee_percent(),
+            'application_fee_percent': total_fee_percentage,
             'transfer_data': self.build_transfer_data(),
             'on_behalf_of': self.get_stripe_connect_account()
         }
