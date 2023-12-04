@@ -335,10 +335,10 @@ class StripeProcessor(PaymentProcessorBase):
     def get_stripe_base_fee_amount(self, amount):
         stripe_base_fee = 0
 
-        if hasattr(STRIPE_BASE_COMMISSION, 'percentage') and STRIPE_BASE_COMMISSION['percentage']:
+        if 'percentage'in STRIPE_BASE_COMMISSION and STRIPE_BASE_COMMISSION['percentage']:
             stripe_base_fee = (amount * STRIPE_BASE_COMMISSION['percentage']) / 100
 
-        if hasattr(STRIPE_BASE_COMMISSION, 'fixed') and STRIPE_BASE_COMMISSION['fixed']:
+        if 'fixed' in STRIPE_BASE_COMMISSION and STRIPE_BASE_COMMISSION['fixed']:
             stripe_base_fee += STRIPE_BASE_COMMISSION['fixed']
 
         return stripe_base_fee
@@ -355,7 +355,7 @@ class StripeProcessor(PaymentProcessorBase):
         vendor_site_commission = VendorSiteCommissionConfig(self.site)
 
         if vendor_site_commission.instance:
-            return self.convert_decimal_to_integer((vendor_site_commission.get_key_value('commission') * amount) / 100)
+            return (vendor_site_commission.get_key_value('commission') * amount) / 100
 
         return None
   
@@ -374,10 +374,10 @@ class StripeProcessor(PaymentProcessorBase):
     def get_recurring_fee_amount(self, amount):
         fee = 0
 
-        if hasattr(STRIPE_RECURRING_COMMISSION, 'percentage') and STRIPE_RECURRING_COMMISSION['percentage']:
+        if 'percentage' in STRIPE_RECURRING_COMMISSION and STRIPE_RECURRING_COMMISSION['percentage']:
             fee = (amount * STRIPE_BASE_COMMISSION['percentage']) / 100
 
-        if hasattr(STRIPE_RECURRING_COMMISSION, 'fixed') and STRIPE_RECURRING_COMMISSION['fixed']:
+        if 'fixed' in STRIPE_RECURRING_COMMISSION and STRIPE_RECURRING_COMMISSION['fixed']:
             fee += STRIPE_BASE_COMMISSION['fixed']
         
         return fee
@@ -618,18 +618,21 @@ class StripeProcessor(PaymentProcessorBase):
             }
         }
 
-    def build_payment_intent(self, amount, currency=DEFAULT_CURRENCY):
+    def build_payment_intent(self, amount, payment_method_id, currency=DEFAULT_CURRENCY):
         stripe_base_fee = self.get_stripe_base_fee_amount(amount)
         application_fee = self.get_application_fee_amount(amount)
 
-        fee_percentage = self.calculate_fee_percentage(amount, stripe_base_fee + application_fee)
+        fee_amount = self.convert_decimal_to_integer(stripe_base_fee + application_fee)
 
         return {
-            'amount': amount,
+            'amount': self.convert_decimal_to_integer(amount),
             'currency': currency,
             'customer': self.invoice.profile.meta['stripe_id'],
-            'application_fee_percent': fee_percentage,
-            'transfer_data': self.get_stripe_connect_account(),
+            'application_fee_amount': fee_amount,
+            'payment_method': payment_method_id,
+            'transfer_data': {
+                "destination": self.get_stripe_connect_account(),
+            },
             'on_behalf_of': self.get_stripe_connect_account()
         }
 
@@ -654,7 +657,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         return {
             'customer': self.invoice.profile.meta['stripe_id'],
-            'promotion_code': self.invoice.coupon_code.first().meta['stripe_id'] if self.invoice.coupon_code.count() else None,
+            'promotion_code': self.invoice.coupon_code.first().meta['stripe_id'] if hasattr(self.invoice, 'coupon_code') and self.invoice.coupon_code.count() else None,
             'items': [{'price': subscription.offer.meta['stripe']['prices'][str(price.pk)]}],
             'default_payment_method': payment_method_id,
             'metadata': {'site': self.invoice.site},
@@ -1759,8 +1762,8 @@ class StripeProcessor(PaymentProcessorBase):
         
         stripe_invoice.lines = stripe_line_items
 
-        amount = self.convert_decimal_to_integer(self.invoice.get_one_time_transaction_total())
-        payment_intent_data = self.build_payment_intent(amount)
+        amount = self.invoice.get_one_time_transaction_total()
+        payment_intent_data = self.build_payment_intent(amount, stripe_payment_method.id)
         stripe_payment_intent = self.stripe_create_object(self.stripe.PaymentIntent, payment_intent_data)
 
         if not stripe_payment_intent:
