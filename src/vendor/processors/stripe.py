@@ -335,10 +335,10 @@ class StripeProcessor(PaymentProcessorBase):
     def get_stripe_base_fee_amount(self, amount):
         stripe_base_fee = 0
 
-        if 'percentage' in STRIPE_BASE_COMMISSION and STRIPE_BASE_COMMISSION['percentage']:
+        if STRIPE_BASE_COMMISSION.get('percentage'):
             stripe_base_fee = (amount * STRIPE_BASE_COMMISSION['percentage']) / 100
 
-        if 'fixed' in STRIPE_BASE_COMMISSION and STRIPE_BASE_COMMISSION['fixed']:
+        if STRIPE_BASE_COMMISSION.get('fixed'):
             stripe_base_fee += STRIPE_BASE_COMMISSION['fixed']
 
         return stripe_base_fee
@@ -362,10 +362,10 @@ class StripeProcessor(PaymentProcessorBase):
     def get_recurring_fee_amount(self, amount):
         fee = 0
 
-        if 'percentage' in STRIPE_RECURRING_COMMISSION and STRIPE_RECURRING_COMMISSION['percentage']:
+        if STRIPE_RECURRING_COMMISSION.get('percentage'):
             fee = (amount * STRIPE_RECURRING_COMMISSION['percentage']) / 100
 
-        if 'fixed' in STRIPE_RECURRING_COMMISSION and STRIPE_RECURRING_COMMISSION['fixed']:
+        if STRIPE_RECURRING_COMMISSION.get('fixed'):
             fee += STRIPE_RECURRING_COMMISSION['fixed']
         
         return fee
