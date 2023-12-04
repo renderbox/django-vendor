@@ -112,6 +112,7 @@ class VendorSiteCommissionConfig(SiteConfigBaseClass):
         super().__init__(site, self.key)
 
 
+
 VENDOR_PRODUCT_MODEL = getattr(settings, "VENDOR_PRODUCT_MODEL", "vendor.Product")
 
 VENDOR_PAYMENT_PROCESSOR = getattr(
@@ -132,3 +133,7 @@ VENDOR_DATA_ENCODER = getattr(
 )
 
 ENABLE_STRIPE_SIGNALS = getattr(settings, 'ENABLE_STRIPE_SIGNALS', False)
+
+STRIPE_BASE_COMMISSION = getattr(settings, 'STRIPE_BASE_COMMISSION', {'percentage': 2.9, 'fixed': 0.3})
+
+STRIPE_RECURRING_COMMISSION = getattr(settings, 'STRIPE_RECURRING_COMMISSION', {'percentage': 0.5})

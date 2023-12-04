@@ -151,7 +151,7 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
             return HttpResponse(status=200, content=f"StripeSubscriptionPaymentFailed error: invalid event: {self.event}")
 
         stripe_invoice = self.event.data.object
-        paid_date = timezone.datetime.fromtimestamp(stripe_invoice.status_transitions.effective_at, tz=timezone.utc)
+        paid_date = timezone.datetime.fromtimestamp(stripe_invoice.effective_at, tz=timezone.utc)
         processor = StripeProcessor(site)
 
         customer_profile, stripe_customer = processor.get_customer_profile_and_stripe_customer(stripe_invoice.customer)
