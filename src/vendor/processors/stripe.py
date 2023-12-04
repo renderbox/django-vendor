@@ -363,10 +363,10 @@ class StripeProcessor(PaymentProcessorBase):
         fee = 0
 
         if 'percentage' in STRIPE_RECURRING_COMMISSION and STRIPE_RECURRING_COMMISSION['percentage']:
-            fee = (amount * STRIPE_BASE_COMMISSION['percentage']) / 100
+            fee = (amount * STRIPE_RECURRING_COMMISSION['percentage']) / 100
 
         if 'fixed' in STRIPE_RECURRING_COMMISSION and STRIPE_RECURRING_COMMISSION['fixed']:
-            fee += STRIPE_BASE_COMMISSION['fixed']
+            fee += STRIPE_RECURRING_COMMISSION['fixed']
         
         return fee
     
