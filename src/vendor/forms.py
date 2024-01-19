@@ -445,6 +445,10 @@ class SubscriptionAddPaymentForm(forms.ModelForm):
         self.fields['subscription'].widget = forms.HiddenInput()
         self.fields['profile'].widget = forms.HiddenInput()
 
+
+class StartDateForm(forms.Form):
+    start_date = forms.DateTimeField(widget=forms.SelectDateWidget(attrs={"class": "datetime"}))
+
 ##########
 # From Sets
 ##########

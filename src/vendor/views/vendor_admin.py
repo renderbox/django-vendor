@@ -3,26 +3,28 @@ import logging
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, DatabaseError, transaction
 from django.db.models import Count, Q
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views.generic import TemplateView
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import CreateView, UpdateView, FormMixin
 from django.views.generic.list import ListView
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from vendor.config import VENDOR_PRODUCT_MODEL, SiteSelectForm
 
-from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm,\
-    SubscriptionForm, SiteSelectForm, SubscriptionAddPaymentForm, OfferSiteSelectForm
+from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm, \
+    SubscriptionForm, SiteSelectForm, SubscriptionAddPaymentForm, OfferSiteSelectForm, \
+    StartDateForm
 
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment, Subscription
 from vendor.models.choice import PaymentTypes, InvoiceStatus, PurchaseStatus
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
-from vendor.processors import get_site_payment_processor
+from vendor.processors import get_site_payment_processor, StripeProcessor, PRORATION_BEHAVIOUR_CHOICE
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 logger = logging.getLogger(__name__)
@@ -242,7 +244,68 @@ class AdminSubscriptionListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset
+        return queryset.filter(profile__site=get_site_from_request(self.request))
+
+
+class AdminStripeSubscriptionListView(LoginRequiredMixin, ListView):
+    '''
+    Lists Stripe Subscriptions from the requests, site.
+    '''
+    template_name = "vendor/manage/receipt_list.html"
+    model = Subscription
+
+    def get_queryset(self):
+        site = get_site_from_request(self.request)
+        qs = Subscription.objects.filter(profile__site=site, gateway_id__startswith="sub_").order_by("status", "-pk")
+        return qs
+
+
+class AdminStripeSubscriptionReCreate(LoginRequiredMixin, FormMixin, DetailView):
+    '''
+    View will get the Stripe Subscription Detail and on post
+    will cancel the existing Subscription and create a new one
+    to update any application fees or other price or offer
+    related details
+    '''
+    template_name = 'vendor/manage/stripe_subscription_detail.html'
+    model = Subscription
+    slug_field = "uuid"
+    slug_url_kwarg = "uuid"
+    form_class = StartDateForm
+    success_url = reverse_lazy('vendor_admin:manager-stripe-subscriptions')
+    
+    def post(self, request, **kwargs):
+        form = StartDateForm(request.POST)
+
+        if not form.is_valid():
+            context = self.get_context_data(**kwargs)
+            context['form'] = form
+            return render(request, self.template_name, context)
+        
+        site = get_site_from_request(request)
+        subscription = self.get_object()
+        subscription_extras = {
+            'billing_cycle_anchor': form.cleaned_data['start_date'],
+            'proration_behavior': PRORATION_BEHAVIOUR_CHOICE.NONE.value
+        }
+        invoice = subscription.profile.get_cart()
+        invoice.empty_cart()
+        invoice.add_offer(subscription.get_offer())
+
+        stripe = StripeProcessor(site, invoice)
+        
+        stripe_payment_methods = stripe.get_customer_payment_methods(subscription.profile.meta["stripe_id"])
+        if not stripe_payment_methods:
+            raise ObjectDoesNotExist(f"stripe_payment_method does not exist for stripe_customer: {subscription.profile.meta['stripe_id']}")
+        
+        stripe.create_subscription(stripe_payment_methods[0].id, subscription_extras)
+
+        if stripe.transaction_succeeded:
+            stripe.subscription_cancel(subscription)
+        
+        invoice.empty_cart()
+        
+        return redirect(reverse("vendor_admin:manager-subscription", kwargs={"uuid": str(self.get_object().uuid)}))
 
 
 class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
@@ -266,8 +329,8 @@ class AdminSubscriptionDetailView(LoginRequiredMixin, DetailView):
         if payment and payment.billing_address:
             context['billing_form'] = AddressForm(instance=payment.billing_address)
 
-        context['payments'] = subscription.payments.order_by('-submitted_date')
-        context['receipts'] = subscription.receipts.order_by('-start_date')
+        context['payments'] = subscription.payments.order_by('-invoice__pk')
+        context['receipts'] = subscription.receipts.order_by('-order_item__invoice__pk')
 
         return context
 
