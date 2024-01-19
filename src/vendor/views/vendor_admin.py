@@ -20,7 +20,7 @@ from vendor.config import VENDOR_PRODUCT_MODEL, SiteSelectForm
 
 from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm, \
     SubscriptionForm, SiteSelectForm, SubscriptionAddPaymentForm, OfferSiteSelectForm, \
-    StripeSubscriptionCreateForm
+    StartDateForm
 
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment, Subscription
 from vendor.models.choice import PaymentTypes, InvoiceStatus, PurchaseStatus
@@ -272,12 +272,12 @@ class AdminStripeSubscriptionReCreate(LoginRequiredMixin, FormMixin, DetailView)
     model = Subscription
     slug_field = "uuid"
     slug_url_kwarg = "uuid"
-    form_class = StripeSubscriptionCreateForm
+    form_class = StartDateForm
     success_url = reverse_lazy('vendor_admin:manager-stripe-subscriptions')
     
     def post(self, request, **kwargs):
         site = get_site_from_request(request)
-        form = StripeSubscriptionCreateForm(request.POST)
+        form = StartDateForm(request.POST)
         subscription = self.get_object()
 
         if not form.is_valid():

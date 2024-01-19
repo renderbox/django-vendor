@@ -446,7 +446,7 @@ class SubscriptionAddPaymentForm(forms.ModelForm):
         self.fields['profile'].widget = forms.HiddenInput()
 
 
-class StripeSubscriptionCreateForm(forms.Form):
+class StartDateForm(forms.Form):
     start_date = forms.DateTimeField(widget=forms.SelectDateWidget(attrs={"class": "datetime"}))
 
 ##########
