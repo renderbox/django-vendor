@@ -3,6 +3,7 @@ import logging
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, DatabaseError, transaction
 from django.db.models import Count, Q
 from django.shortcuts import redirect, render
@@ -23,7 +24,7 @@ from vendor.forms import OfferForm, PriceFormSet, CreditCardForm, AddressForm, \
 from vendor.models import Invoice, Offer, Receipt, CustomerProfile, Payment, Subscription
 from vendor.models.choice import PaymentTypes, InvoiceStatus, PurchaseStatus
 from vendor.views.mixin import PassRequestToFormKwargsMixin, SiteOnRequestFilterMixin, TableFilterMixin, get_site_from_request
-from vendor.processors import get_site_payment_processor, StripeProcessor
+from vendor.processors import get_site_payment_processor, StripeProcessor, PRORATION_BEHAVIOUR_CHOICE
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 logger = logging.getLogger(__name__)
@@ -274,21 +275,30 @@ class AdminStripeSubscriptionReCreate(LoginRequiredMixin, FormMixin, DetailView)
     success_url = reverse_lazy('vendor_admin:manager-stripe-subscriptions')
     
     def post(self, request, **kwargs):
-        site = get_site_from_request(request)
         form = StartDateForm(request.POST)
-        subscription = self.get_object()
 
         if not form.is_valid():
             context = self.get_context_data(**kwargs)
             context['form'] = form
             return render(request, self.template_name, context)
         
+        site = get_site_from_request(request)
+        subscription = self.get_object()
+        subscription_extras = {
+            'billing_cycle_anchor': form.cleaned_data['start_date'],
+            'proration_behavior': PRORATION_BEHAVIOUR_CHOICE.NONE.value
+        }
         invoice = subscription.profile.get_cart()
         invoice.empty_cart()
         invoice.add_offer(subscription.get_offer())
 
         stripe = StripeProcessor(site, invoice)
-        stripe.create_subscription_from_existing_user(subscription.profile, start_date=form.cleaned_data['start_date'])
+        
+        stripe_payment_methods = stripe.get_customer_payment_methods(subscription.profile.meta["stripe_id"])
+        if not stripe_payment_methods:
+            raise ObjectDoesNotExist(f"stripe_payment_method does not exist for stripe_customer: {subscription.profile.meta['stripe_id']}")
+        
+        stripe.create_subscription(stripe_payment_methods[0].id, subscription_extras)
 
         if stripe.transaction_succeeded:
             stripe.subscription_cancel(subscription)
