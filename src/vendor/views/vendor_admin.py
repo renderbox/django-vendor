@@ -1,12 +1,10 @@
 import logging
-from typing import Any
 
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError, DatabaseError, transaction
 from django.db.models import Count, Q
-from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy, reverse
 from django.views.generic import TemplateView
@@ -290,7 +288,7 @@ class AdminStripeSubscriptionReCreate(LoginRequiredMixin, FormMixin, DetailView)
         invoice.add_offer(subscription.get_offer())
 
         stripe = StripeProcessor(site, invoice)
-        new_subscription = stripe.create_subscription_from_existing_user(subscription.profile, start_date=form.cleaned_data['start_date'])
+        stripe.create_subscription_from_existing_user(subscription.profile, start_date=form.cleaned_data['start_date'])
 
         if stripe.transaction_succeeded:
             stripe.subscription_cancel(subscription)
