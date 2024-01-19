@@ -61,21 +61,21 @@
           <div class='d-flex flex-column w-100 px-3 py-2'>
             <div class='font-weight-bold'>{% trans 'Actions:' %}</div>
             {% if object.status == 30 %}
-            <form class="align-itmes-center m-2" method="post" action="{{ object.receipts.first.order_item.offer.add_to_cart_link }}">
+            <form class="align-items-center m-2" method="post" action="{{ object.receipts.first.order_item.offer.add_to_cart_link }}">
               {% csrf_token %}
               <button class="btn btn-sm btn-primary" type="submit">{% trans 'Renew Subscription' %}</button>
             </form>
             {% else %}
-            <form id="cancelSubscription" class="align-itmes-center m-2" method="post"
+            <form id="cancelSubscription" class="align-items-center m-2" method="post"
               action="{% url 'vendor_api:customer-subscription-cancel' object.uuid %}">
               {% csrf_token %}
               <button class="btn btn-sm btn-primary" type="submit">{% trans 'Cancel Subscription' %}</button>
             </form>
             {% endif %}
-            <div class="align-itmes-center m-2">
+            <div class="align-items-center m-2">
               <a class="btn btn-sm btn-primary" href="{% url 'vendor_admin:manager-subscription-add-payment' object.uuid object.profile.uuid %}">{% trans 'Add Payment' %}</a>
             </div>
-            <div class="align-itmes-center m-2">
+            <div class="align-items-center m-2">
               <a class="btn btn-sm btn-primary" href="{% url 'vendor_admin:manager-stripe-subscription-recreate' object.uuid %}">{% trans 'Re Create Subscription' %}</a>
             </div>
           </div>
