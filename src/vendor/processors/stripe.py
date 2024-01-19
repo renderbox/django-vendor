@@ -6,6 +6,7 @@ from math import modf
 import stripe
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.db import models
 from django.utils import timezone
 
 from vendor.config import DEFAULT_CURRENCY, StripeConnectAccountConfig, VendorSiteCommissionConfig, STRIPE_BASE_COMMISSION, STRIPE_RECURRING_COMMISSION
@@ -18,6 +19,12 @@ from vendor.models.choice import (Country, InvoiceStatus, PurchaseStatus,
 from vendor.processors.base import PaymentProcessorBase
 
 logger = logging.getLogger(__name__)
+
+
+class PRORATION_BEHAVIOUR_CHOICE(models.TextChoices):
+    ALWAYS_INVOICE    = "always_invoice", "Always Invoice"
+    CREATE_PRORATIONS = "create_proration", "Create Proration"
+    NONE              = "none", "None"
 
 
 class StripeQueryBuilder:
@@ -1402,7 +1409,7 @@ class StripeProcessor(PaymentProcessorBase):
         
         return subscription
     
-    def create_subscription(self, offer, previous_start_date=None):
+    def create_subscription(self, offer, previous_start_date=None, proration_behavior=PRORATION_BEHAVIOUR_CHOICE.NONE):
         """Creates a Stripe Subscription from a Offer instance.
 
         Creates a Stripe Subscription, which depending on the trail_days will be billed imidiately after excecution. 
@@ -1418,6 +1425,10 @@ class StripeProcessor(PaymentProcessorBase):
 
             previous_start_date: DateTime instance. Helps to calcualate when the next billing cylce will start for
             the subscription. If None it will start when the code is executed.
+
+            proration_behavior: String Enum [always_invoice, create_proration, none] used when previour_start_date
+            is calculated to determine if the invoice will include a payment for the remainig days until the new
+            start date. If none, billing will start on the calculated start date.
         
         Returns:
             Subscription Instance
@@ -1445,6 +1456,60 @@ class StripeProcessor(PaymentProcessorBase):
             trial_days = offer.get_offer_end_date(previous_start_date) - timezone.now()
             subscription_obj['trial_period_days'] = trial_days.days
             subscription_obj['billing_cycle_anchor'] = offer.get_offer_end_date(previous_start_date)
+            subscription_obj['proration_behavior'] = proration_behavior
+
+        stripe_subscription = self.stripe_create_object(self.stripe.Subscription, subscription_obj)
+        if not stripe_subscription or stripe_subscription.status == 'incomplete':
+            self.transaction_succeeded = False
+            raise Exception(f"Subscription Failed to be created: {self.transaction_info}")
+
+        subscription = Subscription.objects.create(
+            gateway_id=stripe_subscription.id,
+            profile=self.invoice.profile,
+            auto_renew=True,
+            status=SubscriptionStatus.ACTIVE
+        )
+        subscription.meta['response'] = self.transaction_info
+        subscription.save()
+
+        return subscription
+    
+    def create_subscription_from_existing_user(self, profile, start_date=timezone.now(), proration_behavior=PRORATION_BEHAVIOUR_CHOICE.NONE):
+        """Creates a new subscription for an existing stripe user
+        
+        Creates a new subscription from an existing stripe user that has a payement on file, this assumes that the processor has a
+        invoice assigned with the offer, to create the subscription. 
+
+        Args:
+
+            previous_start_date: DateTime instance. Helps to calcualate when the next billing cylce will start for
+            the subscription. If None it will start when the code is executed.
+
+            proration_behavior: String Enum [always_invoice, create_proration, none] used when previour_start_date
+            is calculated to determine if the invoice will include a payment for the remainig days until the new
+            start date. If none, billing will start on the calculated start date.
+        Returns:
+            Subscription Instance
+        
+        Exceptions:
+            Stripe Customer has no Payment Methods.
+
+            Stripe Payment intent cloud not be created.
+
+            Subscription Failed to be created.
+        """
+        stripe_payment_methods = self.get_customer_payment_methods(profile.meta["stripe_id"])
+        if not stripe_payment_methods:
+            raise ObjectDoesNotExist(f"stripe_payment_method does not exist for stripe_customer: {profile.meta['stripe_id']}")
+        
+        setup_intent_object = self.build_setup_intent(stripe_payment_methods[0].id)
+        stripe_setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_object)
+        if not stripe_setup_intent:
+            raise Exception(f"Could not create stripe_setup_intent transaction_info: {self.transaction_info}")
+
+        subscription_obj = self.build_subscription(self.invoice.order_items.first(), stripe_payment_methods[0].id)
+        subscription_obj['billing_cycle_anchor'] = start_date
+        subscription_obj['proration_behavior'] = proration_behavior.value
 
         stripe_subscription = self.stripe_create_object(self.stripe.Subscription, subscription_obj)
         if not stripe_subscription or stripe_subscription.status == 'incomplete':
@@ -1781,6 +1846,19 @@ class StripeProcessor(PaymentProcessorBase):
             self.transaction_id = stripe_invoice.payment_intent
 
     def subscription_payment(self, subscription):
+        """Creates and process the payment for the subscription
+        Creates a Stripe Payment Method, a Stripe Setup Intent and a Stripe Subscription. This are the
+        objects needed by Stripe to process a payment for the subscriptions being created.
+        
+        If the transaction is successful it will set the self.transaction_success variable to true, saves
+        the invoice number to the invoice.vendor_notes field and sets the self.subscription_id to the
+        newley created stripe_subscription.id object.
+
+        If the transaction fails, self.transaction_success is set to False.
+
+        Args:
+            subscription: OrderItem model instance.
+        """
         payment_method_data = self.build_payment_method()
         stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
         if not stripe_payment_method:
