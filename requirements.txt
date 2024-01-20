@@ -6,7 +6,7 @@
 #
 asgiref==3.7.2
     # via django
-django==3.2.20
+django==3.2.23
     # via
     #   django-extensions
     #   django-vendor (pyproject.toml)
