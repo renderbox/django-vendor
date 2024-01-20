@@ -20,7 +20,7 @@ charset-normalizer==3.1.0
     # via requests
 click==8.1.4
     # via black
-cryptography==41.0.4
+cryptography==41.0.6
     # via
     #   django-fernet-fields
     #   pyjwt
