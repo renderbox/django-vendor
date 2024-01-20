@@ -19,6 +19,7 @@
       <table class="table table-striped">
         <thead>
           <tr>
+            <th scope="col">{% trans '#' %}</th>
             <th scope="col">{% trans 'Subscription ID' %}</th>
             <th scope="col">{% trans 'Subscription' %}</th>
             <th scope="col">{% trans 'Profile' %}</th>
@@ -31,6 +32,7 @@
         <tbody>
           {% for item in object_list %}
           <tr>
+            <td>{{ forloop.counter }}</td>
             <td>
               <a href="{% url 'vendor_admin:manager-subscription' item.uuid %}">
                 {{ item.gateway_id }}

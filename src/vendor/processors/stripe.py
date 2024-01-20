@@ -1,15 +1,15 @@
 import json
 import logging
-from decimal import Decimal
+from decimal import Decimal, ROUND_UP
 from math import modf
 
 import stripe
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.db import models
 from django.utils import timezone
 
-from vendor.config import (DEFAULT_CURRENCY, StripeConnectAccountConfig,
-                           VendorSiteCommissionConfig)
+from vendor.config import DEFAULT_CURRENCY, StripeConnectAccountConfig, VendorSiteCommissionConfig, STRIPE_BASE_COMMISSION, STRIPE_RECURRING_COMMISSION
 from vendor.integrations import StripeIntegration
 from vendor.models import (CustomerProfile, Invoice, Offer, Payment, Receipt,
                            Subscription)
@@ -19,6 +19,12 @@ from vendor.models.choice import (Country, InvoiceStatus, PurchaseStatus,
 from vendor.processors.base import PaymentProcessorBase
 
 logger = logging.getLogger(__name__)
+
+
+class PRORATION_BEHAVIOUR_CHOICE(models.TextChoices):
+    ALWAYS_INVOICE    = "always_invoice", "Always Invoice"
+    CREATE_PRORATIONS = "create_proration", "Create Proration"
+    NONE              = "none", "None"
 
 
 class StripeQueryBuilder:
@@ -333,6 +339,17 @@ class StripeProcessor(PaymentProcessorBase):
 
         return None
 
+    def get_stripe_base_fee_amount(self, amount):
+        stripe_base_fee = 0
+
+        if STRIPE_BASE_COMMISSION.get('percentage'):
+            stripe_base_fee = (amount * STRIPE_BASE_COMMISSION['percentage']) / 100
+
+        if STRIPE_BASE_COMMISSION.get('fixed'):
+            stripe_base_fee += STRIPE_BASE_COMMISSION['fixed']
+
+        return stripe_base_fee
+
     def get_application_fee_percent(self):
         vendor_site_commission = VendorSiteCommissionConfig(self.site)
 
@@ -340,14 +357,31 @@ class StripeProcessor(PaymentProcessorBase):
             return vendor_site_commission.get_key_value('commission')
 
         return None
-
-    def get_application_fee_amount(self):
+  
+    def get_application_fee_amount(self, amount):
         vendor_site_commission = VendorSiteCommissionConfig(self.site)
 
         if vendor_site_commission.instance:
-            return self.convert_decimal_to_integer((vendor_site_commission.get_key_value('commission')*self.invoice.total)/100)
+            return (vendor_site_commission.get_key_value('commission') * amount) / 100
 
         return None
+
+    def get_recurring_fee_amount(self, amount):
+        fee = 0
+
+        if STRIPE_RECURRING_COMMISSION.get('percentage'):
+            fee = (amount * STRIPE_RECURRING_COMMISSION['percentage']) / 100
+
+        if STRIPE_RECURRING_COMMISSION.get('fixed'):
+            fee += STRIPE_RECURRING_COMMISSION['fixed']
+        
+        return fee
+    
+    def calculate_fee_percentage(self, invoice_amount, fees):
+
+        total_fee_percentage = (fees * 100) / invoice_amount
+
+        return Decimal(total_fee_percentage).quantize(Decimal('.00'), rounding=ROUND_UP)        
 
     def get_invoice_status(self, stripe_status):
         if stripe_status in ["draft", ]:
@@ -424,7 +458,7 @@ class StripeProcessor(PaymentProcessorBase):
         return stripe_object
 
     def stripe_update_object(self, stripe_object_class, object_id, object_data):
-        object_data['sid'] = object_id
+        object_data['id'] = object_id
         stripe_object = self.stripe_call(stripe_object_class.modify, object_data)
 
         if self.transaction_succeeded:
@@ -579,13 +613,21 @@ class StripeProcessor(PaymentProcessorBase):
             }
         }
 
-    def build_payment_intent(self, amount, currency=DEFAULT_CURRENCY):
+    def build_payment_intent(self, amount, payment_method_id, currency=DEFAULT_CURRENCY):
+        stripe_base_fee = self.get_stripe_base_fee_amount(amount)
+        application_fee = self.get_application_fee_amount(amount)
+
+        fee_amount = self.convert_decimal_to_integer(stripe_base_fee + application_fee)
+
         return {
-            'amount': amount,
+            'amount': self.convert_decimal_to_integer(amount),
             'currency': currency,
             'customer': self.invoice.profile.meta['stripe_id'],
-            'application_fee_percent': self.get_application_fee_amount(),
-            'transfer_data': self.get_stripe_connect_account(),
+            'application_fee_amount': fee_amount,
+            'payment_method': payment_method_id,
+            'transfer_data': {
+                "destination": self.get_stripe_connect_account(),
+            },
             'on_behalf_of': self.get_stripe_connect_account()
         }
 
@@ -601,23 +643,33 @@ class StripeProcessor(PaymentProcessorBase):
     
     def build_subscription(self, subscription, payment_method_id):
         price = subscription.offer.get_current_price_instance()
+
+        stripe_base_fee = self.get_stripe_base_fee_amount(self.invoice.total)
+        stripe_recurring_fee = self.get_recurring_fee_amount(self.invoice.total)
+        application_fee = self.get_application_fee_amount(self.invoice.total)
+
+        total_fee_percentage = self.calculate_fee_percentage(self.invoice.total, stripe_base_fee + stripe_recurring_fee + application_fee)
+
         return {
             'customer': self.invoice.profile.meta['stripe_id'],
-            'promotion_code': self.invoice.coupon_code.first().meta['stripe_id'] if self.invoice.coupon_code.count() else None,
+            'promotion_code': self.invoice.coupon_code.first().meta['stripe_id'] if hasattr(self.invoice, 'coupon_code') and self.invoice.coupon_code.count() else None,
             'items': [{'price': subscription.offer.meta['stripe']['prices'][str(price.pk)]}],
             'default_payment_method': payment_method_id,
             'metadata': {'site': self.invoice.site},
             'trial_period_days': subscription.offer.get_trial_days(),
-            'application_fee_percent': self.get_application_fee_percent(),
+            'application_fee_percent': total_fee_percentage,
             'transfer_data': self.build_transfer_data(),
             'on_behalf_of': self.get_stripe_connect_account()
         }
 
     def build_invoice_line_item(self, order_item, invoice_id):
+        price = order_item.offer.get_current_price_instance()
+
         line_item = {
             'customer': self.invoice.profile.meta.get('stripe_id'),
             'invoice': invoice_id,
-            'price': order_item.offer.meta['stripe'].get('price_id'),
+            'quantity': order_item.quantity,
+            'price': order_item.offer.meta['stripe']['prices'].get(str(price.pk)),
         }
 
         if order_item.offer.has_trial() or order_item.offer.has_valid_billing_start_date() or order_item.offer.discount():
@@ -629,6 +681,7 @@ class StripeProcessor(PaymentProcessorBase):
         return {
             'customer': self.invoice.profile.meta.get('stripe_id'),
             'currency': currency,
+            'on_behalf_of': self.get_stripe_connect_account()
         }
 
     ##########
@@ -1356,49 +1409,34 @@ class StripeProcessor(PaymentProcessorBase):
         
         return subscription
     
-    def create_subscription(self, offer, previous_start_date=None):
-        """Creates a Stripe Subscription from a Offer instance.
-
-        Creates a Stripe Subscription, which depending on the trail_days will be billed imidiately after excecution. 
-        This function should only be used when webhooks to caputre the payment have been set otherwise the user,
-        will not have access to the associated offer given that no payment or receipt will be created. For this,
-        it is recommended to use the checkout flow.
-
-        It is expected that before calling this method the `set_billing_address_form_data` and `set_payment_info_form_data`
-        have been called.
-
+    def create_subscription(self, payment_method_id, subscription_extras):
+        """Creates a Stripe and Vendor Subscriptions instance
+        
+        Method setups the process to create and charge a Stripe Subscription. If a Stripe Subscription
+        object is returned a Vendor Subscrption instance will be created. Otherwise an excepetion
+        will be raise with the reason of why the subscription failed to create.
+        
         Args:
-            offer: Offer instance that will be added to an invoice to create the subscription
-
-            previous_start_date: DateTime instance. Helps to calcualate when the next billing cylce will start for
-            the subscription. If None it will start when the code is executed.
+            payment_method_id: String coming from a Stripe Payment Method Object
+            
+            subscription_extras: Dictionary containing extra arguments for the Stripe Subscription.
+            EG { "trail_days": 10, "billing_cycle_anchor": <datetime>}
         
         Returns:
-            Subscription Instance
-
+            subscription: Vendor Subscription Model instance
+            
         Exceptions:
-            Stripe Payment Method.
-
-            Stripe Setup Intent.
-
-            Subscription Failed to be created.
-
+            Stripe Setup Intent failed to create
+            
+            Stripe Subscription failed to create
         """
-        payment_method_data = self.build_payment_method()
-        stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
-        if not stripe_payment_method:
-            raise Exception(f"Could not create stripe_payment_method transaction_info: {self.transaction_info}")
-
-        setup_intent_object = self.build_setup_intent(stripe_payment_method.id)
+        setup_intent_object = self.build_setup_intent(payment_method_id)
         stripe_setup_intent = self.stripe_create_object(self.stripe.SetupIntent, setup_intent_object)
         if not stripe_setup_intent:
             raise Exception(f"Could not create stripe_setup_intent transaction_info: {self.transaction_info}")
-
-        subscription_obj = self.build_subscription(self.invoice.order_items.first(), stripe_payment_method.id)
-        if previous_start_date:
-            trial_days = offer.get_offer_end_date(previous_start_date) - timezone.now()
-            subscription_obj['trial_period_days'] = trial_days.days
-            subscription_obj['billing_cycle_anchor'] = offer.get_offer_end_date(previous_start_date)
+        
+        subscription_obj = self.build_subscription(self.invoice.order_items.first(), payment_method_id)
+        subscription_obj |= subscription_extras
 
         stripe_subscription = self.stripe_create_object(self.stripe.Subscription, subscription_obj)
         if not stripe_subscription or stripe_subscription.status == 'incomplete':
@@ -1431,7 +1469,18 @@ class StripeProcessor(PaymentProcessorBase):
 
                 try:
                     self.pre_authorization()
-                    self.create_subscription(offer, last_start_date)
+
+                    payment_method_data = self.build_payment_method()
+                    stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
+                    if not stripe_payment_method:
+                        raise Exception(f"Could not create stripe_payment_method transaction_info: {self.transaction_info}")
+                    
+                    subscription_extras = {
+                        "billing_cycle_anchor": offer.get_offer_end_date(last_start_date),
+                        "proration_behavior": PRORATION_BEHAVIOUR_CHOICE.NONE.value
+                    }
+                    self.create_subscription(offer, subscription_extras)
+
                     transfer_result_msg['success'].append(f"Successfuly Transfered Subscription: {subscription.gateway_id}")
                     self.update_invoice_status(InvoiceStatus.COMPLETE)
                     
@@ -1704,15 +1753,29 @@ class StripeProcessor(PaymentProcessorBase):
         for order_item in self.invoice.get_one_time_transaction_order_items():
             line_item_data = self.build_invoice_line_item(order_item, stripe_invoice.id)
             stripe_line_item = self.stripe_create_object(self.stripe.InvoiceItem, line_item_data)
+
+            if not stripe_line_item:
+                return None
+            
             stripe_line_items.append(stripe_line_item)
-        
+
         stripe_invoice.lines = stripe_line_items
 
-        amount = self.convert_decimal_to_integer(self.invoice.get_one_time_transaction_total())
-        payment_intent_data = self.build_payment_intent(amount)
-        stripe_payment_intent = self.stripe_create_object(self.stripe.PaymentIntent, payment_intent_data)
+        amount = self.invoice.get_one_time_transaction_total()
 
-        if not stripe_payment_intent:
+        stripe_base_fee = self.get_stripe_base_fee_amount(amount)
+        application_fee = self.get_application_fee_amount(amount)
+        fee_amount = self.convert_decimal_to_integer(stripe_base_fee + application_fee)
+
+        invoice_update = {
+            'application_fee_amount': fee_amount,
+            'transfer_data': {
+                "destination": self.get_stripe_connect_account(),
+            },
+        }
+
+        stripe_invoice = self.stripe_update_object(stripe.Invoice, stripe_invoice.id, invoice_update)
+        if not stripe_invoice:
             return None
 
         self.stripe_call(stripe_invoice.pay, {"payment_method": stripe_payment_method.id})
@@ -1721,6 +1784,19 @@ class StripeProcessor(PaymentProcessorBase):
             self.transaction_id = stripe_invoice.payment_intent
 
     def subscription_payment(self, subscription):
+        """Creates and process the payment for the subscription
+        Creates a Stripe Payment Method, a Stripe Setup Intent and a Stripe Subscription. This are the
+        objects needed by Stripe to process a payment for the subscriptions being created.
+        
+        If the transaction is successful it will set the self.transaction_success variable to true, saves
+        the invoice number to the invoice.vendor_notes field and sets the self.subscription_id to the
+        newley created stripe_subscription.id object.
+
+        If the transaction fails, self.transaction_success is set to False.
+
+        Args:
+            subscription: OrderItem model instance.
+        """
         payment_method_data = self.build_payment_method()
         stripe_payment_method = self.stripe_create_object(self.stripe.PaymentMethod, payment_method_data)
         if not stripe_payment_method:

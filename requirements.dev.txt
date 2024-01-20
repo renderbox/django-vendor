@@ -12,7 +12,7 @@ black==23.3.0
     # via
     #   django-vendor (pyproject.toml)
     #   flake8-black
-certifi==2023.5.7
+certifi==2023.7.22
     # via requests
 cffi==1.15.1
     # via cryptography
@@ -20,7 +20,7 @@ charset-normalizer==3.1.0
     # via requests
 click==8.1.4
     # via black
-cryptography==41.0.1
+cryptography==41.0.4
     # via
     #   django-fernet-fields
     #   pyjwt
@@ -63,7 +63,7 @@ flake8-black==0.3.6
     # via django-vendor (pyproject.toml)
 gitdb==4.0.10
     # via gitpython
-gitpython==3.1.31
+gitpython==3.1.37
     # via bandit
 idna==3.4
     # via requests
@@ -140,5 +140,5 @@ typing-extensions==4.7.1
     #   black
     #   dj-database-url
     #   mypy
-urllib3==2.0.3
+urllib3==2.0.6
     # via requests

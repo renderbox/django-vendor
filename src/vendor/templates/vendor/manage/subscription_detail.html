@@ -61,19 +61,22 @@
           <div class='d-flex flex-column w-100 px-3 py-2'>
             <div class='font-weight-bold'>{% trans 'Actions:' %}</div>
             {% if object.status == 30 %}
-            <form class="align-itmes-center" method="post" action="{{ object.receipts.first.order_item.offer.add_to_cart_link }}">
+            <form class="align-items-center m-2" method="post" action="{{ object.receipts.first.order_item.offer.add_to_cart_link }}">
               {% csrf_token %}
               <button class="btn btn-sm btn-primary" type="submit">{% trans 'Renew Subscription' %}</button>
             </form>
             {% else %}
-            <form id="cancelSubscription" class="align-itmes-center" method="post"
+            <form id="cancelSubscription" class="align-items-center m-2" method="post"
               action="{% url 'vendor_api:customer-subscription-cancel' object.uuid %}">
               {% csrf_token %}
               <button class="btn btn-sm btn-primary" type="submit">{% trans 'Cancel Subscription' %}</button>
             </form>
             {% endif %}
-            <div class="align-itmes-center">
-              <a class="btn btn-primary" href="{% url 'vendor_admin:manager-subscription-add-payment' object.uuid object.profile.uuid %}">{% trans 'Add Payment' %}</a>
+            <div class="align-items-center m-2">
+              <a class="btn btn-sm btn-primary" href="{% url 'vendor_admin:manager-subscription-add-payment' object.uuid object.profile.uuid %}">{% trans 'Add Payment' %}</a>
+            </div>
+            <div class="align-items-center m-2">
+              <a class="btn btn-sm btn-primary" href="{% url 'vendor_admin:manager-stripe-subscription-recreate' object.uuid %}">{% trans 'Re Create Subscription' %}</a>
             </div>
           </div>
         </div>
@@ -167,100 +170,7 @@
   </div>
   {% endif %}
 </div>
-<div class='card'>
-  <div class='card-header'>
-    {% trans 'Invoices' %}
-  </div>
-  <div class='card-body'>
-    <table class="table mb-0">
-      <thead class="thead-dark">
-        <tr>
-          <th style="min-width: 40px;">{% trans '#' %}</th>
-          <th>{% trans 'Date Created' %}</th>
-          <th>{% trans 'Status' %}</th>
-          <th>{% trans 'Subtotal' %}</th>
-          <th>{% trans 'Tax' %}</th>
-          <th>{% trans 'Total' %}</th>
-          <th>{% trans 'Currency' %}</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for invoice in object.profile.invoices.all %}
-        <tr class="table-secondary">
-          <th>{{invoice.pk }}</th>
-          <th>{{invoice.created|date:'Y-m-d' }}</th>
-          <th>{{invoice.get_status_display }}</th>
-          <th>{{invoice.subtotal }}</th>
-          <th>{{invoice.tax }}</th>
-          <th>{{invoice.total }}</th>
-          <th colspan="2">{{invoice.currency }}</th>
-        </tr>
-        <table class="table mb-0">
-          <thead class="bg-light">
-            <tr>
-              <th style="min-width: 40px;">{% trans 'Payments' %}</th>
-              <th>{% trans '#' %}</th>
-              <th>{% trans 'Transaction' %}</th>
-              <th>{% trans 'Amount' %}</th>
-              <th>{% trans 'Payee' %}</th>
-              <th>{% trans 'Account' %}</th>
-              <th>{% trans 'Success' %}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for payment in invoice.payments.all %}
-            <tr>
-              <th></th>
-              <th>{{payment.pk}}</th>
-              <th>{{payment.transaction}}</th>
-              <th>{{payment.amount}}</th>
-              <th>{{payment.payee_full_name}}</th>
-              <th>{{payment.result.payment_info.account_number}}</th>
-              <th>{{payment.success}}</th>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        <table class="table mb-0">
-          <thead class="bg-light">
-            <tr>
-              <th style="min-width: 40px;">{% trans 'Receipts' %}</th>
-              <th class="text-center">{% trans '#' %}</th>
-              <th>{% trans 'Transaction' %}</th>
-              <th>{% trans 'Name' %}</th>
-              <th>{% trans 'Start Date' %}</th>
-              <th>{% trans 'End Date' %}</th>
-              <th>{% trans 'Status' %}</th>
-              <th>{% trans 'Actions' %}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for order_item in invoice.order_items.all %}
-            {% for receipt in order_item.receipts.all %}
-            <tr>
-              <th></th>
-              <th class="text-center">{{receipt.pk}}</th>
-              <th>{{receipt.transaction}}</th>
-              <th>{{order_item.name}}</th>
-              <th>{{receipt.start_date|date:'Y-m-d'}}</th>
-              <th>{{receipt.end_date|date:'Y-m-d'}}</th>
-              <th>{{receipt.get_status_display}}</th>
-              <th><a class="btn btn-sm btn-warning">{% trans 'TBD' %}</a></th>
-              {% comment %}
-              <!-- TODO: Need to implement -->
-              <th><a class="btn btn-sm btn-warning">{% trans 'Refund' %}</a></th>
-              {% endcomment %}
-            </tr>
-            {% endfor %}
-            {% endfor %}
-            {% endfor %}
-          </tbody>
-        </table>
-      </tbody>
-    </table>
-  </div>
-</div>
+<p></p>
 <div class="row">
   <div class="col-6">
     <div class='card'>
@@ -268,6 +178,7 @@
         {% trans 'Payments' %}
       </div>
       <div class='card-body'>
+        <div class="table-responsive">
         <table class="table mb-0">
           <thead class="thead-dark">
             <tr>
@@ -296,6 +207,7 @@
           </tbody>
         </table>
       </div>
+      </div>
     </div>
   </div>
   <div class="col-6">
@@ -304,11 +216,13 @@
         {% trans 'Receipts' %}
       </div>
       <div class='card-body'>
+        <div class="table-responsive">
         <table class="table mb-0">
           <thead class="thead-dark">
             <tr>
               <th>{% trans '#' %}</th>
-              <th>{% trans 'transaction' %}</th>
+              <th>{% trans 'Invoice' %}</th>
+              <th>{% trans 'Transaction' %}</th>
               <th>{% trans 'Start Date' %}</th>
               <th>{% trans 'End Date' %}</th>
             </tr>
@@ -317,6 +231,7 @@
             {% for receipt in receipts %}
             <tr class="table-secondary">
               <th>{{receipt.pk }}</th>
+              <th>{{receipt.order_item.invoice.pk }}</th>
               <th>{{receipt.transaction }}</th>
               <th>{{receipt.start_date|date:'Y-m-d' }}</th>
               <th>{{receipt.end_date|date:'Y-m-d' }}</th>
@@ -324,6 +239,7 @@
             {% endfor %}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   </div>
