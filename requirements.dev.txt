@@ -8,7 +8,7 @@ asgiref==3.7.2
     # via django
 bandit==1.7.5
     # via django-vendor (pyproject.toml)
-black==23.3.0
+black==24.3.0
     # via
     #   django-vendor (pyproject.toml)
     #   flake8-black
