@@ -65,7 +65,7 @@ gitdb==4.0.10
     # via gitpython
 gitpython==3.1.37
     # via bandit
-idna==3.4
+idna==3.7
     # via requests
 iso4217==1.11.20220401
     # via django-vendor (pyproject.toml)
