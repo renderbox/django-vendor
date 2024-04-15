@@ -18,7 +18,7 @@ iso4217==1.11.20220401
     # via django-vendor (pyproject.toml)
 pytz==2023.3
     # via django
-sqlparse==0.4.4
+sqlparse==0.5.0
     # via django
 typing-extensions==4.7.1
     # via asgiref
