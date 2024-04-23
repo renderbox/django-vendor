@@ -1046,5 +1046,3 @@ class AuthorizeNetProcessorTests(TestCase):
         
         payment.refresh_from_db()
         self.assertEqual(payment.status, PurchaseStatus.SETTLED)
-
-
