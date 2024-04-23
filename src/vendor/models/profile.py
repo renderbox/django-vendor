@@ -223,6 +223,9 @@ class CustomerProfile(CreateUpdateModelBase):
         
         filtered_dates = [date for date in next_billing_dates if date is not None]
 
+        if not filtered_dates:
+            return None
+
         return sorted(filtered_dates)[0]
 
     def get_last_payment_date(self):
@@ -238,6 +241,9 @@ class CustomerProfile(CreateUpdateModelBase):
             return None
         
         filtered_dates = [date for date in last_payment_dates if date is not None]
+
+        if not filtered_dates:
+            return None
         
         return sorted(filtered_dates)[-1]
 
