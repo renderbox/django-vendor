@@ -210,16 +210,26 @@ class CustomerProfile(CreateUpdateModelBase):
         return self.subscriptions.filter(status=SubscriptionStatus.ACTIVE)
 
     def get_next_billing_date(self):
+        '''Returns the next billing date for the customers subscriptions'''
         next_billing_dates = []
         
         if not self.subscriptions.filter(status=SubscriptionStatus.ACTIVE).count():
             return None
 
         next_billing_dates = [subscription.get_next_billing_date() for subscription in self.get_active_subscriptions()]
+        
+        if not next_billing_dates:
+            return None
+        
+        filtered_dates = [date for date in next_billing_dates if date is not None]
 
-        return sorted(next_billing_dates)[0]
+        if not filtered_dates:
+            return None
+
+        return sorted(filtered_dates)[0]
 
     def get_last_payment_date(self):
+        '''Returns the last payment date made form the customer subscriptions'''
         last_payment_dates = []
         
         if not self.subscriptions.count():
@@ -227,7 +237,15 @@ class CustomerProfile(CreateUpdateModelBase):
 
         last_payment_dates = [subscription.get_last_payment_date() for subscription in self.subscriptions.all()]
 
-        return sorted(last_payment_dates)[-1]
+        if not last_payment_dates:
+            return None
+        
+        filtered_dates = [date for date in last_payment_dates if date is not None]
+
+        if not filtered_dates:
+            return None
+        
+        return sorted(filtered_dates)[-1]
 
     def get_payment_counts(self):
         return self.payments.filter(deleted=False, status=PurchaseStatus.SETTLED).count()

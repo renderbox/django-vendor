@@ -81,7 +81,10 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
         self.save()
 
     def get_next_billing_date(self):
-        receipts = self.receipts.filter(Q(deleted=False), Q(end_date__gte=timezone.now()) | Q(end_date=None)).order_by('end_date')
+        '''Returns the next billing date
+        
+        Function returns the next billing date which is the last receipt.end_date for the subscription.'''
+        receipts = self.receipts.filter(Q(deleted=False), Q(end_date__gte=timezone.now())).order_by('end_date')
         
         if not receipts.count():
             return None
@@ -89,12 +92,25 @@ class Subscription(SoftDeleteModelBase, CreateUpdateModelBase):
         return receipts.first().end_date
         
     def get_last_payment_date(self):
+        '''Return the payments related reciept start date.
+
+        Instead of returning payments.create DateTime field it return the releated payments reciept.start_date
+        because that field can be edited to match an actual payment date if necessary. 
+        
+        Returns:
+            None or DateTime
+        '''
         payment = self.payments.filter(deleted=False, status__lte=PurchaseStatus.SETTLED).order_by('-created').first()
 
         if not payment:
             return None
+        
+        receipt = payment.get_receipt()
+        
+        if receipt is None or not receipt.start_date:
+            return None
 
-        return payment.get_receipt().start_date
+        return receipt.start_date
         
     def is_on_trial(self):
         if not self.receipts.filter(deleted=False).count():
