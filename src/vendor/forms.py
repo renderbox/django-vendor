@@ -11,12 +11,26 @@ from django.utils.translation import gettext_lazy as _
 from integrations.models import Credential
 
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import Address, Offer, Price, offer_term_details_default, CustomerProfile, Payment, Subscription
-from vendor.models.choice import PaymentTypes, TermType, Country, USAStateChoices, SubscriptionStatus
+from vendor.models import (
+    Address,
+    Offer,
+    Price,
+    offer_term_details_default,
+    CustomerProfile,
+    Payment,
+)
+from vendor.models.choice import (
+    PaymentTypes,
+    RefundReasons,
+    TermType,
+    Country,
+    USAStateChoices,
+    SubscriptionStatus,
+)
 from vendor.utils import get_site_from_request
-
-
 from vendor.config import SiteSelectForm
+
+
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
 COUNTRY_CHOICE = getattr(settings, 'VENDOR_COUNTRY_CHOICE', Country)
@@ -295,6 +309,32 @@ class CreditCardField(forms.CharField):
 
 class PaymentFrom(forms.Form):
     payment_type = forms.ChoiceField(label=_("Payment Type"), choices=PaymentTypes.choices, widget=forms.widgets.HiddenInput)
+
+
+class PaymentRefundForm(forms.ModelForm):
+    refund_amount = forms.DecimalField()
+    reason = forms.CharField(widget=forms.ChoiceField(choices=RefundReasons.choices))
+    void_end_date = forms.BooleanField(default=False)
+
+    class Meta:
+        model = Payment
+        fields = ['uuid', 'refund_amount', 'reasons']
+
+    def clean_refund_amount(self):
+        past_refunds = 0
+        refund_amount = self.cleaned_data['refund_amount']
+
+        if refund_amount > self.instance.amount:
+            raise ValueError({"error": _("Refund amount cannot be greater than the original amount")})
+        
+        if "partial_refunds" in self.instance.result:
+            for partial_refund in self.instance.result.get('partial_refunds'):
+                past_refunds += partial_refund.get('amount', 0)
+
+        if (partial_refund + past_refunds) > self.instance.amount:
+            raise ValueError({"error": _("Refund amount cannot be greater than the original amount")})
+
+        return refund_amount
 
 
 class CreditCardForm(PaymentFrom):

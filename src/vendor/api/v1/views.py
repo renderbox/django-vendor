@@ -2,15 +2,15 @@ from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
 from django.views import View
 
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import CustomerProfile, Invoice, Offer, Receipt, Subscription
+from vendor.forms import PaymentRefundForm
+from vendor.models import CustomerProfile, Payment, Offer, Receipt, Subscription
 from vendor.models.choice import InvoiceStatus
 from vendor.processors import get_site_payment_processor
 from vendor.utils import get_or_create_session_cart, get_site_from_request
@@ -233,3 +233,25 @@ class RenewSubscription(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         # TODO: Need to implement
         pass
+
+
+class RefundPaymentAPIView(LoginRequiredMixin, View):
+    success_url = reverse_lazy('vendor:customer-subscriptions')
+
+    def post(self, request):
+        refund_form = PaymentRefundForm(request.POST)
+
+        if not refund_form.is_valid():
+            return JsonResponse({"error": refund_form.errors})
+
+        processor = get_site_payment_processor(refund_form.instance.invoice.site)(refund_form.instance.invoice.site)
+        
+        try:
+            processor.refund_payment(refund_form)
+            if not processor.transaction_success:
+                return JsonResponse({"error": processor.transaction_info})
+
+        except Exception as exc:
+            return JsonResponse({"error": str(exc)})
+
+        return JsonResponse({"message": "Payment Refunded"})

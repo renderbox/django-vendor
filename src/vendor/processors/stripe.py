@@ -684,6 +684,16 @@ class StripeProcessor(PaymentProcessorBase):
             'on_behalf_of': self.get_stripe_connect_account()
         }
 
+    def build_refund(self, refund_form):
+        int_amount = self.convert_decimal_to_integer(amount=refund_form.cleared_data["amount"])
+        return {
+            "charge": refund_form.instance.transaction_id,
+            "amount": int_amount,
+            "reverse_transaction": True,
+            "refund_application_fee": True,
+            "reason": refund_form.cleaned_data['reason']
+        }
+
     ##########
     # Customers
     ##########
@@ -1266,7 +1276,6 @@ class StripeProcessor(PaymentProcessorBase):
     ##########
     # Payments and Receipts
     ##########
-
     def get_or_create_payment_from_stripe_payment_and_charge(self, invoice, stripe_payment_method, stripe_charge):
         payment = None
         created = False
@@ -1935,3 +1944,11 @@ class StripeProcessor(PaymentProcessorBase):
             payment_info['account_type'] = account_type
 
         subscription.save_payment_info(payment_info)
+
+    def refund_payment(self, refund_form, date=timezone.now()):
+        refund_data = self.build_refund(refund_form)
+        
+        stripe_refund = self.stripe_create_object(self.stripe.Refund, refund_data)
+
+        if stripe_refund:
+            super().refund_payment(refund_form, date=timezone.datetime.fromtimestamp(stripe_refund.created, tz=timezone.utc))

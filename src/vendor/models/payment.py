@@ -1,9 +1,9 @@
 import uuid
 
 from django.db.models.aggregates import Sum
-from django.db.models import Count
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from vendor.models.receipt import Receipt
@@ -145,3 +145,14 @@ class Payment(SoftDeleteModelBase):
 
     def get_amount_display(self):
         return get_display_decimal(self.amount)
+
+    def record_refund(self, amount, date=timezone.now()):
+        self.status = PurchaseStatus.REFUNDED
+        if "refunds" not in self.result:
+            self.result["refunds"] = []
+        
+        self.result["refunds"].append({
+            "date": date.strftime("%Y-%m-%d_%H:%M:%S"),
+            "amount": amount
+        })
+        self.save()
