@@ -1,5 +1,6 @@
 from calendar import monthrange
 from datetime import datetime
+from decimal import Decimal
 from django import forms
 from django.apps import apps
 from django.conf import settings
@@ -313,26 +314,30 @@ class PaymentFrom(forms.Form):
 
 class PaymentRefundForm(forms.ModelForm):
     refund_amount = forms.DecimalField()
-    reason = forms.CharField(widget=forms.ChoiceField(choices=RefundReasons.choices))
-    void_end_date = forms.BooleanField(default=False)
+    reason = forms.ChoiceField(choices=RefundReasons.choices)
+    void_end_date = forms.BooleanField(required=False)
 
     class Meta:
         model = Payment
-        fields = ['uuid', 'refund_amount', 'reasons']
+        fields = ["refund_amount", "reason", "void_end_date"]
 
     def clean_refund_amount(self):
-        past_refunds = 0
-        refund_amount = self.cleaned_data['refund_amount']
+        past_refunds_amount = 0
+        refund_amount = self.cleaned_data.get("refund_amount", 0)
 
         if refund_amount > self.instance.amount:
-            raise ValueError({"error": _("Refund amount cannot be greater than the original amount")})
-        
-        if "partial_refunds" in self.instance.result:
-            for partial_refund in self.instance.result.get('partial_refunds'):
-                past_refunds += partial_refund.get('amount', 0)
+            raise forms.ValidationError(
+                _("Refund amount cannot be greater than the original amount")
+            )
 
-        if (partial_refund + past_refunds) > self.instance.amount:
-            raise ValueError({"error": _("Refund amount cannot be greater than the original amount")})
+        if past_refunds := self.instance.result.get("refunds", []):
+            for partial_refund in past_refunds:
+                past_refunds_amount += Decimal(partial_refund.get("amount", 0))
+
+        if (refund_amount + past_refunds_amount) > self.instance.amount:
+            raise forms.ValidationError(
+                _("Refund amount cannot be greater than the original amount")
+            )
 
         return refund_amount
 

@@ -153,6 +153,6 @@ class Payment(SoftDeleteModelBase):
         
         self.result["refunds"].append({
             "date": date.strftime("%Y-%m-%d_%H:%M:%S"),
-            "amount": amount
+            "amount": str(amount)
         })
         self.save()

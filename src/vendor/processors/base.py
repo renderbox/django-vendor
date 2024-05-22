@@ -579,6 +579,8 @@ class PaymentProcessorBase(object):
             receipt = refund_form.instance.get_receipt()
             receipt.end_date = date
             receipt.save()
+        
+        self.transaction_succeeded = True
 
     def subscription_payment_failed(self, subscription, transaction_id):
         self.payment = Payment.objects.create(
