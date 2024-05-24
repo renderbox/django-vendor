@@ -103,6 +103,14 @@ class VendorAPITest(TestCase):
         response = self.client.post(url, form_data)
         self.assertIn('refund_amount', json.loads(response.content)['error'])
 
+    def test_get_payment_refund_form(self):
+        payment = Payment.objects.get(pk=1)
+        url = reverse('vendor_api:refund-payment-api', kwargs={"uuid": payment.uuid})
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+
 
 @skipIf(True, "Webhook tests are highly dependent on data in Authroizenet and local data.")
 class AuthorizeNetAPITest(TestCase):

@@ -573,7 +573,7 @@ class PaymentProcessorBase(object):
     # -------------------
     # Refund a Payment
     def refund_payment(self, refund_form, date=timezone.now()):
-        refund_form.instance.record_refund(refund_form.cleaned_data['refund_amount'], date)
+        refund_form.instance.record_refund(refund_form.cleaned_data['refund_amount'], date, refund_form.cleaned_data['reason'])
         
         if refund_form.cleaned_data['void_end_date']:
             receipt = refund_form.instance.get_receipt()

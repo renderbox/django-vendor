@@ -685,11 +685,11 @@ class StripeProcessor(PaymentProcessorBase):
         }
 
     def build_refund(self, refund_form):
-        int_amount = self.convert_decimal_to_integer(amount=refund_form.cleared_data["amount"])
+        int_amount = self.convert_decimal_to_integer(refund_form.cleaned_data["refund_amount"])
         return {
-            "charge": refund_form.instance.transaction_id,
+            "charge": refund_form.instance.transaction,
             "amount": int_amount,
-            "reverse_transaction": True,
+            "reverse_transfer": True,
             "refund_application_fee": True,
             "reason": refund_form.cleaned_data['reason']
         }

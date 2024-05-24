@@ -319,25 +319,21 @@ class PaymentRefundForm(forms.ModelForm):
 
     class Meta:
         model = Payment
-        fields = ["refund_amount", "reason", "void_end_date"]
+        fields = ['refund_amount', 'reason', 'void_end_date']
 
     def clean_refund_amount(self):
         past_refunds_amount = 0
-        refund_amount = self.cleaned_data.get("refund_amount", 0)
+        refund_amount = self.cleaned_data.get('refund_amount', 0)
 
         if refund_amount > self.instance.amount:
-            raise forms.ValidationError(
-                _("Refund amount cannot be greater than the original amount")
-            )
-
-        if past_refunds := self.instance.result.get("refunds", []):
+            raise forms.ValidationError(_("Refund amount cannot be greater than the original amount"))
+        
+        if (past_refunds := self.instance.result.get('refunds', [])):
             for partial_refund in past_refunds:
-                past_refunds_amount += Decimal(partial_refund.get("amount", 0))
+                past_refunds_amount += Decimal(partial_refund.get('amount', 0))
 
         if (refund_amount + past_refunds_amount) > self.instance.amount:
-            raise forms.ValidationError(
-                _("Refund amount cannot be greater than the original amount")
-            )
+            raise forms.ValidationError(_("Refund amount cannot be greater than the original amount"))
 
         return refund_amount
 
