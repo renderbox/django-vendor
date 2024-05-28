@@ -26,6 +26,13 @@ class TermType(models.IntegerChoices):
     ONE_TIME_USE = 220, _("One-Time Use")
 
 
+class RefundReasons(models.TextChoices):
+    DUPLICATE        = "duplicate", _("Duplicate")
+    FRAUDULENT       = "fraudulent", _("Fraudulent")
+    CUSTOMER_REQUEST = "requested_by_customer", _("Requested by Customer")
+    OTHER            = "other", _("Other")
+
+
 class PurchaseStatus(models.IntegerChoices):
     QUEUED = 1, _("Queued")
     ACTIVE = 2, _("Active")

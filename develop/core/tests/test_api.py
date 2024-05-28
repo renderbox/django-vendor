@@ -1,17 +1,14 @@
 import json
-import re
 from datetime import timedelta
-
+from decimal import Decimal
 from django.contrib.auth import get_user_model
-from django.http.response import Http404
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
 from unittest import skipIf
 
 from vendor.forms import DateTimeRangeForm
-from vendor.processors.base import PaymentProcessorBase
-from vendor.models import Offer, Price, Receipt, Subscription
+from vendor.models import Offer, Price, Subscription, Payment
 
 User = get_user_model()
 
@@ -45,6 +42,75 @@ class VendorAPITest(TestCase):
         response = self.client.post(url, data={"subscription_uuid": "188e45aa-0fdf-4877-ba84-f4c39c0fc41b", "offer_uuid": "188e45aa-0fdf-4877-ba84-f4c39c0fc41b"})
 
         self.assertEqual(response.status_code, 404)
+
+    def test_refund_payment_success(self):
+        payment = Payment.objects.get(pk=1)
+        url = reverse('vendor_api:refund-payment-api', kwargs={"uuid": payment.uuid})
+
+        form_data = {
+            "refund_amount": 400,
+            "reason": "duplicate",
+        }
+
+        response = self.client.post(url, form_data)
+
+        self.assertEquals(json.loads(response.content)['message'], "Payment Refunded")
+
+    def test_refund_payment_fail(self):
+        payment = Payment.objects.get(pk=1)
+        url = reverse('vendor_api:refund-payment-api', kwargs={"uuid": payment.uuid})
+
+        form_data = {
+            "refund_amount": 9000,
+            "reason": "duplicate",
+        }
+
+        response = self.client.post(url, form_data)
+        self.assertIn('refund_amount', json.loads(response.content)['error'])
+
+    def test_partial_refund_payment_success(self):
+        payment = Payment.objects.get(pk=1)
+        url = reverse('vendor_api:refund-payment-api', kwargs={"uuid": payment.uuid})
+
+        form_data = {
+            "refund_amount": 200,
+            "reason": "duplicate",
+        }
+
+        response = self.client.post(url, form_data)
+        self.assertEquals(json.loads(response.content)['message'], "Payment Refunded")
+
+        response = self.client.post(url, form_data)
+        self.assertEquals(json.loads(response.content)['message'], "Payment Refunded")
+
+        payment.refresh_from_db()
+
+        self.assertEqual(sum(Decimal(refund['amount']) for refund in payment.result['refunds']), form_data["refund_amount"] * 2)
+
+    def test_partial_refund_payment_fail(self):
+        payment = Payment.objects.get(pk=1)
+        url = reverse('vendor_api:refund-payment-api', kwargs={"uuid": payment.uuid})
+
+        form_data = {
+            "refund_amount": 200,
+            "reason": "duplicate",
+        }
+
+        response = self.client.post(url, form_data)
+        self.assertEquals(json.loads(response.content)['message'], "Payment Refunded")
+
+        form_data['refund_amount'] = 900
+        response = self.client.post(url, form_data)
+        self.assertIn('refund_amount', json.loads(response.content)['error'])
+
+    def test_get_payment_refund_form(self):
+        payment = Payment.objects.get(pk=1)
+        url = reverse('vendor_api:refund-payment-api', kwargs={"uuid": payment.uuid})
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+
 
 @skipIf(True, "Webhook tests are highly dependent on data in Authroizenet and local data.")
 class AuthorizeNetAPITest(TestCase):

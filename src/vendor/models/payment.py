@@ -1,15 +1,16 @@
 import uuid
 
+from decimal import Decimal
 from django.db.models.aggregates import Sum
-from django.db.models import Count
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from vendor.models.receipt import Receipt
 from vendor.models.subscription import Subscription
 from vendor.models.base import SoftDeleteModelBase
-from vendor.models.choice import PurchaseStatus
+from vendor.models.choice import PurchaseStatus, RefundReasons
 from vendor.utils import get_display_decimal
 
 
@@ -145,3 +146,44 @@ class Payment(SoftDeleteModelBase):
 
     def get_amount_display(self):
         return get_display_decimal(self.amount)
+
+    def record_refund(self, amount, date=timezone.now(), reason=RefundReasons.OTHER.value):
+        self.status = PurchaseStatus.REFUNDED
+        if "refunds" not in self.result:
+            self.result["refunds"] = []
+        
+        self.result["refunds"].append({
+            "date": date.isoformat(),
+            "reason": reason,
+            "amount": str(amount)
+        })
+
+        self.save()
+
+    def is_refund_available(self, refund_amount):
+        past_refunds = 0
+        past_refund_amount = 0
+        
+        if refund_amount > self.amount:
+            return False
+        
+        if (past_refunds := self.result.get("refunds", [])):
+            past_refund_amount = sum([
+                Decimal(past_refund.get("amount", 0))
+                for past_refund in past_refunds
+            ])
+        
+        if (past_refund_amount + refund_amount) > self.amount:
+            return False
+        
+        return True
+
+    def get_past_refunds(self):
+        past_refunds = []
+        reasons = {reason[0]: reason[1] for reason in RefundReasons.choices}
+
+        for refund in self.result.get("refunds", []):
+            refund['reason'] = reasons[refund['reason'].lower()]
+            past_refunds.append(refund)
+
+        return past_refunds

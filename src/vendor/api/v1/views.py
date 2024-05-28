@@ -2,15 +2,17 @@ from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse
+from django.forms import BaseModelForm
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
 from django.views import View
+from django.views.generic.edit import BaseUpdateView
 
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import CustomerProfile, Invoice, Offer, Receipt, Subscription
+from vendor.forms import PaymentRefundForm
+from vendor.models import CustomerProfile, Payment, Offer, Receipt, Subscription
 from vendor.models.choice import InvoiceStatus
 from vendor.processors import get_site_payment_processor
 from vendor.utils import get_or_create_session_cart, get_site_from_request
@@ -233,3 +235,38 @@ class RenewSubscription(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         # TODO: Need to implement
         pass
+
+
+class RefundPaymentAPIView(LoginRequiredMixin, BaseUpdateView):
+    form_class = PaymentRefundForm
+    success_url = reverse_lazy("vendor:customer-subscriptions")
+
+    def get_object(self):
+        return Payment.objects.get(
+            uuid=self.kwargs.get("uuid"),
+            invoice__site=get_site_from_request(self.request),
+        )
+    
+    def get(self, request, *args, **kwargs):
+        payment = self.get_object()
+        refund_form = self.get_form_class()(instance=payment)
+
+        return JsonResponse(refund_form.data)
+
+    def form_valid(self, form):
+        processor = get_site_payment_processor(form.instance.invoice.site)(
+            form.instance.invoice.site
+        )
+
+        try:
+            processor.refund_payment(form)
+            if not processor.transaction_succeeded:
+                return JsonResponse({"error": processor.transaction_info})
+
+        except Exception as exc:
+            return JsonResponse({"error": str(exc)})
+
+        return JsonResponse({"message": _("Payment Refunded")})
+
+    def form_invalid(self, form: BaseModelForm):
+        return JsonResponse({"error": form.errors})

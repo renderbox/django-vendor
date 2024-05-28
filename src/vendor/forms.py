@@ -1,5 +1,6 @@
 from calendar import monthrange
 from datetime import datetime
+from decimal import Decimal
 from django import forms
 from django.apps import apps
 from django.conf import settings
@@ -11,12 +12,26 @@ from django.utils.translation import gettext_lazy as _
 from integrations.models import Credential
 
 from vendor.config import VENDOR_PRODUCT_MODEL
-from vendor.models import Address, Offer, Price, offer_term_details_default, CustomerProfile, Payment, Subscription
-from vendor.models.choice import PaymentTypes, TermType, Country, USAStateChoices, SubscriptionStatus
+from vendor.models import (
+    Address,
+    Offer,
+    Price,
+    offer_term_details_default,
+    CustomerProfile,
+    Payment,
+)
+from vendor.models.choice import (
+    PaymentTypes,
+    RefundReasons,
+    TermType,
+    Country,
+    USAStateChoices,
+    SubscriptionStatus,
+)
 from vendor.utils import get_site_from_request
-
-
 from vendor.config import SiteSelectForm
+
+
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
 COUNTRY_CHOICE = getattr(settings, 'VENDOR_COUNTRY_CHOICE', Country)
@@ -295,6 +310,32 @@ class CreditCardField(forms.CharField):
 
 class PaymentFrom(forms.Form):
     payment_type = forms.ChoiceField(label=_("Payment Type"), choices=PaymentTypes.choices, widget=forms.widgets.HiddenInput)
+
+
+class PaymentRefundForm(forms.ModelForm):
+    refund_amount = forms.DecimalField()
+    reason = forms.ChoiceField(choices=RefundReasons.choices)
+    void_end_date = forms.BooleanField(required=False)
+
+    class Meta:
+        model = Payment
+        fields = ['refund_amount', 'reason', 'void_end_date']
+
+    def clean_refund_amount(self):
+        past_refunds_amount = 0
+        refund_amount = self.cleaned_data.get('refund_amount', 0)
+
+        if refund_amount > self.instance.amount:
+            raise forms.ValidationError(_("Refund amount cannot be greater than the original amount"))
+        
+        if (past_refunds := self.instance.result.get('refunds', [])):
+            for partial_refund in past_refunds:
+                past_refunds_amount += Decimal(partial_refund.get('amount', 0))
+
+        if (refund_amount + past_refunds_amount) > self.instance.amount:
+            raise forms.ValidationError(_("Refund amount cannot be greater than the original amount"))
+
+        return refund_amount
 
 
 class CreditCardForm(PaymentFrom):
