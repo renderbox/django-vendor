@@ -246,6 +246,12 @@ class RefundPaymentAPIView(LoginRequiredMixin, BaseUpdateView):
             uuid=self.kwargs.get("uuid"),
             invoice__site=get_site_from_request(self.request),
         )
+    
+    def get(self, request, *args, **kwargs):
+        payment = self.get_object()
+        refund_form = self.get_form_class()(instance=payment)
+
+        return JsonResponse(refund_form.data)
 
     def form_valid(self, form):
         processor = get_site_payment_processor(form.instance.invoice.site)(
