@@ -643,16 +643,29 @@ class StripeProcessor(PaymentProcessorBase):
     
     def build_subscription(self, subscription, payment_method_id):
         price = subscription.offer.get_current_price_instance()
+        sub_discount = 0
+        promotion_code = None
 
-        stripe_base_fee = self.get_stripe_base_fee_amount(self.invoice.total)
-        stripe_recurring_fee = self.get_recurring_fee_amount(self.invoice.total)
-        application_fee = self.get_application_fee_amount(self.invoice.total)
+        # Stripe Fees are not adjusted by the discount until discount duration has been implemented
+        stripe_base_fee = self.get_stripe_base_fee_amount(price.cost)
+        stripe_recurring_fee = self.get_recurring_fee_amount(price.cost)
+        application_fee = self.get_application_fee_amount(price.cost)
 
-        total_fee_percentage = self.calculate_fee_percentage(self.invoice.total, stripe_base_fee + stripe_recurring_fee + application_fee)
+        if hasattr(self.invoice, 'coupon_code') and self.invoice.coupon_code.count():
+            coupon_code = self.invoice.coupon_code.first()
+            promotion_code = coupon_code.meta['stripe_id']
+
+            if coupon_code.does_offer_apply(price.offer):
+                sub_discount = coupon_code.get_offer_discount(price.offer)
+
+        total_fee_percentage = self.calculate_fee_percentage(
+            price.cost - sub_discount,
+            stripe_base_fee + stripe_recurring_fee + application_fee
+        )
 
         return {
             'customer': self.invoice.profile.meta['stripe_id'],
-            'promotion_code': self.invoice.coupon_code.first().meta['stripe_id'] if hasattr(self.invoice, 'coupon_code') and self.invoice.coupon_code.count() else None,
+            'promotion_code': promotion_code,
             'items': [{'price': subscription.offer.meta['stripe']['prices'][str(price.pk)]}],
             'default_payment_method': payment_method_id,
             'metadata': {'site': self.invoice.site},
