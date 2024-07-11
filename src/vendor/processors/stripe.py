@@ -651,12 +651,11 @@ class StripeProcessor(PaymentProcessorBase):
         stripe_recurring_fee = self.get_recurring_fee_amount(price.cost)
         application_fee = self.get_application_fee_amount(price.cost)
 
-        if hasattr(self.invoice, 'coupon_code') and self.invoice.coupon_code.count():
-            coupon_code = self.invoice.coupon_code.first()
+        if hasattr(self.invoice, 'coupon_code') and (coupon_code := self.invoice.coupon_code.first()):
             promotion_code = coupon_code.meta['stripe_id']
 
             if coupon_code.does_offer_apply(price.offer):
-                sub_discount = coupon_code.get_offer_discount(price.offer)
+                sub_discount = coupon_code.get_discounted_amount(price.offer)
 
         total_fee_percentage = self.calculate_fee_percentage(
             price.cost - sub_discount,
