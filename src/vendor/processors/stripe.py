@@ -356,7 +356,7 @@ class StripeProcessor(PaymentProcessorBase):
         if vendor_site_commission.instance:
             return vendor_site_commission.get_key_value('commission')
 
-        return None
+        return 0
   
     def get_application_fee_amount(self, amount):
         vendor_site_commission = VendorSiteCommissionConfig(self.site)
