@@ -364,7 +364,7 @@ class StripeProcessor(PaymentProcessorBase):
         if vendor_site_commission.instance:
             return (vendor_site_commission.get_key_value('commission') * amount) / 100
 
-        return None
+        return 0
 
     def get_recurring_fee_amount(self, amount):
         fee = 0
