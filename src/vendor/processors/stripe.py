@@ -657,6 +657,13 @@ class StripeProcessor(PaymentProcessorBase):
             if coupon_code.does_offer_apply(price.offer):
                 sub_discount = coupon_code.get_discounted_amount(price.offer)
 
+        if (price.cost - sub_discount) < (stripe_base_fee + stripe_recurring_fee + application_fee):
+            self.transaction_info["errors"] = {
+                "user_message": f"Invoice total: ${(price.cost - sub_discount):.2f} is less than the fee's ${(stripe_base_fee + stripe_recurring_fee + application_fee):.2f} needed to be collected"
+            }
+            self.transaction_succeeded = False
+            return None
+        
         total_fee_percentage = self.calculate_fee_percentage(
             price.cost - sub_discount,
             stripe_base_fee + stripe_recurring_fee + application_fee
@@ -1832,8 +1839,10 @@ class StripeProcessor(PaymentProcessorBase):
             return None
 
         subscription_obj = self.build_subscription(subscription, stripe_payment_method.id)
-        stripe_subscription = self.stripe_create_object(self.stripe.Subscription, subscription_obj)
+        if not subscription_obj:
+            return None
         
+        stripe_subscription = self.stripe_create_object(self.stripe.Subscription, subscription_obj)
         if not stripe_subscription or stripe_subscription.status == 'incomplete':
             self.transaction_succeeded = False
             return None
