@@ -337,8 +337,11 @@ def process_stripe_invoice_subscription_payment_succeded(stripe_invoice, site):
     processor.invoice, created = processor.get_or_create_invoice_from_stripe_invoice(stripe_invoice, offer, customer_profile)
     processor.renew_subscription(subscription, stripe_invoice.charge, payment_status, payment_success=True, submitted_date=paid_date)
 
-    # Remove any lingering payments.
-    processor.invoice.payments.filter(transaction=None).delete()
+    # Remove any lingering payments. 
+    for payment in processor.invoice.payments.filter(transaction__in=[None, '']):
+        if (receipt := payment.get_receipt()):
+            receipt.delete()
+        payment.delete()
 
     return HttpResponse(status=200, content=f"Subscription: {stripe_subscription.id} renewed invoice: {processor.invoice.pk}")
 
