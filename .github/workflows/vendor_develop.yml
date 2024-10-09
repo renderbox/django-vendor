@@ -8,6 +8,11 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          DATABASE_URL: "postgres://django:password@localhost:5432/vendor"
     strategy:
       max-parallel: 1
       matrix:
