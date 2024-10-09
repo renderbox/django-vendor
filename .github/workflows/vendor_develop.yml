@@ -25,6 +25,7 @@ jobs:
         python -m pip install mistune==0.8.4
         python -m pip install m2r
         python -m pip install -r requirements.dev.txt
+        python -m pip install -e .
     - name: Run Core Tests
       run: |
         cd develop
