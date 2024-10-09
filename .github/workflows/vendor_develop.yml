@@ -8,6 +8,11 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          DATABASE_URL: "postgres://django:password@localhost:5432/vendor"
     strategy:
       max-parallel: 1
       matrix:
@@ -28,6 +33,7 @@ jobs:
     - name: Run Core Tests
       run: |
         cd develop
+        python manage.py migrate
         python manage.py test
         python manage.py makemigrations --check --dry-run
       env: 
