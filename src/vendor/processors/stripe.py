@@ -263,6 +263,44 @@ class StripeProcessor(PaymentProcessorBase):
 
         self.create_offers(subscriptions_to_create)
 
+    def get_stripe_webhook_endpoints(self):
+        has_more = True
+        endpoint_urls = []
+        starting_after = None
+        while has_more:
+            stripe_endpoint_object = self.stripe.WebhookEndpoint.list(limit=1, starting_after=starting_after)
+            
+            if not isinstance(stripe_endpoint_object, self.stripe.ListObject):
+                return endpoint_urls
+            
+            if (endpoints := stripe_endpoint_object.get("data", [])):
+                has_more = stripe_endpoint_object.get("has_more", False)
+                endpoint_urls.extend([endpoint.get("url") for endpoint in endpoints])
+                if hasattr(stripe_endpoint_object.get("data", [])[-1:][0], "id"):
+                    starting_after = stripe_endpoint_object.get("data", [])[-1:][0]['id']
+
+        return endpoint_urls
+    
+    def check_stripe_has_invoice_payment_succeeded_endpoint(self):
+        domain_sections = [self.site.domain]
+        platform_base_domains = [base.lstrip(".") for base in settings.ALLOWED_HOSTS if base.startswith(".")]
+        
+        if len(platform_base_domains):
+            domain_sections.append(platform_base_domains[0])
+        
+        host = ".".join(domain_sections)
+        endpoint_to_check = f"https://{host}/administration/product/api/stripe/invoice/payment/succeded/"
+        endpoints = self.get_stripe_webhook_endpoints()
+
+        if endpoint_to_check not in endpoints:
+            response = self.stripe.WebhookEndpoint.create(
+                enabled_events=["invoice.payment_succeeded"],
+                url=endpoint_to_check
+            )
+
+            if response.secret is None:
+                logger.error(f"Stripe endpoint {endpoint_to_check} was not created {response}")
+
     ##########
     # Parsers
     ##########
@@ -1763,6 +1801,10 @@ class StripeProcessor(PaymentProcessorBase):
         self.validate_invoice_customer_in_stripe()
         self.validate_invoice_offer_in_stripe()
         self.validate_invoice_subscriptions_in_stripe()
+
+        if settings.VENDOR_STATE == "PRODUCTION":
+            self.check_stripe_has_invoice_payment_succeeded_endpoint()
+
         self.transaction_succeeded = False
 
     def process_payment(self):
