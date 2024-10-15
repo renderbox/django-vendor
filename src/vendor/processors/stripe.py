@@ -263,6 +263,44 @@ class StripeProcessor(PaymentProcessorBase):
 
         self.create_offers(subscriptions_to_create)
 
+    def get_stripe_webhook_endpoints(self):
+        has_more = True
+        endpoint_urls = []
+        starting_after = None
+        while has_more:
+            stripe_endpoint_object = self.stripe.WebhookEndpoint.list(limit=1, starting_after=starting_after)
+            
+            if not isinstance(stripe_endpoint_object, self.stripe.ListObject):
+                return endpoint_urls
+            
+            if (endpoints := stripe_endpoint_object.get("data", [])):
+                has_more = stripe_endpoint_object.get("has_more", False)
+                endpoint_urls.extend([endpoint.get("url") for endpoint in endpoints])
+                if hasattr(stripe_endpoint_object.get("data", [])[-1:][0], "id"):
+                    starting_after = stripe_endpoint_object.get("data", [])[-1:][0]['id']
+
+        return endpoint_urls
+    
+    def check_stripe_has_invoice_payment_succeeded_endpoint(self):
+        domain_sections = [self.site.domain]
+        platform_base_domains = [base.lstrip(".") for base in settings.ALLOWED_HOSTS if base.startswith(".")]
+        
+        if len(platform_base_domains):
+            domain_sections.append(platform_base_domains[0])
+        
+        host = ".".join(domain_sections)
+        endpoint_to_check = f"https://{host}/administration/product/api/stripe/invoice/payment/succeded/"
+        endpoints = self.get_stripe_webhook_endpoints()
+
+        if endpoint_to_check not in endpoints:
+            response = self.stripe.WebhookEndpoint.create(
+                enabled_events=["invoice.payment_succeeded"],
+                url=endpoint_to_check
+            )
+
+            if response.secret is None:
+                logger.error(f"Stripe endpoint {endpoint_to_check} was not created {response}")
+
     ##########
     # Parsers
     ##########
@@ -356,7 +394,7 @@ class StripeProcessor(PaymentProcessorBase):
         if vendor_site_commission.instance:
             return vendor_site_commission.get_key_value('commission')
 
-        return None
+        return 0
   
     def get_application_fee_amount(self, amount):
         vendor_site_commission = VendorSiteCommissionConfig(self.site)
@@ -364,7 +402,7 @@ class StripeProcessor(PaymentProcessorBase):
         if vendor_site_commission.instance:
             return (vendor_site_commission.get_key_value('commission') * amount) / 100
 
-        return None
+        return 0
 
     def get_recurring_fee_amount(self, amount):
         fee = 0
@@ -381,7 +419,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         total_fee_percentage = (fees * 100) / invoice_amount
 
-        return Decimal(total_fee_percentage).quantize(Decimal('.00'), rounding=ROUND_UP)        
+        return Decimal(total_fee_percentage).quantize(Decimal('.00'), rounding=ROUND_UP)
 
     def get_invoice_status(self, stripe_status):
         if stripe_status in ["draft", ]:
@@ -527,6 +565,9 @@ class StripeProcessor(PaymentProcessorBase):
     # Stripe Object Builders
     ##########
     def build_transfer_data(self):
+        if not self.get_stripe_connect_account():
+            return None
+        
         return {
             'destination': self.get_stripe_connect_account(),
             # Not required if you are using the application_fee parameter
@@ -645,11 +686,8 @@ class StripeProcessor(PaymentProcessorBase):
         price = subscription.offer.get_current_price_instance()
         sub_discount = 0
         promotion_code = None
-
-        # Stripe Fees are not adjusted by the discount until discount duration has been implemented
-        stripe_base_fee = self.get_stripe_base_fee_amount(price.cost)
-        stripe_recurring_fee = self.get_recurring_fee_amount(price.cost)
-        application_fee = self.get_application_fee_amount(price.cost)
+        total_fee_percentage = None
+        has_connected_account = self.get_stripe_connect_account()
 
         if hasattr(self.invoice, 'coupon_code') and (coupon_code := self.invoice.coupon_code.first()):
             promotion_code = coupon_code.meta['stripe_id']
@@ -657,10 +695,23 @@ class StripeProcessor(PaymentProcessorBase):
             if coupon_code.does_offer_apply(price.offer):
                 sub_discount = coupon_code.get_discounted_amount(price.offer)
 
-        total_fee_percentage = self.calculate_fee_percentage(
-            price.cost - sub_discount,
-            stripe_base_fee + stripe_recurring_fee + application_fee
-        )
+        # Stripe Fees are not adjusted by the discount until discount duration has been implemented
+        if has_connected_account:
+            stripe_base_fee = self.get_stripe_base_fee_amount(price.cost)
+            stripe_recurring_fee = self.get_recurring_fee_amount(price.cost)
+            application_fee = self.get_application_fee_amount(price.cost)
+
+            if (price.cost - sub_discount) < (stripe_base_fee + stripe_recurring_fee + application_fee):
+                self.transaction_info["errors"] = {
+                    "user_message": f"Invoice total: ${(price.cost - sub_discount):.2f} is less than the fee's ${(stripe_base_fee + stripe_recurring_fee + application_fee):.2f} needed to be collected"
+                }
+                self.transaction_succeeded = False
+                return None
+        
+            total_fee_percentage = self.calculate_fee_percentage(
+                price.cost - sub_discount,
+                stripe_base_fee + stripe_recurring_fee + application_fee
+            )
 
         return {
             'customer': self.invoice.profile.meta['stripe_id'],
@@ -1750,6 +1801,10 @@ class StripeProcessor(PaymentProcessorBase):
         self.validate_invoice_customer_in_stripe()
         self.validate_invoice_offer_in_stripe()
         self.validate_invoice_subscriptions_in_stripe()
+
+        if settings.VENDOR_STATE == "PRODUCTION":
+            self.check_stripe_has_invoice_payment_succeeded_endpoint()
+
         self.transaction_succeeded = False
 
     def process_payment(self):
@@ -1832,8 +1887,10 @@ class StripeProcessor(PaymentProcessorBase):
             return None
 
         subscription_obj = self.build_subscription(subscription, stripe_payment_method.id)
-        stripe_subscription = self.stripe_create_object(self.stripe.Subscription, subscription_obj)
+        if not subscription_obj:
+            return None
         
+        stripe_subscription = self.stripe_create_object(self.stripe.Subscription, subscription_obj)
         if not stripe_subscription or stripe_subscription.status == 'incomplete':
             self.transaction_succeeded = False
             return None

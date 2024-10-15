@@ -7,7 +7,7 @@ universal = true
 
 [project]
 name = "django-vendor"
-version = "0.4.16"
+version = "0.4.17"
 
 authors = [
   { name="Grant Viklund", email="renderbox@gmail.com" },
@@ -26,7 +26,7 @@ dependencies = [
     "Django>=3.0,<4.0",
     "django-autoslug",
     "django-extensions",
-    "iso4217",
+    "iso4217<1.12.0",
 ]
 
 [project.optional-dependencies]
