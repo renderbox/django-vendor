@@ -354,7 +354,9 @@ class StripeProcessor(PaymentProcessorBase):
         fraction_part, whole_part = modf(decimal)
                 
         whole_str = str(whole_part).split('.')[0]
-        fraction_str = str(fraction_part).split('.')[1][:2]
+        # need to use Decimal since floats will not always round as expected
+        rounded_fraction = Decimal(fraction_part).quantize(Decimal('.00'), rounding=ROUND_UP)
+        fraction_str = str(rounded_fraction).split('.')[1]
 
         if len(fraction_str) < 2:
             fraction_str = "0" + fraction_str
