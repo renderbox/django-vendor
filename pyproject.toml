@@ -7,7 +7,7 @@ universal = true
 
 [project]
 name = "django-vendor"
-version = "0.4.17"
+version = "0.4.18"
 
 authors = [
   { name="Grant Viklund", email="renderbox@gmail.com" },
