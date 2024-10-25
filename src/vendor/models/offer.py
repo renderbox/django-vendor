@@ -253,22 +253,29 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
             return True
         return False
     
-    def has_valid_billing_start_date(self, today=timezone.now()):
+    def has_valid_billing_start_date(self, today=None):
+        if today is None:
+            today = timezone.now()
+
         if self.billing_start_date and self.billing_start_date > today:
             return True
         return False
     
-    def get_offer_start_date(self, start_date=timezone.now()):
+    def get_offer_start_date(self, start_date=None):
+        if start_date is None:
+            start_date = timezone.now()
         if self.term_start_date and self.term_start_date > start_date:
             return self.term_start_date
         
         return start_date
 
-    def get_offer_end_date(self, start_date=timezone.now()):
+    def get_offer_end_date(self, start_date=None):
         """
         Determines the start date offset so the payment gateway starts charging the monthly offer
         """
         units = self.term_details.get('term_units', TermDetailUnits.MONTH)
+        if start_date is None:
+            start_date = timezone.now()
         
         if units == TermDetailUnits.MONTH:
             return get_future_date_months(start_date, self.get_period_length())
@@ -276,7 +283,10 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         elif units == TermDetailUnits.DAY:
             return get_future_date_days(start_date, self.get_period_length())
     
-    def get_trial_end_date(self, start_date=timezone.now()):
+    def get_trial_end_date(self, start_date=None):
+        if start_date is None:
+            start_date = timezone.now()
+
         if self.billing_start_date and self.billing_start_date > start_date:
             return self.billing_start_date - timedelta(days=1)
         
@@ -292,7 +302,9 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
 
         return start_date + timedelta(days=self.get_trial_days())
 
-    def get_payment_start_date_trial_offset(self, start_date=timezone.now()):
+    def get_payment_start_date_trial_offset(self, start_date=None):
+        if start_date is None:
+            start_date = timezone.now()
         trial_end_date = self.get_trial_end_date(start_date)
 
         if trial_end_date == start_date:
