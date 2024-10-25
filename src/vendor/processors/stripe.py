@@ -350,16 +350,15 @@ class StripeProcessor(PaymentProcessorBase):
     def convert_decimal_to_integer(self, decimal):
         if decimal == 0:
             return 0
-            
+
         fraction_part, whole_part = modf(decimal)
-                
+        rounded_fraction = round(fraction_part, 2)
+
         whole_str = str(whole_part).split('.')[0]
-        # need to use Decimal since floats will not always round as expected
-        rounded_fraction = Decimal(fraction_part).quantize(Decimal('.00'), rounding=ROUND_UP)
-        fraction_str = str(rounded_fraction).split('.')[1]
+        fraction_str = str(rounded_fraction).split('.')[1][:2]
 
         if len(fraction_str) < 2:
-            fraction_str = "0" + fraction_str
+            fraction_str = fraction_str + "0"
 
         stripe_amount = int("".join([whole_str, fraction_str]))
             
