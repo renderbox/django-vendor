@@ -16,7 +16,7 @@ babel==2.16.0
     # via sphinx
 bandit==1.7.5
     # via django-vendor (pyproject.toml)
-black==23.3.0
+black==24.3.0
     # via
     #   django-vendor (pyproject.toml)
     #   flake8-black
