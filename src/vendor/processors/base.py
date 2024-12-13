@@ -108,18 +108,21 @@ class PaymentProcessorBase(object):
             'full_name': self.payment_info.cleaned_data.get('full_name')
         }
         self.payment.payee_full_name = self.payment_info.cleaned_data.get('full_name')
-        self.payment.payee_company = self.billing_address.cleaned_data.get('company')
+        if self.billing_address:
+            self.payment.payee_company = self.billing_address.cleaned_data.get('company')
         self.payment.status = PurchaseStatus.QUEUED
         self.payment.submitted_date = timezone.now()
 
-        billing_address = self.billing_address.save(commit=False)
-        billing_address, created = self.invoice.profile.get_or_create_address(billing_address)
+        if self.billing_address:
+            billing_address = self.billing_address.save(commit=False)
+            billing_address, created = self.invoice.profile.get_or_create_address(billing_address)
 
-        if created:
-            billing_address.profile = self.invoice.profile
-            billing_address.save()
+            if created:
+                billing_address.profile = self.invoice.profile
+                billing_address.save()
 
-        self.payment.billing_address = billing_address
+            self.payment.billing_address = billing_address
+
         self.payment.save()
 
     def save_payment_transaction_result(self):
@@ -317,7 +320,10 @@ class PaymentProcessorBase(object):
         self.payment_info = form_class(form_data)
 
     def is_data_valid(self):
-        if not (self.billing_address.is_valid() and self.payment_info.is_valid() and self.invoice and self.invoice.order_items.count()):
+        # allow billing_address to be blank
+        if self.billing_address and not self.billing_address.is_valid():
+            return False
+        if not (self.payment_info.is_valid() and self.invoice and self.invoice.order_items.count()):
             return False
         return True
 

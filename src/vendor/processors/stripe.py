@@ -633,7 +633,7 @@ class StripeProcessor(PaymentProcessorBase):
         return coupon_data
 
     def build_payment_method(self):
-        return {
+        payment_method =  {
             'type': 'card',
             'card': {
                 'number': self.payment_info.cleaned_data.get('card_number'),
@@ -642,18 +642,23 @@ class StripeProcessor(PaymentProcessorBase):
                 'cvc': self.payment_info.cleaned_data.get('cvv_number'),
             },
             'billing_details': {
-                'address': {
-                    'line1': self.billing_address.cleaned_data.get('address_1', None),
-                    'line2': self.billing_address.cleaned_data.get('address_2', None),
-                    'city': self.billing_address.cleaned_data.get("locality", ""),
-                    'state': self.billing_address.cleaned_data.get("state", ""),
-                    'country': Country.names[Country.values.index(int(self.billing_address.cleaned_data.get("country")))],
-                    'postal_code': self.billing_address.cleaned_data.get("postal_code")
-                },
                 'name': self.payment_info.cleaned_data.get('full_name', None),
                 'email': self.invoice.profile.user.email
             }
         }
+
+        if self.billing_address:
+            address = {
+                'line1': self.billing_address.cleaned_data.get('address_1', None),
+                'line2': self.billing_address.cleaned_data.get('address_2', None),
+                'city': self.billing_address.cleaned_data.get("locality", ""),
+                'state': self.billing_address.cleaned_data.get("state", ""),
+                'country': Country.names[Country.values.index(int(self.billing_address.cleaned_data.get("country")))],
+                'postal_code': self.billing_address.cleaned_data.get("postal_code")
+            }
+            payment_method.billing_details["address"] = address
+
+        return payment_method
 
     def build_payment_intent(self, amount, payment_method_id, currency=DEFAULT_CURRENCY):
         stripe_base_fee = self.get_stripe_base_fee_amount(amount)
