@@ -16,6 +16,7 @@ class SupportedPaymentProcessor(TextChoices):
     PROMO_CODE_BASE = ("base.PaymentProcessorBase", _("Default Processor"))
     AUTHORIZE_NET = ("authorizenet.AuthorizeNetProcessor", _("Authorize.Net"))
     STRIPE = ("stripe.StripeProcessor", _("Stripe"))
+    SQUARE = ("square.SquareProcessor", _("Square"))
 
 
 class PaymentProcessorForm(SiteSelectForm):

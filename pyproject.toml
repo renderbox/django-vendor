@@ -11,7 +11,8 @@ version = "0.4.20"
 
 authors = [
   { name="Grant Viklund", email="renderbox@gmail.com" },
-  { name="Roberto Himmelbauer" }
+  { name="Roberto Himmelbauer" },
+  { name="David Doughty", email="doughty@sleepypenguin.net" },
 ]
 description = "Django App Toolkit for selling digital and physical goods online."
 readme = "README.md"
@@ -47,6 +48,7 @@ dev = [
 ]
 stripe = [ "stripe", ] # Packages needed for Stripe
 authorizenet = [ "authorizenet", ]
+square = [ "squareup", ]
 docs= [
     "recommonmark",
     "m2r",

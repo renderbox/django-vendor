@@ -73,8 +73,11 @@ to dump unit test data
 
 The install process
 1) Add the app to your project
-2) Create your Product model that inherits from the ProductModelBase base class.
+2) Create your Product model as django.db.models.Model
 3) Change the settings.py value for VENDOR_PRODUCT_MODEL to point to your model
 4) Make migrations
 5) Migrate
+6) Update your Product model to inherit from the ProductModelBase base class. (Using two migration steps is necessary to avoid circular dependencies)
+7) Make migrations again
+8) Migrate
 
