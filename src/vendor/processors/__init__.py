@@ -11,6 +11,7 @@ from siteconfigs.models import SiteConfigModel
 
 
 def get_site_payment_processor(site):
+    print("GSPP:", site)
     site_processor = PaymentProcessorSiteConfig(site)
     return import_string(
         f"vendor.processors.{site_processor.get_key_value('payment_processor')}"

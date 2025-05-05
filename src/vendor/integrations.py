@@ -1,6 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from integrations.models import Credential
-from vendor.forms import AuthorizeNetIntegrationForm, StripeIntegrationForm
+from vendor.forms import AuthorizeNetIntegrationForm, SquareIntegrationForm, StripeIntegrationForm
 
 
 class BaseIntegration(object):
@@ -41,6 +41,13 @@ class AuthorizeNetIntegration(BaseIntegration):
     form_class = AuthorizeNetIntegrationForm
 
 
+class SquareIntegration(BaseIntegration):
+    NAME = "Square Integration"
+
+    site = None
+    form_class = SquareIntegrationForm
+
+    
 class StripeIntegration(BaseIntegration):
     NAME = "Stripe Integration"
 
