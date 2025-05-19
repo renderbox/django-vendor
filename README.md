@@ -1,8 +1,6 @@
-![Django Vendor CI](https://github.com/renderbox/django-vendor/workflows/Django%20Vendor%20CI/badge.svg?branch=master)
+[![Django Vendor CI](https://github.com/renderbox/django-vendor/actions/workflows/vendor_ci.yml/badge.svg)](https://github.com/renderbox/django-vendor/actions/workflows/vendor_ci.yml)
 
-![Django Vendor Develop](https://github.com/renderbox/django-vendor/workflows/Django%20Vendor%20Develop/badge.svg?branch=develop)
-
-[![Documentation Status](https://readthedocs.org/projects/django-vendor/badge/?version=latest)](https://django-vendor.readthedocs.io/en/latest/?badge=latest)
+[![Django Vendor Develop](https://github.com/renderbox/django-vendor/actions/workflows/vendor_develop.yml/badge.svg)](https://github.com/renderbox/django-vendor/actions/workflows/vendor_develop.yml)
 
 # Django Vendor
 
