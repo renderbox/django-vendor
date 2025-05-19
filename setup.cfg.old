@@ -1,7 +1,0 @@
-[metadata]
-name = django-vendor
-version = 0.3.8
-
-
-[options]
-packages = find:
