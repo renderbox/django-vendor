@@ -15,7 +15,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, FormMixin, UpdateView
 from django.views.generic.list import ListView
 
-from vendor.config import VENDOR_PRODUCT_MODEL, SiteSelectForm
+from vendor.config import VENDOR_PRODUCT_MODEL
 from vendor.forms import (
     AddressForm,
     CreditCardForm,
@@ -451,7 +451,7 @@ class AdminSubscriptionCreateView(LoginRequiredMixin, TemplateView):
             context["subscription_form"] = subscription_form
             return render(request, self.template_name, context)
 
-        subscription = Subscription.objects.create(
+        subscription = Subscription.objects.create(  # noqa: F841
             profile=subscription_form.cleaned_data["profile"],
             gateway_id=subscription_form.cleaned_data["subscription_id"],
             status=subscription_form.cleaned_data["status"],
@@ -499,7 +499,7 @@ class AdminSubscriptionAddPaymentView(LoginRequiredMixin, TemplateView):
         offer_site_form = OfferSiteSelectForm(request.GET)
 
         if not offer_site_form.is_valid():
-            context["offer_site_form"] = payment_form
+            context["offer_site_form"] = payment_form   # TODO: Fix this line.  payment_form is not defined
             return render(request, self.template_name, context)
 
         payment_form = SubscriptionAddPaymentForm(
@@ -605,14 +605,16 @@ class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
     def post(self, request, *args, **kwargs):
         subscription = Subscription.objects.get(uuid=self.kwargs["uuid"])
         submitted_datetime = timezone.now()
+        site = get_site_from_request(request)
+        customer_profile = request.user.customer_profile
 
         invoice = Invoice.objects.create(
-            profile=customer_profile,
+            profile=customer_profile,      # TODO: Fix this line.  payment_form is not defined
             site=site,
             ordered_date=submitted_datetime,
             status=InvoiceStatus.COMPLETE,
         )
-        invoice.add_offer(offer)
+        invoice.add_offer(offer)      # TODO: Fix this line.  payment_form is not defined
         invoice.save()
 
         transaction_id = timezone.now().strftime("%Y-%m-%d_%H-%M-%S-Manual-Renewal")

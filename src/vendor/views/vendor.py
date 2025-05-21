@@ -27,7 +27,7 @@ from vendor.models import (
     Receipt,
     Subscription,
 )
-from vendor.models.choice import InvoiceStatus, SubscriptionStatus, TermType
+from vendor.models.choice import InvoiceStatus, TermType
 from vendor.processors import get_site_payment_processor
 from vendor.utils import (
     clear_session_purchase_data,
@@ -312,7 +312,7 @@ class OrderHistoryListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         try:
-            # The profile and user are site specific so this should only return what's on the site for that user excluding the cart
+            # The profile and user are site specific so this should only return what's on the site for that user excluding the cart  # noqa E501
             return self.request.user.customer_profile.get(
                 site=get_site_from_request(self.request)
             ).invoices.filter(status__gt=InvoiceStatus.CART)

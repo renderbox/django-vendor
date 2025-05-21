@@ -41,7 +41,7 @@ class OrderHistoryListView(LoginRequiredMixin, ListView):
         try:
             return self.request.user.customer_profile.get().invoices.filter(
                 status__gt=InvoiceStatus.CART
-            )  # The profile and user are site specific so this should only return what's on the site for that user excluding the cart
+            )  # The profile and user are site specific so this should only return what's on the site for that user excluding the cart  # noqa E501
         except ObjectDoesNotExist:  # Catch the actual error for the exception
             return []  # Return empty list if there is no customer_profile
 

@@ -17,7 +17,6 @@ from vendor.models import (
     Wishlist,
     WishlistItem,
 )
-from vendor.models.base import get_product_model
 from vendor.models.choice import InvoiceStatus
 
 logger = logging.getLogger(__name__)
@@ -28,7 +27,7 @@ logger = logging.getLogger(__name__)
 ################
 def soft_delete_payments_with_no_receipt(modeladmin, request, queryset):
     """
-    This action finds any successfull payment that has not a receipt that matches its transaction and created fields, and soft deletes them.
+    This action finds any successfull payment that has not a receipt that matches its transaction and created fields, and soft deletes them.  # noqa: E501
     Every successfull payment has a receipt that has the same transaction value.
     """
     invalid_payments = [

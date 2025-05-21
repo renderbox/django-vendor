@@ -10,7 +10,7 @@ from django.views.generic.edit import FormMixin
 from django.views.generic.list import BaseListView
 
 from vendor.forms import DateRangeForm
-from vendor.models import CustomerProfile, Invoice, Receipt
+from vendor.models import Invoice, Receipt
 from vendor.utils import get_site_from_request
 
 
@@ -132,7 +132,7 @@ class ReceiptListCSV(FormMixin, CSVStreamRowView):
                 "",  # TODO: Refund Reason
                 "",  # TODO: Refund Date
                 "",  # TODO: Refund Author Email
-                "multiple" if obj.end_date is None else f"range",  # TODO: Date Type
+                "multiple" if obj.end_date is None else "range",  # TODO: Date Type
                 " ".join(
                     [
                         "" if obj.start_date is None else f"{obj.start_date:%Y-%m-%d}",
