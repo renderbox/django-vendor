@@ -2,17 +2,17 @@ from django.apps import AppConfig
 
 
 class VendorConfig(AppConfig):
-    name = 'vendor'
+    name = "vendor"
 
     def ready(self):
         from vendor.config import ENABLE_STRIPE_SIGNALS
 
         if ENABLE_STRIPE_SIGNALS:
             import vendor.signals.stripe_signals
-    
-    #  TODO: Would be better to find way to check if any sites have stripe configured instead of having to set the VENDOR_PAYMENT_PROCESSOR to stripe 
+
+    #  TODO: Would be better to find way to check if any sites have stripe configured instead of having to set the VENDOR_PAYMENT_PROCESSOR to stripe
     # to enable it's signals. You can't do the following way, because you assume that you have already ran migration, but if you are in a fresh install
-    # this code will error out any time you run a manage.py command because Site has not been migrated and you are trying to import it. 
+    # this code will error out any time you run a manage.py command because Site has not been migrated and you are trying to import it.
     # def ready(self):
     #     from django.contrib.sites.models import Site
     #     from vendor.config import SupportedPaymentProcessor

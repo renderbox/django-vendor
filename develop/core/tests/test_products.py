@@ -1,22 +1,28 @@
 from core.models import Product
-
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.test import TestCase, Client
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from vendor.models import generate_sku, receipt, validate_msrp_format, validate_msrp
-from vendor.models import Offer, Receipt, CustomerProfile
+from vendor.models import (
+    CustomerProfile,
+    Offer,
+    Receipt,
+    generate_sku,
+    receipt,
+    validate_msrp,
+    validate_msrp_format,
+)
 
 User = get_user_model()
 
 
 class ModelProductTests(TestCase):
 
-    fixtures = ['user', 'unit_test']
+    fixtures = ["user", "unit_test"]
 
     def setUp(self):
         self.new_product = Product()
@@ -32,13 +38,13 @@ class ModelProductTests(TestCase):
 
     def test_unique_sku(self):
         product_a = Product()
-        product_a.name = 'a'
-        product_a.sku = 'a'
+        product_a.name = "a"
+        product_a.sku = "a"
         product_a.save()
 
         product_b = Product()
-        product_b.name = 'a'
-        product_b.sku = 'a'
+        product_b.name = "a"
+        product_b.sku = "a"
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
                 product_b.save()
@@ -83,26 +89,28 @@ class ModelProductTests(TestCase):
     def test_get_best_currency_success(self):
         product = Product.objects.get(pk=1)
 
-        self.assertEquals(product.get_best_currency(), 'usd')
+        self.assertEquals(product.get_best_currency(), "usd")
 
     def test_get_best_currency_fail(self):
         product = Product.objects.get(pk=1)
 
-        self.assertEquals(product.get_best_currency('mxn'), 'usd')
+        self.assertEquals(product.get_best_currency("mxn"), "usd")
 
     def test_create_product_valid_msrp(self):
-        self.assertIsNone(validate_msrp({'msrp': {'default': 'usd', 'usd': 20 }}))
+        self.assertIsNone(validate_msrp({"msrp": {"default": "usd", "usd": 20}}))
 
     def test_create_product_valid_msrp_multiple_currencies(self):
-        self.assertIsNone(validate_msrp({'msrp': {'default': 'usd', 'usd': 20, 'jpy': 12 }}))
+        self.assertIsNone(
+            validate_msrp({"msrp": {"default": "usd", "usd": 20, "jpy": 12}})
+        )
 
     def test_create_product_in_valid_msrp(self):
         with self.assertRaises(ValidationError):
-            validate_msrp({'msrp': {'default': 'rub', 'rub': 20 }})
+            validate_msrp({"msrp": {"default": "rub", "rub": 20}})
 
     def test_create_product_in_valid_msrp(self):
         with self.assertRaises(ValidationError):
-            validate_msrp({'msrp': {'default': 'usd', 'usd': 21, 'rub': 20 }})
+            validate_msrp({"msrp": {"default": "usd", "usd": 21, "rub": 20}})
 
     def test_active_profile_receipts(self):
         receipt = Receipt.objects.get(pk=1)
@@ -136,23 +144,14 @@ class ModelProductTests(TestCase):
 
     def test_save_autocreate_sku_successs(self):
         site = Site.objects.get(pk=1)
-        product_1 = Product.objects.create(
-            name="Test Product",
-            site=site
-        )
+        product_1 = Product.objects.create(name="Test Product", site=site)
         self.assertTrue(product_1.sku)
 
     def test_save_two_products_same_name_autocreate_sku_fail(self):
         site = Site.objects.get(pk=1)
-        product_1 = Product.objects.create(
-            name="Test Product",
-            site=site
-        )
+        product_1 = Product.objects.create(name="Test Product", site=site)
         with self.assertRaises(IntegrityError):
-            product_2 = Product.objects.create(
-                name="Test Product",
-                site=site
-            )
+            product_2 = Product.objects.create(name="Test Product", site=site)
 
 
 class TransactionProductTests(TestCase):
@@ -169,15 +168,16 @@ class TransactionProductTests(TestCase):
 
 class ViewsProductTests(TestCase):
 
-    fixtures = ['user', 'unit_test']
+    fixtures = ["user", "unit_test"]
 
     def setUp(self):
         self.product = Product.objects.get(pk=1)
 
-        self.products_list_uri = reverse('vendor_admin:manager-product-list')
-        self.product_create_uri = reverse('vendor_admin:manager-product-create')
-        self.product_update_uri = reverse('vendor_admin:manager-product-update', kwargs={'uuid': self.product.uuid})
-
+        self.products_list_uri = reverse("vendor_admin:manager-product-list")
+        self.product_create_uri = reverse("vendor_admin:manager-product-create")
+        self.product_update_uri = reverse(
+            "vendor_admin:manager-product-update", kwargs={"uuid": self.product.uuid}
+        )
 
         self.client = Client()
         self.user = User.objects.get(pk=1)
@@ -193,14 +193,14 @@ class ViewsProductTests(TestCase):
         response = client.get(self.products_list_uri)
 
         self.assertEquals(response.status_code, 302)
-        self.assertIn('login', response.url)
+        self.assertIn("login", response.url)
 
     def test_products_list_has_no_content(self):
         Product.objects.all().delete()
-        
+
         response = self.client.get(self.products_list_uri)
 
-        self.assertContains(response, 'No Products')
+        self.assertContains(response, "No Products")
 
     def test_products_list_has_content(self):
         response = self.client.get(self.products_list_uri)
@@ -227,7 +227,7 @@ class ViewsProductTests(TestCase):
         response = client.get(self.product_create_uri)
 
         self.assertEquals(response.status_code, 302)
-        self.assertIn('login', response.url)
+        self.assertIn("login", response.url)
 
     def test_product_update_status_code_success(self):
         response = self.client.get(self.product_update_uri)
@@ -239,10 +239,13 @@ class ViewsProductTests(TestCase):
         response = client.get(self.product_update_uri)
 
         self.assertEquals(response.status_code, 302)
-        self.assertIn('login', response.url)
-    
+        self.assertIn("login", response.url)
+
     def test_product_availability_toggle_activate(self):
-        uri = reverse('vendor_api:manager-product-availablility', kwargs={'uuid': self.product.uuid})
+        uri = reverse(
+            "vendor_api:manager-product-availablility",
+            kwargs={"uuid": self.product.uuid},
+        )
 
         self.product.available = False
         self.product.save()
@@ -251,15 +254,25 @@ class ViewsProductTests(TestCase):
             offer.available = False
             offer.save()
 
-        response = self.client.post(uri, data={'available': True})
+        response = self.client.post(uri, data={"available": True})
         self.product.refresh_from_db()
-        
+
         self.assertEqual(response.status_code, 302)
         self.assertTrue(self.product.available)
-        self.assertTrue(all((offer.available for offer in Offer.objects.filter(products__in=[self.product]))))
-    
+        self.assertTrue(
+            all(
+                (
+                    offer.available
+                    for offer in Offer.objects.filter(products__in=[self.product])
+                )
+            )
+        )
+
     def test_product_availability_toggle_inactivate(self):
-        uri = reverse('vendor_api:manager-product-availablility', kwargs={'uuid': self.product.uuid})
+        uri = reverse(
+            "vendor_api:manager-product-availablility",
+            kwargs={"uuid": self.product.uuid},
+        )
 
         self.product.available = True
         self.product.save()
@@ -268,13 +281,19 @@ class ViewsProductTests(TestCase):
             offer.available = True
             offer.save()
 
-        response = self.client.post(uri, data={'available': False})
+        response = self.client.post(uri, data={"available": False})
         self.product.refresh_from_db()
-        
+
         self.assertEqual(response.status_code, 302)
         self.assertFalse(self.product.available)
-        self.assertFalse(all((offer.available for offer in Offer.objects.filter(products__in=[self.product]))))
-
+        self.assertFalse(
+            all(
+                (
+                    offer.available
+                    for offer in Offer.objects.filter(products__in=[self.product])
+                )
+            )
+        )
 
     # def test_view_uplaod_csv_product(self):
     #     raise NotImplementedError()

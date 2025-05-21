@@ -1,10 +1,9 @@
 # App Settings
-from django.conf import settings
 from django import forms
-from django.db.models import TextChoices
+from django.conf import settings
 from django.contrib.sites.models import Site
+from django.db.models import TextChoices
 from django.utils.translation import gettext_lazy as _
-
 from siteconfigs.config import SiteConfigBaseClass
 
 
@@ -112,7 +111,6 @@ class VendorSiteCommissionConfig(SiteConfigBaseClass):
         super().__init__(site, self.key)
 
 
-
 VENDOR_PRODUCT_MODEL = getattr(settings, "VENDOR_PRODUCT_MODEL", "vendor.Product")
 
 VENDOR_PAYMENT_PROCESSOR = getattr(
@@ -132,8 +130,12 @@ VENDOR_DATA_ENCODER = getattr(
     settings, "VENDOR_DATA_ENCODER", "vendor.encrypt.cleartext"
 )
 
-ENABLE_STRIPE_SIGNALS = getattr(settings, 'ENABLE_STRIPE_SIGNALS', False)
+ENABLE_STRIPE_SIGNALS = getattr(settings, "ENABLE_STRIPE_SIGNALS", False)
 
-STRIPE_BASE_COMMISSION = getattr(settings, 'STRIPE_BASE_COMMISSION', {'percentage': 2.9, 'fixed': 0.3})
+STRIPE_BASE_COMMISSION = getattr(
+    settings, "STRIPE_BASE_COMMISSION", {"percentage": 2.9, "fixed": 0.3}
+)
 
-STRIPE_RECURRING_COMMISSION = getattr(settings, 'STRIPE_RECURRING_COMMISSION', {'percentage': 0.5})
+STRIPE_RECURRING_COMMISSION = getattr(
+    settings, "STRIPE_RECURRING_COMMISSION", {"percentage": 0.5}
+)

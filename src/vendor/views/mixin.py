@@ -1,8 +1,9 @@
-from django.core.exceptions import ImproperlyConfigured
 from django.contrib import messages
+from django.core.exceptions import ImproperlyConfigured
 from django.http import Http404
 from django.shortcuts import redirect
 from django.utils.translation import gettext as _
+
 from vendor.utils import get_site_from_request
 
 
@@ -10,7 +11,7 @@ class PassRequestToFormKwargsMixin:
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['request'] = self.request
+        kwargs["request"] = self.request
         return kwargs
 
 
@@ -19,6 +20,7 @@ class ProductRequiredMixin:
     Checks to see if a user has a required product and if not, redirects them.
     ProductRequiredMixin expects that request.site is set.
     """
+
     product_queryset = None
     product_model = None
     product_redirect = "/"
@@ -37,9 +39,9 @@ class ProductRequiredMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Variable set by ProductRequiredMixin
-        context['product_owned'] = self.product_owned
-        context['future_access'] = self.future_access
-        
+        context["product_owned"] = self.product_owned
+        context["future_access"] = self.future_access
+
         return context
 
     def user_has_product(self):
@@ -52,9 +54,13 @@ class ProductRequiredMixin:
             self.product_owned = False
         else:
             products = self.get_product_queryset()
-            self.product_owned = self.request.user.customer_profile.filter(
+            self.product_owned = (
+                self.request.user.customer_profile.filter(
                     site=get_site_from_request(self.request)
-                ).get().has_product(products)
+                )
+                .get()
+                .has_product(products)
+            )
 
         return self.product_owned
 
@@ -63,10 +69,14 @@ class ProductRequiredMixin:
             self.future_access = False
         else:
             products = self.get_product_queryset()
-            self.future_access = self.request.user.customer_profile.filter(
+            self.future_access = (
+                self.request.user.customer_profile.filter(
                     site=get_site_from_request(self.request)
-                ).get().has_future_access(products)
-        
+                )
+                .get()
+                .has_future_access(products)
+            )
+
         return self.future_access
 
     def get_product_queryset(self):
@@ -76,29 +86,31 @@ class ProductRequiredMixin:
         if self.product_queryset is None:
             if self.product_model:
                 # Only provide list of products on the current site.
-                return self.product_model.objects.filter(site=get_site_from_request(self.request))
+                return self.product_model.objects.filter(
+                    site=get_site_from_request(self.request)
+                )
             else:
                 raise ImproperlyConfigured(
                     "%(cls)s is missing a Product QuerySet. Define "
                     "%(cls)s.product_model, %(cls)s.product_queryset, or override "
-                    "%(cls)s.get_product_queryset()." % {
-                        'cls': self.__class__.__name__
-                    }
+                    "%(cls)s.get_product_queryset()." % {"cls": self.__class__.__name__}
                 )
         return self.product_queryset.all()
 
     def handle_no_product(self):
-        '''
+        """
         The result to be returned if no viable product is found owned by the user.
         If None is returned, default to a 404 response.
 
         This method allows for a dynamic redirect to be used.
         Default is to use the product_redirect path.
-        '''
+        """
 
         if not self.product_redirect:
-            raise Http404(_("No %(verbose_name)s found matching the query") %
-                          {'verbose_name': self.get_product_queryset().model._meta.verbose_name})
+            raise Http404(
+                _("No %(verbose_name)s found matching the query")
+                % {"verbose_name": self.get_product_queryset().model._meta.verbose_name}
+            )
 
         messages.info(self.request, _("Product Purchase required."))
         return redirect(self.product_redirect)
@@ -107,7 +119,7 @@ class ProductRequiredMixin:
 class SiteOnRequestFilterMixin:
 
     def get_queryset(self):
-        if hasattr(self.request, 'site'):
+        if hasattr(self.request, "site"):
             return self.model.objects.filter(site=get_site_from_request(self.request))
         return self.model.on_site.all()
 
@@ -117,6 +129,7 @@ class TableFilterMixin:
     Mixin for List Views that want to add dynamica pagination, ordering and search filters.
     The mixin expect paginate_by, ordering and search_filter in the request.GET parameter.
     """
+
     paginate_by = None
     ordering = []
     search_filter = None
@@ -133,23 +146,27 @@ class TableFilterMixin:
         """
         Set the self.paginate_by variable from the Pagination Class in the ListView
         """
-        if self.request.GET.get('paginate_by'):
-            self.paginate_by = self.request.GET.get('paginate_by')
+        if self.request.GET.get("paginate_by"):
+            self.paginate_by = self.request.GET.get("paginate_by")
 
     def set_ordering(self):
         """
         Sets a ordering list that can be intrepreted by the order_by() query method.
         """
         self.ordering = []
-        if self.request.GET.get('ordering', []):
-            self.ordering = [order for order in self.request.GET.get('ordering', []).split(',') if order]
+        if self.request.GET.get("ordering", []):
+            self.ordering = [
+                order
+                for order in self.request.GET.get("ordering", []).split(",")
+                if order
+            ]
 
     def get_search_filter_queryset(self, queryset):
         """
         If search_filter is in the request.GET parameters it will call search_filter and return
         a queryset object.
         """
-        if self.request.GET.get('search_filter'):
+        if self.request.GET.get("search_filter"):
             return self.search_filter(queryset)
         return queryset
 

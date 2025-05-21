@@ -4,13 +4,12 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from .profile import CustomerProfile
 from .choice import Country
-
+from .profile import CustomerProfile
 
 # Can be overridden in the settings.py with a differnt IntegerChoices object
 # It should still maintain the ISO-3166 codes for the country numbers and Enumerated keys
-COUNTRY_DEFAULT = getattr(settings, 'VENDOR_COUNTRY_DEFAULT', Country.US)
+COUNTRY_DEFAULT = getattr(settings, "VENDOR_COUNTRY_DEFAULT", Country.US)
 
 
 #####################
@@ -36,17 +35,37 @@ class Address(models.Model):
     Returns:
         Address(): Returns an instance of the Address model
     """
-    uuid = models.UUIDField(_("UUID"), editable=False, unique=True, default=uuid.uuid4, null=False, blank=False)
+
+    uuid = models.UUIDField(
+        _("UUID"),
+        editable=False,
+        unique=True,
+        default=uuid.uuid4,
+        null=False,
+        blank=False,
+    )
     # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
     name = models.CharField(_("Address Name"), max_length=80, blank=True)
-    profile = models.ForeignKey(CustomerProfile, verbose_name=_("Customer Profile"), null=True, on_delete=models.CASCADE, related_name="addresses")
+    profile = models.ForeignKey(
+        CustomerProfile,
+        verbose_name=_("Customer Profile"),
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="addresses",
+    )
     first_name = models.CharField(_("First Name"), max_length=150, blank=True)
     last_name = models.CharField(_("Last Name"), max_length=150, blank=True)
     address_1 = models.CharField(_("Address"), max_length=40, blank=False)
-    address_2 = models.CharField(_("Address 2 (Optional)"), max_length=40, blank=True, null=True)
+    address_2 = models.CharField(
+        _("Address 2 (Optional)"), max_length=40, blank=True, null=True
+    )
     locality = models.CharField(_("City"), max_length=40, blank=False)
     state = models.CharField(_("State"), max_length=40, blank=False)
-    country = models.IntegerField(_("Country/Region"), choices=Country.choices, default=Country[COUNTRY_DEFAULT].value)
+    country = models.IntegerField(
+        _("Country/Region"),
+        choices=Country.choices,
+        default=Country[COUNTRY_DEFAULT].value,
+    )
     postal_code = models.CharField(_("Postal Code"), max_length=16, blank=True)
 
     # def create_address_from_billing_form(self, billing_form, profile):
@@ -80,4 +99,6 @@ class Address(models.Model):
         return "\n".join([f"{key}: {value}" for key, value in self.__dict__.items()])
 
     def get_address_display(self):
-        return f"{self.profile.user}\n{self.address_1}, {self.address_2}\n{self.locality}, {self.state}, {self.get_country_display()}, {self.postal_code}".replace('None', '')
+        return f"{self.profile.user}\n{self.address_1}, {self.address_2}\n{self.locality}, {self.state}, {self.get_country_display()}, {self.postal_code}".replace(
+            "None", ""
+        )

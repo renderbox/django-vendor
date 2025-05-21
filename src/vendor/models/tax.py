@@ -6,13 +6,14 @@ from django.utils.translation import gettext_lazy as _
 # TAX CLASSIFIER
 #####################
 class TaxClassifier(models.Model):
-    '''
+    """
     This for things like "Digital Goods", "Furniture" or "Food" which may or
     may not be taxable depending on the location.  These are determined by the
     manager of all sites.
     These classifiers will retain certian provider specific codes that are used
     to help calculate the tax liability in the sale.
-    '''
+    """
+
     name = models.CharField(_("Name"), max_length=80, blank=True)
     taxable = models.BooleanField(_("Taxable"))
     # info = models.ManyToManyField("vendor.TaxInfo")                 # Which taxes is this subject to and where.  This is for a more complex tax setup

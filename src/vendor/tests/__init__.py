@@ -1,11 +1,5 @@
-
 from .test_processor import *
 from .test_stripe import *
-
-
-
-
-
 
 # TODO: Check which tests are still worth keepting
 # import os
@@ -241,7 +235,7 @@ from .test_stripe import *
 #         offer = Offer.objects.get(pk=2)
 #         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
 #         orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
-        
+
 #         data = {
 #             "offer": offer.sku
 #         }
@@ -589,14 +583,14 @@ from .test_stripe import *
 #         '''
 
 #         self.client.force_login(self.user)
-        
+
 #         uri = reverse('vendor-user-cart-delete-api')
 #         response = self.client.delete(uri)
 
 #         try:
 #             self.assertEqual(response.status_code, 200)     # 200 -> Return Response Code
 #             self.assertEqual(Invoice.objects.all().filter(status=0).count(), 2)      # There should be 3 carts
-            
+
 #             # Check the cart to see that it's empty
 
 
@@ -701,7 +695,7 @@ from .test_stripe import *
 #         self.product = Product.objects.get(pk=4)
 
 #     def test_payment_process(self):
-        
+
 #         self.client.force_login(self.user)
 #         offer = Offer.objects.get(pk=2)
 #         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
@@ -712,7 +706,7 @@ from .test_stripe import *
 
 #         purchases = Purchase.objects.filter(user = self.user)
 #         invoice_completed = Invoice.objects.get(id = invoice.id)
-        
+
 #         try:
 #             self.assertEqual(response.status_code, 200)     # 200 -> Created Response Code
 #             self.assertEqual(invoice_completed.status, 20)

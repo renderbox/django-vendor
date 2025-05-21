@@ -8,8 +8,10 @@ This is a 'passthrough encoder' (which is the default) for development.  It shou
 To make your own, the module expects to have 'encode' and 'decode' functions.  Everything else is up to you.
 """
 
+
 def encode(data):
     return data
+
 
 def decode(data):
     return data

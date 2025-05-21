@@ -72,3 +72,6 @@ test = [
 [tool.poetry.urls]
 Homepage = "https://github.com/renderbox/django-vendor"
 "Bug Tracker" = "https://github.com/renderbox/django-vendor/issues"
+
+[tool.isort]
+profile = "black"

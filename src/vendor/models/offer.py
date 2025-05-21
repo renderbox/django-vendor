@@ -16,8 +16,11 @@ from vendor.utils import get_future_date_days, get_future_date_months
 
 from .base import CreateUpdateModelBase, SoftDeleteModelBase
 from .choice import TermDetailUnits, TermType
-from .modelmanagers import (ActiveCurrentSiteManager, ActiveManager,
-                            CurrentSiteSoftDeleteManager)
+from .modelmanagers import (
+    ActiveCurrentSiteManager,
+    ActiveManager,
+    CurrentSiteSoftDeleteManager,
+)
 from .utils import is_currency_available, set_default_site_id
 
 
@@ -40,28 +43,92 @@ def offer_term_details_default():
 
 
 class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
-    '''
+    """
     Offer attaches to a record from the designated VENDOR_PRODUCT_MODEL.
     This is so more than one offer can be made per product, with different
     priorities.  It also allows for the bundling of several products into
     a single Offer on the site.
-    '''
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)                                # Used to track the product
-    slug = AutoSlugField(populate_from='name', unique_with='site__id', editable=True)                                               # SEO friendly
-    site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="product_offers")                      # For multi-site support
-    name = models.CharField(_("Name"), max_length=80, blank=True)                                           # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
-    start_date = models.DateTimeField(_("Start Date"), help_text=_("What date should this offer become available?"))
-    end_date = models.DateTimeField(_("End Date"), blank=True, null=True, help_text=_("Expiration Date?"))
+    """
+
+    uuid = models.UUIDField(
+        default=uuid.uuid4, editable=False, unique=True
+    )  # Used to track the product
+    slug = AutoSlugField(
+        populate_from="name", unique_with="site__id", editable=True
+    )  # SEO friendly
+    site = models.ForeignKey(
+        Site,
+        verbose_name=_("Site"),
+        on_delete=models.CASCADE,
+        default=set_default_site_id,
+        related_name="product_offers",
+    )  # For multi-site support
+    name = models.CharField(
+        _("Name"), max_length=80, blank=True
+    )  # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
+    start_date = models.DateTimeField(
+        _("Start Date"), help_text=_("What date should this offer become available?")
+    )
+    end_date = models.DateTimeField(
+        _("End Date"), blank=True, null=True, help_text=_("Expiration Date?")
+    )
     terms = models.IntegerField(_("Terms"), default=0, choices=TermType.choices)
-    term_details = models.JSONField(_("Term Details"), default=offer_term_details_default, blank=True, null=True, help_text=_("term_units: 10/20(Day/Month), trial_occurrences: 1(defualt)"))
-    term_start_date = models.DateTimeField(_("Term Start Date"), help_text=_("When is this product available to use?"), blank=True, null=True)  # Useful for Event Tickets or Pre-Orders
-    billing_start_date = models.DateTimeField(_("Billing Start Date"), blank=True, null=True, default=None, help_text=_("The start date to begin billing"))
-    available = models.BooleanField(_("Available"), default=False, help_text=_("Is this currently available?"))
-    bundle = models.BooleanField(_("Is a Bundle?"), default=False, help_text=_("Is this a product bundle? (auto-generated)"))  # Auto-generated based on if the count of the products is greater than 1.
-    offer_description = models.TextField(_("Offer Description"), default=None, blank=True, null=True, help_text=_("You can enter a list of descriptions. Note: if you inputs something here the product description will not show up."))
-    list_bundle_items = models.BooleanField(_("List Bundled Items"), default=False, help_text=_("When showing to customers, display the included items in a list?"))
-    allow_multiple = models.BooleanField(_("Allow Multiple Purchase"), default=False, help_text=_("Confirm the user wants to buy multiples of the product where typically there is just one purchased at a time."))
-    is_promotional = models.BooleanField(_("Is Promotional"), default=False, help_text=_("You can mark this offer as promotional to help identify it between normal priced and discount priced offers."))
+    term_details = models.JSONField(
+        _("Term Details"),
+        default=offer_term_details_default,
+        blank=True,
+        null=True,
+        help_text=_("term_units: 10/20(Day/Month), trial_occurrences: 1(defualt)"),
+    )
+    term_start_date = models.DateTimeField(
+        _("Term Start Date"),
+        help_text=_("When is this product available to use?"),
+        blank=True,
+        null=True,
+    )  # Useful for Event Tickets or Pre-Orders
+    billing_start_date = models.DateTimeField(
+        _("Billing Start Date"),
+        blank=True,
+        null=True,
+        default=None,
+        help_text=_("The start date to begin billing"),
+    )
+    available = models.BooleanField(
+        _("Available"), default=False, help_text=_("Is this currently available?")
+    )
+    bundle = models.BooleanField(
+        _("Is a Bundle?"),
+        default=False,
+        help_text=_("Is this a product bundle? (auto-generated)"),
+    )  # Auto-generated based on if the count of the products is greater than 1.
+    offer_description = models.TextField(
+        _("Offer Description"),
+        default=None,
+        blank=True,
+        null=True,
+        help_text=_(
+            "You can enter a list of descriptions. Note: if you inputs something here the product description will not show up."
+        ),
+    )
+    list_bundle_items = models.BooleanField(
+        _("List Bundled Items"),
+        default=False,
+        help_text=_("When showing to customers, display the included items in a list?"),
+    )
+    allow_multiple = models.BooleanField(
+        _("Allow Multiple Purchase"),
+        default=False,
+        help_text=_(
+            "Confirm the user wants to buy multiples of the product where typically there is just one purchased at a time."
+        ),
+    )
+    is_promotional = models.BooleanField(
+        _("Is Promotional"),
+        default=False,
+        help_text=_(
+            "You can mark this offer as promotional to help identify it between normal priced and discount priced offers."
+        ),
+    )
     meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)
 
     objects = models.Manager()
@@ -98,13 +165,19 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
             return 0
 
     def current_price(self, currency=DEFAULT_CURRENCY):
-        '''
+        """
         Finds the highest priority active price and returns that, otherwise returns msrp total.
-        '''
+        """
         now = timezone.now()
-        price = self.prices.filter(Q(start_date__lte=now) | Q(start_date=None),
-                                   Q(end_date__gte=now) | Q(end_date=None),
-                                   Q(currency=currency)).order_by('-priority').first()  # first()/last() returns the model object or None
+        price = (
+            self.prices.filter(
+                Q(start_date__lte=now) | Q(start_date=None),
+                Q(end_date__gte=now) | Q(end_date=None),
+                Q(currency=currency),
+            )
+            .order_by("-priority")
+            .first()
+        )  # first()/last() returns the model object or None
 
         if price is None:
             # If there is no price for the offer, all MSRPs should be summed up for the "price".
@@ -118,9 +191,15 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
 
     def get_current_price_instance(self, currency=DEFAULT_CURRENCY):
         now = timezone.now()
-        price = self.prices.filter(Q(start_date__lte=now) | Q(start_date=None),
-                                   Q(end_date__gte=now) | Q(end_date=None),
-                                   Q(currency=currency)).order_by('-priority').first()  # first()/last() returns the model object or None
+        price = (
+            self.prices.filter(
+                Q(start_date__lte=now) | Q(start_date=None),
+                Q(end_date__gte=now) | Q(end_date=None),
+                Q(currency=currency),
+            )
+            .order_by("-priority")
+            .first()
+        )  # first()/last() returns the model object or None
 
         return price
 
@@ -131,7 +210,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         return reverse("vendor_api:remove-from-cart", kwargs={"slug": self.slug})
 
     def set_name_if_empty(self):
-        product_names = [ product.name for product in self.products.all() ]
+        product_names = [product.name for product in self.products.all()]
         if len(product_names) == 1:
             self.name = product_names[0]
         else:
@@ -154,28 +233,35 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
             return math.fabs(self.current_price())
         elif self.is_promotional and self.current_price() > 0:
             return 0
-        
+
         discount = self.get_msrp(currency) - self.current_price(currency)
 
         if discount <= 0:
             return 0
-            
+
         return discount
 
     def get_best_currency(self, currency=DEFAULT_CURRENCY):
         """
         Gets best currency for products available in this offer
         """
-        product_msrp_currencies = [ set(product.meta['msrp'].keys()) for product in self.products.all() ]
+        product_msrp_currencies = [
+            set(product.meta["msrp"].keys()) for product in self.products.all()
+        ]
 
-        if product_msrp_currencies and len(product_msrp_currencies[0]) >= 2:  # fixes IndexError: list index out of range
-            if is_currency_available(product_msrp_currencies[0].union(*product_msrp_currencies[1:]), currency=currency):
+        if (
+            product_msrp_currencies and len(product_msrp_currencies[0]) >= 2
+        ):  # fixes IndexError: list index out of range
+            if is_currency_available(
+                product_msrp_currencies[0].union(*product_msrp_currencies[1:]),
+                currency=currency,
+            ):
                 return currency
 
         return DEFAULT_CURRENCY
 
     def get_trial_amount(self):
-        return self.term_details.get('trial_amount', 0)
+        return self.term_details.get("trial_amount", 0)
 
     def get_trial_savings(self):
         """
@@ -184,7 +270,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         if not self.has_trial_occurrences():
             return 0
 
-        trial_savings = self.current_price() - self.term_details.get('trial_amount', 0)
+        trial_savings = self.current_price() - self.term_details.get("trial_amount", 0)
 
         if trial_savings < 0:
             return 0
@@ -198,18 +284,18 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         if not self.has_trial_occurrences():
             return 0
 
-        return self.term_details.get('trial_amount', 0)
+        return self.term_details.get("trial_amount", 0)
 
     def get_trial_duration_in_months(self):
-        duration = self.term_details.get('trial_days', 0)
+        duration = self.term_details.get("trial_days", 0)
 
         if duration <= 0:
             return 0
 
-        return math.ceil(duration/31)
+        return math.ceil(duration / 31)
 
     def has_trial_occurrences(self):
-        if self.term_details.get('trial_occurrences', 0) > 0:
+        if self.term_details.get("trial_occurrences", 0) > 0:
             return True
         return False
 
@@ -223,36 +309,42 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
 
     def get_period_length(self):
         if self.terms == TermType.SUBSCRIPTION:
-            return self.term_details['period_length']
+            return self.term_details["period_length"]
         else:
-            return self.terms - 100   # You subtract 100 because enum are numbered according to their period length. eg Month = 101 and Year = 112
+            return (
+                self.terms - 100
+            )  # You subtract 100 because enum are numbered according to their period length. eg Month = 101 and Year = 112
 
     def get_payment_occurrences(self):
         """
         Gets the defined payment ocurrences for a Subscription. It defaults to
         9999 which means it will charge that amount until the customer cancels the subscription.
         """
-        return self.term_details.get('payment_occurrences', 9999)
+        return self.term_details.get("payment_occurrences", 9999)
 
     def get_trial_occurrences(self):
-        return self.term_details.get('trial_occurrences', 0)
-    
+        return self.term_details.get("trial_occurrences", 0)
+
     def get_trial_days(self):
-        return self.term_details.get('trial_days', 0)
+        return self.term_details.get("trial_days", 0)
 
     def has_any_discount_or_trial(self):
-        if self.discount() or self.get_trial_amount() or\
-           self.get_trial_occurrences() or self.get_trial_days() or\
-           (self.billing_start_date and self.billing_start_date > timezone.now()):
+        if (
+            self.discount()
+            or self.get_trial_amount()
+            or self.get_trial_occurrences()
+            or self.get_trial_days()
+            or (self.billing_start_date and self.billing_start_date > timezone.now())
+        ):
             return True
-            
+
         return False
-    
+
     def has_trial(self):
         if self.get_trial_occurrences() or self.get_trial_days():
             return True
         return False
-    
+
     def has_valid_billing_start_date(self, today=None):
         if today is None:
             today = timezone.now()
@@ -260,45 +352,49 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         if self.billing_start_date and self.billing_start_date > today:
             return True
         return False
-    
+
     def get_offer_start_date(self, start_date=None):
         if start_date is None:
             start_date = timezone.now()
         if self.term_start_date and self.term_start_date > start_date:
             return self.term_start_date
-        
+
         return start_date
 
     def get_offer_end_date(self, start_date=None):
         """
         Determines the start date offset so the payment gateway starts charging the monthly offer
         """
-        units = self.term_details.get('term_units', TermDetailUnits.MONTH)
+        units = self.term_details.get("term_units", TermDetailUnits.MONTH)
         if start_date is None:
             start_date = timezone.now()
-        
+
         if units == TermDetailUnits.MONTH:
             return get_future_date_months(start_date, self.get_period_length())
-        
+
         elif units == TermDetailUnits.DAY:
             return get_future_date_days(start_date, self.get_period_length())
-    
+
     def get_trial_end_date(self, start_date=None):
         if start_date is None:
             start_date = timezone.now()
 
         if self.billing_start_date and self.billing_start_date > start_date:
             return self.billing_start_date - timedelta(days=1)
-        
+
         trial_occurrences = self.get_trial_occurrences()
         if trial_occurrences:
-            units = self.term_details.get('term_units', TermDetailUnits.MONTH)
+            units = self.term_details.get("term_units", TermDetailUnits.MONTH)
 
             if units == TermDetailUnits.MONTH:
-                return get_future_date_months(start_date, self.get_period_length() * trial_occurrences)
+                return get_future_date_months(
+                    start_date, self.get_period_length() * trial_occurrences
+                )
 
             elif units == TermDetailUnits.DAY:
-                return get_future_date_days(start_date, self.get_period_length() * trial_occurrences)
+                return get_future_date_days(
+                    start_date, self.get_period_length() * trial_occurrences
+                )
 
         return start_date + timedelta(days=self.get_trial_days())
 
@@ -309,5 +405,5 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
 
         if trial_end_date == start_date:
             return start_date
-        
+
         return trial_end_date + timedelta(days=1)

@@ -1,12 +1,16 @@
-from django.utils.module_loading import import_string
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.module_loading import import_string
+from siteconfigs.models import SiteConfigModel
 
 from vendor.config import PaymentProcessorSiteConfig
 from vendor.processors.authorizenet import AuthorizeNetProcessor
-from vendor.processors.stripe import StripeProcessor, StripeQueryBuilder, PRORATION_BEHAVIOUR_CHOICE
 from vendor.processors.base import PaymentProcessorBase
 from vendor.processors.dummy import DummyProcessor
-from siteconfigs.models import SiteConfigModel
+from vendor.processors.stripe import (
+    PRORATION_BEHAVIOUR_CHOICE,
+    StripeProcessor,
+    StripeQueryBuilder,
+)
 
 
 def get_site_payment_processor(site):

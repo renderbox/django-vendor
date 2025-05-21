@@ -1,20 +1,34 @@
-from core.models import Product
 from datetime import timedelta
+from random import choice, randrange
+from unittest import skipIf
 
+from core.models import Product
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
-from django.utils import timezone
+from django.test import Client, TestCase, tag
 from django.urls import reverse
-from django.test import TestCase, Client, tag
-
-from unittest import skipIf
-from random import randrange, choice
+from django.utils import timezone
 from siteconfigs.models import SiteConfigModel
-from vendor.forms import CreditCardForm, BillingAddressForm
-from vendor.models import Invoice, Payment, Offer, Price, Receipt, CustomerProfile, OrderItem, Subscription
-from vendor.models.choice import PurchaseStatus, InvoiceStatus, SubscriptionStatus
-from vendor.processors import PaymentProcessorBase, AuthorizeNetProcessor, StripeProcessor
+
+from vendor.forms import BillingAddressForm, CreditCardForm
+from vendor.models import (
+    CustomerProfile,
+    Invoice,
+    Offer,
+    OrderItem,
+    Payment,
+    Price,
+    Receipt,
+    Subscription,
+)
+from vendor.models.choice import InvoiceStatus, PurchaseStatus, SubscriptionStatus
+from vendor.processors import (
+    AuthorizeNetProcessor,
+    PaymentProcessorBase,
+    StripeProcessor,
+)
+
 ###############################
 # Test constants
 ###############################
@@ -24,7 +38,7 @@ User = get_user_model()
 
 class BaseProcessorTests(TestCase):
 
-    fixtures = ['user', 'unit_test']
+    fixtures = ["user", "unit_test"]
 
     def setUp(self):
         self.client = Client()
@@ -36,24 +50,24 @@ class BaseProcessorTests(TestCase):
         self.subscription_offer = Offer.objects.get(pk=4)
         self.hamster_wheel = Offer.objects.get(pk=3)
         self.form_data = {
-            'billing_address_form': {
-                'billing-name': 'Home',
-                'billing-company': 'Whitemoon Dreams',
-                'billing-country': '840',
-                'billing-address_1': '221B Baker Street',
-                'billing-address_2': '',
-                'billing-locality': 'Marylebone',
-                'billing-state': 'California',
-                'billing-postal_code': '90292'
+            "billing_address_form": {
+                "billing-name": "Home",
+                "billing-company": "Whitemoon Dreams",
+                "billing-country": "840",
+                "billing-address_1": "221B Baker Street",
+                "billing-address_2": "",
+                "billing-locality": "Marylebone",
+                "billing-state": "California",
+                "billing-postal_code": "90292",
             },
-            'credit_card_form': {
-                'full_name': 'Bob Ross',
-                'card_number': '5424000000000015',
-                'expire_month': '12',
-                'expire_year': '2030',
-                'cvv_number': '900',
-                'payment_type': '10'
-            }
+            "credit_card_form": {
+                "full_name": "Bob Ross",
+                "card_number": "5424000000000015",
+                "expire_month": "12",
+                "expire_year": "2030",
+                "cvv_number": "900",
+                "payment_type": "10",
+            },
         }
 
     def test_base_processor_init_fail(self):
@@ -63,12 +77,16 @@ class BaseProcessorTests(TestCase):
     def test_base_processor_init_success(self):
         base_processor = PaymentProcessorBase(self.site, self.existing_invoice)
 
-        self.assertEquals('PaymentProcessorBase', base_processor.provider)
+        self.assertEquals("PaymentProcessorBase", base_processor.provider)
         self.assertIsNotNone(base_processor.invoice)
 
     def test_create_payment_model_success(self):
-        self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
-        self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+        self.base_processor.set_billing_address_form_data(
+            self.form_data["billing_address_form"], BillingAddressForm
+        )
+        self.base_processor.set_payment_info_form_data(
+            self.form_data["credit_card_form"], CreditCardForm
+        )
         self.base_processor.is_data_valid()
         self.base_processor.create_payment_model()
 
@@ -76,10 +94,14 @@ class BaseProcessorTests(TestCase):
 
     def test_save_payment_transaction_success(self):
         payment_success = True
-        transaction_id = '1423wasd'
+        transaction_id = "1423wasd"
 
-        self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
-        self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+        self.base_processor.set_billing_address_form_data(
+            self.form_data["billing_address_form"], BillingAddressForm
+        )
+        self.base_processor.set_payment_info_form_data(
+            self.form_data["credit_card_form"], CreditCardForm
+        )
         self.base_processor.is_data_valid()
         self.base_processor.create_payment_model()
         self.base_processor.transaction_succeeded = payment_success
@@ -91,7 +113,7 @@ class BaseProcessorTests(TestCase):
 
         self.assertTrue(self.base_processor.payment.success)
         self.assertEquals(self.base_processor.payment.transaction, transaction_id)
-        self.assertIn('payment_info', self.base_processor.payment.result)
+        self.assertIn("payment_info", self.base_processor.payment.result)
 
     def test_update_invoice_status_success(self):
         self.base_processor.transaction_succeeded = True
@@ -108,12 +130,16 @@ class BaseProcessorTests(TestCase):
         self.base_processor.invoice.add_offer(self.subscription_offer)
         self.base_processor.invoice.save()
 
-        order_item_subscription = self.base_processor.invoice.order_items.get(offer__pk=4)
+        order_item_subscription = self.base_processor.invoice.order_items.get(
+            offer__pk=4
+        )
         self.base_processor.payment = Payment.objects.get(pk=1)
-        
+
         self.base_processor.subscription_id = "123"
         self.base_processor.create_subscription_model()
-        self.base_processor.create_receipt_by_term_type(order_item_subscription, order_item_subscription.offer.terms)
+        self.base_processor.create_receipt_by_term_type(
+            order_item_subscription, order_item_subscription.offer.terms
+        )
 
         self.assertIsNotNone(self.base_processor.subscription)
         self.assertIsNotNone(self.base_processor.receipt.subscription)
@@ -123,19 +149,31 @@ class BaseProcessorTests(TestCase):
         perpetual_order_item = self.base_processor.invoice.order_items.get(offer__pk=1)
 
         self.base_processor.payment = Payment.objects.get(pk=1)
-        self.base_processor.create_receipt_by_term_type(perpetual_order_item, perpetual_order_item.offer.terms)
+        self.base_processor.create_receipt_by_term_type(
+            perpetual_order_item, perpetual_order_item.offer.terms
+        )
 
         self.assertIsNone(self.base_processor.receipt.subscription)
 
     # def test_create_receipt_by_term_type_one_time_use(self):
-        # raise NotImplementedError()
+    # raise NotImplementedError()
 
     def test_create_receipts_success(self):
         self.base_processor.invoice.status = InvoiceStatus.COMPLETE
         self.base_processor.payment = Payment.objects.get(pk=1)
-        self.base_processor.create_receipts(self.base_processor.invoice.order_items.all())
+        self.base_processor.create_receipts(
+            self.base_processor.invoice.order_items.all()
+        )
 
-        self.assertEquals(Receipt.objects.all().count(), sum([ order_item.receipts.all().count() for order_item in self.base_processor.invoice.order_items.all() ]))
+        self.assertEquals(
+            Receipt.objects.all().count(),
+            sum(
+                [
+                    order_item.receipts.all().count()
+                    for order_item in self.base_processor.invoice.order_items.all()
+                ]
+            ),
+        )
 
     # def test_update_subscription_receipt_success(self):
     #     subscription_id = 123456789
@@ -166,37 +204,55 @@ class BaseProcessorTests(TestCase):
         price.cost = 25
         price.start_date = timezone.now() - timedelta(days=1)
         price.save()
-        self.assertNotEquals(self.existing_invoice.total, self.base_processor.amount_without_subscriptions())
+        self.assertNotEquals(
+            self.existing_invoice.total,
+            self.base_processor.amount_without_subscriptions(),
+        )
 
     def test_get_transaction_id_success(self):
         self.base_processor.payment = Payment.objects.get(pk=1)
         self.assertIn(str(settings.SITE_ID), self.base_processor.get_transaction_id())
-        self.assertIn(str(self.existing_invoice.profile.pk), self.base_processor.get_transaction_id())
-        self.assertIn(str(self.existing_invoice.pk), self.base_processor.get_transaction_id())
+        self.assertIn(
+            str(self.existing_invoice.profile.pk),
+            self.base_processor.get_transaction_id(),
+        )
+        self.assertIn(
+            str(self.existing_invoice.pk), self.base_processor.get_transaction_id()
+        )
 
     def test_set_billing_address_form_data_fail(self):
         with self.assertRaises(TypeError):
             self.base_processor.set_billing_address_form_data(self.form_data)
 
     def test_set_billing_address_form_data_success(self):
-        self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
+        self.base_processor.set_billing_address_form_data(
+            self.form_data["billing_address_form"], BillingAddressForm
+        )
 
         self.assertIsNotNone(self.base_processor.billing_address)
-        self.assertIn(self.form_data['billing_address_form']['billing-address_1'], self.base_processor.billing_address.data['billing-address_1'])
+        self.assertIn(
+            self.form_data["billing_address_form"]["billing-address_1"],
+            self.base_processor.billing_address.data["billing-address_1"],
+        )
 
     def test_set_payment_info_form_data_fail(self):
         with self.assertRaises(TypeError):
             self.base_processor.set_payment_info_form_data(self.form_data)
 
     def test_set_payment_info_form_data_success(self):
-        self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+        self.base_processor.set_payment_info_form_data(
+            self.form_data["credit_card_form"], CreditCardForm
+        )
 
         self.assertIsNotNone(self.base_processor.payment_info)
-        self.assertIn(self.form_data['credit_card_form']['cvv_number'], self.base_processor.payment_info.data['cvv_number'])
+        self.assertIn(
+            self.form_data["credit_card_form"]["cvv_number"],
+            self.base_processor.payment_info.data["cvv_number"],
+        )
 
     def test_get_checkout_context_success(self):
         context = self.base_processor.get_checkout_context()
-        self.assertIn('invoice', context)
+        self.assertIn("invoice", context)
 
     def test_free_payment_success(self):
         customer = CustomerProfile.objects.get(pk=2)
@@ -206,8 +262,12 @@ class BaseProcessorTests(TestCase):
 
         base_processor = PaymentProcessorBase(invoice.site, invoice)
 
-        base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
-        base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+        base_processor.set_billing_address_form_data(
+            self.form_data["billing_address_form"], BillingAddressForm
+        )
+        base_processor.set_payment_info_form_data(
+            self.form_data["credit_card_form"], CreditCardForm
+        )
 
         base_processor.authorize_payment()
 
@@ -217,8 +277,8 @@ class BaseProcessorTests(TestCase):
     def test_renew_subscription(self):
         subscription = Subscription.objects.get(pk=1)
         offer = subscription.get_offer()
-        offer.term_details['trial_occurrences'] = 0
-        offer.term_details['trial_days'] = 0
+        offer.term_details["trial_occurrences"] = 0
+        offer.term_details["trial_days"] = 0
         offer.save()
         offer.refresh_from_db()
         subscription.save()
@@ -230,7 +290,7 @@ class BaseProcessorTests(TestCase):
             profile=subscription.profile,
             site=subscription.profile.site,
             ordered_date=submitted_datetime,
-            status=InvoiceStatus.COMPLETE
+            status=InvoiceStatus.COMPLETE,
         )
         invoice.add_offer(subscription.receipts.first().order_item.offer)
         invoice.save()
@@ -238,79 +298,121 @@ class BaseProcessorTests(TestCase):
         transaction_id = timezone.now().strftime("%Y-%m-%d_%H-%M-%S-Manual-Renewal")
 
         base_processor = PaymentProcessorBase(invoice.site, invoice)
-        base_processor.renew_subscription(subscription, transaction_id, PurchaseStatus.CAPTURED)
+        base_processor.renew_subscription(
+            subscription, transaction_id, PurchaseStatus.CAPTURED
+        )
 
-        self.assertTrue(subscription.profile.has_product(subscription.receipts.last().products.all()))
+        self.assertTrue(
+            subscription.profile.has_product(
+                subscription.receipts.last().products.all()
+            )
+        )
 
     def test_subscription_price_update_success(self):
         subscription = Subscription.objects.get(pk=1)
         offer = Offer.objects.get(pk=4)
-        price = Price.objects.create(offer=offer, cost=89.99, currency='usd', start_date=timezone.now())
+        price = Price.objects.create(
+            offer=offer, cost=89.99, currency="usd", start_date=timezone.now()
+        )
         offer.prices.add(price)
 
         processor = PaymentProcessorBase(subscription.profile.site)
         processor.subscription_update_price(subscription, price, self.user)
 
         subscription.refresh_from_db()
-        self.assertIn('price_update', subscription.meta)
+        self.assertIn("price_update", subscription.meta)
 
     def test_subscription_payment_billing_start_date(self):
         today = timezone.now()
         self.subscription_offer.billing_start_date = today + timedelta(days=10)
         self.subscription_offer.save()
 
-        self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
-        self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+        self.base_processor.set_billing_address_form_data(
+            self.form_data["billing_address_form"], BillingAddressForm
+        )
+        self.base_processor.set_payment_info_form_data(
+            self.form_data["credit_card_form"], CreditCardForm
+        )
         self.base_processor.is_data_valid()
 
         self.base_processor.invoice.add_offer(self.subscription_offer)
         self.base_processor.invoice.save()
         self.base_processor.transaction_succeeded = True
         self.base_processor.process_subscriptions()
-    
-        self.assertEqual(today.strftime("%y/%m/%d"), self.base_processor.trial_receipt.start_date.strftime("%y/%m/%d"))
-        self.assertEqual((self.subscription_offer.billing_start_date - timedelta(days=1)).strftime("%y/%m/%d"), self.base_processor.trial_receipt.end_date.strftime("%y/%m/%d"))
+
+        self.assertEqual(
+            today.strftime("%y/%m/%d"),
+            self.base_processor.trial_receipt.start_date.strftime("%y/%m/%d"),
+        )
+        self.assertEqual(
+            (self.subscription_offer.billing_start_date - timedelta(days=1)).strftime(
+                "%y/%m/%d"
+            ),
+            self.base_processor.trial_receipt.end_date.strftime("%y/%m/%d"),
+        )
 
     def test_subscription_payment_term_start_date(self):
         today = timezone.now()
         self.subscription_offer.term_start_date = today + timedelta(days=10)
-        self.subscription_offer.term_details['trial_amount'] = 0
-        self.subscription_offer.term_details['trial_occurrences'] = 0
-        self.subscription_offer.term_details['trial_days'] = 0
+        self.subscription_offer.term_details["trial_amount"] = 0
+        self.subscription_offer.term_details["trial_occurrences"] = 0
+        self.subscription_offer.term_details["trial_days"] = 0
         self.subscription_offer.save()
 
-        self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
-        self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+        self.base_processor.set_billing_address_form_data(
+            self.form_data["billing_address_form"], BillingAddressForm
+        )
+        self.base_processor.set_payment_info_form_data(
+            self.form_data["credit_card_form"], CreditCardForm
+        )
         self.base_processor.is_data_valid()
 
         self.base_processor.invoice.add_offer(self.subscription_offer)
         self.base_processor.invoice.save()
         self.base_processor.transaction_succeeded = True
         self.base_processor.process_subscriptions()
-    
+
         self.assertIsNone(self.base_processor.trial_receipt)
-        self.assertEqual(self.subscription_offer.term_start_date, self.base_processor.receipt.start_date)
-    
+        self.assertEqual(
+            self.subscription_offer.term_start_date,
+            self.base_processor.receipt.start_date,
+        )
+
     def test_subscription_payment_trial_days(self):
         today = timezone.now()
         self.subscription_offer.term_start_date = today + timedelta(days=10)
-        self.subscription_offer.term_details['trial_amount'] = 10
-        self.subscription_offer.term_details['trial_occurrences'] = 0
-        self.subscription_offer.term_details['trial_days'] = 7
+        self.subscription_offer.term_details["trial_amount"] = 10
+        self.subscription_offer.term_details["trial_occurrences"] = 0
+        self.subscription_offer.term_details["trial_days"] = 7
         self.subscription_offer.save()
 
-        self.base_processor.set_billing_address_form_data(self.form_data['billing_address_form'], BillingAddressForm)
-        self.base_processor.set_payment_info_form_data(self.form_data['credit_card_form'], CreditCardForm)
+        self.base_processor.set_billing_address_form_data(
+            self.form_data["billing_address_form"], BillingAddressForm
+        )
+        self.base_processor.set_payment_info_form_data(
+            self.form_data["credit_card_form"], CreditCardForm
+        )
         self.base_processor.is_data_valid()
 
         self.base_processor.invoice.add_offer(self.subscription_offer)
         self.base_processor.invoice.save()
         self.base_processor.transaction_succeeded = True
         self.base_processor.process_subscriptions()
-    
-        self.assertEqual(self.subscription_offer.term_start_date.strftime("%y/%m/%d"), self.base_processor.trial_receipt.start_date.strftime("%y/%m/%d"))
-        self.assertEqual((self.base_processor.trial_receipt.end_date).strftime("%y/%m/%d"), (self.subscription_offer.term_start_date + timezone.timedelta(days=self.subscription_offer.term_details['trial_days'])).strftime("%y/%m/%d"))
-    
+
+        self.assertEqual(
+            self.subscription_offer.term_start_date.strftime("%y/%m/%d"),
+            self.base_processor.trial_receipt.start_date.strftime("%y/%m/%d"),
+        )
+        self.assertEqual(
+            (self.base_processor.trial_receipt.end_date).strftime("%y/%m/%d"),
+            (
+                self.subscription_offer.term_start_date
+                + timezone.timedelta(
+                    days=self.subscription_offer.term_details["trial_days"]
+                )
+            ).strftime("%y/%m/%d"),
+        )
+
     # def test_get_header_javascript_success(self):
     #     raise NotImplementedError()
 
@@ -347,7 +449,7 @@ class BaseProcessorTests(TestCase):
 
 class SupportedProcessorsSetupTests(TestCase):
 
-    fixtures = ['user', 'unit_test']
+    fixtures = ["user", "unit_test"]
 
     def setUp(self):
         self.invoice = Invoice.objects.get(pk=1)
@@ -366,9 +468,12 @@ class SupportedProcessorsSetupTests(TestCase):
 
     def test_authorize_net_init(self):
         try:
-            if not (settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID):
+            if not (
+                settings.AUTHORIZE_NET_TRANSACTION_KEY and settings.AUTHORIZE_NET_API_ID
+            ):
                 raise ValueError(
-                "Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID")
+                    "Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID"
+                )
             processor = AuthorizeNetProcessor(self.site, self.invoice)
         except Exception:
             print("AuthorizeNetProcessor did not initalized correctly")
@@ -376,5 +481,4 @@ class SupportedProcessorsSetupTests(TestCase):
             pass
 
     # def test_stripe_init(self):
-        # raise NotImplementedError()
-
+    # raise NotImplementedError()

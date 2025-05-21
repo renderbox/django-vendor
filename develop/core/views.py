@@ -6,12 +6,11 @@ from django.shortcuts import render
 from django.views.generic import TemplateView, View
 from django.views.generic.list import ListView
 
-from vendor.models import Offer
 from vendor.forms import CreditCardForm
+from vendor.models import Offer
 from vendor.models.choice import PaymentTypes, SubscriptionStatus
 from vendor.utils import get_site_from_request
 from vendor.views.mixin import ProductRequiredMixin
-
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +20,10 @@ class VendorIndexView(ListView):
     model = Offer
 
     def get_queryset(self):
-        if hasattr(self.request, 'site'):
-            return self.model.objects.filter(site=get_site_from_request(self.request), available=True)
+        if hasattr(self.request, "site"):
+            return self.model.objects.filter(
+                site=get_site_from_request(self.request), available=True
+            )
         return self.model.on_site.filter(available=True)
 
 
@@ -33,31 +34,50 @@ class ProductAccessView(ProductRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['object'] = self.model.objects.get(site=get_site_from_request(request), slug=kwargs['slug'])
+        context["object"] = self.model.objects.get(
+            site=get_site_from_request(request), slug=kwargs["slug"]
+        )
         return render(request, self.template_name, context)
 
     def get_product_queryset(self):
         """
         Method to get the Product(s) needed for the check.  Can be overridden to handle complex queries.
         """
-        return self.model.objects.filter(site=get_site_from_request(self.request), slug=self.kwargs['slug']).get().products.all()
+        return (
+            self.model.objects.filter(
+                site=get_site_from_request(self.request), slug=self.kwargs["slug"]
+            )
+            .get()
+            .products.all()
+        )
+
 
 class AccountView(LoginRequiredMixin, TemplateView):
     template_name = "core/account.html"
 
     def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        customer_profile, created = request.user.customer_profile.get_or_create(site=get_site_from_request(request))
-        subscriptions = customer_profile.subscriptions.filter(status=SubscriptionStatus.ACTIVE)
 
-        context['payments'] = customer_profile.payments.filter(success=True)
-        context["offers"] = Offer.objects.filter(site=get_site_from_request(request), available=True).order_by('terms')
+        customer_profile, created = request.user.customer_profile.get_or_create(
+            site=get_site_from_request(request)
+        )
+        subscriptions = customer_profile.subscriptions.filter(
+            status=SubscriptionStatus.ACTIVE
+        )
+
+        context["payments"] = customer_profile.payments.filter(success=True)
+        context["offers"] = Offer.objects.filter(
+            site=get_site_from_request(request), available=True
+        ).order_by("terms")
 
         if subscriptions:
-            context['subscription'] = subscriptions.first()
-            context['payment'] = subscriptions.first().payments.filter(success=True).first()
-            context['payment_form'] = CreditCardForm(initial={'payment_type': PaymentTypes.CREDIT_CARD})
+            context["subscription"] = subscriptions.first()
+            context["payment"] = (
+                subscriptions.first().payments.filter(success=True).first()
+            )
+            context["payment_form"] = CreditCardForm(
+                initial={"payment_type": PaymentTypes.CREDIT_CARD}
+            )
 
         return render(request, self.template_name, context)
 
@@ -65,6 +85,7 @@ class AccountView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
 
         return render(request, self.template_name, context)
+
 
 class LoggerTestView(LoginRequiredMixin, View):
 

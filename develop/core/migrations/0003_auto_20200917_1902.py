@@ -6,19 +6,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vendor', '0003_auto_20200915_1839'),
-        ('core', '0002_auto_20200910_2334'),
+        ("vendor", "0003_auto_20200915_1839"),
+        ("core", "0002_auto_20200910_2334"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='product',
-            name='name',
-            field=models.CharField(max_length=80, verbose_name='Name'),
+            model_name="product",
+            name="name",
+            field=models.CharField(max_length=80, verbose_name="Name"),
         ),
         migrations.AlterField(
-            model_name='product',
-            name='offers',
-            field=models.ManyToManyField(blank=True, related_name='products', to='vendor.Offer'),
+            model_name="product",
+            name="offers",
+            field=models.ManyToManyField(
+                blank=True, related_name="products", to="vendor.Offer"
+            ),
         ),
     ]
