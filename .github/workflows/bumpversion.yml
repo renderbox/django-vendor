@@ -1,0 +1,29 @@
+name: Bump Version
+
+on:
+  workflow_run:
+    workflows: ["Python Tests"]
+    types:
+      - completed
+
+jobs:
+  bumpversion:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' && !contains(github.event.workflow_run.head_commit.message, 'Bump version:')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - name: Install bump2version
+        run: pip install bump2version
+      - name: Bump version (patch)
+        run: bump2version patch
+      - name: Push changes
+        run: |
+          git push --follow-tags

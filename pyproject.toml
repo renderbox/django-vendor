@@ -1,35 +1,36 @@
 [build-system]
-requires = ["setuptools>=61.0.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
-[tool.distutils.bdist_wheel]
-universal = true
-
-[project]
+[tool.poetry]
 name = "django-vendor"
-version = "0.4.20"
-
-authors = [
-  { name="Grant Viklund", email="renderbox@gmail.com" },
-  { name="Roberto Himmelbauer" }
-]
+version = "0.5.0"
 description = "Django App Toolkit for selling digital and physical goods online."
+authors = ["Grant Viklund <renderbox@gmail.com>", "Roberto Himmelbauer"]
 readme = "README.md"
-requires-python = ">=3.7"
-classifiers = [
-    "Programming Language :: Python :: 3 :: Only",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
-keywords = ["django", "app"]
-dependencies = [
-    "Django>=3.0,<4.0",
-    "django-autoslug",
-    "django-extensions",
-    "iso4217<1.12.0",
+packages = [
+    { include = "vendor", from = "src" }
 ]
 
-[project.optional-dependencies]
+[tool.poetry.dependencies]
+python = ">=3.10"
+django = ">=5.0,<6.0"
+django-autoslug = "*"
+django-extensions = "*"
+iso4217 = "<1.12.0"
+
+[tool.poetry.extras]
+stripe = ["stripe"]
+authorizenet = ["authorizenet"]
+docs = [
+    "recommonmark",
+    "m2r",
+    "django-extensions",
+    "coverage",
+    "Sphinx",
+    "rstcheck",
+    "sphinx-rtd-theme",
+]
 dev = [
     "black",
     "flake8",
@@ -40,26 +41,34 @@ dev = [
     "dj-database-url",
     "psycopg2-binary",
     "django-crispy-forms",
-    "django-site-configs",
+    "django-site-configs (>=0.3.0,<0.4.0)",
     "django-integrations",
     "django-allauth",
     "toml",
 ]
-stripe = [ "stripe", ] # Packages needed for Stripe
-authorizenet = [ "authorizenet", ]
-docs= [
-    "recommonmark",
-    "m2r",
-    "django_extensions",
-    "coverage",
-    "Sphinx",
-    "rstcheck",
-    "sphinx-rtd-theme",
+test = [
+    "pytest",
+    "pytest-django",
+    "pytest-cov",
+    "pytest-factoryboy",
+    "pytest-mock",
+    "pytest-asyncio",
+    "pytest-bdd",
+    "black",
+    "flake8",
+    "flake8-black",
+    "mypy",
+    "bandit",
+    "isort",
+    "dj-database-url",
+    "psycopg2-binary",
+    "django-crispy-forms",
+    "django-site-configs (>=0.3.0,<0.4.0)",
+    "django-integrations",
+    "django-allauth",
+    "toml",
 ]
 
-[project.urls]
-"Homepage" = "https://github.com/renderbox/django-vendor"
+[tool.poetry.urls]
+Homepage = "https://github.com/renderbox/django-vendor"
 "Bug Tracker" = "https://github.com/renderbox/django-vendor/issues"
-
-[tool.setuptools.package-data]
-vendor = ["templates/vendor/*.html", "templates/vendor/*/*.html"]
