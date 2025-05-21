@@ -25,7 +25,7 @@ class ModuleTests(TestCase):
             # The exit code will be 1 when there are no missing migrations
             try:
                 assert e == "1"
-            except:
+            except AssertionError:
                 self.fail(
                     "\n\nHey, There are missing migrations!\n\n %s" % output.getvalue()
                 )

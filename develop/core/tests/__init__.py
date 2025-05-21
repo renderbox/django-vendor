@@ -1,9 +1,10 @@
-from .test_checkout import *
-from .test_customer_profile import *
-from .test_invoice import *
-from .test_module import *
-from .test_offers import *
-from .test_prices import *
-from .test_products import *
-from .test_shipping import *
-from .test_tax import *
+# May not be neceasary using pytest
+from .test_checkout import *  # noqa F401, F403
+from .test_customer_profile import *  # noqa F401, F403
+from .test_invoice import *  # noqa F401, F403
+from .test_module import *  # noqa F401, F403
+from .test_offers import *  # noqa F401, F403
+from .test_prices import *  # noqa F401, F403
+from .test_products import *  # noqa F401, F403
+from .test_shipping import *  # noqa F401, F403
+from .test_tax import *  # noqa F401, F403

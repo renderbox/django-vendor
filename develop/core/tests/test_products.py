@@ -12,7 +12,6 @@ from vendor.models import (
     Offer,
     Receipt,
     generate_sku,
-    receipt,
     validate_msrp,
     validate_msrp_format,
 )
@@ -104,11 +103,11 @@ class ModelProductTests(TestCase):
             validate_msrp({"msrp": {"default": "usd", "usd": 20, "jpy": 12}})
         )
 
-    def test_create_product_in_valid_msrp(self):
+    def test_create_product_in_valid_msrp_rub(self):
         with self.assertRaises(ValidationError):
             validate_msrp({"msrp": {"default": "rub", "rub": 20}})
 
-    def test_create_product_in_valid_msrp(self):
+    def test_create_product_in_valid_msrp_usd(self):
         with self.assertRaises(ValidationError):
             validate_msrp({"msrp": {"default": "usd", "usd": 21, "rub": 20}})
 
@@ -149,9 +148,10 @@ class ModelProductTests(TestCase):
 
     def test_save_two_products_same_name_autocreate_sku_fail(self):
         site = Site.objects.get(pk=1)
-        product_1 = Product.objects.create(name="Test Product", site=site)
+        product_1 = Product.objects.create(name="Test Product", site=site)  # noqa F841
+
         with self.assertRaises(IntegrityError):
-            product_2 = Product.objects.create(name="Test Product", site=site)
+            product_2 = Product.objects.create(name="Test Product", site=site)  # noqa F841
 
 
 class TransactionProductTests(TestCase):

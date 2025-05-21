@@ -175,7 +175,7 @@ class ModelCustomerProfileTests(TestCase):
         )
 
     def test_has_previously_owned_products_false(self):
-        cart = self.customer_profile.get_cart_or_checkout_cart()
+        cart = self.customer_profile.get_cart_or_checkout_cart()  # noqa F841
 
         self.assertFalse(
             self.customer_profile.has_previously_owned_products(
@@ -229,7 +229,7 @@ class ModelCustomerProfileTests(TestCase):
         invoice_invalid_cart.profile = self.customer_profile_existing
         invoice_invalid_cart.save()
 
-        invoice = self.customer_profile_existing.get_cart_or_checkout_cart()
+        invoice = self.customer_profile_existing.get_cart_or_checkout_cart()  # noqa F841
 
         self.assertEqual(
             1,
@@ -258,7 +258,7 @@ class AddOfferToProfileView(TestCase):
             terms=TermType.MONTHLY_SUBSCRIPTION,
             term_details={"term_units": 20, "trial_occurrences": 1},
         )
-        price = Price.objects.create(
+        price = Price.objects.create(  # noqa F841
             offer=self.free_offer, cost=0, start_date=timezone.now()
         )
         self.free_offer.products.add(Product.objects.get(pk=5))
@@ -282,7 +282,7 @@ class AddOfferToProfileView(TestCase):
                 "uuid_offer": self.free_offer.uuid,
             },
         )
-        response = self.client.get(url)
+        response = self.client.get(url)  # noqa F841
         self.assertTrue(self.customer_profile.receipts.count())
 
     def test_adds_free_product_to_profile_fail(self):
@@ -293,5 +293,5 @@ class AddOfferToProfileView(TestCase):
                 "uuid_offer": Offer.objects.get(pk=2).uuid,
             },
         )
-        response = self.client.get(url)
+        response = self.client.get(url)  # noqa F841
         self.assertFalse(self.customer_profile.receipts.count())

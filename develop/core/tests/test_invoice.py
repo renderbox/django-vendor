@@ -470,7 +470,7 @@ class CartViewTests(TestCase):
             response, f'<span class="text-primary">${self.invoice.total}</span>'
         )
 
-        remove_shirt_url = reverse(
+        remove_shirt_url = reverse(  # noqa F841
             "vendor_api:remove-from-cart", kwargs={"slug": self.shirt_offer.slug}
         )
         self.assertContains(
@@ -634,7 +634,7 @@ class ReviewCheckoutViewTests(TestCase):
         session["credit_card_form"] = payment_info.cleaned_data
         session.save()
 
-        response = self.client.post(self.view_url)
+        response = self.client.post(self.view_url)  # noqa F841
 
         self.assertEquals(
             self.invoice.payments.all().count(),

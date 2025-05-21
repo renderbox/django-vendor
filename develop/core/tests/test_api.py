@@ -158,10 +158,13 @@ class AuthorizeNetAPITest(TestCase):
             ),
         }
         headers = {
-            "HTTP_X_ANET_SIGNATURE": "sha512=C83D2EC65F4ADD4771B35FD0BD1EFF135F33ACDF6CA3E9467C05A465D32F985001F1BC46C6E4CADE62FC4C6B77B0A93124D77079B4EDF5B988C311555E6E5A90",
+            "HTTP_X_ANET_SIGNATURE": "sha512=C83D2EC65F4ADD4771B35FD0BD1EFF135F33ACDF6CA3E9467C05A465D32F985001F1BC46C6E4CADE62FC4C6B77B0A93124D77079B4EDF5B988C311555E6E5A90",  # noqa E501
             "Content-Type": "application/json",
         }
         response = self.client.post(url, data=payload, **headers)
+        self.assertEqual(
+            response.status_code, 200
+        )  # confims that the webhook was received
 
     def test_get_settled_transactions_view(self):
         start_date, end_date = (
