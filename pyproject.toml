@@ -2,30 +2,83 @@
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.poetry]
+[project]
 name = "django-vendor"
 version = "0.5.0"
 description = "Django App Toolkit for selling digital and physical goods online."
-authors = ["Grant Viklund <renderbox@gmail.com>", "Roberto Himmelbauer"]
+authors = [
+    { name = "Grant Viklund", email = "renderbox@gmail.com" },
+    { name = "Roberto Himmelbauer" }
+]
 readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["django", "app"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "django>=5.0,<6.0",
+    "django-autoslug",
+    "django-extensions",
+    "iso4217<1.12.0"
+]
 packages = [
     { include = "vendor", from = "src" }
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.10"
-django = ">=5.0,<6.0"
-django-autoslug = "*"
-django-extensions = "*"
-iso4217 = "<1.12.0"
-
-[tool.poetry.extras]
+[project.optional-dependencies]
 stripe = ["stripe"]
 authorizenet = ["authorizenet"]
+dev = [
+    "black",
+    "flake8",
+    "flake8-black",
+    "mypy",
+    "bandit",
+    "isort",
+    "dj-database-url",
+    "psycopg2-binary",
+    "django-crispy-forms",
+    "django-site-configs",
+    "django-integrations",
+    "django-allauth",
+    "toml"
+]
+test = [
+    "pytest",
+    "pytest-django",
+    "pytest-cov",
+    "pytest-factoryboy",
+    "pytest-mock",
+    "pytest-asyncio",
+    "pytest-bdd"
+]
+lint = [
+    "black",
+    "flake8",
+    "flake8-black",
+    "mypy",
+    "bandit",
+    "isort"
+]
 
-[tool.poetry.urls]
+[project.urls]
 Homepage = "https://github.com/renderbox/django-vendor"
 "Bug Tracker" = "https://github.com/renderbox/django-vendor/issues"
+
+[tool.isort]
+profile = "black"
+
+[tool.poetry]
+packages = [
+    { include = "vendor", from = "src" }
+]
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
@@ -58,6 +111,3 @@ flake8-black = "^0.3.6"
 mypy = "^1.15.0"
 bandit = "^1.8.3"
 isort = "^6.0.1"
-
-[tool.isort]
-profile = "black"
