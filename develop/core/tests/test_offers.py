@@ -40,58 +40,58 @@ class ModelOfferTests(TestCase):
         offer.save()
         offer.products.add(Product.objects.all().first())
 
-        self.assertEquals(Site.objects.get_current(), offer.site)
+        self.assertEqual(Site.objects.get_current(), offer.site)
 
     def test_add_offer_to_cart_slug(self):
         mug_offer = Offer.objects.get(pk=4)
         slug = mug_offer.add_to_cart_link()
-        self.assertEquals(slug, "/api/cart/add/" + mug_offer.slug + "/")
+        self.assertEqual(slug, "/api/cart/add/" + mug_offer.slug + "/")
 
     def test_remove_offer_to_cart_slug(self):
         mug_offer = Offer.objects.get(pk=4)
         slug = mug_offer.remove_from_cart_link()
-        self.assertEquals(slug, "/api/cart/remove/" + mug_offer.slug + "/")
+        self.assertEqual(slug, "/api/cart/remove/" + mug_offer.slug + "/")
 
     def test_get_current_price_is_msrp(self):
         offer = Offer.objects.get(pk=4)
         price = offer.current_price("mxn")
-        self.assertEquals(price, 21.12)
+        self.assertEqual(price, 21.12)
 
     def test_get_current_price_is_msrp_default(self):
         offer = Offer.objects.get(pk=4)
         price = offer.current_price()
-        self.assertEquals(price, 25.2)
+        self.assertEqual(price, 25.2)
 
     def test_get_current_price_has_only_start_date(self):
         offer = Offer.objects.get(pk=2)
-        self.assertEquals(offer.current_price(), 75.0)
+        self.assertEqual(offer.current_price(), 75.0)
 
     def test_get_current_price_is_between_start_end_date(self):
         offer = Offer.objects.get(pk=3)
-        self.assertEquals(offer.current_price(), 25.2)
+        self.assertEqual(offer.current_price(), 25.2)
 
     def test_get_current_price_acording_to_priority(self):
         offer = Offer.objects.get(pk=3)
-        self.assertEquals(offer.current_price(), 25.2)
+        self.assertEqual(offer.current_price(), 25.2)
 
     def test_offer_negative_discount(self):
         offer = Offer.objects.get(pk=3)
-        self.assertEquals(get_display_decimal(offer.discount()), 0.00)
+        self.assertEqual(get_display_decimal(offer.discount()), 0.00)
 
     def test_offer_discount(self):
         offer = Offer.objects.get(pk=1)
-        self.assertEquals(get_display_decimal(offer.discount()), 10.00)
+        self.assertEqual(get_display_decimal(offer.discount()), 10.00)
 
     def test_offer_description_from_product(self):
         offer = Offer.objects.get(pk=3)
-        self.assertEquals(
+        self.assertEqual(
             offer.description,
             offer.products.all().first().description.get("description", ""),
         )
 
     def test_offer_description(self):
         offer = Offer.objects.get(pk=4)
-        self.assertEquals(offer.description, offer.offer_description)
+        self.assertEqual(offer.description, offer.offer_description)
 
     # def test_empty_name_single_product(self):
     # p1 = Product.objects.get(pk=1)
@@ -101,7 +101,7 @@ class ModelOfferTests(TestCase):
     # offer.save()
     # p1 = Product.objects.get(pk=1)
 
-    # self.assertEquals(p1.name, offer.name)
+    # self.assertEqual(p1.name, offer.name)
     #     raise NotImplementedError()
 
     # def test_empty_name_bundle(self):
@@ -115,7 +115,7 @@ class ModelOfferTests(TestCase):
     # offer.save()
     # p1 = Product.objects.get(pk=1)
 
-    # self.assertEquals("Bundle: " + ", ".join([p1,p2]), offer.name)
+    # self.assertEqual("Bundle: " + ", ".join([p1,p2]), offer.name)
     # raise NotImplementedError()
 
     def test_get_best_currency_bundle_success(self):
@@ -123,28 +123,28 @@ class ModelOfferTests(TestCase):
 
         offer_bundle.products.add(Product.objects.get(pk=1))
 
-        self.assertEquals(offer_bundle.get_best_currency(), "usd")
+        self.assertEqual(offer_bundle.get_best_currency(), "usd")
 
     def test_get_best_currency_single_success(self):
         offer = Offer.objects.get(pk=4)
 
-        self.assertEquals(offer.get_best_currency("mxn"), "mxn")
+        self.assertEqual(offer.get_best_currency("mxn"), "mxn")
 
     def test_get_best_currency_single_success_not_default(self):
         offer = Offer.objects.get(pk=4)
 
-        self.assertEquals(offer.get_best_currency("usd"), "usd")
+        self.assertEqual(offer.get_best_currency("usd"), "usd")
 
     def test_get_best_currency_bundle_fail(self):
         offer_bundle = Offer.objects.get(pk=4)
         offer_bundle.products.add(Product.objects.get(pk=1))
 
-        self.assertEquals(offer_bundle.get_best_currency("jpy"), "usd")
+        self.assertEqual(offer_bundle.get_best_currency("jpy"), "usd")
 
     def test_get_best_currency_single_fail(self):
         offer = Offer.objects.get(pk=4)
 
-        self.assertEquals(offer.get_best_currency("jpy"), "usd")
+        self.assertEqual(offer.get_best_currency("jpy"), "usd")
 
     def test_get_status_display_active(self):
         offer = Offer.objects.get(pk=1)
@@ -180,7 +180,7 @@ class ModelOfferTests(TestCase):
             Offer.objects.all().count() - deleted_offer_difference,
             Offer.not_deleted.count(),
         )
-        self.assertEquals(offer_count_before_deletion, Offer.objects.all().count())
+        self.assertEqual(offer_count_before_deletion, Offer.objects.all().count())
 
     def test_get_offer_start_date_returns_now(self):
         today = timezone.now()
@@ -320,13 +320,13 @@ class ViewOfferTests(TestCase):
     def test_offers_list_status_code_success(self):
         response = self.client.get(self.offers_list_uri)
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_offers_list_status_code_fail_no_login(self):
         client = Client()
         response = client.get(self.offers_list_uri)
 
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
         self.assertIn("login", response.url)
 
     def test_offers_list_has_content(self):
@@ -354,25 +354,25 @@ class ViewOfferTests(TestCase):
     def test_offer_create_status_code_success(self):
         response = self.client.get(self.offer_create_uri)
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_offer_create_status_code_fail_no_login(self):
         client = Client()
         response = client.get(self.offer_create_uri)
 
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
         self.assertIn("login", response.url)
 
     def test_offer_update_status_code_success(self):
         response = self.client.get(self.offer_update_uri)
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_offer_update_status_code_fail_no_login(self):
         client = Client()
         response = client.get(self.offer_update_uri)
 
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
         self.assertIn("login", response.url)
 
     def test_check_add_cart_link_status_code_post(self):
@@ -380,24 +380,24 @@ class ViewOfferTests(TestCase):
 
         response = self.client.post(url)
 
-        self.assertEquals(response.status_code, 302)
-        self.assertEquals(response.url, reverse("vendor:cart"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("vendor:cart"))
 
     def test_check_remove_from_cart_link_request_post(self):
         url = self.shirt_offer.remove_from_cart_link()
 
         response = self.client.post(url)
 
-        self.assertEquals(response.status_code, 302)
-        self.assertEquals(response.url, reverse("vendor:cart"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("vendor:cart"))
 
     def test_check_add_cart_link_status_code_get(self):
         url = self.mug_offer.add_to_cart_link()
 
         response = self.client.get(url)
 
-        self.assertEquals(response.status_code, 302)
-        self.assertEquals(response.url, reverse("vendor:cart"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("vendor:cart"))
 
     # def test_view_only_available_offers(self):
     #     raise NotImplementedError()

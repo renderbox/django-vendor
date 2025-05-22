@@ -80,7 +80,7 @@ class BaseProcessorTests(TestCase):
     def test_base_processor_init_success(self):
         base_processor = PaymentProcessorBase(self.site, self.existing_invoice)
 
-        self.assertEquals("PaymentProcessorBase", base_processor.provider)
+        self.assertEqual("PaymentProcessorBase", base_processor.provider)
         self.assertIsNotNone(base_processor.invoice)
 
     def test_create_payment_model_success(self):
@@ -115,14 +115,14 @@ class BaseProcessorTests(TestCase):
         self.base_processor.payment.refresh_from_db()
 
         self.assertTrue(self.base_processor.payment.success)
-        self.assertEquals(self.base_processor.payment.transaction, transaction_id)
+        self.assertEqual(self.base_processor.payment.transaction, transaction_id)
         self.assertIn("payment_info", self.base_processor.payment.result)
 
     def test_update_invoice_status_success(self):
         self.base_processor.transaction_succeeded = True
         self.base_processor.update_invoice_status(InvoiceStatus.COMPLETE)
 
-        self.assertEquals(InvoiceStatus.COMPLETE, self.base_processor.invoice.status)
+        self.assertEqual(InvoiceStatus.COMPLETE, self.base_processor.invoice.status)
 
     def test_update_invoice_status_fails(self):
         self.base_processor.update_invoice_status(InvoiceStatus.COMPLETE)
@@ -168,7 +168,7 @@ class BaseProcessorTests(TestCase):
             self.base_processor.invoice.order_items.all()
         )
 
-        self.assertEquals(
+        self.assertEqual(
             Receipt.objects.all().count(),
             sum(
                 [
@@ -193,11 +193,11 @@ class BaseProcessorTests(TestCase):
     #     receipt = Receipt.objects.get(meta__subscription_id=subscription_id)
 
     #     self.assertIsNotNone(receipt)
-    #     self.assertEquals(subscription_id, receipt.meta['subscription_id'])
+    #     self.assertEqual(subscription_id, receipt.meta['subscription_id'])
 
     def test_amount_success(self):
         self.existing_invoice.update_totals()
-        self.assertEquals(self.existing_invoice.total, self.base_processor.amount())
+        self.assertEqual(self.existing_invoice.total, self.base_processor.amount())
 
     def test_amount_without_subscriptions_success(self):
         self.base_processor.invoice.add_offer(self.subscription_offer)

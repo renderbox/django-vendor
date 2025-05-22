@@ -88,12 +88,12 @@ class ModelProductTests(TestCase):
     def test_get_best_currency_success(self):
         product = Product.objects.get(pk=1)
 
-        self.assertEquals(product.get_best_currency(), "usd")
+        self.assertEqual(product.get_best_currency(), "usd")
 
     def test_get_best_currency_fail(self):
         product = Product.objects.get(pk=1)
 
-        self.assertEquals(product.get_best_currency("mxn"), "usd")
+        self.assertEqual(product.get_best_currency("mxn"), "usd")
 
     def test_create_product_valid_msrp(self):
         self.assertIsNone(validate_msrp({"msrp": {"default": "usd", "usd": 20}}))
@@ -186,13 +186,13 @@ class ViewsProductTests(TestCase):
     def test_products_list_status_code_success(self):
         response = self.client.get(self.products_list_uri)
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_products_list_status_code_fail_no_login(self):
         client = Client()
         response = client.get(self.products_list_uri)
 
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
         self.assertIn("login", response.url)
 
     def test_products_list_has_no_content(self):
@@ -220,25 +220,25 @@ class ViewsProductTests(TestCase):
     def test_product_create_status_code_success(self):
         response = self.client.get(self.product_create_uri)
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_products_create_status_code_fail_no_login(self):
         client = Client()
         response = client.get(self.product_create_uri)
 
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
         self.assertIn("login", response.url)
 
     def test_product_update_status_code_success(self):
         response = self.client.get(self.product_update_uri)
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_products_update_status_code_fail_no_login(self):
         client = Client()
         response = client.get(self.product_update_uri)
 
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
         self.assertIn("login", response.url)
 
     def test_product_availability_toggle_activate(self):

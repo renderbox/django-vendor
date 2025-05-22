@@ -73,12 +73,12 @@ class SubscriptionViewTests(TestCase):
     def test_admin_subscription_list_success(self):
         response = self.client.get(self.subscription_list_uri)
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_admin_subscription_detail_success(self):
         response = self.client.get(self.subscription_detail_uri)
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_admin_subscription_detail_fail(self):
         non_exiting_subscriptin_uri = reverse(
@@ -86,18 +86,18 @@ class SubscriptionViewTests(TestCase):
         )
         response = self.client.get(non_exiting_subscriptin_uri)
 
-        self.assertEquals(response.status_code, 404)
+        self.assertEqual(response.status_code, 404)
 
     def test_admin_subscription_create_success(self):
         response = self.client.get(self.subscription_create_uri)
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "gateway_id")
 
     def test_admin_subscription_create_apply_site_filter_success(self):
         response = self.client.get(f"{self.subscription_create_uri}?site=1")
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertContains(response, "subscription_id")
 
     def test_admin_subscription_create_post_success(self):
@@ -110,17 +110,17 @@ class SubscriptionViewTests(TestCase):
 
         response = self.client.post(self.subscription_create_uri, data=post_data)
 
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
 
     def test_admin_subscription_add_payment_success(self):
         response = self.client.get(self.subscription_add_payment_uri)
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_admin_subscription_add_payment_apply_site_filter_success(self):
         response = self.client.get(f"{self.subscription_add_payment_uri}?site=1")
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertContains(response, "transaction")
 
     def test_admin_subscription_add_payment_post_success(self):
@@ -140,4 +140,4 @@ class SubscriptionViewTests(TestCase):
             f"{self.subscription_add_payment_uri}?site=1", data=post_data
         )
 
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)

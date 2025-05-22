@@ -93,4 +93,4 @@ jobs:
           DJANGO_DEBUG: 1
           DATABASE_URL: "postgres://runner:postgres@localhost:5432/test_db"
         run: |
-          python -m pytest src/integrations develop
+          poetry run pytest

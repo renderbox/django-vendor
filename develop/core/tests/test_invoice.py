@@ -30,14 +30,14 @@ class ModelInvoiceTests(TestCase):
         invoice.profile = CustomerProfile.objects.get(pk=1)
         invoice.save()
 
-        self.assertEquals(Site.objects.get_current(), invoice.site)
+        self.assertEqual(Site.objects.get_current(), invoice.site)
 
     def test_add_offer(self):
         self.existing_invoice.add_offer(Offer.objects.get(pk=4))
         self.new_invoice.add_offer(self.mug_offer)
 
         self.assertIsNotNone(OrderItem.objects.get(invoice=self.new_invoice))
-        self.assertEquals(
+        self.assertEqual(
             OrderItem.objects.filter(invoice=self.existing_invoice).count(), 4
         )
 
@@ -48,7 +48,7 @@ class ModelInvoiceTests(TestCase):
         before_remove_count = self.existing_invoice.order_items.count()
         self.existing_invoice.remove_offer(Offer.objects.get(pk=3))
 
-        self.assertEquals(
+        self.assertEqual(
             self.existing_invoice.order_items.count(), before_remove_count - 1
         )
 
@@ -64,10 +64,10 @@ class ModelInvoiceTests(TestCase):
         self.existing_invoice.update_totals()
         remove_shirt_total = self.existing_invoice.total
 
-        self.assertEquals(
+        self.assertEqual(
             get_display_decimal(add_mug_total), get_display_decimal(start_total)
         )  # Offer.pk =4 has a trial period
-        self.assertEquals(
+        self.assertEqual(
             get_display_decimal(remove_shirt_total),
             get_display_decimal(start_total - Offer.objects.get(pk=2).current_price()),
         )
@@ -120,17 +120,17 @@ class ModelInvoiceTests(TestCase):
     def test_get_recurring_total(self):
         recurring_offer = Offer.objects.get(pk=4)
 
-        self.assertEquals(
+        self.assertEqual(
             self.existing_invoice.get_recurring_total(), recurring_offer.current_price()
         )
 
     def test_get_recurring_total_only_recurring_order_items(self):
         recurring_offer = Offer.objects.get(pk=5)
 
-        self.assertEquals(
+        self.assertEqual(
             self.new_invoice.get_recurring_total(), recurring_offer.current_price()
         )
-        self.assertEquals(self.new_invoice.get_one_time_transaction_total(), 0)
+        self.assertEqual(self.new_invoice.get_one_time_transaction_total(), 0)
 
     def test_get_one_time_transaction_total_with_recurring_offer(self):
         recurring_offer = Offer.objects.get(pk=5)
@@ -146,17 +146,17 @@ class ModelInvoiceTests(TestCase):
             self.existing_invoice.get_one_time_transaction_total()
         )
 
-        self.assertEquals(before_one_time_total, after_one_time_total)
-        self.assertEquals(before_total, after_total)
+        self.assertEqual(before_one_time_total, after_one_time_total)
+        self.assertEqual(before_total, after_total)
 
     def test_get_one_time_transaction_total_no_recurring_order_items(self):
         self.existing_invoice.update_totals()
 
-        self.assertEquals(
+        self.assertEqual(
             self.existing_invoice.get_one_time_transaction_total(),
             (self.existing_invoice.total - self.existing_invoice.get_recurring_total()),
         )
-        self.assertEquals(
+        self.assertEqual(
             get_display_decimal(self.existing_invoice.get_recurring_total()),
             get_display_decimal(
                 self.existing_invoice.total
@@ -176,7 +176,7 @@ class ModelInvoiceTests(TestCase):
         recurring_offer = Offer.objects.get(pk=5)
         self.existing_invoice.add_offer(recurring_offer)
 
-        self.assertEquals(
+        self.assertEqual(
             self.existing_invoice.get_one_time_transaction_order_items().count(),
             self.existing_invoice.order_items.all().count()
             - len(self.existing_invoice.get_recurring_order_items()),
@@ -348,12 +348,12 @@ class ModelInvoiceTests(TestCase):
         self.assertNotEquals(invoice.get_promos(), "")
 
     def test_get_promos_none(self):
-        self.assertEquals(self.new_invoice.get_promos(), "")
+        self.assertEqual(self.new_invoice.get_promos(), "")
 
     def test_get_promos_empty(self):
         self.new_invoice.vendor_notes["promos"] = {}
         self.new_invoice.save()
-        self.assertEquals(self.new_invoice.get_promos(), "")
+        self.assertEqual(self.new_invoice.get_promos(), "")
 
     def test_soft_delete(self):
         invoice = Invoice.objects.all().first()
@@ -368,7 +368,7 @@ class ModelInvoiceTests(TestCase):
             Invoice.objects.all().count() - deleted_invoice_difference,
             Invoice.not_deleted.count(),
         )
-        self.assertEquals(invoice_count_before_deletion, Invoice.objects.all().count())
+        self.assertEqual(invoice_count_before_deletion, Invoice.objects.all().count())
 
     def test_get_next_billing_date_month(self):
         pass
@@ -407,7 +407,7 @@ class ModelInvoiceTests(TestCase):
         self.existing_invoice.clear_promos()
         self.existing_invoice.refresh_from_db()
 
-        self.assertEquals(self.existing_invoice.order_items.count(), item_counter - 1)
+        self.assertEqual(self.existing_invoice.order_items.count(), item_counter - 1)
         self.assertFalse(
             self.existing_invoice.order_items.filter(offer=promo_offer).exists()
         )
@@ -431,7 +431,7 @@ class CartViewTests(TestCase):
 
     def test_view_cart_status_code(self):
         response = self.client.get(self.cart_url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_view_cart_content_loads(self):
         response = self.client.get(self.cart_url)
@@ -494,7 +494,7 @@ class AccountInformationViewTests(TestCase):
 
     def test_view_status_code_200(self):
         response = self.client.get(self.view_url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_view_redirect_login(self):
         self.client.logout()
@@ -530,7 +530,7 @@ class PaymentViewTests(TestCase):
 
     def test_view_status_code_200(self):
         response = self.client.get(self.view_url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_view_redirect_login(self):
         self.client.logout()
@@ -572,7 +572,7 @@ class ReviewCheckoutViewTests(TestCase):
 
     def test_view_status_code_200(self):
         response = self.client.get(self.view_url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_view_redirect_login(self):
         self.client.logout()
@@ -636,7 +636,7 @@ class ReviewCheckoutViewTests(TestCase):
 
         response = self.client.post(self.view_url)  # noqa F841
 
-        self.assertEquals(
+        self.assertEqual(
             self.invoice.payments.all().count(),
             Payment.objects.filter(invoice=self.invoice).count(),
         )
@@ -669,7 +669,7 @@ class PaymentSummaryViewTests(TestCase):
 
     def test_view_status_code_200(self):
         response = self.client.get(self.view_url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_view_redirect_login(self):
         self.client.logout()

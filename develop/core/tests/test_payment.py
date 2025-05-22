@@ -19,7 +19,7 @@ class PaymentModelTests(TestCase):
         payment = Payment.objects.get(pk=1)
         receipts = payment.get_related_receipts()
         self.assertTrue(receipts.count())
-        self.assertEquals(correct_receipt.pk, receipts.first().pk)
+        self.assertEqual(correct_receipt.pk, receipts.first().pk)
 
     def test_get_related_receipts_fail(self):
         payment = Payment.objects.get(pk=1)
@@ -47,7 +47,7 @@ class PaymentModelTests(TestCase):
             Payment.objects.all().count() - deleted_payment_difference,
             Payment.not_deleted.count(),
         )
-        self.assertEquals(payment_count_before_deletion, Payment.objects.all().count())
+        self.assertEqual(payment_count_before_deletion, Payment.objects.all().count())
 
     def test_get_settled_payments_in_date_range_success(self):
         # TODO: Finish this test
@@ -79,7 +79,7 @@ class PaymentViewTests(TestCase):
             )
         )
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Purchase Confirmation")
 
     def test_view_payment_status_code_fail_no_login(self):
@@ -91,5 +91,5 @@ class PaymentViewTests(TestCase):
             )
         )
 
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
         self.assertIn("login", response.url)

@@ -111,3 +111,10 @@ flake8-black = "^0.3.6"
 mypy = "^1.15.0"
 bandit = "^1.8.3"
 isort = "^6.0.1"
+
+[tool.poetry.group.stripe.dependencies]
+stripe = "^12.1.0"
+
+[tool.poetry.group.authorizenet.dependencies]
+lxml = "^4.9.0"
+authorizenet = "^1.1.6"

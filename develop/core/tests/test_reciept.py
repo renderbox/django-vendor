@@ -1,8 +1,8 @@
-from datetime import timedelta
+from datetime import timedelta, timezone
 
 from django.contrib.sites.models import Site
 from django.test import TestCase
-from django.utils import timezone
+from django.utils import timezone as dj_timezone
 
 from vendor.models import CustomerProfile, Invoice, Offer, Receipt
 
@@ -19,7 +19,7 @@ class ReceiptModelTests(TestCase):
         )
         self.new_invoice.add_offer(Offer.objects.get(pk=4))
         self.new_receipt = Receipt.objects.create(
-            start_date=timezone.now(),
+            start_date=dj_timezone.now(),
             end_date=self.new_invoice.order_items.first().offer.get_offer_end_date(),
             profile=CustomerProfile.objects.get(pk=1),
             order_item=self.new_invoice.order_items.first(),
@@ -49,7 +49,7 @@ class ReceiptModelTests(TestCase):
             Receipt.objects.all().count() - deleted_receipt_difference,
             Receipt.not_deleted.count(),
         )
-        self.assertEquals(receipt_count_before_deletion, Receipt.objects.all().count())
+        self.assertEqual(receipt_count_before_deletion, Receipt.objects.all().count())
 
 
 class ReceiptViewTests(TestCase):
