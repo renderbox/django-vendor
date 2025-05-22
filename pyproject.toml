@@ -22,56 +22,35 @@ iso4217 = "<1.12.0"
 [tool.poetry.extras]
 stripe = ["stripe"]
 authorizenet = ["authorizenet"]
-docs = [
-    "recommonmark",
-    "m2r",
-    "django-extensions",
-    "coverage",
-    "Sphinx",
-    "rstcheck",
-    "sphinx-rtd-theme",
-]
-dev = [
-    "black",
-    "flake8",
-    "flake8-black",
-    "mypy",
-    "bandit",
-    "isort",
-    "dj-database-url",
-    "psycopg2-binary",
-    "django-crispy-forms",
-    "django-site-configs (>=0.3.0,<0.4.0)",
-    "django-integrations",
-    "django-allauth",
-    "toml",
-]
-test = [
-    "pytest",
-    "pytest-django",
-    "pytest-cov",
-    "pytest-factoryboy",
-    "pytest-mock",
-    "pytest-asyncio",
-    "pytest-bdd",
-    "black",
-    "flake8",
-    "flake8-black",
-    "mypy",
-    "bandit",
-    "isort",
-    "dj-database-url",
-    "psycopg2-binary",
-    "django-crispy-forms",
-    "django-site-configs (>=0.3.0,<0.4.0)",
-    "django-integrations",
-    "django-allauth",
-    "toml",
-]
 
 [tool.poetry.urls]
 Homepage = "https://github.com/renderbox/django-vendor"
 "Bug Tracker" = "https://github.com/renderbox/django-vendor/issues"
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
+flake8 = "^7.2.0"
+flake8-black = "^0.3.6"
+mypy = "^1.15.0"
+bandit = "^1.8.3"
+isort = "^6.0.1"
+dj-database-url = "^2.3.0"
+psycopg2-binary = "^2.9.10"
+django-crispy-forms = "^2.4"
+django-site-configs = "^0.3.0"
+django-integrations = "^0.2.0"
+django-allauth = "^65.8.1"
+toml = "^0.10.2"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.5"
+pytest-django = "^4.11.1"
+pytest-cov = "^6.1.1"
+pytest-factoryboy = "^2.7.0"
+pytest-mock = "^3.14.0"
+pytest-asyncio = "^0.26.0"
+pytest-bdd = "^8.1.0"
 
 [tool.isort]
 profile = "black"
