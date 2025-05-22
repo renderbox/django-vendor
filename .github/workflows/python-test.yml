@@ -13,10 +13,16 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.12"
-      - run: pip install black isort flake8
-      - run: black --check src
-      - run: isort --check-only src
-      - run: flake8 src
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Install Dependencies
+        run: poetry install --with=lint
+      - name: Black Tests
+        run: black --check src
+      - name: iSort Tests
+        run: isort --check-only src
+      - name: Flake8 Tests
+        run: flake8 src
 
   migrations:
     name: Check Missing Migrations
@@ -27,8 +33,12 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.12"
-      - run: pip install -e .[dev,test] # assumes extras_require for test deps
-      - run: python develop/manage.py makemigrations --check --dry-run
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Install Dependencies
+        run: poetry install --with=dev,test
+      - name: Check for Missing Migrations
+        run: python develop/manage.py makemigrations --check --dry-run
 
   test:
     name: Django ${{ matrix.django-version }} on Python ${{ matrix.python-version }}
@@ -71,11 +81,12 @@ jobs:
         env:
           PGPASSWORD: ""
 
+      - name: Install Poetry
+        run: pipx install poetry
       - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[test]"
-          python -m pip install "Django==${{ matrix.django-version }}"
+        run: poetry install --with=test
+      - name: Install Django
+        run: poetry add Django@${{ matrix.django-version }}
 
       - name: Test with Pytest
         env:
