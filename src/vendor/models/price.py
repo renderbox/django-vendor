@@ -37,9 +37,9 @@ class Price(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        if (
-            not self.priority
-        ):  # TODO: Add check to see if this is the only price on the offer, then let it be 0.  If not, might need to do some assumptions to guess what it should be.
+        if not self.priority:
+            # TODO: Add check to see if this is the only price on the offer, then let it be 0.
+            # If not, might need to do some assumptions to guess what it should be.
             self.priority = 0
 
         super().save(*args, **kwargs)

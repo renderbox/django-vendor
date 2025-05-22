@@ -8,17 +8,17 @@ class VendorConfig(AppConfig):
         from vendor.config import ENABLE_STRIPE_SIGNALS
 
         if ENABLE_STRIPE_SIGNALS:
-            import vendor.signals.stripe_signals
+            import vendor.signals.stripe_signals  # noqa: F401
 
-    #  TODO: Would be better to find way to check if any sites have stripe configured instead of having to set the VENDOR_PAYMENT_PROCESSOR to stripe
-    # to enable it's signals. You can't do the following way, because you assume that you have already ran migration, but if you are in a fresh install
-    # this code will error out any time you run a manage.py command because Site has not been migrated and you are trying to import it.
+    #  TODO: Would be better to find way to check if any sites have stripe configured instead of having to set the VENDOR_PAYMENT_PROCESSOR to stripe  # noqa: E501
+    # to enable it's signals. You can't do the following way, because you assume that you have already ran migration, but if you are in a fresh install  # noqa: E501
+    # this code will error out any time you run a manage.py command because Site has not been migrated and you are trying to import it.  # noqa: E501
     # def ready(self):
     #     from django.contrib.sites.models import Site
     #     from vendor.config import SupportedPaymentProcessor
     #     from vendor.processors import get_site_payment_processor
 
-    #     is_stripe_configured = next((True for site in Site.objects.all() if get_site_payment_processor(site) == SupportedPaymentProcessor.STRIPE), None)
+    #     is_stripe_configured = next((True for site in Site.objects.all() if get_site_payment_processor(site) == SupportedPaymentProcessor.STRIPE), None)  # noqa: E501
 
     #     if is_stripe_configured:
     #         import vendor.signals.stripe_signals

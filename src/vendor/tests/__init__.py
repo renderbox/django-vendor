@@ -1,5 +1,5 @@
-from .test_processor import *
-from .test_stripe import *
+from .test_processor import *  # noqa F401, F403
+from .test_stripe import *  # noqa F401, F403
 
 # TODO: Check which tests are still worth keepting
 # import os
@@ -493,14 +493,14 @@ from .test_stripe import *
 #         self.client.force_login(self.user)
 
 #         offer = Offer.objects.get(pk=2)
-#         price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+#         price = offer.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()  # noqa E501
 
 #         invoice = Invoice.objects.create(user = self.user, ordered_date = timezone.now())
 
 #         orderitem = OrderItem.objects.create(invoice = invoice, offer = offer)
 
 #         offer2 = Offer.objects.create(product = self.product2, name = self.product2.name, msrp = 90.0)
-#         price2 = offer2.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()
+#         price2 = offer2.sale_price.filter(start_date__lte= timezone.now(), end_date__gte=timezone.now()).order_by('priority').first()  # noqa E501
 
 #         orderitem2 = OrderItem.objects.create(invoice = invoice, offer = offer2, quantity = 2)
 
@@ -850,7 +850,7 @@ from .test_stripe import *
 #     def test_current_price(self):
 
 #         offer = Offer.objects.create(product=self.product, msrp = 80)
-#         price = Price.objects.create(offer = offer, cost = 90, priority=2, start_date = timezone.now(), end_date = timezone.now() + timezone.timedelta(days=1))
+#         price = Price.objects.create(offer = offer, cost = 90, priority=2, start_date = timezone.now(), end_date = timezone.now() + timezone.timedelta(days=1))  # noqa E501
 
 #         try:
 #             self.assertEqual(offer.current_price(), offer.sale_price.all()[0].cost)

@@ -65,7 +65,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
     )  # For multi-site support
     name = models.CharField(
         _("Name"), max_length=80, blank=True
-    )  # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
+    )  # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""  # noqa: E501
     start_date = models.DateTimeField(
         _("Start Date"), help_text=_("What date should this offer become available?")
     )
@@ -107,7 +107,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         blank=True,
         null=True,
         help_text=_(
-            "You can enter a list of descriptions. Note: if you inputs something here the product description will not show up."
+            "You can enter a list of descriptions. Note: if you inputs something here the product description will not show up."  # noqa: E501
         ),
     )
     list_bundle_items = models.BooleanField(
@@ -119,14 +119,14 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         _("Allow Multiple Purchase"),
         default=False,
         help_text=_(
-            "Confirm the user wants to buy multiples of the product where typically there is just one purchased at a time."
+            "Confirm the user wants to buy multiples of the product where typically there is just one purchased at a time."  # noqa: E501
         ),
     )
     is_promotional = models.BooleanField(
         _("Is Promotional"),
         default=False,
         help_text=_(
-            "You can mark this offer as promotional to help identify it between normal priced and discount priced offers."
+            "You can mark this offer as promotional to help identify it between normal priced and discount priced offers."  # noqa: E501
         ),
     )
     meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)
@@ -313,7 +313,7 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         else:
             return (
                 self.terms - 100
-            )  # You subtract 100 because enum are numbered according to their period length. eg Month = 101 and Year = 112
+            )  # You subtract 100 because enum are numbered according to their period length. eg Month = 101 and Year = 112  # noqa: E501
 
     def get_payment_occurrences(self):
         """

@@ -150,7 +150,7 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
 
         if created:
             processor.sync_stripe_subscription(site, stripe_subscription)
-            msg = f"Synced Stripe Subscription: ({subscription.pk},{stripe_subscription.id}), customer: ({customer_profile.pk}, {stripe_customer.id}) site: {site}"
+            msg = f"Synced Stripe Subscription: ({subscription.pk},{stripe_subscription.id}), customer: ({customer_profile.pk}, {stripe_customer.id}) site: {site}"  # noqa: E501
             logger.info(msg)
             return HttpResponse(status=200, content=msg)
 
@@ -225,7 +225,7 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
             )
             return HttpResponse(
                 status=200,
-                content=f"StripeSubscriptionPaymentFailed error: email: {stripe_invoice.customer_email} does not exist",
+                content=f"StripeSubscriptionPaymentFailed error: email: {stripe_invoice.customer_email} does not exist",  # noqa: E501
             )
 
         try:
@@ -234,11 +234,11 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
             )
         except ObjectDoesNotExist:
             logger.error(
-                f"StripeSubscriptionPaymentFailed customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}"
+                f"StripeSubscriptionPaymentFailed customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}"  # noqa: E501
             )
             return HttpResponse(
                 status=200,
-                content=f"StripeSubscriptionPaymentFailed customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}",
+                content=f"StripeSubscriptionPaymentFailed customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}",  # noqa: E501
             )
 
         offer = subscription.get_offer()
@@ -320,11 +320,11 @@ class StripeInvoicePaid(StripeBaseAPI):
             )
         except ObjectDoesNotExist:
             logger.error(
-                f"StripeInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}"
+                f"StripeInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}"  # noqa: E501
             )
             return HttpResponse(
                 status=200,
-                content=f"StripeInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}",
+                content=f"StripeInvoicePaid customer: {customer_profile} does not have a subscription with stripe_id: {stripe_invoice.subscription}",  # noqa: E501
             )
 
         payment = subscription.payments.filter(
@@ -336,11 +336,11 @@ class StripeInvoicePaid(StripeBaseAPI):
 
         if not payment and not receipt:
             logger.warning(
-                f"There are no payments to update for subscription: {subscription}. Stripe Invoice: {stripe_invoice.id}"
+                f"There are no payments to update for subscription: {subscription}. Stripe Invoice: {stripe_invoice.id}"  # noqa: E501
             )
             return HttpResponse(
                 status=200,
-                content=f"There are no payments to update for subscription: {subscription}. Stripe Invoice: {stripe_invoice.id}",
+                content=f"There are no payments to update for subscription: {subscription}. Stripe Invoice: {stripe_invoice.id}",  # noqa: E501
             )
 
         if payment:
@@ -387,7 +387,7 @@ class StripeCardExpiring(StripeBaseAPI):
                 )
                 return HttpResponse(
                     status=200,
-                    content=f"StripeCardExpiring: stripe id {stripe_customer_id} does not exist for customer in vendor",
+                    content=f"StripeCardExpiring: stripe id {stripe_customer_id} does not exist for customer in vendor",  # noqa: E501
                 )
 
             email = customer_profile.user.email
@@ -483,7 +483,7 @@ def process_stripe_invoice_subscription_payment_succeded(stripe_invoice, site):
     )
 
     if not offer or not customer_profile:
-        msg = f"Stripe Subscription Invoice was not processed, stripe_invoice: {stripe_invoice.id} offer: {offer}, customer_profile: {customer_profile} stripe_customer: {stripe_customer}"
+        msg = f"Stripe Subscription Invoice was not processed, stripe_invoice: {stripe_invoice.id} offer: {offer}, customer_profile: {customer_profile} stripe_customer: {stripe_customer}"  # noqa: E501
         logger.error(msg)
         return HttpResponse(status=200, content=msg)
 

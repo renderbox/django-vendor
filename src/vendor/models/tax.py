@@ -16,7 +16,7 @@ class TaxClassifier(models.Model):
 
     name = models.CharField(_("Name"), max_length=80, blank=True)
     taxable = models.BooleanField(_("Taxable"))
-    # info = models.ManyToManyField("vendor.TaxInfo")                 # Which taxes is this subject to and where.  This is for a more complex tax setup
+    # info = models.ManyToManyField("vendor.TaxInfo")                 # Which taxes is this subject to and where.  This is for a more complex tax setup  # noqa: E501
 
     def __str__(self):
         return self.name

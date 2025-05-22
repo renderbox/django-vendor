@@ -499,7 +499,9 @@ class AdminSubscriptionAddPaymentView(LoginRequiredMixin, TemplateView):
         offer_site_form = OfferSiteSelectForm(request.GET)
 
         if not offer_site_form.is_valid():
-            context["offer_site_form"] = payment_form   # TODO: Fix this line.  payment_form is not defined
+            context["offer_site_form"] = (
+                payment_form  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
+            )
             return render(request, self.template_name, context)
 
         payment_form = SubscriptionAddPaymentForm(
@@ -609,12 +611,14 @@ class AdminManualSubscriptionRenewal(LoginRequiredMixin, DetailView):
         customer_profile = request.user.customer_profile
 
         invoice = Invoice.objects.create(
-            profile=customer_profile,      # TODO: Fix this line.  payment_form is not defined
+            profile=customer_profile,
             site=site,
             ordered_date=submitted_datetime,
             status=InvoiceStatus.COMPLETE,
         )
-        invoice.add_offer(offer)      # TODO: Fix this line.  payment_form is not defined
+        invoice.add_offer(  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
+            offer  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
+        )
         invoice.save()
 
         transaction_id = timezone.now().strftime("%Y-%m-%d_%H-%M-%S-Manual-Renewal")

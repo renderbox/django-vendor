@@ -44,7 +44,7 @@ class Address(models.Model):
         null=False,
         blank=False,
     )
-    # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""
+    # If there is only a Product and this is blank, the product's name will be used, oterhwise it will default to "Bundle: <product>, <product>""  # noqa: E501
     name = models.CharField(_("Address Name"), max_length=80, blank=True)
     profile = models.ForeignKey(
         CustomerProfile,
@@ -78,7 +78,7 @@ class Address(models.Model):
     #     address = Address()
     #     # TODO: regex to only get digits
     #     address.street_number = billing_form.data.get('address_line_1')
-    #     address.route = ", ".join([billing_form.data.get('address_line_1', ""),billing_form.data.get('address_line_2', "")])
+    #     address.route = ", ".join([billing_form.data.get('address_line_1', ""),billing_form.data.get('address_line_2', "")])  # noqa: E501
     #     address.locality = locality
     #     address.raw = ", ".join(
     #         [   billing_form.data.get('name', ""),
@@ -99,6 +99,6 @@ class Address(models.Model):
         return "\n".join([f"{key}: {value}" for key, value in self.__dict__.items()])
 
     def get_address_display(self):
-        return f"{self.profile.user}\n{self.address_1}, {self.address_2}\n{self.locality}, {self.state}, {self.get_country_display()}, {self.postal_code}".replace(
+        return f"{self.profile.user}\n{self.address_1}, {self.address_2}\n{self.locality}, {self.state}, {self.get_country_display()}, {self.postal_code}".replace(  # noqa: E501
             "None", ""
         )

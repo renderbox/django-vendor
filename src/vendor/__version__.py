@@ -1,7 +1,6 @@
 import importlib.metadata
 import os
 
-
 try:
     __version__ = importlib.metadata.version("vendor")
     print("DIR NAME")

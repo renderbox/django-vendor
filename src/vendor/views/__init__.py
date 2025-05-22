@@ -1,30 +1,33 @@
-from django.conf import settings
-from django.contrib import messages
+# from django.conf import settings
+# from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import F
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse, reverse_lazy
-from django.utils import timezone
-from django.utils.translation import gettext as _
-from django.views import View
-from django.views.generic import TemplateView
+
+# from django.db.models import F
+# from django.http import HttpResponse
+# from django.shortcuts import get_object_or_404, redirect, render
+# from django.urls import reverse, reverse_lazy
+# from django.utils import timezone
+# from django.utils.translation import gettext as _
+# from django.views import View
+# from django.views.generic import TemplateView
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
+
+# from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
 from django.views.generic.list import ListView
 
-from vendor.forms import BillingAddressForm, CreditCardForm
-from vendor.models import Address, Invoice, Offer, OrderItem, Payment
-from vendor.models.address import Address as GoogleAddress
+# from vendor.forms import BillingAddressForm, CreditCardForm
+from vendor.models import Invoice  # Address, Offer, OrderItem, Payment
+
+# from vendor.models.address import Address as GoogleAddress
 from vendor.models.choice import InvoiceStatus
 
-from .vendor import TransferExistingSubscriptionsToStripe
-from .vendor_admin import (
-    AdminDashboardView,
-    AdminInvoiceDetailView,
-    AdminInvoiceListView,
-)
+# from .vendor import TransferExistingSubscriptionsToStripe
+# from .vendor_admin import (
+#     AdminDashboardView,
+#     AdminInvoiceDetailView,
+#     AdminInvoiceListView,
+# )
 
 
 ######################

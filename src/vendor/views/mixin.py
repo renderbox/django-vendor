@@ -132,7 +132,7 @@ class TableFilterMixin:
 
     paginate_by = None
     ordering = []
-    search_filter = None
+    # search_filter = None
 
     def search_filter(self, queryset):
         """

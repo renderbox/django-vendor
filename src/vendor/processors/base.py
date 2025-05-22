@@ -44,7 +44,7 @@ class PaymentProcessorBase(object):
     status = None
     invoice = None
     provider = None
-    # TODO: Change payment to a list as an invoice can have multiple payment. EG: 1 for 1 type purchases and n for any amount of subscriptions.
+    # TODO: Change payment to a list as an invoice can have multiple payment. EG: 1 for 1 type purchases and n for any amount of subscriptions.  # noqa: E501
     payment = None
     subscription = None
     subscription_id = None
@@ -524,7 +524,7 @@ class PaymentProcessorBase(object):
     # Process a Subscription
     def process_subscriptions(self):
         """
-        Process/subscribies recurring payments throught the payement gateway and creates a payment model for each subscription.
+        Process/subscribies recurring payments throught the payement gateway and creates a payment model for each subscription.  # noqa: E501
         If a payment is completed it will create a receipt for the subscription
         """
         if not self.is_card_valid():

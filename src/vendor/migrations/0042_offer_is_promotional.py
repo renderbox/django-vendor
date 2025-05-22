@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             name="is_promotional",
             field=models.BooleanField(
                 default=False,
-                help_text="You can mark this offer as promotional to help identify it between normal priced and discount priced offers.",
+                help_text="You can mark this offer as promotional to help identify it between normal priced and discount priced offers.",  # noqa: E501
                 verbose_name="Is Promotional",
             ),
         ),

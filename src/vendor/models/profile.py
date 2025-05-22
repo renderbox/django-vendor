@@ -23,7 +23,7 @@ from .utils import set_default_site_id
 class CustomerProfile(CreateUpdateModelBase):
     """
     Additional customer information related to purchasing.
-    This is what the Invoices are attached to.  This is abstracted from the user model directly do it can be mre flexible in the future.
+    This is what the Invoices are attached to.  This is abstracted from the user model directly do it can be mre flexible in the future.  # noqa: E501
     """
 
     uuid = models.UUIDField(

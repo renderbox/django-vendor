@@ -502,10 +502,10 @@ class StripeProcessorTests(TestCase):
         if not offers_exist:
             self.pro_annual_license["metadata"]["pk"] = offer1.pk
             self.pro_annual_license2["metadata"]["pk"] = offer2.pk
-            stripe_product1 = self.processor.stripe_create_object(
+            stripe_product1 = self.processor.stripe_create_object(  # noqa: F841
                 self.processor.stripe.Product, self.pro_annual_license
             )
-            stripe_product2 = self.processor.stripe_create_object(
+            stripe_product2 = self.processor.stripe_create_object(  # noqa: F841
                 self.processor.stripe.Product, self.pro_annual_license2
             )
 
@@ -820,7 +820,9 @@ class StripeProcessorTests(TestCase):
         )
         product = Product.objects.create(name="Stripe Product", site=self.site)
         product.offers.add(offer)
-        price = Price.objects.create(offer=offer, cost=10.99, start_date=timezone.now())
+        price = Price.objects.create(  # noqa: F841
+            offer=offer, cost=10.99, start_date=timezone.now()
+        )
 
         # clear offers that dont have a price, since we cant create stripe product and price
         offers_with_no_price = Offer.objects.filter(
@@ -951,7 +953,7 @@ class StripeCRUDObjectTests(TestCase):
     def test_create_product_no_name_fail(self):
         del self.pro_monthly_license["name"]
 
-        stripe_product = self.processor.stripe_create_object(
+        stripe_product = self.processor.stripe_create_object(  # noqa: F841
             self.processor.stripe.Product, self.pro_monthly_license
         )
         self.assertFalse(self.processor.transaction_succeeded)
@@ -1019,7 +1021,7 @@ class StripeCRUDObjectTests(TestCase):
     def test_create_price_invalid_field_fail(self):
         self.pri_monthly["type"] = "This is not a valid field"
 
-        stripe_price = self.processor.stripe_create_object(
+        stripe_price = self.processor.stripe_create_object(  # noqa: F841
             self.processor.stripe.Price, self.pri_monthly
         )
 
@@ -1056,7 +1058,7 @@ class StripeCRUDObjectTests(TestCase):
             "payment_method": stripe_payment_method.id,
             "metadata": self.valid_metadata,
         }
-        stripe_setup_intent = self.processor.stripe_create_object(
+        stripe_setup_intent = self.processor.stripe_create_object(  # noqa: F841
             self.processor.stripe.SetupIntent, setup_intent_object
         )
 

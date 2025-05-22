@@ -3,7 +3,7 @@
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import migrations
 
-from vendor.models import Payment
+# from vendor.models import Payment
 
 
 def post_payment_status_change(apps, schema_editor):

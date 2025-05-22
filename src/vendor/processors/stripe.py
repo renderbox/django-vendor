@@ -164,7 +164,7 @@ class StripeQueryBuilder:
         if clause_obj.get("field", None) == "metadata":
             if not clause_obj.get("key", None):
                 logger.error(
-                    f"StripeQueryBuilder.search_clause_checks_pass: metadata searches need a key field"
+                    "StripeQueryBuilder.search_clause_checks_pass: metadata searches need a key field"
                 )
                 return False
 
@@ -257,7 +257,7 @@ class StripeProcessor(PaymentProcessorBase):
             )
 
         # TODO handle this better, but needed to get passed this error message
-        # Search is not supported on api version 2016-07-06. Update your API version, or set the API Version of this request to 2020-08-27 or greater.
+        # Search is not supported on api version 2016-07-06. Update your API version, or set the API Version of this request to 2020-08-27 or greater.  # noqa: E501
         # https://stripe.com/docs/libraries/set-version
         self.stripe.api_version = "2023-08-16"
 
@@ -631,7 +631,7 @@ class StripeProcessor(PaymentProcessorBase):
             or "product_id" not in price.offer.meta["stripe"]
         ):
             raise TypeError(
-                f"Price cannot be created without a product_id on price.offer.meta['stripe'] field offer: {price.offer}"
+                f"Price cannot be created without a product_id on price.offer.meta['stripe'] field offer: {price.offer}"  # noqa: E501
             )
 
         price_data = {
@@ -760,7 +760,7 @@ class StripeProcessor(PaymentProcessorBase):
                 stripe_base_fee + stripe_recurring_fee + application_fee
             ):
                 self.transaction_info["errors"] = {
-                    "user_message": f"Invoice total: ${(price.cost - sub_discount):.2f} is less than the fee's ${(stripe_base_fee + stripe_recurring_fee + application_fee):.2f} needed to be collected"
+                    "user_message": f"Invoice total: ${(price.cost - sub_discount):.2f} is less than the fee's ${(stripe_base_fee + stripe_recurring_fee + application_fee):.2f} needed to be collected"  # noqa: E501
                 }
                 self.transaction_succeeded = False
                 return None
@@ -850,7 +850,7 @@ class StripeProcessor(PaymentProcessorBase):
     def get_customer_profile(self, stripe_customer, site=None):
         """Get's CustomerProfile if found.
         Try's to get the CustomerProfile based on the stripe_customer.email and site.
-        If found and the CustomerProfile instance does not have the associated stripe_customer.id it addes it addes it to the meta field.
+        If found and the CustomerProfile instance does not have the associated stripe_customer.id it addes it addes it to the meta field.  # noqa: E501
 
         Args:
             site: Site instance
@@ -873,7 +873,7 @@ class StripeProcessor(PaymentProcessorBase):
             )
         except MultipleObjectsReturned:
             logger.error(
-                f"get_customer_profile Multiple CustomerProfiles returned for email:{stripe_customer.email} site: {site.domain}"
+                f"get_customer_profile Multiple CustomerProfiles returned for email:{stripe_customer.email} site: {site.domain}"  # noqa: E501
             )
         except Exception as exce:
             logger.error(
@@ -955,7 +955,7 @@ class StripeProcessor(PaymentProcessorBase):
                 profile.meta.update({"stripe_id": new_stripe_customer["id"]})
                 profile.save()
                 logger.info(
-                    f"create_stripe_customers: Stripe Customer created: {new_stripe_customer['id']} from profile: {profile} site: {profile.site}"
+                    f"create_stripe_customers: Stripe Customer created: {new_stripe_customer['id']} from profile: {profile} site: {profile.site}"  # noqa: E501
                 )
 
     def update_stripe_customers(self, customers):
@@ -970,7 +970,7 @@ class StripeProcessor(PaymentProcessorBase):
                 profile.meta.update({"stripe_id": existing_stripe_customer["id"]})
                 profile.save()
                 logger.info(
-                    f"update_stripe_customers: Stipe Customer updated: {existing_stripe_customer['id']} from profile: {profile} site: {profile.site}"
+                    f"update_stripe_customers: Stipe Customer updated: {existing_stripe_customer['id']} from profile: {profile} site: {profile.site}"  # noqa: E501
                 )
             else:
                 self.create_stripe_customers([profile])
@@ -1223,7 +1223,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         if "pk" not in stripe_product.metadata:
             logger.error(
-                f"get_offer_from_stripe_product stripe_product id: ({stripe_product.id}, {stripe_product.name}) does not have a pk in metadata"
+                f"get_offer_from_stripe_product stripe_product id: ({stripe_product.id}, {stripe_product.name}) does not have a pk in metadata"  # noqa: E501
             )
             return offer
 
@@ -1231,15 +1231,15 @@ class StripeProcessor(PaymentProcessorBase):
             offer = Offer.objects.get(pk=int(stripe_product.metadata["pk"]))
         except ObjectDoesNotExist:
             logger.error(
-                f"get_offer_from_stripe_product Offer Does Not Exists for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}"
+                f"get_offer_from_stripe_product Offer Does Not Exists for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}"  # noqa: E501
             )
         except MultipleObjectsReturned:
             logger.error(
-                f"get_offer_from_stripe_product Multiple Offers Found for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}"
+                f"get_offer_from_stripe_product Multiple Offers Found for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}"  # noqa: E501
             )
         except Exception as exce:
             logger.error(
-                f"get_offer_from_stripe_product Exception {exce} for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}"
+                f"get_offer_from_stripe_product Exception {exce} for stripe_product: ({stripe_product.id}, {stripe_product.name}) pk: {stripe_product.metadata['pk']}"  # noqa: E501
             )
 
         return offer
@@ -1348,7 +1348,7 @@ class StripeProcessor(PaymentProcessorBase):
 
             offer.save()
             logger.info(
-                f"create_stripe_product_prices: Stripe Price created: {stripe_price.id} from offer {offer} site {offer.site}"
+                f"create_stripe_product_prices: Stripe Price created: {stripe_price.id} from offer {offer} site {offer.site}"  # noqa: E501
             )
 
     def sync_offer_prices(self, offer):
@@ -1459,7 +1459,7 @@ class StripeProcessor(PaymentProcessorBase):
             )
         except MultipleObjectsReturned:
             logger.error(
-                f"get_or_create_invoice_from_stripe_invoice Multiple Invoice for id: {stripe_invoice.id} customer_profile: {customer_profile.user.email}"
+                f"get_or_create_invoice_from_stripe_invoice Multiple Invoice for id: {stripe_invoice.id} customer_profile: {customer_profile.user.email}"  # noqa: E501
             )
             invoice = Invoice.objects.filter(
                 site=customer_profile.site,
@@ -1469,7 +1469,7 @@ class StripeProcessor(PaymentProcessorBase):
             ).first()
         except Exception as exce:
             logger.error(
-                f"get_or_create_invoice_from_stripe_invoice Exception {exce} for id: {stripe_invoice.id} customer_profile: {customer_profile.user.email}"
+                f"get_or_create_invoice_from_stripe_invoice Exception {exce} for id: {stripe_invoice.id} customer_profile: {customer_profile.user.email}"  # noqa: E501
             )
 
         if created:
@@ -1540,16 +1540,16 @@ class StripeProcessor(PaymentProcessorBase):
             dup_payments = Payment.objects.filter(transaction=stripe_charge.id)
             payment = dup_payments.first()
             logger.error(
-                f"get_or_create_payment_from_stripe_payment_and_charge Multiple Payments for transaction: {stripe_charge.id} queryresult for payments: {dup_payments}"
+                f"get_or_create_payment_from_stripe_payment_and_charge Multiple Payments for transaction: {stripe_charge.id} queryresult for payments: {dup_payments}"  # noqa: E501
             )
         except Exception as exce:
             logger.error(
-                f"get_or_create_payment_from_stripe_payment_and_charge Exception {exce} for stripe_charge id: {stripe_charge.id}"
+                f"get_or_create_payment_from_stripe_payment_and_charge Exception {exce} for stripe_charge id: {stripe_charge.id}"  # noqa: E501
             )
 
         if created:
             logger.info(
-                f"get_or_create_payment_from_stripe_payment_and_charge: Payment Created ({payment.pk},{stripe_charge.id})"
+                f"get_or_create_payment_from_stripe_payment_and_charge: Payment Created ({payment.pk},{stripe_charge.id})"  # noqa: E501
             )
 
         return payment, created
@@ -1583,11 +1583,11 @@ class StripeProcessor(PaymentProcessorBase):
             )
             receipt = dup_receipts.first()
             logger.info(
-                f"get_or_create_receipt_from_stripe_charge Multiple Receipts for transaction: {stripe_charge.id}, duplicated receipts: {dup_receipts}"
+                f"get_or_create_receipt_from_stripe_charge Multiple Receipts for transaction: {stripe_charge.id}, duplicated receipts: {dup_receipts}"  # noqa: E501
             )
         except Exception as exce:
             logger.error(
-                f"get_or_create_receipt_from_stripe_charge Exception {exce} for stripe_charge id: {stripe_charge.id}, subscriptions: ({payment.subscription.pk},{payment.subscription.gateway_id})"
+                f"get_or_create_receipt_from_stripe_charge Exception {exce} for stripe_charge id: {stripe_charge.id}, subscriptions: ({payment.subscription.pk},{payment.subscription.gateway_id})"  # noqa: E501
             )
 
         if created:
@@ -1628,11 +1628,11 @@ class StripeProcessor(PaymentProcessorBase):
                 )
                 receipt = dup_receipts.first()
                 logger.info(
-                    f"get_or_create_receipt_from_stripe_charge Multiple Receipts for transaction: {stripe_charge.id}, duplicated receipts: {dup_receipts}"
+                    f"get_or_create_receipt_from_stripe_charge Multiple Receipts for transaction: {stripe_charge.id}, duplicated receipts: {dup_receipts}"  # noqa: E501
                 )
             except Exception as exce:
                 logger.error(
-                    f"get_or_create_receipt_from_stripe_charge Exception {exce} for stripe_charge id: {stripe_charge.id}, subscriptions: ({payment.subscription.pk},{payment.subscription.gateway_id})"
+                    f"get_or_create_receipt_from_stripe_charge Exception {exce} for stripe_charge id: {stripe_charge.id}, subscriptions: ({payment.subscription.pk},{payment.subscription.gateway_id})"  # noqa: E501
                 )
 
             if created:
@@ -1673,11 +1673,11 @@ class StripeProcessor(PaymentProcessorBase):
             )
         except MultipleObjectsReturned:
             logger.error(
-                f"get_or_create_subscription_from_stripe_subscription Multiple Subscriptions returned for customer_profile: {customer_profile} subscription: {stripe_subscription.id}"
+                f"get_or_create_subscription_from_stripe_subscription Multiple Subscriptions returned for customer_profile: {customer_profile} subscription: {stripe_subscription.id}"  # noqa: E501
             )
         except Exception as exce:
             logger.error(
-                f"get_or_create_subscription_from_stripe_subscription Exception {exce} for customer_profile: {customer_profile} subscription {stripe_subscription.id}"
+                f"get_or_create_subscription_from_stripe_subscription Exception {exce} for customer_profile: {customer_profile} subscription {stripe_subscription.id}"  # noqa: E501
             )
 
         if subscription:
@@ -1688,7 +1688,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         if created:
             logger.info(
-                f"get_or_create_subscription_from_stripe_subscription Subscription Created: ({subscription.pk}, {stripe_subscription.id})"
+                f"get_or_create_subscription_from_stripe_subscription Subscription Created: ({subscription.pk}, {stripe_subscription.id})"  # noqa: E501
             )
 
         return subscription, created
@@ -1839,8 +1839,8 @@ class StripeProcessor(PaymentProcessorBase):
         """
         # Create Customer loop through all site customer and save their id's
         # Create Stripe product with site offers
-        ## Create Stripe Price from Offer.Prices
-        ## Create Coupons from Offer.term_details.
+        # Create Stripe Price from Offer.Prices
+        # Create Coupons from Offer.term_details.
         for subscription in self.invoice.get_recurring_order_items():
             product_name = subscription.offer.name
             product_name_full = f"{product_name} - site {self.site.domain}"
@@ -2290,7 +2290,7 @@ class StripeProcessor(PaymentProcessorBase):
 
         if stripe_subscription.status != "canceled":
             logger.error(
-                f"Stripe Subscription Failed: subscription: {subscription.id} transaction info: {self.transaction_info}"
+                f"Stripe Subscription Failed: subscription: {subscription.id} transaction info: {self.transaction_info}"  # noqa: E501
             )
             raise Exception("Stripe Subscription Failed")
 

@@ -5,7 +5,7 @@ from decimal import ROUND_UP, Decimal
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils import timezone
 
-from vendor.models.choice import TermDetailUnits
+# from vendor.models.choice import TermDetailUnits
 
 
 #############

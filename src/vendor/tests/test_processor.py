@@ -1,33 +1,35 @@
 from datetime import timedelta
-from random import choice, randrange
-from unittest import skipIf
 
-from core.models import Product
+# from core.models import Product
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
-from django.test import Client, TestCase, tag
-from django.urls import reverse
+from django.test import Client, TestCase  # , tag
+
+# from django.urls import reverse
 from django.utils import timezone
-from siteconfigs.models import SiteConfigModel
 
 from vendor.forms import BillingAddressForm, CreditCardForm
-from vendor.models import (
+from vendor.models import (  # OrderItem,
     CustomerProfile,
     Invoice,
     Offer,
-    OrderItem,
     Payment,
     Price,
     Receipt,
     Subscription,
 )
-from vendor.models.choice import InvoiceStatus, PurchaseStatus, SubscriptionStatus
-from vendor.processors import (
+from vendor.models.choice import InvoiceStatus, PurchaseStatus  # , SubscriptionStatus
+from vendor.processors import (  # StripeProcessor,
     AuthorizeNetProcessor,
     PaymentProcessorBase,
-    StripeProcessor,
 )
+
+# from random import choice, randrange
+# from unittest import skipIf
+
+# from siteconfigs.models import SiteConfigModel
+
 
 ###############################
 # Test constants
@@ -73,6 +75,7 @@ class BaseProcessorTests(TestCase):
     def test_base_processor_init_fail(self):
         with self.assertRaises(TypeError):
             base_processor = PaymentProcessorBase()
+        self.assertIsNone(base_processor)
 
     def test_base_processor_init_success(self):
         base_processor = PaymentProcessorBase(self.site, self.existing_invoice)
@@ -460,7 +463,7 @@ class SupportedProcessorsSetupTests(TestCase):
         Test the initialized of the PaymentProcessor defined in the setting file
         """
         try:
-            processor = PaymentProcessorBase(self.site, self.invoice)
+            processor = PaymentProcessorBase(self.site, self.invoice)  # noqa F841
         except Exception:
             print("Warning PaymentProcessor defined in settings file did not pass init")
         finally:
@@ -474,7 +477,7 @@ class SupportedProcessorsSetupTests(TestCase):
                 raise ValueError(
                     "Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID"
                 )
-            processor = AuthorizeNetProcessor(self.site, self.invoice)
+            processor = AuthorizeNetProcessor(self.site, self.invoice)  # noqa F841
         except Exception:
             print("AuthorizeNetProcessor did not initalized correctly")
         finally:

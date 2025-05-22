@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name="allow_multiple",
             field=models.BooleanField(
                 default=False,
-                help_text="Confirm the user wants to buy multiples of the product where typically there is just one purchased at a time.",
+                help_text="Confirm the user wants to buy multiples of the product where typically there is just one purchased at a time.",  # noqa: E501
                 verbose_name="Allow Multiple Purchase",
             ),
         ),

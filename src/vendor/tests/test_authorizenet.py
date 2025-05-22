@@ -28,7 +28,7 @@ from vendor.models import (
     Subscription,
 )
 from vendor.models.choice import InvoiceStatus, PurchaseStatus, SubscriptionStatus
-from vendor.processors import AuthorizeNetProcessor, PaymentProcessorBase
+from vendor.processors import AuthorizeNetProcessor  # , PaymentProcessorBase
 
 User = get_user_model()
 
@@ -247,7 +247,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         if "E00027" in errors or "E00012" in errors:
             print(
-                f"Skipping test test_process_payment_fail_cvv_no_match because merchant does not accept card"
+                "Skipping test test_process_payment_fail_cvv_no_match because merchant does not accept card"
             )
         else:
             self.assertTrue("avsResultCode: N" in results)
@@ -290,7 +290,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         if "E00027" in errors or "E00012" in errors:
             print(
-                f"Skipping test test_process_payment_fail_cvv_should_not_be_on_card because merchant does not accept card"
+                "Skipping test test_process_payment_fail_cvv_should_not_be_on_card because merchant does not accept card"  # noqa: E501
             )
         else:
             self.assertTrue("avsResultCode: S" in results)
@@ -334,7 +334,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         if "E00027" in errors or "E00012" in errors:
             print(
-                f"Skipping test test_process_payment_fail_cvv_not_certified because merchant does not accept card"
+                "Skipping test test_process_payment_fail_cvv_not_certified because merchant does not accept card"
             )
         else:
             self.assertTrue("avsResultCode: U" in results)
@@ -376,14 +376,14 @@ class AuthorizeNetProcessorTests(TestCase):
 
         if "E00027" in errors or "E00012" in errors:
             print(
-                f"Skipping test test_process_payment_fail_cvv_not_processed because merchant does not accept card"
+                "Skipping test test_process_payment_fail_cvv_not_processed because merchant does not accept card"
             )
         else:
             self.assertTrue("avsResultCode: P" in results)
 
     ##########
     # AVS Tests
-    # Reference: https://support.authorize.net/s/article/What-Are-the-Different-Address-Verification-Service-AVS-Response-Codes
+    # Reference: https://support.authorize.net/s/article/What-Are-the-Different-Address-Verification-Service-AVS-Response-Codes  # noqa: E501
     ##########
     def test_process_payment_avs_addr_match_zipcode_no_match(self):
         """
@@ -851,7 +851,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.processor.refund_payment(payment)
         print(
-            f"\ntest_refund_success\nMessage: {self.processor.transaction_info}\nResponse: {self.processor.transaction_response}\n"
+            f"\ntest_refund_success\nMessage: {self.processor.transaction_info}\nResponse: {self.processor.transaction_response}\n"  # noqa: E501
         )
         if "error_code" in self.processor.transaction_info:
             if self.processor.transaction_info["errors"]["error_code"] == 8:
@@ -862,7 +862,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
     def test_refund_fail_invalid_account_number(self):
         """
-        Checks for transaction_succeeded fail because the account number does not match the payment transaction settled.
+        Checks for transaction_succeeded fail because the account number does not match the payment transaction settled.  # noqa: E501
         """
         status_before_transaction = self.existing_invoice.status
 
@@ -1029,7 +1029,7 @@ class AuthorizeNetProcessorTests(TestCase):
             self.processor.subscription_update_payment(subscription)
             subscription.refresh_from_db()
             print(
-                f"\ntest_subscription_update_payment\nMessage: {self.processor.transaction_info}\nResponse: {self.processor.transaction_response}\nSubscription ID: {subscription.gateway_id}\n"
+                f"\ntest_subscription_update_payment\nMessage: {self.processor.transaction_info}\nResponse: {self.processor.transaction_response}\nSubscription ID: {subscription.gateway_id}\n"  # noqa: E501
             )
             print(
                 f"Update Card number: {self.form_data['credit_card_form']['card_number'][-4:]}"
@@ -1067,7 +1067,7 @@ class AuthorizeNetProcessorTests(TestCase):
             subscription=subscription,
         )
 
-        dummy_payment = Payment.objects.create(
+        dummy_payment = Payment.objects.create(  # noqa: F841
             invoice=dummy_receipt.order_item.invoice,
             profile=customer_profile,
             success=True,
@@ -1144,17 +1144,17 @@ class AuthorizeNetProcessorTests(TestCase):
         )
         is_valid = self.processor.is_card_valid()
         self.processor.create_payment_model()
-        print(f"Test is_card_valid_success\n")
+        print("Test is_card_valid_success\n")
         print(f"Transaction Submitted: {self.processor.transaction_succeeded}")
         print(f"Transaction Response: {self.processor.transaction_response}")
         print(f"Transaction Msg: {self.processor.transaction_info}")
         if "duplicate" in str(self.processor.transaction_info):
-            print(f"Skipping Test test_is_card_valid_success because of duplicate")
+            print("Skipping Test test_is_card_valid_success because of duplicate")
             return None
         elif "not accept this type of credit card" in str(
             self.processor.transaction_info
         ):
-            print(f"Skipping Test test_is_card_valid_success because of duplicate")
+            print("Skipping Test test_is_card_valid_success because of duplicate")
             return None
         else:
             self.assertTrue(is_valid)
@@ -1177,7 +1177,7 @@ class AuthorizeNetProcessorTests(TestCase):
         if active_subscriptions:
             self.processor.subscription_update_price(subscription, new_price, self.user)
             print(
-                f"\test_subscription_update_price\nMessage: {self.processor.transaction_info}\nResponse: {self.processor.transaction_response}\nSubscription ID: {subscription.gateway_id}\n"
+                f"\test_subscription_update_price\nMessage: {self.processor.transaction_info}\nResponse: {self.processor.transaction_response}\nSubscription ID: {subscription.gateway_id}\n"  # noqa: E501
             )
             response = self.processor.subscription_info(subscription.gateway_id)
             self.assertTrue(self.processor.transaction_succeeded)
@@ -1371,7 +1371,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
     def test_subscription_save_transaction_multiple_subscriptions(self):
         subscription = Subscription.objects.get(gateway_id="7127667")
-        sub_a = Subscription.objects.create(
+        sub_a = Subscription.objects.create(  # noqa: F841
             gateway_id="7127667",
             profile=self.existing_invoice.profile,
             status=SubscriptionStatus.ACTIVE,

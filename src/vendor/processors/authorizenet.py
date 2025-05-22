@@ -11,34 +11,9 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 from vendor.config import VENDOR_PAYMENT_PROCESSOR, VENDOR_STATE
+
+# from vendor.forms import BillingAddressForm, CreditCardForm
 from vendor.integrations import AuthorizeNetIntegration
-
-logger = logging.getLogger(__name__)
-
-try:
-    import pyxb
-    from authorizenet import apicontractsv1, constants
-    from authorizenet.apicontrollers import *
-
-    class CustomDate(pyxb.binding.datatypes.date):
-        def __new__(cls, *args, **kw):
-            # Because of some python, XsdLiteral (pyxb.binding.datatypes)
-            # When a new date is created that is not a datetime and those, has more arguments,
-            # it requires to only have the year, month and day arguments.
-
-            if len(args) == 8:
-                args = args[:3]
-            return super().__new__(cls, *args, **kw)
-
-except ModuleNotFoundError:
-    if VENDOR_PAYMENT_PROCESSOR == "authorizenet.AuthorizeNetProcessor":
-        print(
-            "WARNING: authorizenet module not found.  Install the library if you want to use the AuthorizeNetProcessor."
-        )
-        raise
-    pass
-
-from vendor.forms import BillingAddressForm, CreditCardForm
 from vendor.models import (
     CustomerProfile,
     Invoice,
@@ -48,17 +23,48 @@ from vendor.models import (
     Subscription,
 )
 from vendor.models.address import Country
-from vendor.models.choice import (
+from vendor.models.choice import (  # TermType,
     InvoiceStatus,
     PaymentTypes,
     PurchaseStatus,
     SubscriptionStatus,
     TermDetailUnits,
-    TermType,
     TransactionTypes,
 )
 
 from .base import PaymentProcessorBase
+
+logger = logging.getLogger(__name__)
+
+
+try:
+    import pyxb
+    from authorizenet import apicontractsv1, constants
+    from authorizenet.apicontrollers import (
+        ARBCancelSubscriptionController,
+        ARBCreateSubscriptionController,
+        ARBUpdateSubscriptionController,
+        createTransactionController,
+    )
+
+except ImportError:
+    if VENDOR_PAYMENT_PROCESSOR == "authorizenet.AuthorizeNetProcessor":
+        print(
+            "WARNING: authorizenet module not found.  Install the library if you want to use the AuthorizeNetProcessor."  # noqa: E501
+        )
+    raise
+
+
+# TODO: Fix this.  This class does not get defined unless the module is imported but it's used elsewhere in the code.  # noqa: E501
+class CustomDate(pyxb.binding.datatypes.date):
+    def __new__(cls, *args, **kw):
+        # Because of some python, XsdLiteral (pyxb.binding.datatypes)
+        # When a new date is created that is not a datetime and those, has more arguments,
+        # it requires to only have the year, month and day arguments.
+
+        if len(args) == 8:
+            args = args[:3]
+        return super().__new__(cls, *args, **kw)
 
 
 class AuthorizeNetProcessor(PaymentProcessorBase):
@@ -106,7 +112,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             self.merchant_auth.name = settings.AUTHORIZE_NET_API_ID
         else:
             logger.error(
-                "AuthorizeNetProcessor Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID"
+                "AuthorizeNetProcessor Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID"  # noqa: E501
             )
             raise ValueError(
                 "Missing Authorize.net keys in settings: AUTHORIZE_NET_TRANSACTION_KEY and/or AUTHORIZE_NET_API_ID"
@@ -669,7 +675,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         # You set the request to the transaction
         self.transaction.transactionRequest = self.transaction_type
-        self.controller = createTransactionController(self.transaction)
+        self.controller = createTransactionController(
+            self.transaction
+        )  # TODO: Fix this.  This class does not get defined unless the module is imported but it's used in the code.  # noqa: E501
         self.set_controller_api_endpoint()
         self.controller.execute()
 
@@ -721,7 +729,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.subscription = self.transaction_type
 
         # Creating and executing the controller
-        self.controller = ARBCreateSubscriptionController(self.transaction)
+        self.controller = ARBCreateSubscriptionController(
+            self.transaction
+        )  # TODO: fix this.  It's not defined or imported.  # noqa: E501
         self.set_controller_api_endpoint()
         self.controller.execute()
 
@@ -763,7 +773,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         # You set the request to the transaction
         self.transaction.transactionRequest = self.transaction_type
-        self.controller = createTransactionController(self.transaction)
+        self.controller = createTransactionController(
+            self.transaction
+        )  # TODO: fix this.  It's not defined or imported.  # noqa: E501
         self.set_controller_api_endpoint()
         self.controller.execute()
 
@@ -794,7 +806,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.subscriptionId = subscription.gateway_id
         self.transaction.subscription = self.transaction_type
 
-        self.controller = ARBUpdateSubscriptionController(self.transaction)
+        self.controller = ARBUpdateSubscriptionController(
+            self.transaction
+        )  # TODO: fix this.  It's not defined or imported.  # noqa: E501
         self.set_controller_api_endpoint()
         self.controller.execute()
 
@@ -834,7 +848,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.subscriptionId = str(subscription.gateway_id)
         self.transaction.includeTransactions = False
 
-        self.controller = ARBCancelSubscriptionController(self.transaction)
+        self.controller = ARBCancelSubscriptionController(
+            self.transaction
+        )  # TODO: fix this.  It's not defined or imported.  # noqa: E501
         self.set_controller_api_endpoint()
         self.controller.execute()
 
@@ -850,7 +866,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.subscriptionId = str(subscription_id)
         self.transaction.includeTransactions = True
 
-        self.controller = ARBGetSubscriptionController(self.transaction)
+        self.controller = ARBGetSubscriptionController(self.transaction)  # noqa: F821
         self.set_controller_api_endpoint()
         self.controller.execute()
 
@@ -883,7 +899,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction_type.payment = payment_type
 
         self.transaction.transactionRequest = self.transaction_type
-        self.controller = createTransactionController(self.transaction)
+        self.controller = createTransactionController(
+            self.transaction
+        )  # TODO: fix this.  It's not defined or imported.  # noqa: E501
         self.set_controller_api_endpoint()
         self.controller.execute()
 
@@ -904,7 +922,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         self.transaction.transactionRequest = self.transaction_type
 
-        self.controller = createTransactionController(self.transaction)
+        self.controller = createTransactionController(
+            self.transaction
+        )  # TODO: fix this.  It's not defined or imported.  # noqa: E501
         self.set_controller_api_endpoint()
         self.controller.execute()
 
@@ -919,7 +939,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         Handles an Authorize Only transaction to ensure that the funds are in the customers bank account
         """
         invoice_number = str(self.invoice.pk)[:19]
-        description = "This amount is only to check for valid cards and will not be charged. Depending on your bank the charge can take 3 to 5 days to be removed."
+        description = "This amount is only to check for valid cards and will not be charged. Depending on your bank the charge can take 3 to 5 days to be removed."  # noqa: E501
         self.create_payment_model(settings.VENDOR_CHARGE_VALIDATION_PRICE)
         self.transaction = self.create_transaction()
         self.transaction_type = self.create_transaction_type(
@@ -994,7 +1014,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.sorting = sorting
         self.transaction.paging = paging
 
-        self.controller = getCustomerPaymentProfileListController(self.transaction)
+        self.controller = getCustomerPaymentProfileListController(  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
+            self.transaction
+        )
         self.controller.execute()
 
         self.transaction_response = self.controller.getresponse()
@@ -1019,7 +1041,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             paging.offset = previous_page + 1
 
             self.transaction.paging = paging
-            self.controller = getCustomerPaymentProfileListController(self.transaction)
+            self.controller = getCustomerPaymentProfileListController(  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
+                self.transaction
+            )
             self.controller.execute()
             self.transaction_response = self.controller.getresponse()
             self.parse_response(self.parse_transaction_response)
@@ -1054,7 +1078,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.sorting = sorting
         self.transaction.paging = paging
 
-        self.controller = getCustomerPaymentProfileListController(self.transaction)
+        self.controller = getCustomerPaymentProfileListController(  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
+            self.transaction
+        )  # noqa: F821
         self.controller.execute()
 
         self.transaction_response = self.controller.getresponse()
@@ -1072,7 +1098,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
                 [
                     {
                         "customerProfileId": customer_profile.customerProfileId.text,
-                        "customerPaymentProfileId": self.transaction_response.paymentProfiles.paymentProfile.customerPaymentProfileId.text,
+                        "customerPaymentProfileId": self.transaction_response.paymentProfiles.paymentProfile.customerPaymentProfileId.text,  # noqa: E501
                     }
                     for customer_profile in self.transaction_response.paymentProfiles.paymentProfile
                 ]
@@ -1082,7 +1108,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             paging.offset = previous_page + 1
 
             self.transaction.paging = paging
-            self.controller = getCustomerPaymentProfileListController(self.transaction)
+            self.controller = getCustomerPaymentProfileListController(  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
+                self.transaction
+            )  # noqa: F821
             self.controller.execute()
             self.transaction_response = self.controller.getresponse()
             self.parse_response(self.parse_transaction_response)
@@ -1093,7 +1121,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
                     [
                         {
                             "customerProfileId": customer_profile.customerProfileId.text,
-                            "customerPaymentProfileId": self.transaction_response.paymentProfiles.paymentProfile.customerPaymentProfileId.text,
+                            "customerPaymentProfileId": self.transaction_response.paymentProfiles.paymentProfile.customerPaymentProfileId.text,  # noqa: E501
                         }
                         for customer_profile in self.transaction_response.paymentProfiles.paymentProfile
                     ]
@@ -1106,7 +1134,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.customerProfileId = customer_id
 
-        self.controller = getCustomerProfileController(self.transaction)
+        self.controller = getCustomerProfileController(  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
+            self.transaction
+        )
         self.controller.execute()
 
         self.transaction_response = self.controller.getresponse()
@@ -1148,11 +1178,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
                 payment.save()
             except ObjectDoesNotExist:
                 logger.error(
-                    f"update_payments_to_settled payment for transaction: {settled_transaction.transId.text} was not found for site: {site}"
+                    f"update_payments_to_settled payment for transaction: {settled_transaction.transId.text} was not found for site: {site}"  # noqa: E501
                 )
             except MultipleObjectsReturned:
                 logger.error(
-                    f"update_payments_to_settled multiple objects returned for transaction: {settled_transaction.transId.text}"
+                    f"update_payments_to_settled multiple objects returned for transaction: {settled_transaction.transId.text}"  # noqa: E501
                 )
                 payment = Payment.objects.filter(
                     profile__site=site, transaction=settled_transaction.transId.text
@@ -1166,7 +1196,7 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.transId = transaction_id
 
-        self.controller = createCustomerProfileFromTransactionController(
+        self.controller = createCustomerProfileFromTransactionController(  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
             self.transaction
         )
         self.set_controller_api_endpoint()
@@ -1192,7 +1222,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.profile = self.create_customer_profile_data()
 
-        self.controller = createCustomerProfileController(self.transaction)
+        self.controller = createCustomerProfileController(  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
+            self.transaction
+        )
         self.set_controller_api_endpoint()
         self.controller.execute()
 
@@ -1225,7 +1257,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         )
         self.transaction.validationMode = "liveMode"
 
-        self.controller = createCustomerPaymentProfileController(self.transaction)
+        self.controller = createCustomerPaymentProfileController(  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
+            self.transaction
+        )
         self.set_controller_api_endpoint()
         self.controller.execute()
 
@@ -1251,7 +1285,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.firstSettlementDate = start_date
         self.transaction.lastSettlementDate = end_date
 
-        self.controller = getSettledBatchListController(self.transaction)
+        self.controller = getSettledBatchListController(  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
+            self.transaction
+        )
         self.set_controller_api_endpoint()
         self.controller.execute()
 
@@ -1273,7 +1309,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.batchId = batch_id
 
-        self.controller = getTransactionListController(self.transaction)
+        self.controller = getTransactionListController(  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
+            self.transaction
+        )
         self.set_controller_api_endpoint()
         self.controller.execute()
 
@@ -1290,7 +1328,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.transId = transaction_id
 
-        self.controller = getTransactionDetailsController(self.transaction)
+        self.controller = getTransactionDetailsController(  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
+            self.transaction
+        )
         self.set_controller_api_endpoint()
         self.controller.execute()
 
@@ -1310,7 +1350,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.transaction.searchType = search_type
         self.transaction.paging = self.create_paging(limit, offset)
 
-        self.controller = ARBGetSubscriptionListController(self.transaction)
+        self.controller = ARBGetSubscriptionListController(  # TODO: fix this.  It's not defined or imported.  # noqa: F821,E501
+            self.transaction
+        )
         self.set_controller_api_endpoint()
         self.controller.execute()
 
@@ -1361,7 +1403,7 @@ def sync_subscriptions(site):
         if hasattr(subscription_info.subscription.profile, "email"):
             email = subscription_info.subscription.profile.email.text
             logger.info(
-                f"sync_subscriptions subscription id: {subscription_id} subscription name: {subscription_info.subscription.name} for email {email}"
+                f"sync_subscriptions subscription id: {subscription_id} subscription name: {subscription_info.subscription.name} for email {email}"  # noqa: E501
             )
 
             try:
@@ -1377,7 +1419,7 @@ def sync_subscriptions(site):
 
                 offer = offers.first()
 
-                ## Create a subscription with status.
+                # Create a subscription with status.
                 subscription, _ = Subscription.objects.get_or_create(
                     gateway_id=subscription_id, profile=customer_profile
                 )
@@ -1389,7 +1431,7 @@ def sync_subscriptions(site):
                 )
                 subscription.save()
 
-                ## Get transactions for subscription.
+                # Get transactions for subscription.
                 subscription_transactions = processor.get_subscription_transactions(
                     subscription_info
                 )
@@ -1426,7 +1468,7 @@ def sync_subscriptions(site):
                     if not subscription.payments.filter(
                         transaction=transaction_id
                     ).count():
-                        ### Create Invoice
+                        # Create Invoice
                         invoice = Invoice.objects.create(
                             profile=customer_profile,
                             site=site,
@@ -1437,7 +1479,7 @@ def sync_subscriptions(site):
                         invoice.add_offer(offer)
                         invoice.save()
 
-                        ### Create Payment
+                        # Create Payment
                         payment = Payment()
                         payment.profile = customer_profile
                         payment.invoice = invoice
@@ -1456,7 +1498,7 @@ def sync_subscriptions(site):
                         payment.save()
 
                         if payment_status == PurchaseStatus.SETTLED:
-                            ### Create Receipt.
+                            # Create Receipt.
                             receipt = Receipt()
                             receipt.profile = customer_profile
                             receipt.order_item = invoice.order_items.first()
@@ -1487,7 +1529,7 @@ def sync_subscriptions(site):
 
                         payment.save()
 
-                        if not payment.invoice:  ### Create Invoice
+                        if not payment.invoice:  # Create Invoice
                             invoice = Invoice.objects.create(
                                 profile=customer_profile,
                                 site=site,
@@ -1540,7 +1582,7 @@ def sync_subscriptions(site):
             except Exception as exce:
                 logger.exception(f"sync_subscriptions exception: {exce}")
 
-    logger.info(f"sync_subscriptions Finished Subscription Migration")
+    logger.info("sync_subscriptions Finished Subscription Migration")
 
 
 def sync_subscriptions_and_create_missing_receipts(site):
@@ -1562,14 +1604,14 @@ def sync_subscriptions_and_create_missing_receipts(site):
                 gateway_id=subscription_id, profile__site=site
             )
 
-        except ObjectDoesNotExist as exce:
+        except ObjectDoesNotExist as exce:  # noqa: F841
             pass
 
-        except Exception as exce:
+        except Exception as exce:  # noqa: F841
             pass
 
         subscription_info = processor.subscription_info(subscription_id)
-        # valid_subscription_transactions = [transaction for transaction in subscription_info.subscription.arbTransactions.arbTransaction if hasattr(transaction, 'transId') ]
+        # valid_subscription_transactions = [transaction for transaction in subscription_info.subscription.arbTransactions.arbTransaction if hasattr(transaction, 'transId') ]  # noqa: E501
         valid_subscription_transactions = []
         if hasattr(subscription_info.subscription, "arbTransactions"):
             for (

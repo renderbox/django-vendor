@@ -82,7 +82,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         ordering = [
             "-ordered_date",
             "-updated",
-        ]  # TODO: [GK-2518] change to use ordered_date.  Invoice ordered_date needs to be updated on successful purchase by the PaymentProcessor.
+        ]  # TODO: [GK-2518] change to use ordered_date.  Invoice ordered_date needs to be updated on successful purchase by the PaymentProcessor.  # noqa: E501
 
         permissions = (
             ("can_view_site_purchases", "Can view Site Purchases"),
@@ -244,7 +244,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
 
     def get_one_time_transaction_total(self):
         """
-        Gets the total price for order items that will be purchased on a single transation. It also subtracts any discounts
+        Gets the total price for order items that will be purchased on a single transation. It also subtracts any discounts  # noqa: E501
         """
         one_time_order_items = self.get_one_time_transaction_order_items()
         return sum(
@@ -320,7 +320,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
                             (offer_total * coupon_order_item.offer.current_price())
                             / 100
                         )
-                        # offer_total = offer_total - (recurring_order_item.discounts + ((offer_total * coupon_order_item.offer.current_price()) / 100))
+                        # offer_total = offer_total - (recurring_order_item.discounts + ((offer_total * coupon_order_item.offer.current_price()) / 100))  # noqa: E501
                     else:
                         offer_total = offer_total - math.fabs(
                             coupon_order_item.offer.current_price()
@@ -390,7 +390,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
 
     def get_discounts(self):
         """
-        Returns the sum of discounts and trial_discounts. Discounts are related to the offer.price and the offer.product.msrp,
+        Returns the sum of discounts and trial_discounts. Discounts are related to the offer.price and the offer.product.msrp,  # noqa: E501
         while trial discounts are related to the set offer.meta.trial_amount if it has a trial_occurrence.
         """
         if "discounts" in self.vendor_notes:
@@ -428,7 +428,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
             return self.vendor_notes["discounts"]
 
         discounts = 0
-        coupon_code_order_item = self.get_coupon_code_order_item()
+        coupon_code_order_item = self.get_coupon_code_order_item()  # noqa: F841
 
         discounts = sum(
             [

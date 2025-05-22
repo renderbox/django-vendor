@@ -63,17 +63,17 @@ def update_payment(site, transaction_id, transaction_detail):
 
     except MultipleObjectsReturned as exce:
         logger.error(
-            f"ERROR AuthorizeCaptureAPI update_payment multiple payments for transaction: {transaction_id} error: {exce}"
+            f"ERROR AuthorizeCaptureAPI update_payment multiple payments for transaction: {transaction_id} error: {exce}"  # noqa: E501
         )
 
     except ObjectDoesNotExist as exce:
         logger.error(
-            f"ERROR AuthorizeCaptureAPI update_payment payment does not exist for transaction: {transaction_id} error: {exce}"
+            f"ERROR AuthorizeCaptureAPI update_payment payment does not exist for transaction: {transaction_id} error: {exce}"  # noqa: E501
         )
 
     except Exception as exce:
         logger.error(
-            f"ERROR AuthorizeCaptureAPI update_payment transaction: {transaction_id}, error: {exce}"
+            f"ERROR AuthorizeCaptureAPI update_payment transaction: {transaction_id}, error: {exce}"  # noqa: E501
         )
 
 
@@ -82,7 +82,7 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
 
     subscription_id = transaction_detail.subscription.id.text
     logger.info(
-        f"AuthorizeCaptureAPI subscription_save_transaction saving subscription transaction: {transaction_id} for subscription {subscription_id}"
+        f"AuthorizeCaptureAPI subscription_save_transaction saving subscription transaction: {transaction_id} for subscription {subscription_id}"  # noqa: E501
     )
 
     submitted_datetime = datetime.strptime(
@@ -97,7 +97,7 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
     )
 
     logger.info(
-        f"AuthorizeCaptureAPI subscription_save_transaction detail: submitted_date: {submitted_datetime}, payment_info: {payment_info}, payment_status: {payment_status}, payment_success: {payment_success}"
+        f"AuthorizeCaptureAPI subscription_save_transaction detail: submitted_date: {submitted_datetime}, payment_info: {payment_info}, payment_status: {payment_status}, payment_success: {payment_success}"  # noqa: E501
     )
 
     try:
@@ -107,7 +107,7 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
 
     except MultipleObjectsReturned as exce:
         logger.error(
-            f"ERROR AuthorizeCaptureAPI subscription_save_transaction multiple subscription for id: {subscription_id} error: {exce}"
+            f"ERROR AuthorizeCaptureAPI subscription_save_transaction multiple subscription for id: {subscription_id} error: {exce}"  # noqa: E501
         )
         subscription = Subscription.objects.filter(
             gateway_id=subscription_id, profile__site=site
@@ -115,13 +115,13 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
 
     except ObjectDoesNotExist as exce:
         logger.error(
-            f"ERROR AuthorizeCaptureAPI subscription_save_transaction subscription does not exist {subscription_id} exce: {exce}"
+            f"ERROR AuthorizeCaptureAPI subscription_save_transaction subscription does not exist {subscription_id} exce: {exce}"  # noqa: E501
         )
         return None
 
     if not subscription.get_offer():
         logger.error(
-            f"ERROR AuthorizeCaptureAPI subscription_save_transaction subscription does not have an Offer, subscription: {subscription.pk} - {subscription.gateway_id}"
+            f"ERROR AuthorizeCaptureAPI subscription_save_transaction subscription does not have an Offer, subscription: {subscription.pk} - {subscription.gateway_id}"  # noqa: E501
         )
         return None
 
@@ -133,7 +133,7 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
     except MultipleObjectsReturned as exce:
         # There should be none or only one payment with transaction None and status in Queue
         logger.error(
-            f"ERROR AuthorizeCaptureAPI MultipleObjectsReturned subscription_save_transaction multiple payments returned with None as Transaction, for {subscription_id} exce: {exce}"
+            f"ERROR AuthorizeCaptureAPI MultipleObjectsReturned subscription_save_transaction multiple payments returned with None as Transaction, for {subscription_id} exce: {exce}"  # noqa: E501
         )
         subscription.payments.filter(
             Q(transaction="") | Q(transaction=None), Q(status=PurchaseStatus.QUEUED)
@@ -162,7 +162,7 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
             submitted_date=submitted_datetime,
         )
         logger.info(
-            f"AuthorizeCaptureAPI subscription_save_transaction creating new payment and receipt for subscription, for {subscription_id}"
+            f"AuthorizeCaptureAPI subscription_save_transaction creating new payment and receipt for subscription, for {subscription_id}"  # noqa: E501
         )
 
         return None  # No need to continue to create receipt as it is done in the above function
@@ -195,7 +195,7 @@ def subscription_save_transaction(site, transaction_id, transaction_detail):
             submitted_date=submitted_datetime,
         )
         logger.info(
-            f"AuthorizeCaptureAPI subscription_save_transaction creating new payment and receipt for subscription, for {subscription_id}"
+            f"AuthorizeCaptureAPI subscription_save_transaction creating new payment and receipt for subscription, for {subscription_id}"  # noqa: E501
         )
 
         return None  # No need to continue to create receipt as it is done in the above function
@@ -277,7 +277,7 @@ class AuthorizeNetBaseAPI(View):
                 raise TypeError("No private key set")
 
             logger.info(
-                f"AuthorizeNetBaseAPI is_valid_post: Checking hashs\nCALCULATED: {hash_value}\nREQUEST VALUE: {self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]}"
+                f"AuthorizeNetBaseAPI is_valid_post: Checking hashs\nCALCULATED: {hash_value}\nREQUEST VALUE: {self.request.META.get('HTTP_X_ANET_SIGNATURE')[7:]}"  # noqa: E501
             )
 
             if hash_value.upper() == self.request.META.get("HTTP_X_ANET_SIGNATURE")[7:]:

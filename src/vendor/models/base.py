@@ -152,7 +152,7 @@ class ProductModelBase(CreateUpdateModelBase):
     def get_best_currency(self, currency=DEFAULT_CURRENCY):
         """
         If no currency is provided as an argument it will default to the products's msrp default currency.
-        If currency is provided but is not available in the product it will default to the products's msrp default currency.
+        If currency is provided but is not available in the product it will default to the products's msrp default currency.  # noqa: E501
         """
         if is_currency_available(self.meta["msrp"].keys(), currency=currency):
             return currency

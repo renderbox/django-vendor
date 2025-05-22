@@ -19,7 +19,7 @@ def stripe_create_customer_signal(sender, instance, created, **kwargs):
         != SupportedPaymentProcessor.STRIPE.value
     ):
         logger.error(
-            f"stripe_create_customer_signal instance: {instance.pk} was not created on stripe for site {instance.site} because site is not configured with Stripe"
+            f"stripe_create_customer_signal instance: {instance.pk} was not created on stripe for site {instance.site} because site is not configured with Stripe"  # noqa: E501
         )
         return None
 
@@ -61,7 +61,7 @@ def stripe_create_customer_signal(sender, instance, created, **kwargs):
         processor.update_stripe_customers([instance])
         if len(query_result.data) > 1:
             logger.warning(
-                f"stripe_create_customer_signal: more than one customer found for email: {instance.user.email} on site: {instance.site.domain}"
+                f"stripe_create_customer_signal: more than one customer found for email: {instance.user.email} on site: {instance.site.domain}"  # noqa: E501
             )
 
     processor.create_stripe_customers([instance])
@@ -86,7 +86,7 @@ def stripe_delete_customer_signal(sender, instance, **kwargs):
         != SupportedPaymentProcessor.STRIPE.value
     ):
         logger.error(
-            f"stripe_delete_customer_signal instance: {instance.pk} can't be deleted as this site: {instance.site} is not configured to use Stripe"
+            f"stripe_delete_customer_signal instance: {instance.pk} can't be deleted as this site: {instance.site} is not configured to use Stripe"  # noqa: E501
         )
         return None
 
@@ -120,7 +120,7 @@ def stripe_create_offer_signal(sender, instance, created, **kwargs):
         != SupportedPaymentProcessor.STRIPE.value
     ):
         logger.error(
-            f"stripe_create_offer_signal instance: {instance.pk} was not created on stripe for site {instance.site} because site is not configured with Stripe"
+            f"stripe_create_offer_signal instance: {instance.pk} was not created on stripe for site {instance.site} because site is not configured with Stripe"  # noqa: E501
         )
         return None
 
@@ -182,7 +182,7 @@ def stripe_delete_offer_signal(sender, instance, **kwargs):
         != SupportedPaymentProcessor.STRIPE.value
     ):
         logger.error(
-            f"stripe_delete_offer_signal instance: {instance.pk} can't be deleted as this site: {instance.site} is not configured to use Stripe"
+            f"stripe_delete_offer_signal instance: {instance.pk} can't be deleted as this site: {instance.site} is not configured to use Stripe"  # noqa: E501
         )
         return None
 

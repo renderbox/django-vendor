@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             field=models.TextField(
                 blank=True,
                 default=None,
-                help_text="You can enter a list of descriptions. Note: if you inputs something here the product description will not show up.",
+                help_text="You can enter a list of descriptions. Note: if you inputs something here the product description will not show up.",  # noqa: E501
                 null=True,
                 verbose_name="Offer Description",
             ),

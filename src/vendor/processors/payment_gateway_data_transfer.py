@@ -5,7 +5,7 @@ from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.utils import timezone
 
 from vendor.models import CustomerProfile, Offer, Subscription
-from vendor.models.choice import InvoiceStatus, SubscriptionStatus
+from vendor.models.choice import SubscriptionStatus  # InvoiceStatus,
 from vendor.processors import AuthorizeNetProcessor, StripeProcessor
 
 logger = logging.getLogger(__name__)
@@ -164,7 +164,7 @@ def transfer_subscriptions_from_authorizenet_to_stripe(site):
                 ):
                     stripe.transaction_succeeded = False
                     logger.error(
-                        f"AuthorizeNet Subscription {auth_subscription.id.text} was not transfered to stripe error {stripe.transaction_info}"
+                        f"AuthorizeNet Subscription {auth_subscription.id.text} was not transfered to stripe error {stripe.transaction_info}"  # noqa: E501
                     )
                 else:
                     subscription = Subscription.objects.create(
@@ -178,13 +178,13 @@ def transfer_subscriptions_from_authorizenet_to_stripe(site):
 
             except ObjectDoesNotExist as exce:
                 logger.exception(
-                    f"sync_subscriptions exception: {exce} subscription: ({auth_subscription.id.text}, {subscription_info.subscription.name})"
+                    f"sync_subscriptions exception: {exce} subscription: ({auth_subscription.id.text}, {subscription_info.subscription.name})"  # noqa: E501
                 )
             except MultipleObjectsReturned as exce:
                 logger.exception(
-                    f"sync_subscriptions exception: {exce} subscription: ({auth_subscription.id.text}, {subscription_info.subscription.name})"
+                    f"sync_subscriptions exception: {exce} subscription: ({auth_subscription.id.text}, {subscription_info.subscription.name})"  # noqa: E501
                 )
             except Exception as exce:
                 logger.exception(
-                    f"sync_subscriptions exception: {exce} subscription: ({auth_subscription.id.text}, {subscription_info.subscription.name})"
+                    f"sync_subscriptions exception: {exce} subscription: ({auth_subscription.id.text}, {subscription_info.subscription.name})"  # noqa: E501
                 )
