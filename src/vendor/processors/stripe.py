@@ -2,8 +2,17 @@ import json
 import logging
 from decimal import ROUND_UP, Decimal
 from math import modf
+import warnings
 
-import stripe
+try:
+    import stripe
+except ImportError:
+    stripe = None
+    warnings.warn(
+        "Stripe SDK is not installed. StripeProcessor will be non-functional.",
+        ImportWarning
+    )
+
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models
@@ -238,6 +247,13 @@ class StripeProcessor(PaymentProcessorBase):
     TRANSACTION_RESPONSE_CODE = "response_code"
     source = None
     products_mapping = {}
+
+    def __new__(cls, *args, **kwargs):
+        if stripe is None:
+            raise ImportError(
+                "Stripe SDK is not installed. StripeProcessor cannot be used."
+            )
+        return super().__new__(cls)
 
     def processor_setup(self, site, source=None):
         self.credentials = StripeIntegration(site)
@@ -2077,7 +2093,7 @@ class StripeProcessor(PaymentProcessorBase):
                 card_number = self.payment_info.cleaned_data.get("card_number")
                 exp_month = self.payment_info.cleaned_data.get("expire_month")
                 exp_year = self.payment_info.cleaned_data.get("expire_year")
-                cvc = self.payment_info.cleaned_data.get("cvc_number")
+                cvc = self.payment_info.cleaned_data.get("cvv_number")
                 card = {
                     "number": card_number,
                     "exp_month": exp_month,

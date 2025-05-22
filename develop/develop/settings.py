@@ -66,7 +66,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Add the account middleware:
-    # "allauth.account.middleware.AccountMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "develop.urls"
@@ -251,3 +251,7 @@ LOGGING = {
         },
     },
 }
+
+ENCRYPTED_FIELD_KEYS = [
+    b'_z0qxUVtAOB4gGcfZ7uRvA3_2xFLPvR2f4OOP_TeV1A=',
+]

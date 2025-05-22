@@ -4,6 +4,7 @@ Payment processor for Authorize.net.
 
 import ast
 import logging
+import warnings
 from datetime import datetime
 from math import ceil
 
@@ -39,32 +40,67 @@ logger = logging.getLogger(__name__)
 
 try:
     import pyxb
-    from authorizenet import apicontractsv1, constants
+except ImportError:
+    pyxb = None
+    warnings.warn(
+        "pyxb is not installed. CustomDate will not be available.", ImportWarning
+    )
+
+try:
+    from authorizenet import apicontractsv1
     from authorizenet.apicontrollers import (
         ARBCancelSubscriptionController,
         ARBCreateSubscriptionController,
+        ARBGetSubscriptionController,
+        ARBGetSubscriptionListController,
         ARBUpdateSubscriptionController,
+        createCustomerPaymentProfileController,
+        createCustomerProfileController,
+        createCustomerProfileFromTransactionController,
         createTransactionController,
+        getCustomerPaymentProfileListController,
+        getCustomerProfileController,
+        getSettledBatchListController,
+        getTransactionDetailsController,
+        getTransactionListController,
     )
-
 except ImportError:
-    if VENDOR_PAYMENT_PROCESSOR == "authorizenet.AuthorizeNetProcessor":
-        print(
-            "WARNING: authorizenet module not found.  Install the library if you want to use the AuthorizeNetProcessor."  # noqa: E501
-        )
-    raise
+    warnings.warn(
+        "Authorize.Net SDK is not installed. AuthorizeNetProcessor will be non-functional.",
+        ImportWarning,
+    )
+    apicontractsv1 = None
+    createTransactionController = None
+    ARBCreateSubscriptionController = None
+    ARBUpdateSubscriptionController = None
+    ARBCancelSubscriptionController = None
+    ARBGetSubscriptionController = None
+    ARBGetSubscriptionListController = None
+    getCustomerPaymentProfileListController = None
+    getCustomerProfileController = None
+    createCustomerProfileFromTransactionController = None
+    createCustomerProfileController = None
+    createCustomerPaymentProfileController = None
+    getSettledBatchListController = None
+    getTransactionListController = None
+    getTransactionDetailsController = None
 
 
-# TODO: Fix this.  This class does not get defined unless the module is imported but it's used elsewhere in the code.  # noqa: E501
-class CustomDate(pyxb.binding.datatypes.date):
-    def __new__(cls, *args, **kw):
-        # Because of some python, XsdLiteral (pyxb.binding.datatypes)
-        # When a new date is created that is not a datetime and those, has more arguments,
-        # it requires to only have the year, month and day arguments.
+if pyxb is not None:
 
-        if len(args) == 8:
-            args = args[:3]
-        return super().__new__(cls, *args, **kw)
+    class CustomDate(pyxb.binding.datatypes.date):
+        def __new__(cls, *args, **kw):
+            # Because of some python, XsdLiteral (pyxb.binding.datatypes)
+            # When a new date is created that is not a datetime and those, has more arguments,
+            # it requires to only have the year, month and day arguments.
+
+            if len(args) == 8:
+                args = args[:3]
+            return super().__new__(cls, *args, **kw)
+
+else:
+    CustomDate = None
+    # Optionally, you could define a fallback or raise an error if used
 
 
 class AuthorizeNetProcessor(PaymentProcessorBase):
@@ -1343,8 +1379,16 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self,
         limit=1000,
         offset=1,
-        search_type=apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionActive,
+        search_type=None,
     ):
+        if apicontractsv1 is None:
+            warnings.warn(
+                "Authorize.Net SDK is not installed. get_list_of_subscriptions will not function.",
+                ImportWarning,
+            )
+            return []
+        if search_type is None:
+            search_type = apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionActive
         self.transaction = apicontractsv1.ARBGetSubscriptionListRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.searchType = search_type

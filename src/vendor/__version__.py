@@ -11,6 +11,6 @@ except:  # This is to support installing the package locally via "pip install -e
 
     module_dir = os.path.dirname(__file__)
     cfg = toml.load(module_dir + "/../../pyproject.toml")
-    __version__ = cfg["project"]["version"]
+    __version__ = cfg["tool"]["poetry"]["version"]
 
 VERSION = __version__
