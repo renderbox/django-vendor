@@ -13,16 +13,16 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.12"
-      - name: Install Poetry
-        run: pipx install poetry
       - name: Install Dependencies
-        run: poetry install --extras=lint
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[lint]"
       - name: Black Tests
-        run: poetry black --check src
+        run: black --check src
       - name: iSort Tests
-        run: poetry isort --check-only src
+        run: isort --check-only src
       - name: Flake8 Tests
-        run: poetry flake8 src
+        run: flake8 src
 
   migrations:
     name: Check Missing Migrations
@@ -33,10 +33,10 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.12"
-      - name: Install Poetry
-        run: pipx install poetry
       - name: Install Dependencies
-        run: poetry install --with=dev,test
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[test] # assumes extras_require for test deps
       - name: Check for Missing Migrations
         run: python develop/manage.py makemigrations --check --dry-run
 
@@ -81,16 +81,15 @@ jobs:
         env:
           PGPASSWORD: ""
 
-      - name: Install Poetry
-        run: pipx install poetry
       - name: Install Dependencies
-        run: poetry install --with=test
-      - name: Install Django
-        run: poetry add Django@${{ matrix.django-version }}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test]"
+          python -m pip install "Django==${{ matrix.django-version }}"
 
       - name: Test with Pytest
         env:
           DJANGO_DEBUG: 1
           DATABASE_URL: "postgres://runner:postgres@localhost:5432/test_db"
         run: |
-          poetry run pytest
+          pytest develop
