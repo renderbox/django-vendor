@@ -2,7 +2,7 @@ name: Python Tests
 
 on:
   pull_request:
-    branches: ["main", "develop"]
+    branches: ["master", "develop"]
 
 jobs:
   lint:
@@ -16,7 +16,7 @@ jobs:
       - name: Install Poetry
         run: pipx install poetry
       - name: Install Dependencies
-        run: poetry install --with=lint
+        run: poetry install --extras=lint
       - name: Black Tests
         run: black --check src
       - name: iSort Tests
