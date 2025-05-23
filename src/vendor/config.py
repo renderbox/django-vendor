@@ -25,20 +25,17 @@ class PaymentProcessorForm(SiteSelectForm):
 
 
 class PaymentProcessorSiteConfig(SiteConfigBaseClass):
-    label = _("Payment Processor")
+    label = "Payment Processor"
     default = {"payment_processor": "base.PaymentProcessorBase"}
     form_class = PaymentProcessorForm
     key = ""
     instance = None
 
     def __init__(self, site=None):
-
         if site is None:
             site = Site.objects.get_current()
-
         self.key = ".".join([__name__, __class__.__name__])
         super().__init__(site)
-
         if not self.instance:
             self.default["payment_processor"] = VENDOR_PAYMENT_PROCESSOR
 
@@ -48,7 +45,6 @@ class PaymentProcessorSiteConfig(SiteConfigBaseClass):
     def get_initials(self):
         initial = super().get_initials()
         initial["site"] = (self.site.pk, self.site.domain)
-
         if self.instance:
             initial["payment_processor"] = [
                 choice
@@ -57,7 +53,6 @@ class PaymentProcessorSiteConfig(SiteConfigBaseClass):
             ][0]
         else:
             initial["payment_processor"] = SupportedPaymentProcessor.choices[0]
-
         return initial
 
     def get_selected_processor(self):
@@ -67,8 +62,28 @@ class PaymentProcessorSiteConfig(SiteConfigBaseClass):
                 for choice in SupportedPaymentProcessor.choices
                 if choice[0] == self.instance.value["payment_processor"]
             ][0]
-
         return SupportedPaymentProcessor.choices[0]  # Return Default Processors
+
+    def get_key_value(self, key):
+        """
+        Return the value for a given key from the config instance or default.
+        """
+        if self.instance and hasattr(self.instance, "value"):
+            return self.instance.value.get(key)
+        return self.default.get(key)
+
+    def save(self, value=None, key=None):
+        """
+        Save a single key-value pair to the config instance, or all if no key provided.
+        """
+        current_value = getattr(self, "value", None)
+        if value is not None and key is not None:
+            data = current_value.copy() if current_value else self.default.copy()
+            data[key] = value
+            self.value = data
+            super().save()
+        else:
+            super().save()
 
 
 class StripeConnectAccountForm(SiteSelectForm):
@@ -76,19 +91,30 @@ class StripeConnectAccountForm(SiteSelectForm):
 
 
 class StripeConnectAccountConfig(SiteConfigBaseClass):
-    label = _("Stripe Connect Account")
+    label = "Stripe Connect Account"
     default = {"stripe_connect_account": None}
     form_class = StripeConnectAccountForm
     key = ""
     instance = None
 
     def __init__(self, site=None):
-
         if site is None:
             site = Site.objects.get_current()
-
         self.key = ".".join([__name__, __class__.__name__])
-        super().__init__(site, self.key)
+        super().__init__(site)
+
+    def save(self, value=None, key=None):
+        """
+        Save a single key-value pair to the config instance, or all if no key provided.
+        """
+        current_value = getattr(self, "value", None)
+        if value is not None and key is not None:
+            data = current_value.copy() if current_value else self.default.copy()
+            data[key] = value
+            self.value = data
+            super().save()
+        else:
+            super().save()
 
 
 class VendorSiteCommissionForm(SiteSelectForm):
@@ -96,19 +122,30 @@ class VendorSiteCommissionForm(SiteSelectForm):
 
 
 class VendorSiteCommissionConfig(SiteConfigBaseClass):
-    label = _("Vendor Site Commission")
+    label = "Vendor Site Commission"
     default = {"commission": None}
     form_class = VendorSiteCommissionForm
     key = ""
     instance = None
 
     def __init__(self, site=None):
-
         if site is None:
             site = Site.objects.get_current()
-
         self.key = ".".join([__name__, __class__.__name__])
-        super().__init__(site, self.key)
+        super().__init__(site)
+
+    def save(self, value=None, key=None):
+        """
+        Save a single key-value pair to the config instance, or all if no key provided.
+        """
+        current_value = getattr(self, "value", None)
+        if value is not None and key is not None:
+            data = current_value.copy() if current_value else self.default.copy()
+            data[key] = value
+            self.value = data
+            super().save()
+        else:
+            super().save()
 
 
 VENDOR_PRODUCT_MODEL = getattr(settings, "VENDOR_PRODUCT_MODEL", "vendor.Product")

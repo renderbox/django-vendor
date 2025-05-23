@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from vendor.forms import DateTimeRangeForm
 from vendor.models import Offer, Payment, Price, Subscription
+from vendor.utils import force_str_if_proxy
 
 User = get_user_model()
 

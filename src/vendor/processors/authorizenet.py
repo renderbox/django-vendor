@@ -176,15 +176,15 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             PaymentTypes.MOBILE: self.create_mobile_payment,
         }
 
-    def set_api_endpoint(self):
-        """
-        Sets the API endpoint for debugging or production.It is dependent on the VENDOR_STATE
-        enviornment variable. Default value is DEBUG for the VENDOR_STATE
-        """
-        if VENDOR_STATE == "DEBUG":
-            self.API_ENDPOINT = constants.SANDBOX
-        elif VENDOR_STATE == "PRODUCTION":
-            self.API_ENDPOINT = constants.PRODUCTION
+    # def set_api_endpoint(self):
+    #     """
+    #     Sets the API endpoint for debugging or production.It is dependent on the VENDOR_STATE
+    #     enviornment variable. Default value is DEBUG for the VENDOR_STATE
+    #     """
+    #     if VENDOR_STATE == "DEBUG":
+    #         self.API_ENDPOINT = constants.SANDBOX
+    #     elif VENDOR_STATE == "PRODUCTION":
+    #         self.API_ENDPOINT = constants.PRODUCTION
 
     ##########
     # Authorize.net Object creations
@@ -1180,8 +1180,12 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
         self.parse_success()
 
         if self.transaction_succeeded:
-            return self.transaction_response.profile.email.pyval
-
+            # Defensive: check for profile and email attributes
+            profile = getattr(self.transaction_response, "profile", None)
+            if profile:
+                email = getattr(profile, "email", None)
+                if email:
+                    return getattr(email, "pyval", None) or getattr(email, "text", None) or str(email)
         return None
 
     def get_settled_transactions(self, start_date, end_date):
@@ -1372,8 +1376,16 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         response = self.controller.getresponse()
 
-        if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
+        # Added check for None response to avoid AttributeError
+        if response is None:
+            logger.error(f"AuthorizeNetProcessor.get_transaction_detail: No response for transaction_id {transaction_id}")
+            return None
+
+        if hasattr(response, "messages") and response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
             return response.transaction
+        else:
+            logger.error(f"AuthorizeNetProcessor.get_transaction_detail: Invalid response for transaction_id {transaction_id}, response: {response}")
+            return None
 
     def get_list_of_subscriptions(
         self,

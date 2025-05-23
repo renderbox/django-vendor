@@ -4,6 +4,8 @@ from decimal import ROUND_UP, Decimal
 
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils import timezone as dj_timezone
+from django.utils.encoding import force_str
+from django.utils.functional import Promise
 
 
 #############
@@ -53,3 +55,12 @@ def get_future_date_days(today, add_days):
 
 def get_display_decimal(amount):
     return Decimal(amount).quantize(Decimal(".00"), rounding=ROUND_UP)
+
+
+def force_str_if_proxy(value):
+    """
+    Convert Django lazy translation objects (Promise/__proxy__) to string, otherwise return as is.
+    """
+    if isinstance(value, Promise):
+        return force_str(value)
+    return value
