@@ -1,4 +1,4 @@
-[![Django Vendor CI](https://github.com/renderbox/django-vendor/actions/workflows/vendor_ci.yml/badge.svg)](https://github.com/renderbox/django-vendor/actions/workflows/vendor_ci.yml)
+[![Python Tests](https://github.com/renderbox/django-vendor/actions/workflows/python-test.yml/badge.svg)](https://github.com/renderbox/django-vendor/actions/workflows/python-test.yml)
 
 [![Django Vendor Develop](https://github.com/renderbox/django-vendor/actions/workflows/vendor_develop.yml/badge.svg)](https://github.com/renderbox/django-vendor/actions/workflows/vendor_develop.yml)
 
