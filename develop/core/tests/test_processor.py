@@ -74,8 +74,7 @@ class BaseProcessorTests(TestCase):
 
     def test_base_processor_init_fail(self):
         with self.assertRaises(TypeError):
-            base_processor = PaymentProcessorBase()
-        self.assertIsNone(base_processor)
+            PaymentProcessorBase()
 
     def test_base_processor_init_success(self):
         base_processor = PaymentProcessorBase(self.site, self.existing_invoice)
@@ -127,7 +126,7 @@ class BaseProcessorTests(TestCase):
     def test_update_invoice_status_fails(self):
         self.base_processor.update_invoice_status(InvoiceStatus.COMPLETE)
 
-        self.assertNotEquals(InvoiceStatus.COMPLETE, self.base_processor.invoice.status)
+        self.assertNotEqual(InvoiceStatus.COMPLETE, self.base_processor.invoice.status)
 
     def test_create_receipt_by_term_type_subscription(self):
         self.base_processor.invoice.add_offer(self.subscription_offer)
@@ -207,7 +206,7 @@ class BaseProcessorTests(TestCase):
         price.cost = 25
         price.start_date = timezone.now() - timedelta(days=1)
         price.save()
-        self.assertNotEquals(
+        self.assertNotEqual(
             self.existing_invoice.total,
             self.base_processor.amount_without_subscriptions(),
         )

@@ -32,7 +32,7 @@ class ModelCustomerProfileTests(TestCase):
         self.customer_profile.user = User.objects.get(pk=1)
         self.customer_profile.save()
 
-        self.assertEquals(Site.objects.get_current(), self.customer_profile.site)
+        self.assertEqual(Site.objects.get_current(), self.customer_profile.site)
 
     def test_get_invoice_cart(self):
         cp = CustomerProfile.objects.get(pk=1)
@@ -66,14 +66,14 @@ class ModelCustomerProfileTests(TestCase):
             site=Site.objects.get_current()
         ).get_cart_items_count()
 
-        self.assertEquals(count, 0)
+        self.assertEqual(count, 0)
 
     def test_get_cart_items_count_no_items(self):
         customer_profile = CustomerProfile.objects.get(pk=1)
 
         count = customer_profile.get_cart_items_count()
 
-        self.assertEquals(count, customer_profile.invoices.first().order_items.count())
+        self.assertEqual(count, customer_profile.invoices.first().order_items.count())
 
     def test_owns_product_true(self):
         receipt = Receipt.objects.get(pk=1)
@@ -272,7 +272,7 @@ class AddOfferToProfileView(TestCase):
             },
         )
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
 
     def test_adds_free_product_to_profile_success(self):
         url = reverse(

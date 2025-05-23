@@ -306,12 +306,14 @@ class RefundPaymentAPIView(LoginRequiredMixin, BaseUpdateView):
         try:
             processor.refund_payment(form)
             if not processor.transaction_succeeded:
+                # Return the transaction_info dict directly for proper JSON serialization
                 return JsonResponse({"error": processor.transaction_info})
 
         except Exception as exc:
             return JsonResponse({"error": str(exc)})
 
-        return JsonResponse({"message": _("Payment Refunded")})
+        return JsonResponse({"message": str(_("Payment Refunded"))})
 
     def form_invalid(self, form: BaseModelForm):
+        # Return form.errors directly for proper JSON serialization
         return JsonResponse({"error": form.errors})

@@ -37,7 +37,7 @@ class PaymentProcessorSiteConfig(SiteConfigBaseClass):
             site = Site.objects.get_current()
 
         self.key = ".".join([__name__, __class__.__name__])
-        super().__init__(site, self.key)
+        super().__init__(site)
 
         if not self.instance:
             self.default["payment_processor"] = VENDOR_PAYMENT_PROCESSOR

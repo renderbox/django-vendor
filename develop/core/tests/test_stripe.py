@@ -135,7 +135,7 @@ class StripeProcessorTests(TestCase):
         self.assertIsNotNone(settings.STRIPE_PUBLIC_KEY)
 
     def test_processor_initialization_success(self):
-        self.assertEquals(self.processor.provider, "StripeProcessor")
+        self.assertEqual(self.processor.provider, "StripeProcessor")
         self.assertIsNotNone(self.processor.invoice)
         self.assertIsNotNone(self.processor.credentials)
 
@@ -160,7 +160,7 @@ class StripeProcessorTests(TestCase):
 
         self.assertIsNotNone(self.processor.payment)
         self.assertTrue(self.processor.payment.success)
-        self.assertEquals(InvoiceStatus.COMPLETE, self.processor.invoice.status)
+        self.assertEqual(InvoiceStatus.COMPLETE, self.processor.invoice.status)
 
     def test_process_payment_transaction_fail_invalid_card(self):
         """
@@ -183,7 +183,7 @@ class StripeProcessorTests(TestCase):
 
         self.assertIsNone(self.processor.payment)
         self.assertFalse(self.processor.transaction_succeeded)
-        self.assertEquals(InvoiceStatus.CART, self.processor.invoice.status)
+        self.assertEqual(InvoiceStatus.CART, self.processor.invoice.status)
 
     def test_process_payment_transaction_fail_invalid_expiration(self):
         """
@@ -208,7 +208,7 @@ class StripeProcessorTests(TestCase):
 
         self.assertIsNone(self.processor.payment)
         self.assertFalse(self.processor.transaction_succeeded)
-        self.assertEquals(InvoiceStatus.CART, self.processor.invoice.status)
+        self.assertEqual(InvoiceStatus.CART, self.processor.invoice.status)
 
     def test_process_payment_fail_cvv_no_match(self):
         """
@@ -394,7 +394,7 @@ class StripeProcessorTests(TestCase):
         query = self.processor.query_builder.build_search_query(
             self.processor.stripe.Product, [name_clause]
         )
-        self.assertEquals(valid_query, query)
+        self.assertEqual(valid_query, query)
 
     def test_build_search_query_name_and_metadata(self):
         """
@@ -418,7 +418,7 @@ class StripeProcessorTests(TestCase):
         query = self.processor.query_builder.build_search_query(
             self.processor.stripe.Product, [name_clause, metadata_clause]
         )
-        self.assertEquals(valid_query, query)
+        self.assertEqual(valid_query, query)
 
     def test_build_search_query_metadata(self):
         """
@@ -436,7 +436,7 @@ class StripeProcessorTests(TestCase):
         query = self.processor.query_builder.build_search_query(
             self.processor.stripe.Product, [metadata_clause]
         )
-        self.assertEquals(valid_query, query)
+        self.assertEqual(valid_query, query)
 
     def test_build_search_query_metadata_fail(self):
         """
@@ -452,7 +452,7 @@ class StripeProcessorTests(TestCase):
         query = self.processor.query_builder.build_search_query(
             self.processor.stripe.Product, [metadata_clause]
         )
-        self.assertEquals(query, "")
+        self.assertEqual(query, "")
 
     def test_get_stripe_offers(self):
         # Test will fail on initial run without products created on stripe. Dont create duplicates
@@ -706,10 +706,10 @@ class StripeProcessorTests(TestCase):
             self.processor.stripe.Customer, stripe_customer2.id
         )
 
-        self.assertEquals(
+        self.assertEqual(
             updated_stripe_customer1.name, f"{user1.first_name} {user1.last_name}"
         )
-        self.assertEquals(
+        self.assertEqual(
             updated_stripe_customer2.name, f"{user2.first_name} {user2.last_name}"
         )
 
@@ -773,7 +773,7 @@ class StripeProcessorTests(TestCase):
 
         self.assertIsNotNone(self.processor.payment)
         self.assertTrue(self.processor.payment.success)
-        self.assertEquals(InvoiceStatus.COMPLETE, self.processor.invoice.status)
+        self.assertEqual(InvoiceStatus.COMPLETE, self.processor.invoice.status)
 
     """
     Commenting out since stripe doesnt allow you to delete Price objects (weird)
@@ -992,7 +992,7 @@ class StripeCRUDObjectTests(TestCase):
         )
 
         self.assertIsNotNone(update_product.id)
-        self.assertEquals(update_product["name"], update_data["name"])
+        self.assertEqual(update_product["name"], update_data["name"])
 
     ##########
     # Price CRUD

@@ -65,7 +65,7 @@ class VendorAPITest(TestCase):
 
         response = self.client.post(url, form_data)
 
-        self.assertEquals(json.loads(response.content)["message"], "Payment Refunded")
+        self.assertEqual(json.loads(response.content)["message"], "Payment Refunded")
 
     def test_refund_payment_fail(self):
         payment = Payment.objects.get(pk=1)
@@ -89,10 +89,10 @@ class VendorAPITest(TestCase):
         }
 
         response = self.client.post(url, form_data)
-        self.assertEquals(json.loads(response.content)["message"], "Payment Refunded")
+        self.assertEqual(json.loads(response.content)["message"], "Payment Refunded")
 
         response = self.client.post(url, form_data)
-        self.assertEquals(json.loads(response.content)["message"], "Payment Refunded")
+        self.assertEqual(json.loads(response.content)["message"], "Payment Refunded")
 
         payment.refresh_from_db()
 
@@ -111,7 +111,7 @@ class VendorAPITest(TestCase):
         }
 
         response = self.client.post(url, form_data)
-        self.assertEquals(json.loads(response.content)["message"], "Payment Refunded")
+        self.assertEqual(json.loads(response.content)["message"], "Payment Refunded")
 
         form_data["refund_amount"] = 900
         response = self.client.post(url, form_data)

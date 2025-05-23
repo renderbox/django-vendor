@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.utils.functional import Promise
 
 from vendor.forms import BillingAddressForm, CreditCardForm
 from vendor.models import CustomerProfile, Invoice, Offer, OrderItem, Payment, Price
@@ -9,6 +10,24 @@ from vendor.models.choice import InvoiceStatus
 from vendor.utils import get_display_decimal
 
 User = get_user_model()
+
+
+def proxy_cleaner(value):
+    """Convert Django translation proxy objects to string, leave other types unchanged."""
+    if isinstance(value, Promise):
+        return str(value)
+    return value
+
+
+def debug_json(data):
+    import json
+
+    try:
+        json.dumps(data)
+    except TypeError as e:
+        print("JSON serialization error:", e)
+        print("Offending data:", data)
+        raise
 
 
 class ModelInvoiceTests(TestCase):
@@ -87,7 +106,7 @@ class ModelInvoiceTests(TestCase):
             .quantity
         )
 
-        self.assertNotEquals(start_quantity, end_quantity)
+        self.assertNotEqual(start_quantity, end_quantity)
 
     def test_remove_quantity(self):
         start_quantity = (
@@ -102,7 +121,7 @@ class ModelInvoiceTests(TestCase):
             .quantity
         )
 
-        self.assertNotEquals(start_quantity, end_quantity)
+        self.assertNotEqual(start_quantity, end_quantity)
 
     def test_remove_quantity_zero(self):
         start_quantity = (
@@ -115,7 +134,7 @@ class ModelInvoiceTests(TestCase):
             offer=self.hamster
         ).count()
 
-        self.assertNotEquals(start_quantity, end_quantity)
+        self.assertNotEqual(start_quantity, end_quantity)
 
     def test_get_recurring_total(self):
         recurring_offer = Offer.objects.get(pk=4)
@@ -170,7 +189,7 @@ class ModelInvoiceTests(TestCase):
         self.existing_invoice.add_offer(recurring_offer)
         after_count = self.existing_invoice.get_recurring_order_items().count()
 
-        self.assertNotEquals(before_count, after_count)
+        self.assertNotEqual(before_count, after_count)
 
     def test_get_one_time_transaction_order_items(self):
         recurring_offer = Offer.objects.get(pk=5)
@@ -345,7 +364,7 @@ class ModelInvoiceTests(TestCase):
     def test_get_promos(self):
         invoice = Invoice.objects.get(pk=1)
 
-        self.assertNotEquals(invoice.get_promos(), "")
+        self.assertNotEqual(invoice.get_promos(), "")
 
     def test_get_promos_none(self):
         self.assertEqual(self.new_invoice.get_promos(), "")
@@ -586,6 +605,8 @@ class ReviewCheckoutViewTests(TestCase):
         session = self.client.session
         session["billing_address_form"] = BillingAddressForm().initial
         session["credit_card_form"] = CreditCardForm().initial
+        debug_json(session["billing_address_form"])
+        debug_json(session["credit_card_form"])
         session.save()
         self.invoice.status = InvoiceStatus.CHECKOUT
         self.invoice.save()
@@ -628,10 +649,15 @@ class ReviewCheckoutViewTests(TestCase):
 
         session = self.client.session
         session["billing_address_form"] = {
-            f"billing-{key}": value
+            f"billing-{key}": proxy_cleaner(value)
             for key, value in billing_address.cleaned_data.items()
         }
-        session["credit_card_form"] = payment_info.cleaned_data
+        session["credit_card_form"] = {
+            k: proxy_cleaner(v)
+            for k, v in payment_info.cleaned_data.items()
+        }
+        debug_json(session["billing_address_form"])
+        debug_json(session["credit_card_form"])
         session.save()
 
         response = self.client.post(self.view_url)  # noqa F841

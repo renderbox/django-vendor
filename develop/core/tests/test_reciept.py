@@ -27,8 +27,8 @@ class ReceiptModelTests(TestCase):
         )
 
     def test_receipt_is_on_trial_true(self):
-        self.first_receipt.start_date = timezone.now()
-        self.first_receipt.end_date = timezone.now() + timedelta(days=10)
+        self.first_receipt.start_date = dj_timezone.now()
+        self.first_receipt.end_date = dj_timezone.now() + timedelta(days=10)
         self.first_receipt.transaction = "trial"
         self.first_receipt.save()
         self.assertTrue(self.first_receipt.is_on_trial())

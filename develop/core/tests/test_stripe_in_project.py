@@ -1,9 +1,10 @@
 from random import randrange
 from unittest import skipIf
 
-import stripe
+# import stripe
 from django.conf import settings
 from django.test import Client, TestCase
+from siteconfigs.models import SiteConfigModel
 
 @skipIf(
     (getattr(settings, 'STRIPE_PUBLIC_KEY', None) or getattr(settings, 'STRIPE_SECRET_KEY', None)) is None,
@@ -27,7 +28,7 @@ class StripeProcessorTests(TestCase):
         User = get_user_model()
 
     def setup_processor_site_config(self):
-        from siteconfigs.models import SiteConfigModel
+        
         self.processor_site_config = SiteConfigModel()
         self.processor_site_config.site = self.existing_invoice.site
         self.processor_site_config.key = "vendor.config.PaymentProcessorSiteConfig"

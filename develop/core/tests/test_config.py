@@ -28,13 +28,13 @@ class StripeConnectAccountConfigTests(TestCase):
         url = reverse("vendor_admin:manager-config-stripe-connect-list")
 
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_stripe_config_create_get_success(self):
         url = reverse("vendor_admin:manager-config-stripe-connect-create")
 
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_stripe_config_create_post_success(self):
         url = reverse("vendor_admin:manager-config-stripe-connect-create")
@@ -45,11 +45,11 @@ class StripeConnectAccountConfigTests(TestCase):
         response = self.client.post(url, data=config_data)
         stripe_config_site_two = StripeConnectAccountConfig(site_two)
 
-        self.assertEquals(
+        self.assertEqual(
             stripe_config_site_two.value.get("stripe_connect_account"),
             config_data["account_number"],
         )
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
 
     def test_stripe_config_edit_get_success(self):
         url = reverse(
@@ -58,7 +58,7 @@ class StripeConnectAccountConfigTests(TestCase):
         )
 
         response = self.client.post(url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_stripe_config_edit_post_success(self):
         url = reverse(
@@ -71,11 +71,11 @@ class StripeConnectAccountConfigTests(TestCase):
         response = self.client.post(url, data=config_data)
         stripe_config = StripeConnectAccountConfig(Site.objects.get(pk=1))
 
-        self.assertEquals(
+        self.assertEqual(
             stripe_config.value.get("stripe_connect_account"),
             config_data["account_number"],
         )
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
 
 
 class SiteProcessorConfigTests(TestCase):
@@ -93,13 +93,13 @@ class SiteProcessorConfigTests(TestCase):
         url = reverse("vendor_admin:manager-config-processor-list")
 
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_processor_config_create_get_success(self):
         url = reverse("vendor_admin:manager-config-processor-create")
 
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_processor_config_create_post_success(self):
         url = reverse("vendor_admin:manager-config-processor-create")
@@ -113,11 +113,11 @@ class SiteProcessorConfigTests(TestCase):
         response = self.client.post(url, data=config_data)
         payment_config = PaymentProcessorSiteConfig(site_two)
 
-        self.assertEquals(
+        self.assertEqual(
             payment_config.value.get("payment_processor"),
             config_data["payment_processor"],
         )
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
 
     def test_processor_config_edit_get_success(self):
         url = reverse(
@@ -126,7 +126,7 @@ class SiteProcessorConfigTests(TestCase):
         )
 
         response = self.client.post(url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_processor_config_edit_post_success(self):
         url = reverse(
@@ -139,11 +139,11 @@ class SiteProcessorConfigTests(TestCase):
         response = self.client.post(url, data=config_data)
         payment_config = PaymentProcessorSiteConfig(Site.objects.get(pk=1))
 
-        self.assertEquals(
+        self.assertEqual(
             payment_config.value.get("payment_processor"),
             config_data["payment_processor"],
         )
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
 
 
 class VendorSiteCommissionConfigTests(TestCase):
@@ -161,13 +161,13 @@ class VendorSiteCommissionConfigTests(TestCase):
         url = reverse("vendor_admin:manager-config-commission-list")
 
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_vendor_site_commission_config_create_get_success(self):
         url = reverse("vendor_admin:manager-config-commission-create")
 
         response = self.client.get(url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_vendor_site_commission_config_create_post_success(self):
         url = reverse("vendor_admin:manager-config-commission-create")
@@ -178,10 +178,10 @@ class VendorSiteCommissionConfigTests(TestCase):
         response = self.client.post(url, data=config_data)
         commission_config = VendorSiteCommissionConfig(site)
 
-        self.assertEquals(
+        self.assertEqual(
             commission_config.value.get("commission"), config_data["commission"]
         )
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
 
     def test_vendor_site_commission_config_edit_get_success(self):
         url = reverse(
@@ -190,7 +190,7 @@ class VendorSiteCommissionConfigTests(TestCase):
         )
 
         response = self.client.post(url)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_vendor_site_commission_config_edit_post_success(self):
         url = reverse(
@@ -203,7 +203,7 @@ class VendorSiteCommissionConfigTests(TestCase):
         response = self.client.post(url, data=config_data)
         commission_config = VendorSiteCommissionConfig(Site.objects.get(pk=1))
 
-        self.assertEquals(
+        self.assertEqual(
             commission_config.value.get("commission"), config_data["commission"]
         )
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)

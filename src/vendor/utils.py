@@ -1,11 +1,9 @@
 from calendar import mdays
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import ROUND_UP, Decimal
 
 from django.contrib.sites.shortcuts import get_current_site
-from django.utils import timezone
-
-# from vendor.models.choice import TermDetailUnits
+from django.utils import timezone as dj_timezone
 
 
 #############

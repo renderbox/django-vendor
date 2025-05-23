@@ -29,6 +29,7 @@ from vendor.models import (
 )
 from vendor.models.choice import InvoiceStatus, PurchaseStatus, SubscriptionStatus
 from vendor.processors import AuthorizeNetProcessor  # , PaymentProcessorBase
+# from vendor import constants
 
 User = get_user_model()
 
@@ -122,7 +123,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.assertIsNotNone(settings.AUTHORIZE_NET_API_ID)
 
     def test_processor_initialization_success(self):
-        self.assertEquals(self.processor.provider, "AuthorizeNetProcessor")
+        self.assertEqual(self.processor.provider, "AuthorizeNetProcessor")
         self.assertIsNotNone(self.processor.invoice)
         self.assertIsNotNone(self.processor.merchant_auth)
         self.assertIsNotNone(self.processor.merchant_auth.transactionKey)
@@ -161,7 +162,7 @@ class AuthorizeNetProcessorTests(TestCase):
         print(self.processor.transaction_info)
         self.assertIsNotNone(self.processor.payment)
         self.assertTrue(self.processor.payment.success)
-        self.assertEquals(InvoiceStatus.COMPLETE, self.processor.invoice.status)
+        self.assertEqual(InvoiceStatus.COMPLETE, self.processor.invoice.status)
 
     def test_process_payment_transaction_fail_invalid_card(self):
         """
@@ -181,7 +182,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertIsNone(self.processor.payment)
         self.assertFalse(self.processor.transaction_succeeded)
-        self.assertEquals(InvoiceStatus.CART, self.processor.invoice.status)
+        self.assertEqual(InvoiceStatus.CART, self.processor.invoice.status)
 
     def test_process_payment_transaction_fail_invalid_expiration(self):
         """
@@ -203,7 +204,7 @@ class AuthorizeNetProcessorTests(TestCase):
 
         self.assertIsNone(self.processor.payment)
         self.assertFalse(self.processor.transaction_succeeded)
-        self.assertEquals(InvoiceStatus.CART, self.processor.invoice.status)
+        self.assertEqual(InvoiceStatus.CART, self.processor.invoice.status)
 
     ##########
     # CVV Tests
@@ -584,7 +585,7 @@ class AuthorizeNetProcessorTests(TestCase):
                 ]
             )
             self.assertFalse(self.processor.payment.success)
-            self.assertEquals(InvoiceStatus.CART, self.processor.invoice.status)
+            self.assertEqual(InvoiceStatus.CART, self.processor.invoice.status)
 
     def test_process_payment_avs_not_supported(self):
         """
@@ -858,7 +859,7 @@ class AuthorizeNetProcessorTests(TestCase):
                 print("The credit card has expired. Skipping\n")
                 return
 
-        self.assertEquals(PurchaseStatus.REFUNDED, payment.status)
+        self.assertEqual(PurchaseStatus.REFUNDED, payment.status)
 
     def test_refund_fail_invalid_account_number(self):
         """
@@ -888,7 +889,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.refund_payment(payment)
 
         self.assertFalse(self.processor.transaction_succeeded)
-        self.assertEquals(self.processor.invoice.status, status_before_transaction)
+        self.assertEqual(self.processor.invoice.status, status_before_transaction)
 
     def test_refund_fail_invalid_amount(self):
         """
@@ -920,7 +921,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.refund_payment(payment)
 
         self.assertFalse(self.processor.transaction_succeeded)
-        self.assertEquals(self.processor.invoice.status, status_before_transaction)
+        self.assertEqual(self.processor.invoice.status, status_before_transaction)
 
     def test_refund_fail_invalid_transaction_id(self):
         """
@@ -953,7 +954,7 @@ class AuthorizeNetProcessorTests(TestCase):
         self.processor.refund_payment(payment)
 
         self.assertFalse(self.processor.transaction_succeeded)
-        self.assertEquals(self.processor.invoice.status, status_before_transaction)
+        self.assertEqual(self.processor.invoice.status, status_before_transaction)
 
     ##########
     # Customer Payment Profile Transaction Tests
@@ -1038,7 +1039,7 @@ class AuthorizeNetProcessorTests(TestCase):
                 print("Merchant does not accept this card. Skipping test")
             else:
                 self.assertTrue(self.processor.transaction_succeeded)
-                self.assertEquals(
+                self.assertEqual(
                     subscription.meta["payment_info"]["account_number"][-4:],
                     self.form_data["credit_card_form"]["card_number"][-4:],
                 )
@@ -1292,26 +1293,26 @@ class AuthorizeNetProcessorTests(TestCase):
     def test_view_checkout_account_success_code(self):
         response = self.client.get(reverse("vendor:checkout-account"))
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Shipping Address")
 
     def test_view_checkout_payment_success_code(self):
         response = self.client.get(reverse("vendor:checkout-payment"))
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Billing Address")
 
     def test_view_checkout_review_success_code(self):
         response = self.client.get(reverse("vendor:checkout-review"))
 
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Review")
 
     def test_view_checkout_status_code_fail_no_login(self):
         client = Client()
         response = client.get(reverse("vendor:checkout-review"))
 
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
         self.assertIn("login", response.url)
 
     ##########
