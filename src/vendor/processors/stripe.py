@@ -1,8 +1,8 @@
 import json
 import logging
+import warnings
 from decimal import ROUND_UP, Decimal
 from math import modf
-import warnings
 
 try:
     import stripe
@@ -10,7 +10,7 @@ except ImportError:
     stripe = None
     warnings.warn(
         "Stripe SDK is not installed. StripeProcessor will be non-functional.",
-        ImportWarning
+        ImportWarning,
     )
 
 from django.conf import settings

@@ -3,7 +3,8 @@ from datetime import datetime, timedelta, timezone
 from decimal import ROUND_UP, Decimal
 
 from django.contrib.sites.shortcuts import get_current_site
-from django.utils import timezone as dj_timezone
+
+# from django.utils import timezone as dj_timezone
 from django.utils.encoding import force_str
 from django.utils.functional import Promise
 

@@ -11,7 +11,7 @@ from math import ceil
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
-from vendor.config import VENDOR_PAYMENT_PROCESSOR, VENDOR_STATE
+from vendor.config import VENDOR_STATE  # VENDOR_PAYMENT_PROCESSOR
 
 # from vendor.forms import BillingAddressForm, CreditCardForm
 from vendor.integrations import AuthorizeNetIntegration
@@ -1185,7 +1185,11 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             if profile:
                 email = getattr(profile, "email", None)
                 if email:
-                    return getattr(email, "pyval", None) or getattr(email, "text", None) or str(email)
+                    return (
+                        getattr(email, "pyval", None)
+                        or getattr(email, "text", None)
+                        or str(email)
+                    )
         return None
 
     def get_settled_transactions(self, start_date, end_date):
@@ -1378,13 +1382,20 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
 
         # Added check for None response to avoid AttributeError
         if response is None:
-            logger.error(f"AuthorizeNetProcessor.get_transaction_detail: No response for transaction_id {transaction_id}")
+            logger.error(
+                f"AuthorizeNetProcessor.get_transaction_detail: No response for transaction_id {transaction_id}"
+            )
             return None
 
-        if hasattr(response, "messages") and response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
+        if (
+            hasattr(response, "messages")
+            and response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok
+        ):
             return response.transaction
         else:
-            logger.error(f"AuthorizeNetProcessor.get_transaction_detail: Invalid response for transaction_id {transaction_id}, response: {response}")
+            logger.error(
+                f"AuthorizeNetProcessor.get_transaction_detail: Invalid response for transaction_id {transaction_id}, response: {response}"  # noqa: E501
+            )
             return None
 
     def get_list_of_subscriptions(
@@ -1400,7 +1411,9 @@ class AuthorizeNetProcessor(PaymentProcessorBase):
             )
             return []
         if search_type is None:
-            search_type = apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionActive
+            search_type = (
+                apicontractsv1.ARBGetSubscriptionListSearchTypeEnum.subscriptionActive
+            )
         self.transaction = apicontractsv1.ARBGetSubscriptionListRequest()
         self.transaction.merchantAuthentication = self.merchant_auth
         self.transaction.searchType = search_type
