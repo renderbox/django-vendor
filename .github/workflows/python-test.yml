@@ -36,7 +36,7 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .[test] # assumes extras_require for test deps
+          pip install -e ".[test,dev]" # assumes extras_require for test deps
       - name: Check for Missing Migrations
         run: python develop/manage.py makemigrations --check --dry-run
 

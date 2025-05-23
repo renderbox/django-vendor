@@ -57,7 +57,8 @@ test = [
     "pytest-factoryboy",
     "pytest-mock",
     "pytest-asyncio",
-    "pytest-bdd"
+    "pytest-bdd",
+    "dj-database-url",
 ]
 lint = [
     "black",
@@ -65,7 +66,8 @@ lint = [
     "flake8-black",
     "mypy",
     "bandit",
-    "isort"
+    "isort",
+    "dj-database-url",
 ]
 
 [project.urls]
