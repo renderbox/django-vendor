@@ -6,41 +6,51 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vendor', '0036_post_payment_status_change'),
+        ("vendor", "0036_post_payment_status_change"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='receipt',
-            name='auto_renew',
+            model_name="receipt",
+            name="auto_renew",
         ),
         migrations.RemoveField(
-            model_name='receipt',
-            name='status',
+            model_name="receipt",
+            name="status",
         ),
         migrations.AlterField(
-            model_name='offer',
-            name='meta',
-            field=models.JSONField(blank=True, default=dict, null=True, verbose_name='Meta'),
+            model_name="offer",
+            name="meta",
+            field=models.JSONField(
+                blank=True, default=dict, null=True, verbose_name="Meta"
+            ),
         ),
         migrations.AlterField(
-            model_name='payment',
-            name='transaction',
-            field=models.CharField(blank=True, max_length=80, null=True, verbose_name='Transaction ID'),
+            model_name="payment",
+            name="transaction",
+            field=models.CharField(
+                blank=True, max_length=80, null=True, verbose_name="Transaction ID"
+            ),
         ),
         migrations.AlterField(
-            model_name='receipt',
-            name='meta',
-            field=models.JSONField(blank=True, default=dict, null=True, verbose_name='Meta'),
+            model_name="receipt",
+            name="meta",
+            field=models.JSONField(
+                blank=True, default=dict, null=True, verbose_name="Meta"
+            ),
         ),
         migrations.AlterField(
-            model_name='receipt',
-            name='transaction',
-            field=models.CharField(blank=True, max_length=80, null=True, verbose_name='Transaction'),
+            model_name="receipt",
+            name="transaction",
+            field=models.CharField(
+                blank=True, max_length=80, null=True, verbose_name="Transaction"
+            ),
         ),
         migrations.AlterField(
-            model_name='receipt',
-            name='vendor_notes',
-            field=models.JSONField(blank=True, default=dict, null=True, verbose_name='Vendor Notes'),
+            model_name="receipt",
+            name="vendor_notes",
+            field=models.JSONField(
+                blank=True, default=dict, null=True, verbose_name="Vendor Notes"
+            ),
         ),
     ]

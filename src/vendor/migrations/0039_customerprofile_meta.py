@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vendor', '0038_auto_20220719_0944'),
+        ("vendor", "0038_auto_20220719_0944"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='customerprofile',
-            name='meta',
-            field=models.JSONField(blank=True, default=dict, null=True, verbose_name='Meta'),
+            model_name="customerprofile",
+            name="meta",
+            field=models.JSONField(
+                blank=True, default=dict, null=True, verbose_name="Meta"
+            ),
         ),
     ]

@@ -13,8 +13,7 @@ from vendor.models.base import get_product_model
 from vendor.models.choice import InvoiceStatus
 
 from .base import CreateUpdateModelBase
-from .choice import (CURRENCY_CHOICES, PurchaseStatus, SubscriptionStatus,
-                     TermType)
+from .choice import CURRENCY_CHOICES, PurchaseStatus, SubscriptionStatus, TermType
 from .utils import set_default_site_id
 
 
@@ -22,16 +21,37 @@ from .utils import set_default_site_id
 # CUSTOMER PROFILE
 #####################
 class CustomerProfile(CreateUpdateModelBase):
-    '''
+    """
     Additional customer information related to purchasing.
-    This is what the Invoices are attached to.  This is abstracted from the user model directly do it can be mre flexible in the future.
-    '''
-    uuid = models.UUIDField(_("UUID"), editable=False, unique=True, default=uuid.uuid4, null=False, blank=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("User"), on_delete=models.CASCADE, related_name="customer_profile")
-    currency = models.CharField(_("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY)      # User's default currency
-    site = models.ForeignKey(Site, verbose_name=_("Site"), on_delete=models.CASCADE, default=set_default_site_id, related_name="customer_profile")                      # For multi-site support
+    This is what the Invoices are attached to.  This is abstracted from the user model directly do it can be mre flexible in the future.  # noqa: E501
+    """
+
+    uuid = models.UUIDField(
+        _("UUID"),
+        editable=False,
+        unique=True,
+        default=uuid.uuid4,
+        null=False,
+        blank=False,
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("User"),
+        on_delete=models.CASCADE,
+        related_name="customer_profile",
+    )
+    currency = models.CharField(
+        _("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY
+    )  # User's default currency
+    site = models.ForeignKey(
+        Site,
+        verbose_name=_("Site"),
+        on_delete=models.CASCADE,
+        default=set_default_site_id,
+        related_name="customer_profile",
+    )  # For multi-site support
     meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)
-        
+
     objects = models.Manager()
     on_site = CurrentSiteManager()
 
@@ -59,7 +79,7 @@ class CustomerProfile(CreateUpdateModelBase):
     def get_cart(self):
         if self.has_invoice_in_checkout():
             self.revert_invoice_to_cart()
-    
+
         cart, created = self.invoices.get_or_create(status=InvoiceStatus.CART)
         return cart
 
@@ -67,24 +87,42 @@ class CustomerProfile(CreateUpdateModelBase):
         return self.invoices.filter(status=InvoiceStatus.CHECKOUT).first()
 
     def get_cart_or_checkout_cart(self):
-        checkout_status = self.invoices.filter(status=InvoiceStatus.CHECKOUT, deleted=False).annotate(item_count=Count('order_items')).order_by('-item_count')
-        cart_status = self.invoices.filter(status=InvoiceStatus.CART, deleted=False).annotate(item_count=Count('order_items')).order_by('-item_count')
+        checkout_status = (
+            self.invoices.filter(status=InvoiceStatus.CHECKOUT, deleted=False)
+            .annotate(item_count=Count("order_items"))
+            .order_by("-item_count")
+        )
+        cart_status = (
+            self.invoices.filter(status=InvoiceStatus.CART, deleted=False)
+            .annotate(item_count=Count("order_items"))
+            .order_by("-item_count")
+        )
 
-        if checkout_status.count() > 1:  # There should only be one invoice in checkout status
+        if (
+            checkout_status.count() > 1
+        ):  # There should only be one invoice in checkout status
             for invoice in checkout_status.all()[1:]:
                 invoice.delete()
-        
-        if checkout_status:  # If there is an invoice in checkout status it there should be no invoices in cart status
+
+        if (
+            checkout_status
+        ):  # If there is an invoice in checkout status it there should be no invoices in cart status
             for invoice in cart_status.all():
                 invoice.delete()
 
             return checkout_status.first()
-        
-        if not cart_status:  # There is no invoice in checkout or cart. Create a new one for user.
-            cart, created = self.invoices.get_or_create(site=self.site, status=InvoiceStatus.CART)
+
+        if (
+            not cart_status
+        ):  # There is no invoice in checkout or cart. Create a new one for user.
+            cart, created = self.invoices.get_or_create(
+                site=self.site, status=InvoiceStatus.CART
+            )
             return cart
 
-        if cart_status.count() > 1:  # There is more the one invoice in cart status. Remove all except one.
+        if (
+            cart_status.count() > 1
+        ):  # There is more the one invoice in cart status. Remove all except one.
             for invoice in cart_status.all()[1:]:
                 invoice.delete()
 
@@ -101,16 +139,20 @@ class CustomerProfile(CreateUpdateModelBase):
 
         # Queryset or List of model records
         if isinstance(products, QuerySet) or isinstance(products, list):
-            return self.receipts.filter(Q(products__in=products),
-                                        Q(deleted=False),
-                                        Q(start_date__lte=now) | Q(start_date=None),
-                                        Q(end_date__gte=now) | Q(end_date=None))
+            return self.receipts.filter(
+                Q(products__in=products),
+                Q(deleted=False),
+                Q(start_date__lte=now) | Q(start_date=None),
+                Q(end_date__gte=now) | Q(end_date=None),
+            )
 
         # Single model record
-        return self.receipts.filter(Q(products=products),
-                                    Q(deleted=False),
-                                    Q(start_date__lte=now) | Q(start_date=None),
-                                    Q(end_date__gte=now) | Q(end_date=None))
+        return self.receipts.filter(
+            Q(products=products),
+            Q(deleted=False),
+            Q(start_date__lte=now) | Q(start_date=None),
+            Q(end_date__gte=now) | Q(end_date=None),
+        )
 
     def has_product(self, products):
         """
@@ -124,14 +166,22 @@ class CustomerProfile(CreateUpdateModelBase):
 
         # Queryset or List of model records
         if isinstance(products, QuerySet) or isinstance(products, list):
-            return bool(self.receipts.filter(Q(products__in=products),
-                                             Q(deleted=False),
-                                             Q(start_date__gte=now) | Q(start_date=None)).count())
+            return bool(
+                self.receipts.filter(
+                    Q(products__in=products),
+                    Q(deleted=False),
+                    Q(start_date__gte=now) | Q(start_date=None),
+                ).count()
+            )
 
         # Single model record
-        return bool(self.receipts.filter(Q(products=products),
-                                         Q(deleted=False),
-                                         Q(start_date__gte=now) | Q(start_date=None)).count())
+        return bool(
+            self.receipts.filter(
+                Q(products=products),
+                Q(deleted=False),
+                Q(start_date__gte=now) | Q(start_date=None),
+            ).count()
+        )
 
     def has_owned_product(self, products):
         # Queryset or List of model records
@@ -169,7 +219,8 @@ class CustomerProfile(CreateUpdateModelBase):
             state=address.state,
             country=address.country,
             postal_code=address.postal_code,
-            profile=self)
+            profile=self,
+        )
         return address, created
 
     def has_previously_owned_products(self, products):
@@ -183,15 +234,15 @@ class CustomerProfile(CreateUpdateModelBase):
         return Product.objects.filter(receipts__profile=self)
 
     def get_active_products(self):
-        return set([receipt.products.first()
-                    for receipt in self.get_active_receipts()])
+        return set([receipt.products.first() for receipt in self.get_active_receipts()])
 
     def get_active_offer_receipts(self, offer):
         return self.get_active_receipts().filter(Q(order_item__offer=offer))
 
     def get_active_receipts(self):
-        return self.receipts.filter(Q(deleted=False),
-                                    Q(end_date__gte=timezone.now()) | Q(end_date=None)).exclude(products=None)
+        return self.receipts.filter(
+            Q(deleted=False), Q(end_date__gte=timezone.now()) | Q(end_date=None)
+        ).exclude(products=None)
 
     def get_inactive_receipts(self):
         return self.receipts.filter(end_date__lt=timezone.now())
@@ -200,8 +251,10 @@ class CustomerProfile(CreateUpdateModelBase):
         """
         Returns a tuple product and offer tuple that are related to the active receipt
         """
-        return [(receipt.products.first(), receipt.order_item.offer)
-                for receipt in self.get_active_receipts()]
+        return [
+            (receipt.products.first(), receipt.order_item.offer)
+            for receipt in self.get_active_receipts()
+        ]
 
     def get_subscriptions(self):
         return self.subscriptions.all()
@@ -210,17 +263,20 @@ class CustomerProfile(CreateUpdateModelBase):
         return self.subscriptions.filter(status=SubscriptionStatus.ACTIVE)
 
     def get_next_billing_date(self):
-        '''Returns the next billing date for the customers subscriptions'''
+        """Returns the next billing date for the customers subscriptions"""
         next_billing_dates = []
-        
+
         if not self.subscriptions.filter(status=SubscriptionStatus.ACTIVE).count():
             return None
 
-        next_billing_dates = [subscription.get_next_billing_date() for subscription in self.get_active_subscriptions()]
-        
+        next_billing_dates = [
+            subscription.get_next_billing_date()
+            for subscription in self.get_active_subscriptions()
+        ]
+
         if not next_billing_dates:
             return None
-        
+
         filtered_dates = [date for date in next_billing_dates if date is not None]
 
         if not filtered_dates:
@@ -229,36 +285,52 @@ class CustomerProfile(CreateUpdateModelBase):
         return sorted(filtered_dates)[0]
 
     def get_last_payment_date(self):
-        '''Returns the last payment date made form the customer subscriptions'''
+        """Returns the last payment date made form the customer subscriptions"""
         last_payment_dates = []
-        
+
         if not self.subscriptions.count():
             return None
 
-        last_payment_dates = [subscription.get_last_payment_date() for subscription in self.subscriptions.all()]
+        last_payment_dates = [
+            subscription.get_last_payment_date()
+            for subscription in self.subscriptions.all()
+        ]
 
         if not last_payment_dates:
             return None
-        
+
         filtered_dates = [date for date in last_payment_dates if date is not None]
 
         if not filtered_dates:
             return None
-        
+
         return sorted(filtered_dates)[-1]
 
     def get_payment_counts(self):
-        return self.payments.filter(deleted=False, status=PurchaseStatus.SETTLED).count()
+        return self.payments.filter(
+            deleted=False, status=PurchaseStatus.SETTLED
+        ).count()
 
     def get_payment_sum(self):
-        return self.payments.filter(deleted=False, status=PurchaseStatus.SETTLED).aggregate(Sum('amount'))
+        return self.payments.filter(
+            deleted=False, status=PurchaseStatus.SETTLED
+        ).aggregate(Sum("amount"))
 
     def get_settled_payments(self):
-        return self.payments.filter(deleted=False, status=PurchaseStatus.SETTLED).order_by('amount', 'submitted_date')
+        return self.payments.filter(
+            deleted=False, status=PurchaseStatus.SETTLED
+        ).order_by("amount", "submitted_date")
 
     def is_offer_on_trial(self, offer):
 
-        on_trial_receipt = next((receipt for receipt in self.get_active_offer_receipts(offer) if receipt.transaction and 'trial' in receipt.transaction), None)
+        on_trial_receipt = next(
+            (
+                receipt
+                for receipt in self.get_active_offer_receipts(offer)
+                if receipt.transaction and "trial" in receipt.transaction
+            ),
+            None,
+        )
 
         if on_trial_receipt:
             return True

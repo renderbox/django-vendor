@@ -1,8 +1,8 @@
-from django.utils.translation import gettext as _
-from django.db import models
-from django.contrib.sites.models import Site
-from django.contrib.sites.managers import CurrentSiteManager
 from django.conf import settings
+from django.contrib.sites.managers import CurrentSiteManager
+from django.contrib.sites.models import Site
+from django.db import models
+from django.utils.translation import gettext as _
 
 from vendor.models.base import ProductModelBase
 
@@ -10,10 +10,12 @@ from vendor.models.base import ProductModelBase
 # CATALOG
 ##########
 
+
 class Catalog(models.Model):
-    '''
+    """
     An Example Catalog use for Development
-    '''
+    """
+
     name = models.CharField(_("Name"), max_length=80, blank=True)
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=settings.SITE_ID)
 
@@ -23,21 +25,22 @@ class Catalog(models.Model):
     def __str__(self):
         return self.name
 
+
 ##########
 # PRODUCT
 ##########
 
+
 class Product(ProductModelBase):
-    '''
+    """
     An Example Product use for Development
-    '''
+    """
+
     # name = models.CharField(_("Name"), max_length=80, blank=True)
     pass
 
 
-
-
-'''
+"""
 # Product Download From S3 with expiring token
 # https://www.gyford.com/phil/writing/2012/09/26/django-s3-temporary/
 
@@ -89,4 +92,4 @@ class SecretFileView(RedirectView):
                 raise http.Http404
         else:
             raise http.Http404
-'''
+"""

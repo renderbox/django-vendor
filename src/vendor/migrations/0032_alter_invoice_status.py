@@ -6,13 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vendor', '0031_pre_invoice_status_change'),
+        ("vendor", "0031_pre_invoice_status_change"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='invoice',
-            name='status',
-            field=models.IntegerField(choices=[(0, 'Cart'), (10, 'Checkout'), (20, 'Complete')], default=0, verbose_name='Status'),
+            model_name="invoice",
+            name="status",
+            field=models.IntegerField(
+                choices=[(0, "Cart"), (10, "Checkout"), (20, "Complete")],
+                default=0,
+                verbose_name="Status",
+            ),
         ),
     ]

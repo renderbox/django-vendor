@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vendor', '0023_profile_null_false'),
+        ("vendor", "0023_profile_null_false"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='offer',
-            name='deleted',
-            field=models.BooleanField(default=False, verbose_name='Deleted'),
+            model_name="offer",
+            name="deleted",
+            field=models.BooleanField(default=False, verbose_name="Deleted"),
         ),
     ]

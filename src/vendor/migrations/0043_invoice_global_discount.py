@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vendor', '0042_offer_is_promotional'),
+        ("vendor", "0042_offer_is_promotional"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='invoice',
-            name='global_discount',
-            field=models.FloatField(blank=True, default=0, null=True, verbose_name='Global Discount'),
+            model_name="invoice",
+            name="global_discount",
+            field=models.FloatField(
+                blank=True, default=0, null=True, verbose_name="Global Discount"
+            ),
         ),
     ]

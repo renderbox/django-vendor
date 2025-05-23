@@ -6,13 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vendor', '0040_auto_20221020_1617'),
+        ("vendor", "0040_auto_20221020_1617"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='offer',
-            name='billing_start_date',
-            field=models.DateTimeField(blank=True, default=None, help_text='The start date to begin billing', null=True, verbose_name='Billing Start Date'),
+            model_name="offer",
+            name="billing_start_date",
+            field=models.DateTimeField(
+                blank=True,
+                default=None,
+                help_text="The start date to begin billing",
+                null=True,
+                verbose_name="Billing Start Date",
+            ),
         ),
     ]
