@@ -16,6 +16,8 @@ jobs:
       - name: Install Poetry
         run: pipx install poetry
       - name: Install Dependencies
+        run: poetry add black isort flake8
+      - name: Install Dependencies
         run: poetry install --extras=lint
       - name: Black Tests
         run: black --check src
