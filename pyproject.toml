@@ -23,7 +23,7 @@ classifiers = [
 ]
 keywords = ["django", "app"]
 dependencies = [
-    "Django>=3.0,<4.0",
+    "Django>=3.0,<5.0",
     "django-autoslug",
     "django-extensions",
     "iso4217<1.12.0",
