@@ -160,7 +160,7 @@ pyyaml==6.0
     # via bandit
 recommonmark==0.7.1
     # via django-vendor (pyproject.toml)
-requests==2.31.0
+requests==2.32.4
     # via
     #   authorizenet
     #   django-allauth
