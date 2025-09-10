@@ -42,7 +42,7 @@ defusedxml==0.7.1
     # via python3-openid
 dj-database-url==2.0.0
     # via django-vendor (pyproject.toml)
-django==3.2.20
+django==4.2.24
     # via
     #   dj-database-url
     #   django-allauth
