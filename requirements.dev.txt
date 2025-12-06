@@ -231,7 +231,7 @@ typing-extensions==4.7.1
     #   pydantic-core
     #   stripe
     #   typer
-urllib3==2.0.6
+urllib3==2.6.0
     # via requests
 wheel==0.44.0
     # via django-vendor (pyproject.toml::build-system.requires)
