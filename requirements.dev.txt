@@ -53,7 +53,7 @@ django==3.2.20
     #   django-site-configs
     #   django-vendor (pyproject.toml)
     #   djangorestframework
-django-allauth==0.54.0
+django-allauth==65.13.0
     # via django-vendor (pyproject.toml)
 django-autoslug==1.9.9
     # via django-vendor (pyproject.toml)
