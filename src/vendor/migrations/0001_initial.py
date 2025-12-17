@@ -2,12 +2,12 @@
 
 import uuid
 
-import autoslug.fields
 import django.contrib.sites.managers
 import django.db.models.deletion
 import django.db.models.manager
 from django.conf import settings
 from django.db import migrations, models
+from vendor.fields import AutoSlugField
 
 from vendor.config import VENDOR_PRODUCT_MODEL
 
@@ -618,7 +618,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "slug",
-                    autoslug.fields.AutoSlugField(
+                    AutoSlugField(
                         editable=False, populate_from="name", unique_with=("site__id",)
                     ),
                 ),

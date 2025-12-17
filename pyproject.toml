@@ -24,9 +24,7 @@ classifiers = [
 ]
 dependencies = [
     "django>=5.2,<7.0",
-    "django-autoslug",
-    "django-extensions",
-    "iso4217<1.12.0"
+    "iso4217<1.12.0",
 ]
 packages = [
     { include = "vendor", from = "src" }
