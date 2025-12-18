@@ -19,6 +19,25 @@ from vendor.processors import StripeProcessor
 User = get_user_model()
 
 
+# US Stripe Test Credit Cards
+# https://paymentcloudinc.com/blog/stripe-test-cards/
+VALID_CARD_NUMBERS = [
+    "4242424242424242",  # visa
+    "5555555555554444",  # mastercard
+    # "378282246310005",   # amex
+    # "6011111111111117",  # discover
+]
+
+# INVALID_CARD_NUMBERS
+DECLINE_PAYMENT_CARD_NUMBER = "4000000000000002",  # generic decline
+FRAUD_PREVENTION_CARD_NUMBER = "4000000000000010",  # expired_card
+INVALID_CVV_CARD_NUMBER = "4000000000000127",  # incorrect_cvc
+EXPIRED_CARD_NUMBER = "4000000000000069",  # expired_card
+POSTAL_CODE_CHECK_FAIL_CARD_NUMBER = "4000000000000036",  # postal_code_check_fail
+
+
+
+
 @skipIf(
     (settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None,
     "Stripe enviornment variables not set, skipping tests",
@@ -26,12 +45,6 @@ User = get_user_model()
 class StripeProcessorTests(TestCase):
     fixtures = ["user", "unit_test"]
 
-    VALID_CARD_NUMBERS = [
-        "4242424242424242",  # visa
-        "4000056655665556",  # visa debit
-        "5555555555554444",  # mastercard
-        "5200828282828210",  # mastercard debit
-    ]
 
     def setup_processor_site_config(self):
         self.processor_site_config = SiteConfigModel()
@@ -86,7 +99,7 @@ class StripeProcessorTests(TestCase):
             },
             "credit_card_form": {
                 "full_name": "Bob Ross",
-                "card_number": "4242424242424242",
+                "card_number": VALID_CARD_NUMBERS[0],
                 "expire_month": "12",
                 "expire_year": "2030",
                 "cvv_number": "900",
@@ -171,7 +184,7 @@ class StripeProcessorTests(TestCase):
         self.processor.create_stripe_customers([self.customer])
         self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
-        self.form_data["credit_card_form"]["card_number"] = "4242424242424241"
+        self.form_data["credit_card_form"]["card_number"] = VALID_CARD_NUMBERS[0]
 
         self.processor.set_billing_address_form_data(
             self.form_data.get("billing_address_form"), BillingAddressForm
@@ -218,7 +231,7 @@ class StripeProcessorTests(TestCase):
         self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data["credit_card_form"]["cvv_number"] = "901"
-        self.form_data["credit_card_form"]["card_number"] = "4000000000000127"
+        self.form_data["credit_card_form"]["card_number"] = INVALID_CVV_CARD_NUMBER
 
         self.processor.set_billing_address_form_data(
             self.form_data.get("billing_address_form"), BillingAddressForm
@@ -239,7 +252,7 @@ class StripeProcessorTests(TestCase):
         self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data["credit_card_form"]["cvv_number"] = "902"
-        self.form_data["credit_card_form"]["card_number"] = "4000000000000002"
+        self.form_data["credit_card_form"]["card_number"] = DECLINE_PAYMENT_CARD_NUMBER
 
         self.processor.set_billing_address_form_data(
             self.form_data.get("billing_address_form"), BillingAddressForm
@@ -260,7 +273,7 @@ class StripeProcessorTests(TestCase):
         self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data["credit_card_form"]["cvv_number"] = "903"
-        self.form_data["credit_card_form"]["card_number"] = "4000000000000101"
+        self.form_data["credit_card_form"]["card_number"] = INVALID_CVV_CARD_NUMBER
 
         self.processor.set_billing_address_form_data(
             self.form_data.get("billing_address_form"), BillingAddressForm
@@ -281,7 +294,7 @@ class StripeProcessorTests(TestCase):
         self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data["credit_card_form"]["cvv_number"] = "904"
-        self.form_data["credit_card_form"]["card_number"] = "4000000000000069"
+        self.form_data["credit_card_form"]["card_number"] = EXPIRED_CARD_NUMBER
 
         self.processor.set_billing_address_form_data(
             self.form_data.get("billing_address_form"), BillingAddressForm
@@ -302,7 +315,7 @@ class StripeProcessorTests(TestCase):
         self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data["credit_card_form"]["cvv_number"] = "903"
-        self.form_data["credit_card_form"]["card_number"] = "4000000000000101"
+        self.form_data["credit_card_form"]["card_number"] = FRAUD_PREVENTION_CARD_NUMBER
 
         self.processor.set_billing_address_form_data(
             self.form_data.get("billing_address_form"), BillingAddressForm
@@ -323,7 +336,7 @@ class StripeProcessorTests(TestCase):
         self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data["credit_card_form"]["cvv_number"] = "903"
-        self.form_data["credit_card_form"]["card_number"] = "4000000000004954"
+        self.form_data["credit_card_form"]["card_number"] = FRAUD_PREVENTION_CARD_NUMBER
 
         self.processor.set_billing_address_form_data(
             self.form_data.get("billing_address_form"), BillingAddressForm
@@ -345,7 +358,7 @@ class StripeProcessorTests(TestCase):
         self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
         self.form_data["credit_card_form"]["cvv_number"] = "903"
-        self.form_data["credit_card_form"]["card_number"] = "4000000000009235"
+        self.form_data["credit_card_form"]["card_number"] = FRAUD_PREVENTION_CARD_NUMBER
 
         self.processor.set_billing_address_form_data(
             self.form_data.get("billing_address_form"), BillingAddressForm
@@ -366,7 +379,7 @@ class StripeProcessorTests(TestCase):
         self.processor.create_stripe_customers([self.customer])
         self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
-        self.form_data["credit_card_form"]["card_number"] = "4000000000000036"
+        self.form_data["credit_card_form"]["card_number"] = POSTAL_CODE_CHECK_FAIL_CARD_NUMBER
 
         self.processor.set_billing_address_form_data(
             self.form_data.get("billing_address_form"), BillingAddressForm
@@ -882,7 +895,7 @@ class StripeCRUDObjectTests(TestCase):
             "metadata": self.valid_metadata,
         }
         self.card = {
-            "number": 4242424242424242,
+            "number": int(VALID_CARD_NUMBERS[0]),
             "exp_month": "10",
             "exp_year": "2023",
             "cvc": "9000",
