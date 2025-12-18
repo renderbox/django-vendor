@@ -8,7 +8,14 @@
 #  Software Foundation. See the file README for copying conditions.
 #
 from django.db.models import (
-    Model, CharField, DateField, DateTimeField, BooleanField, ForeignKey, Manager, CASCADE
+    CASCADE,
+    BooleanField,
+    CharField,
+    DateField,
+    DateTimeField,
+    ForeignKey,
+    Manager,
+    Model,
 )
 
 # this app

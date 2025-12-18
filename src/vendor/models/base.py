@@ -1,6 +1,5 @@
 import uuid
 
-from vendor.fields import AutoSlugField
 from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.managers import CurrentSiteManager
@@ -10,6 +9,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from vendor.config import DEFAULT_CURRENCY, VENDOR_PRODUCT_MODEL
+from vendor.fields import AutoSlugField
 
 from .modelmanagers import SoftDeleteManager
 from .utils import is_currency_available

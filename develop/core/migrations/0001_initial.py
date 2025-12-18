@@ -2,11 +2,11 @@
 
 import uuid
 
-import vendor.fields
 import django.contrib.sites.managers
 import django.db.models.manager
 from django.db import migrations, models
 
+import vendor.fields
 import vendor.models.base
 
 

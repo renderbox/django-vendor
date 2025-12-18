@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.fixture(autouse=True)
 def add_test_apps(settings):
     extra_apps = ["siteconfigs", "stripe"]

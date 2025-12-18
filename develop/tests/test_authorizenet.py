@@ -29,6 +29,7 @@ from vendor.models import (
 )
 from vendor.models.choice import InvoiceStatus, PurchaseStatus, SubscriptionStatus
 from vendor.processors import AuthorizeNetProcessor  # , PaymentProcessorBase
+
 # from vendor import constants
 
 User = get_user_model()

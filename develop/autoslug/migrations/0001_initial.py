@@ -2,8 +2,9 @@
 
 import autoslug.models
 import django.db.models.deletion
-import vendor.fields
 from django.db import migrations, models
+
+import vendor.fields
 
 
 class Migration(migrations.Migration):

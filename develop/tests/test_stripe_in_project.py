@@ -6,6 +6,7 @@ from django.conf import settings
 from django.test import Client, TestCase
 from siteconfigs.models import SiteConfigModel
 
+
 @skipIf(
     (getattr(settings, 'STRIPE_PUBLIC_KEY', None) or getattr(settings, 'STRIPE_SECRET_KEY', None)) is None,
     "Stripe environment variables not set, skipping tests",

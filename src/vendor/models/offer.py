@@ -2,7 +2,6 @@ import math
 import uuid
 from datetime import timedelta
 
-from vendor.fields import AutoSlugField
 from django.contrib.sites.managers import CurrentSiteManager
 from django.contrib.sites.models import Site
 from django.db import models
@@ -12,6 +11,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from vendor.config import DEFAULT_CURRENCY
+from vendor.fields import AutoSlugField
 from vendor.utils import get_future_date_days, get_future_date_months
 
 from .base import CreateUpdateModelBase, SoftDeleteModelBase

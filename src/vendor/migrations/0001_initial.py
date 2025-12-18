@@ -7,9 +7,9 @@ import django.db.models.deletion
 import django.db.models.manager
 from django.conf import settings
 from django.db import migrations, models
-from vendor.fields import AutoSlugField
 
 from vendor.config import VENDOR_PRODUCT_MODEL
+from vendor.fields import AutoSlugField
 
 
 class Migration(migrations.Migration):

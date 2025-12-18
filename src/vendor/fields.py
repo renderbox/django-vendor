@@ -19,9 +19,10 @@ try:
 except ImportError:
     modeltranslation_utils = None
 
-# this app
-from vendor.settings import slugify, autoslug_modeltranslation_enable
 from vendor import utils
+
+# this app
+from vendor.settings import autoslug_modeltranslation_enable, slugify
 
 __all__ = ['AutoSlugField']
 

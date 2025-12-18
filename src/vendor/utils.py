@@ -1,15 +1,15 @@
-from calendar import mdays
 import datetime as dt
+from calendar import mdays
 from decimal import ROUND_UP, Decimal
 
 from django.contrib.sites.shortcuts import get_current_site
-from django.utils.encoding import force_str
-from django.utils.functional import Promise
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import ForeignKey
 from django.db.models.fields import DateField
 from django.template.defaultfilters import slugify as django_slugify
-from django.utils.timezone import localtime, is_aware
+from django.utils.encoding import force_str
+from django.utils.functional import Promise
+from django.utils.timezone import is_aware, localtime
 
 
 #############
