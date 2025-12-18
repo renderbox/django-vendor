@@ -62,9 +62,13 @@ class ModelWithLongNameUnique(Model):
     slug = AutoSlugField(populate_from='name', unique=True)
 
 
+def get_callable_slug(instance):
+    return f"the {instance.name}"
+
+
 class ModelWithCallable(Model):
     name = CharField(max_length=200)
-    slug = AutoSlugField(populate_from=lambda instance: 'the %s' % instance.name)
+    slug = AutoSlugField(populate_from=get_callable_slug)
 
 
 class ModelWithCallableAttr(Model):
@@ -91,7 +95,8 @@ class ModelWithCustomPrimaryKey(Model):
     slug = AutoSlugField(populate_from='name', unique=True)
 
 
-custom_slugify = lambda value: default_slugify(value).replace('-', '_')
+def custom_slugify(value):
+    return default_slugify(value).replace("-", "_")
 
 
 class ModelWithCustomSlugifier(Model):

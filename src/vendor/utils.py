@@ -1,13 +1,10 @@
 from calendar import mdays
-from datetime import datetime, timedelta, timezone
+import datetime as dt
 from decimal import ROUND_UP, Decimal
 
 from django.contrib.sites.shortcuts import get_current_site
-
-# from django.utils import timezone as dj_timezone
 from django.utils.encoding import force_str
 from django.utils.functional import Promise
-import datetime
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import ForeignKey
 from django.db.models.fields import DateField
@@ -50,14 +47,14 @@ def get_future_date_months(today, add_months):
         newday = mdays[newmonth]
     if newyear % 4 == 0 and newmonth == 2:
         newday += 1
-    return datetime(newyear, newmonth, newday, tzinfo=timezone.utc)
+    return dt.datetime(newyear, newmonth, newday, tzinfo=dt.timezone.utc)
 
 
 def get_future_date_days(today, add_days):
     """
     Returns a datetime object with the a new added days
     """
-    return today + timedelta(days=add_days)
+    return today + dt.timedelta(days=add_days)
 
 
 def get_display_decimal(amount):
@@ -105,7 +102,7 @@ def get_prepopulated_value(field, instance):
     """
     Returns preliminary value based on `populate_from`.
     """
-    if hasattr(field.populate_from, '__call__'):
+    if hasattr(field.populate_from, "__call__"):
         # AutoSlugField(populate_from=lambda instance: ...)
         return field.populate_from(instance)
     else:
@@ -173,15 +170,23 @@ def get_uniqueness_lookups(field, instance, unique_with):
         try:
             other_field = instance._meta.get_field(field_name)
         except FieldDoesNotExist:
-            raise ValueError('Could not find attribute %s.%s referenced'
-                             ' by %s.%s (see constraint `unique_with`)'
-                             % (instance._meta.object_name, field_name,
-                                instance._meta.object_name, field.name))
+            raise ValueError(
+                "Could not find attribute %s.%s referenced"
+                " by %s.%s (see constraint `unique_with`)"
+                % (
+                    instance._meta.object_name,
+                    field_name,
+                    instance._meta.object_name,
+                    field.name,
+                )
+            )
 
         if field == other_field:
-            raise ValueError('Attribute %s.%s references itself in `unique_with`.'
-                             ' Please use "unique=True" for this case.'
-                             % (instance._meta.object_name, field_name))
+            raise ValueError(
+                "Attribute %s.%s references itself in `unique_with`."
+                ' Please use "unique=True" for this case.'
+                % (instance._meta.object_name, field_name)
+            )
 
         value = getattr(instance, field_name)
         if value is not False and not value:
@@ -198,9 +203,9 @@ def get_uniqueness_lookups(field, instance, unique_with):
                              % (instance._meta.object_name, field.name,
                                 instance._meta.object_name, field_name,
                                 field.name))
-        if isinstance(value, datetime.datetime) and is_aware(value):
+        if isinstance(value, dt.datetime) and is_aware(value):
             value = localtime(value)
-        if isinstance(other_field, DateField):    # DateTimeField is a DateField subclass
+        if isinstance(other_field, DateField):  # DateTimeField is a DateField subclass
             inner_lookup = inner_lookup or 'day'
 
             if '__' in inner_lookup:
