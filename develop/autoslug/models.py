@@ -30,43 +30,43 @@ class SimpleModel(Model):
 
 class ModelWithUniqueSlug(Model):
     name = CharField(max_length=200)
-    slug = AutoSlugField(populate_from='name', unique=True)
+    slug = AutoSlugField(populate_from="name", unique=True)
 
 
 class ModelWithUniqueSlugFK(Model):
     name = CharField(max_length=200)
     simple_model = ForeignKey(SimpleModel, on_delete=CASCADE)
-    slug = AutoSlugField(populate_from='name', unique_with='simple_model__name')
+    slug = AutoSlugField(populate_from="name", unique_with="simple_model__name")
 
 
 class ModelWithUniqueSlugDate(Model):
     date = DateField()
-    slug = AutoSlugField(unique_with='date')
+    slug = AutoSlugField(unique_with="date")
 
 
 class ModelWithUniqueSlugDay(Model):  # same as ...Date, just more explicit
     date = DateTimeField()
-    slug = AutoSlugField(unique_with='date__day')
+    slug = AutoSlugField(unique_with="date__day")
 
 
 class ModelWithUniqueSlugMonth(Model):
     date = DateField()
-    slug = AutoSlugField(unique_with='date__month')
+    slug = AutoSlugField(unique_with="date__month")
 
 
 class ModelWithUniqueSlugYear(Model):
     date = DateField()
-    slug = AutoSlugField(unique_with='date__year')
+    slug = AutoSlugField(unique_with="date__year")
 
 
 class ModelWithLongName(Model):
     name = CharField(max_length=200)
-    slug = AutoSlugField(populate_from='name')
+    slug = AutoSlugField(populate_from="name")
 
 
 class ModelWithLongNameUnique(Model):
     name = CharField(max_length=200)
-    slug = AutoSlugField(populate_from='name', unique=True)
+    slug = AutoSlugField(populate_from="name", unique=True)
 
 
 def get_callable_slug(instance):
@@ -80,26 +80,26 @@ class ModelWithCallable(Model):
 
 class ModelWithCallableAttr(Model):
     name = CharField(max_length=200)
-    slug = AutoSlugField(populate_from='get_name')
+    slug = AutoSlugField(populate_from="get_name")
 
     def get_name(self):
-        return 'spam, %s and spam' % self.name
+        return "spam, %s and spam" % self.name
 
 
 class ModelWithNullable(Model):
     name = CharField(max_length=200, blank=True, null=True)
-    slug = AutoSlugField(populate_from='name', blank=True, null=True)
+    slug = AutoSlugField(populate_from="name", blank=True, null=True)
 
 
 class ModelWithBlank(Model):
     name = CharField(max_length=200, blank=True, null=True)
-    slug = AutoSlugField(populate_from='name', blank=True)
+    slug = AutoSlugField(populate_from="name", blank=True)
 
 
 class ModelWithCustomPrimaryKey(Model):
     custom_primary_key = CharField(primary_key=True, max_length=1)
     name = CharField(max_length=200)
-    slug = AutoSlugField(populate_from='name', unique=True)
+    slug = AutoSlugField(populate_from="name", unique=True)
 
 
 def custom_slugify(value):
@@ -111,41 +111,41 @@ class ModelWithCustomSlugifier(Model):
 
 
 class ModelWithCustomSeparator(Model):
-    slug = AutoSlugField(unique=True, sep='_')
+    slug = AutoSlugField(unique=True, sep="_")
 
 
 class ModelWithReferenceToItself(Model):
-    slug = AutoSlugField(unique_with='slug')
+    slug = AutoSlugField(unique_with="slug")
 
 
 class ModelWithWrongReferencedField(Model):
-    slug = AutoSlugField(unique_with='wrong_field')
+    slug = AutoSlugField(unique_with="wrong_field")
 
 
 class ModelWithWrongLookupInUniqueWith(Model):
-    slug = AutoSlugField(unique_with='name__foo')
+    slug = AutoSlugField(unique_with="name__foo")
     name = CharField(max_length=10)
 
 
 class ModelWithWrongFieldOrder(Model):
-    slug = AutoSlugField(unique_with='date')
+    slug = AutoSlugField(unique_with="date")
     date = DateField(blank=False, null=False)
 
 
 class ModelWithAcceptableEmptyDependency(Model):
     date = DateField(blank=True, null=True)
-    slug = AutoSlugField(unique_with='date')
+    slug = AutoSlugField(unique_with="date")
 
 
 class ModelWithBooleanInUniqueWith(Model):
     name = CharField(max_length=200)
     bool = BooleanField()
-    slug = AutoSlugField(unique_with='bool', populate_from='name')
+    slug = AutoSlugField(unique_with="bool", populate_from="name")
 
 
 class ModelWithAutoUpdateEnabled(Model):
     name = CharField(max_length=200)
-    slug = AutoSlugField(populate_from='name', always_update=True)
+    slug = AutoSlugField(populate_from="name", always_update=True)
 
 
 class ModelWithSlugSpaceSharedIntegrityError(ModelWithUniqueSlug):
@@ -157,7 +157,7 @@ class SharedSlugSpace(Model):
     name = CharField(max_length=200)
     # ensure that any subclasses use the base model's manager for testing
     # slug uniqueness
-    slug = AutoSlugField(populate_from='name', unique=True, manager=objects)
+    slug = AutoSlugField(populate_from="name", unique=True, manager=objects)
 
 
 class ModelWithSlugSpaceShared(SharedSlugSpace):
@@ -166,14 +166,16 @@ class ModelWithSlugSpaceShared(SharedSlugSpace):
 
 class ModelWithUniqueSlugFKNull(Model):
     name = CharField(max_length=200)
-    simple_model = ForeignKey(SimpleModel, null=True, blank=True, default=None, on_delete=CASCADE)
-    slug = AutoSlugField(populate_from='name', unique_with='simple_model')
+    simple_model = ForeignKey(
+        SimpleModel, null=True, blank=True, default=None, on_delete=CASCADE
+    )
+    slug = AutoSlugField(populate_from="name", unique_with="simple_model")
 
 
 class ModeltranslationOne(Model):
     title = CharField(max_length=255)
     description = CharField(max_length=255)
-    slug = AutoSlugField(populate_from='title', always_update=True, unique=True)
+    slug = AutoSlugField(populate_from="title", always_update=True, unique=True)
 
 
 class NonDeletedObjects(Manager):
@@ -197,4 +199,4 @@ class AbstractModelWithCustomManager(Model):
 
 class NonDeletableModelWithUniqueSlug(AbstractModelWithCustomManager):
     name = CharField(max_length=200)
-    slug = AutoSlugField(populate_from='name', unique=True, manager_name='all_objects')
+    slug = AutoSlugField(populate_from="name", unique=True, manager_name="all_objects")

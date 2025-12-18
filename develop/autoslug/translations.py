@@ -13,8 +13,7 @@ from .models import ModeltranslationOne
 
 
 class ModeltranslationOneTranslation(TranslationOptions):
-    fields = ('title', 'description')
+    fields = ("title", "description")
 
 
-translator.register(ModeltranslationOne,
-                    ModeltranslationOneTranslation)
+translator.register(ModeltranslationOne, ModeltranslationOneTranslation)

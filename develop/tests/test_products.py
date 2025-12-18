@@ -151,7 +151,9 @@ class ModelProductTests(TestCase):
         product_1 = Product.objects.create(name="Test Product", site=site)  # noqa F841
 
         with self.assertRaises(IntegrityError):
-            product_2 = Product.objects.create(name="Test Product", site=site)  # noqa F841
+            product_2 = Product.objects.create(
+                name="Test Product", site=site
+            )  # noqa F841
 
 
 class TransactionProductTests(TestCase):

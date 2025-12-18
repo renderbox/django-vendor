@@ -103,9 +103,9 @@ AUTHENTICATION_BACKENDS = [
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
     }
 }
 
@@ -244,5 +244,5 @@ LOGGING = {
 }
 
 ENCRYPTED_FIELD_KEYS = [
-    b'_z0qxUVtAOB4gGcfZ7uRvA3_2xFLPvR2f4OOP_TeV1A=',
+    b"_z0qxUVtAOB4gGcfZ7uRvA3_2xFLPvR2f4OOP_TeV1A=",
 ]

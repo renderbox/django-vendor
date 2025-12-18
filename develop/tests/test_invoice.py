@@ -653,8 +653,7 @@ class ReviewCheckoutViewTests(TestCase):
             for key, value in billing_address.cleaned_data.items()
         }
         session["credit_card_form"] = {
-            k: proxy_cleaner(v)
-            for k, v in payment_info.cleaned_data.items()
+            k: proxy_cleaner(v) for k, v in payment_info.cleaned_data.items()
         }
         debug_json(session["billing_address_form"])
         debug_json(session["credit_card_form"])

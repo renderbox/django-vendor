@@ -229,7 +229,9 @@ class ModelCustomerProfileTests(TestCase):
         invoice_invalid_cart.profile = self.customer_profile_existing
         invoice_invalid_cart.save()
 
-        invoice = self.customer_profile_existing.get_cart_or_checkout_cart()  # noqa F841
+        invoice = (
+            self.customer_profile_existing.get_cart_or_checkout_cart()
+        )  # noqa F841
 
         self.assertEqual(
             1,
