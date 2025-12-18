@@ -1,10 +1,10 @@
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "django-vendor"
-version = "1.0.0dev1"
+version = "0.5.0dev1"
 description = "Django App Toolkit for selling digital and physical goods online."
 authors = [
     { name = "Grant Viklund", email = "renderbox@gmail.com" },
@@ -20,34 +20,14 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.12"
 ]
 dependencies = [
     "django>=5.2,<7.0",
-    "iso4217<1.12.0",
-]
-packages = [
-    { include = "vendor", from = "src" }
+    "iso4217<1.12.0"
 ]
 
 [project.optional-dependencies]
-stripe = ["stripe"]
-authorizenet = ["authorizenet"]
-dev = [
-    "black",
-    "flake8",
-    "flake8-black",
-    "mypy",
-    "bandit",
-    "isort",
-    "dj-database-url",
-    "psycopg2-binary",
-    "django-crispy-forms",
-    "django-site-configs",
-    "django-integrations",
-    "django-allauth",
-    "toml"
-]
 test = [
     "pytest",
     "pytest-django",
@@ -55,66 +35,32 @@ test = [
     "pytest-factoryboy",
     "pytest-mock",
     "pytest-asyncio",
-    "pytest-bdd",
-    "dj-database-url",
+    "pytest-bdd"
 ]
 lint = [
     "black",
     "flake8",
     "flake8-black",
-    "mypy",
-    "bandit",
     "isort",
-    "dj-database-url",
+    "mypy",
+    "bandit"
+]
+dev = [
+    "django-vendor[test]",
+    "django-vendor[lint]",
+    "django-crispy-forms",
+    "django-site-configs",
+    "django-integrations",
+    "django-allauth"
 ]
 
 [project.urls]
 Homepage = "https://github.com/renderbox/django-vendor"
 "Bug Tracker" = "https://github.com/renderbox/django-vendor/issues"
 
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["vendor*"]
+
 [tool.isort]
 profile = "black"
-
-[tool.poetry]
-packages = [
-    { include = "vendor", from = "src" }
-]
-
-[tool.poetry.group.dev.dependencies]
-black = "^25.1.0"
-flake8 = "^7.2.0"
-flake8-black = "^0.3.6"
-mypy = "^1.15.0"
-bandit = "^1.8.3"
-isort = "^6.0.1"
-dj-database-url = "^2.3.0"
-psycopg2-binary = "^2.9.10"
-django-crispy-forms = "^2.4"
-django-site-configs = "^0.3.0"
-django-integrations = "^0.2.0"
-django-allauth = "^65.8.1"
-toml = "^0.10.2"
-
-[tool.poetry.group.test.dependencies]
-pytest = "^8.3.5"
-pytest-django = "^4.11.1"
-pytest-cov = "^6.1.1"
-pytest-factoryboy = "^2.7.0"
-pytest-mock = "^3.14.0"
-pytest-asyncio = "^0.26.0"
-pytest-bdd = "^8.1.0"
-
-[tool.poetry.group.lint.dependencies]
-black = "^25.1.0"
-flake8 = "^7.2.0"
-flake8-black = "^0.3.6"
-mypy = "^1.15.0"
-bandit = "^1.8.3"
-isort = "^6.0.1"
-
-[tool.poetry.group.stripe.dependencies]
-stripe = "^12.1.0"
-
-[tool.poetry.group.authorizenet.dependencies]
-lxml = "^4.9.0"
-authorizenet = "^1.1.6"
