@@ -36,8 +36,7 @@ User = get_user_model()
 
 @tag("external")
 @skipIf(
-    (settings.AUTHORIZE_NET_API_ID is None)
-    or (settings.AUTHORIZE_NET_TRANSACTION_KEY is None),
+    (settings.AUTHORIZE_NET_API_ID or settings.AUTHORIZE_NET_TRANSACTION_KEY) is None,
     "Authorize.Net enviornment variables not set, skipping tests",
 )
 class AuthorizeNetProcessorTests(TestCase):

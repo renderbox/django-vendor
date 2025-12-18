@@ -1,7 +1,6 @@
 from random import randrange
 from unittest import skipIf
 
-import stripe
 from core.models import Product
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -10,6 +9,12 @@ from django.db.models import Q, signals
 from django.test import Client, TestCase
 from django.utils import timezone
 from siteconfigs.models import SiteConfigModel
+
+try:
+    import stripe
+except ImportError:
+    if (settings.STRIPE_PUBLIC_KEY or settings.STRIPE_SECRET_KEY) is None:
+        pass
 
 from vendor.forms import BillingAddressForm, CreditCardForm
 from vendor.models import CustomerProfile, Invoice, Offer, Price
