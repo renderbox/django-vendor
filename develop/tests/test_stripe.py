@@ -14,6 +14,7 @@ from siteconfigs.models import SiteConfigModel
 from vendor.forms import BillingAddressForm, CreditCardForm
 from vendor.models import CustomerProfile, Invoice, Offer, Price
 from vendor.models.choice import InvoiceStatus
+from vendor.config import DEFAULT_CURRENCY
 from vendor.processors import StripeProcessor
 
 User = get_user_model()
@@ -28,12 +29,12 @@ VALID_CARD_NUMBERS = [
     # "6011111111111117",  # discover
 ]
 
-# INVALID_CARD_NUMBERS
-DECLINE_PAYMENT_CARD_NUMBER = ("4000000000000002",)  # generic decline
-FRAUD_PREVENTION_CARD_NUMBER = ("4000000000000010",)  # expired_card
-INVALID_CVV_CARD_NUMBER = ("4000000000000127",)  # incorrect_cvc
-EXPIRED_CARD_NUMBER = ("4000000000000069",)  # expired_card
-POSTAL_CODE_CHECK_FAIL_CARD_NUMBER = ("4000000000000036",)  # postal_code_check_fail
+# INVALID_CARD_NUMBERS (strings for form validation)
+DECLINE_PAYMENT_CARD_NUMBER = "4000000000000002"  # generic decline
+FRAUD_PREVENTION_CARD_NUMBER = "4000000000000010"  # expired_card
+INVALID_CVV_CARD_NUMBER = "4000000000000127"  # incorrect_cvc
+EXPIRED_CARD_NUMBER = "4000000000000069"  # expired_card
+POSTAL_CODE_CHECK_FAIL_CARD_NUMBER = "4000000000000036"  # postal_code_check_fail
 
 
 @skipIf(
@@ -1204,19 +1205,21 @@ class StripeBuildObjectTests(TestCase):
         offer.save()
         price = offer.prices.first()
 
-        price_data = self.processor.build_price(offer, price)
+        price_data = self.processor.build_price(price, DEFAULT_CURRENCY)
         stripe_price = self.processor.stripe_create_object(
             self.processor.stripe.Price, price_data
         )
 
         self.assertIsNotNone(stripe_price.id)
-        self.assertEqual(price.cost, stripe_price.unit_amount)
+        self.assertEqual(
+            self.processor.convert_decimal_to_integer(price.cost), stripe_price.unit_amount
+        )
 
     def test_build_coupon_success(self):
         offer = Offer.objects.all().first()
         price = offer.prices.first()
 
-        coupon_data = self.processor.build_coupon(offer, price)
+        coupon_data = self.processor.build_coupon(offer, DEFAULT_CURRENCY)
         stripe_coupon = self.processor.stripe_create_object(
             self.processor.stripe.Coupon, coupon_data
         )
