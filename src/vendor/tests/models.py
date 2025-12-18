@@ -12,8 +12,8 @@ from django.db.models import (
 )
 
 # this app
-from autoslug import AutoSlugField
-from autoslug.settings import slugify as default_slugify
+from vendor.fields import AutoSlugField
+from vendor.settings import slugify as default_slugify
 
 
 class SimpleModel(Model):

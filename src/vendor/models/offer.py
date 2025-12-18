@@ -2,7 +2,7 @@ import math
 import uuid
 from datetime import timedelta
 
-from autoslug import AutoSlugField
+from vendor.fields import AutoSlugField
 from django.contrib.sites.managers import CurrentSiteManager
 from django.contrib.sites.models import Site
 from django.db import models

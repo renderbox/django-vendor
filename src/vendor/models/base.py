@@ -1,6 +1,6 @@
 import uuid
 
-from autoslug import AutoSlugField
+from vendor.fields import AutoSlugField
 from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.managers import CurrentSiteManager

@@ -58,13 +58,24 @@ Django settings that affect django-autoslug:
 
 """
 from django.conf import settings
-from django import VERSION
+from django.utils.module_loading import import_string
 
-from django.urls import get_callable
+DEFAULT_SLUGIFY_FUNCTION = 'django.utils.text.slugify'
+
+
+def _get_setting(name, default):
+    """
+    Safe settings access that does not raise during import when Django is
+    not configured (e.g., module-level imports in tests).
+    """
+    if settings.configured:
+        return getattr(settings, name, default)
+    return default
+
 
 # use custom slugifying function if any
-slugify_function_path = getattr(settings, 'AUTOSLUG_SLUGIFY_FUNCTION', 'autoslug.utils.slugify')
-slugify = get_callable(slugify_function_path)
+slugify_function_path = _get_setting('AUTOSLUG_SLUGIFY_FUNCTION', DEFAULT_SLUGIFY_FUNCTION)
+slugify = import_string(slugify_function_path)
 
 # enable/disable modeltranslation support
-autoslug_modeltranslation_enable = getattr(settings, 'AUTOSLUG_MODELTRANSLATION_ENABLE', False)
+autoslug_modeltranslation_enable = _get_setting('AUTOSLUG_MODELTRANSLATION_ENABLE', False)

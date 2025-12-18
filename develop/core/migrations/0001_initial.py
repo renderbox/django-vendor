@@ -2,7 +2,7 @@
 
 import uuid
 
-import autoslug.fields
+import vendor.fields
 import django.contrib.sites.managers
 import django.db.models.manager
 from django.db import migrations, models
@@ -82,7 +82,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "slug",
-                    autoslug.fields.AutoSlugField(
+                    vendor.fields.AutoSlugField(
                         editable=False, populate_from="name", unique_with=("site__id",)
                     ),
                 ),

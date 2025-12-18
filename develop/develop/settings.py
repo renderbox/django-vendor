@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import os
 from pathlib import Path
 
-import dj_database_url
 from django.utils.translation import gettext_lazy as _
 from iso4217 import Currency
 
@@ -102,21 +101,12 @@ AUTHENTICATION_BACKENDS = [
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
-DATABASES = {}
-DATABASES["default"] = dj_database_url.config(
-    conn_max_age=600,
-    ssl_require=False,
-    default=os.environ.get(
-        "DATABASE_URL", "sqlite:///{}".format(os.path.join(BASE_DIR, "db.sqlite3"))
-    ),
-)  # Default to SQLite for testing on GitHub
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators

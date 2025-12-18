@@ -20,8 +20,8 @@ except ImportError:
     modeltranslation_utils = None
 
 # this app
-from autoslug.settings import slugify, autoslug_modeltranslation_enable
-from autoslug import utils
+from vendor.settings import slugify, autoslug_modeltranslation_enable
+from vendor import utils
 
 __all__ = ['AutoSlugField']
 
@@ -84,7 +84,7 @@ class AutoSlugField(SlugField):
     .. code-block:: python
 
         from django.db import models
-        from autoslug import AutoSlugField
+        from vendor.fields import AutoSlugField
 
         class Article(models.Model):
             '''An article with title, date and slug. The slug is not totally
@@ -154,7 +154,7 @@ class AutoSlugField(SlugField):
             pass
 
         # autoslugify value using custom `slugify` function
-        from autoslug.settings import slugify as default_slugify
+        from vendor.settings import slugify as default_slugify
         def custom_slugify(value):
             return default_slugify(value).replace('-', '_')
         slug = AutoSlugField(slugify=custom_slugify)
