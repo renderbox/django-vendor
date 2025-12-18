@@ -128,6 +128,13 @@ class BaseProcessorTests(TestCase):
 
         self.assertNotEqual(InvoiceStatus.COMPLETE, self.base_processor.invoice.status)
 
+    def test_is_data_valid_false_when_forms_invalid(self):
+        # Missing order items or invalid forms should short-circuit validation
+        processor = PaymentProcessorBase(self.site, self.existing_invoice)
+        processor.set_billing_address_form_data({}, BillingAddressForm)
+        processor.set_payment_info_form_data({}, CreditCardForm)
+        self.assertFalse(processor.is_data_valid())
+
     def test_create_receipt_by_term_type_subscription(self):
         self.base_processor.invoice.add_offer(self.subscription_offer)
         self.base_processor.invoice.save()
@@ -197,6 +204,10 @@ class BaseProcessorTests(TestCase):
     def test_amount_success(self):
         self.existing_invoice.update_totals()
         self.assertEqual(self.existing_invoice.total, self.base_processor.amount())
+
+    def test_to_stripe_valid_unit(self):
+        self.assertEqual(self.base_processor.to_stripe_valid_unit(0), 0)
+        self.assertEqual(self.base_processor.to_stripe_valid_unit(10), 1000)
 
     def test_amount_without_subscriptions_success(self):
         self.base_processor.invoice.add_offer(self.subscription_offer)
