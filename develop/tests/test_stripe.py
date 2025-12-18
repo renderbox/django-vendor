@@ -29,13 +29,11 @@ VALID_CARD_NUMBERS = [
 ]
 
 # INVALID_CARD_NUMBERS
-DECLINE_PAYMENT_CARD_NUMBER = "4000000000000002",  # generic decline
-FRAUD_PREVENTION_CARD_NUMBER = "4000000000000010",  # expired_card
-INVALID_CVV_CARD_NUMBER = "4000000000000127",  # incorrect_cvc
-EXPIRED_CARD_NUMBER = "4000000000000069",  # expired_card
-POSTAL_CODE_CHECK_FAIL_CARD_NUMBER = "4000000000000036",  # postal_code_check_fail
-
-
+DECLINE_PAYMENT_CARD_NUMBER = ("4000000000000002",)  # generic decline
+FRAUD_PREVENTION_CARD_NUMBER = ("4000000000000010",)  # expired_card
+INVALID_CVV_CARD_NUMBER = ("4000000000000127",)  # incorrect_cvc
+EXPIRED_CARD_NUMBER = ("4000000000000069",)  # expired_card
+POSTAL_CODE_CHECK_FAIL_CARD_NUMBER = ("4000000000000036",)  # postal_code_check_fail
 
 
 @skipIf(
@@ -44,7 +42,6 @@ POSTAL_CODE_CHECK_FAIL_CARD_NUMBER = "4000000000000036",  # postal_code_check_fa
 )
 class StripeProcessorTests(TestCase):
     fixtures = ["user", "unit_test"]
-
 
     def setup_processor_site_config(self):
         self.processor_site_config = SiteConfigModel()
@@ -379,7 +376,9 @@ class StripeProcessorTests(TestCase):
         self.processor.create_stripe_customers([self.customer])
         self.processor.transaction_succeeded = False
         self.processor.invoice.profile.refresh_from_db()
-        self.form_data["credit_card_form"]["card_number"] = POSTAL_CODE_CHECK_FAIL_CARD_NUMBER
+        self.form_data["credit_card_form"][
+            "card_number"
+        ] = POSTAL_CODE_CHECK_FAIL_CARD_NUMBER
 
         self.processor.set_billing_address_form_data(
             self.form_data.get("billing_address_form"), BillingAddressForm
