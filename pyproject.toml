@@ -28,6 +28,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+stripe = ["stripe"]
+authorizenet = ["authorizenet"]
 test = [
     "pytest",
     "pytest-django",
@@ -35,7 +37,9 @@ test = [
     "pytest-factoryboy",
     "pytest-mock",
     "pytest-asyncio",
-    "pytest-bdd"
+    "pytest-bdd",
+    "django-vendor[stripe]",
+    "django-vendor[authorizenet]"
 ]
 lint = [
     "black",

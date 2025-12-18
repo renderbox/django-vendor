@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "iso4217",
     "integrations",
     "siteconfigs",
+    "autoslug",
     "vendor",
 ]
 
