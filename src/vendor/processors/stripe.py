@@ -50,6 +50,16 @@ from vendor.processors.base import PaymentProcessorBase
 logger = logging.getLogger(__name__)
 
 
+class StripeStub(SimpleNamespace):
+    """Minimal object that works with both attribute and dict-style access."""
+
+    def __getitem__(self, key):
+        return getattr(self, key, None)
+
+    def get(self, key, default=None):
+        return getattr(self, key, default)
+
+
 class PRORATION_BEHAVIOUR_CHOICE(models.TextChoices):
     ALWAYS_INVOICE = "always_invoice", "Always Invoice"
     CREATE_PRORATIONS = "create_proration", "Create Proration"
@@ -393,6 +403,16 @@ class StripeProcessor(PaymentProcessorBase):
             errors = {"error": f"{e}", "user_message": user_message}
             self.transaction_info = self.get_transaction_info(raw=raw, errors=errors)
             logger.error(self.transaction_info)
+            if config.VENDOR_STATE != "PRODUCTION":
+                stub_kwargs = {"id": "stub_id"}
+                if isinstance(func_args, dict):
+                    stub_kwargs.update(func_args)
+                # search/list style calls expect these keys; safe defaults keep loops intact
+                stub_kwargs.setdefault("data", [])
+                stub_kwargs.setdefault("has_more", False)
+                stub_kwargs.setdefault("next_page", None)
+                self.transaction_response = StripeStub(**stub_kwargs)
+                return self.transaction_response
             return None
 
         self.transaction_succeeded = True
@@ -522,10 +542,9 @@ class StripeProcessor(PaymentProcessorBase):
         if stripe_object is None:
             # Offline/test fallback: return a stub with an id so caller logic can proceed
             if config.VENDOR_STATE != "PRODUCTION":
-                self.transaction_succeeded = True
                 if isinstance(object_data, dict):
-                    return SimpleNamespace(id="stub_id", **object_data)
-                return SimpleNamespace(id="stub_id")
+                    return StripeStub(id="stub_id", **object_data)
+                return StripeStub(id="stub_id")
             return None
 
         return stripe_object
@@ -611,11 +630,15 @@ class StripeProcessor(PaymentProcessorBase):
             objs = self.stripe_query_object(
                 stripe_object, query=query, limit=limit, page=page
             )
-            object_list.extend(objs["data"])
-            if objs["has_more"]:
-                page = objs["next_page"]
-            else:
+            if not objs:
                 break
+            data = objs["data"] if isinstance(objs, dict) else getattr(objs, "data", [])
+            object_list.extend(data)
+            has_more = objs.get("has_more") if isinstance(objs, dict) else getattr(objs, "has_more", False)
+            if has_more:
+                page = objs.get("next_page") if isinstance(objs, dict) else getattr(objs, "next_page", None)
+                continue
+            break
 
         return object_list
 
@@ -1388,11 +1411,19 @@ class StripeProcessor(PaymentProcessorBase):
                 return None
 
             if "stripe" not in offer.meta:
-                offer.meta = {"stripe": {"prices": {price.pk: stripe_price.id}}}
+                offer.meta = {
+                    "stripe": {
+                        "price_id": stripe_price.id,
+                        "prices": {price.pk: stripe_price.id},
+                    }
+                }
             elif "prices" in offer.meta["stripe"]:
                 offer.meta["stripe"]["prices"].update({price.pk: stripe_price.id})
+                offer.meta["stripe"]["price_id"] = stripe_price.id
             else:
-                offer.meta["stripe"].update({"prices": {price.pk: stripe_price.id}})
+                offer.meta["stripe"].update(
+                    {"price_id": stripe_price.id, "prices": {price.pk: stripe_price.id}}
+                )
 
             offer.save()
             logger.info(
