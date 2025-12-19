@@ -1,6 +1,5 @@
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-
 from iso4217 import Currency
 
 from vendor.config import AVAILABLE_CURRENCIES
@@ -16,21 +15,25 @@ def validate_msrp_format(value):
     if not value:
         return None
 
-    msrp = value.split(',')
+    msrp = value.split(",")
 
     if len(msrp) != 2 or not msrp:
-        raise ValidationError(_("Invalid MSRP Value"), params={'value': value})
+        raise ValidationError(_("Invalid MSRP Value"), params={"value": value})
 
     if not msrp[0] or not msrp[1]:
-        raise ValidationError(_("Invalid MSRP Value"), params={'value': value})
+        raise ValidationError(_("Invalid MSRP Value"), params={"value": value})
 
     if not msrp[0].lower() in Currency.__dict__:
-        raise ValidationError(_("Invalid MSRP Value"), params={'value': value})
+        raise ValidationError(_("Invalid MSRP Value"), params={"value": value})
 
 
 def validate_msrp(value):
-    if value['msrp']['default'] not in AVAILABLE_CURRENCIES.keys():
-        raise ValidationError(_('Currency not available'))
+    if value["msrp"]["default"] not in AVAILABLE_CURRENCIES.keys():
+        raise ValidationError(_("Currency not available"))
 
-    if False in [ is_currency_available(value['msrp'].keys(), currency=msrp_currency) for msrp_currency in value['msrp'].keys() if msrp_currency != 'default']:
-        raise ValidationError(_('Currency not available'))
+    if False in [
+        is_currency_available(value["msrp"].keys(), currency=msrp_currency)
+        for msrp_currency in value["msrp"].keys()
+        if msrp_currency != "default"
+    ]:
+        raise ValidationError(_("Currency not available"))

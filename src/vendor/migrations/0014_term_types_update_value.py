@@ -4,8 +4,9 @@ from django.db import migrations
 
 from vendor.models.choice import TermType
 
+
 def term_type_update_value(apps, schema_editor):
-    OfferModel = apps.get_model('vendor', 'Offer')
+    OfferModel = apps.get_model("vendor", "Offer")
 
     for offer in OfferModel.objects.filter(terms__lt=100):
         if offer.terms == 0:
@@ -24,12 +25,15 @@ def term_type_update_value(apps, schema_editor):
             offer.terms = TermType.ONE_TIME_USE
         offer.save()
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vendor', '0013_auto_20201202_1759'),
+        ("vendor", "0013_auto_20201202_1759"),
     ]
 
     operations = [
-        migrations.RunPython(term_type_update_value, reverse_code=migrations.RunPython.noop),
+        migrations.RunPython(
+            term_type_update_value, reverse_code=migrations.RunPython.noop
+        ),
     ]
