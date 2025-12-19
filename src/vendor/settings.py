@@ -60,7 +60,7 @@ Django settings that affect django-autoslug:
 from django.conf import settings
 from django.utils.module_loading import import_string
 
-DEFAULT_SLUGIFY_FUNCTION = 'django.utils.text.slugify'
+DEFAULT_SLUGIFY_FUNCTION = "django.utils.text.slugify"
 
 
 def _get_setting(name, default):
@@ -74,8 +74,12 @@ def _get_setting(name, default):
 
 
 # use custom slugifying function if any
-slugify_function_path = _get_setting('AUTOSLUG_SLUGIFY_FUNCTION', DEFAULT_SLUGIFY_FUNCTION)
+slugify_function_path = _get_setting(
+    "AUTOSLUG_SLUGIFY_FUNCTION", DEFAULT_SLUGIFY_FUNCTION
+)
 slugify = import_string(slugify_function_path)
 
 # enable/disable modeltranslation support
-autoslug_modeltranslation_enable = _get_setting('AUTOSLUG_MODELTRANSLATION_ENABLE', False)
+autoslug_modeltranslation_enable = _get_setting(
+    "AUTOSLUG_MODELTRANSLATION_ENABLE", False
+)

@@ -29,9 +29,9 @@ class StripeProcessorHelperTests(TestCase):
     def test_convert_decimal_to_integer_and_back(self):
         assert self.processor.convert_decimal_to_integer(0) == 0
         assert self.processor.convert_decimal_to_integer(10.55) == 1055
-        assert self.processor.convert_integer_to_decimal(1055) == self.processor.to_valid_decimal(
-            10.55
-        )
+        assert self.processor.convert_integer_to_decimal(
+            1055
+        ) == self.processor.to_valid_decimal(10.55)
 
     def test_get_stripe_base_fee_amount_uses_defaults(self):
         # Defaults from STRIPE_BASE_COMMISSION = {"percentage": 2.9, "fixed": 0.3}
@@ -44,4 +44,3 @@ class StripeProcessorHelperTests(TestCase):
 
     def test_get_stripe_connect_account_default_none(self):
         self.assertIsNone(self.processor.get_stripe_connect_account())
-

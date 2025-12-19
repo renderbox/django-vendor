@@ -634,9 +634,17 @@ class StripeProcessor(PaymentProcessorBase):
                 break
             data = objs["data"] if isinstance(objs, dict) else getattr(objs, "data", [])
             object_list.extend(data)
-            has_more = objs.get("has_more") if isinstance(objs, dict) else getattr(objs, "has_more", False)
+            has_more = (
+                objs.get("has_more")
+                if isinstance(objs, dict)
+                else getattr(objs, "has_more", False)
+            )
             if has_more:
-                page = objs.get("next_page") if isinstance(objs, dict) else getattr(objs, "next_page", None)
+                page = (
+                    objs.get("next_page")
+                    if isinstance(objs, dict)
+                    else getattr(objs, "next_page", None)
+                )
                 continue
             break
 
@@ -792,10 +800,14 @@ class StripeProcessor(PaymentProcessorBase):
 
     def build_subscription(self, subscription, payment_method_id):
         price = subscription.offer.get_current_price_instance()
-        stripe_meta = subscription.offer.meta.get("stripe", {}) if subscription.offer.meta else {}
+        stripe_meta = (
+            subscription.offer.meta.get("stripe", {}) if subscription.offer.meta else {}
+        )
         if not price:
             return None
-        if "prices" not in stripe_meta or str(price.pk) not in stripe_meta.get("prices", {}):
+        if "prices" not in stripe_meta or str(price.pk) not in stripe_meta.get(
+            "prices", {}
+        ):
             return None
         sub_discount = 0
         promotion_code = None
@@ -848,7 +860,9 @@ class StripeProcessor(PaymentProcessorBase):
         if not price:
             return None
 
-        stripe_meta = order_item.offer.meta.get("stripe", {}) if order_item.offer.meta else {}
+        stripe_meta = (
+            order_item.offer.meta.get("stripe", {}) if order_item.offer.meta else {}
+        )
         stripe_price_id = stripe_meta.get("prices", {}).get(str(price.pk))
         if not stripe_price_id:
             # In offline/test mode allow stubbing the price id
@@ -2286,10 +2300,14 @@ class StripeProcessor(PaymentProcessorBase):
 
         if str(getattr(stripe_payment_method, "id", "")).startswith("stub_"):
             self.transaction_succeeded = True
-            self.transaction_id = getattr(stripe_invoice, "payment_intent", None) or "stub_payment_intent"
+            self.transaction_id = (
+                getattr(stripe_invoice, "payment_intent", None) or "stub_payment_intent"
+            )
             return stripe_invoice
 
-        self.stripe_call(stripe_invoice.pay, {"payment_method": stripe_payment_method.id})
+        self.stripe_call(
+            stripe_invoice.pay, {"payment_method": stripe_payment_method.id}
+        )
 
         if self.transaction_succeeded:
             self.transaction_id = stripe_invoice.payment_intent
@@ -2383,7 +2401,9 @@ class StripeProcessor(PaymentProcessorBase):
         # Offline/test fallback: skip calling Stripe if we have a stub payment method/id
         if str(payment_method_id).startswith("stub_"):
             self.transaction_succeeded = True
-            self.transaction_id = getattr(stripe_payment_intent, "id", None) or "stub_payment_intent"
+            self.transaction_id = (
+                getattr(stripe_payment_intent, "id", None) or "stub_payment_intent"
+            )
             return stripe_payment_intent
 
         if not stripe_payment_intent:

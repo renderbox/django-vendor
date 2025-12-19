@@ -11,10 +11,10 @@ from django.test import Client, TestCase
 from django.utils import timezone
 from siteconfigs.models import SiteConfigModel
 
+from vendor.config import DEFAULT_CURRENCY
 from vendor.forms import BillingAddressForm, CreditCardForm
 from vendor.models import CustomerProfile, Invoice, Offer, Price
 from vendor.models.choice import InvoiceStatus
-from vendor.config import DEFAULT_CURRENCY
 from vendor.processors import StripeProcessor
 
 User = get_user_model()
@@ -25,7 +25,7 @@ User = get_user_model()
 VALID_CARD_NUMBERS = [
     "4242424242424242",  # visa
     "5555555555554444",  # mastercard
-    "378282246310005",   # amex
+    "378282246310005",  # amex
     "6011111111111117",  # discover
 ]
 
@@ -1214,7 +1214,8 @@ class StripeBuildObjectTests(TestCase):
 
         self.assertIsNotNone(stripe_price.id)
         self.assertEqual(
-            self.processor.convert_decimal_to_integer(price.cost), stripe_price.unit_amount
+            self.processor.convert_decimal_to_integer(price.cost),
+            stripe_price.unit_amount,
         )
 
     def test_build_coupon_success(self):

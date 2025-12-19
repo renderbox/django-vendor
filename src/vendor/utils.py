@@ -128,7 +128,6 @@ def generate_unique_slug(field, instance, slug, manager):
     if not manager:
         manager = field.model._default_manager
 
-
     # keep changing the slug until it is unique
     while True:
         # find instances with same slug
@@ -148,11 +147,11 @@ def generate_unique_slug(field, instance, slug, manager):
         tail_length = len(field.index_sep) + len(str(index))
         combined_length = len(original_slug) + tail_length
         if field.max_length < combined_length:
-            original_slug = original_slug[:field.max_length - tail_length]
+            original_slug = original_slug[: field.max_length - tail_length]
 
         # re-generate the slug
         data = dict(slug=original_slug, sep=field.index_sep, index=index)
-        slug = '%(slug)s%(sep)s%(index)d' % data
+        slug = "%(slug)s%(sep)s%(index)d" % data
 
         # ...next iteration...
 
@@ -162,8 +161,8 @@ def get_uniqueness_lookups(field, instance, unique_with):
     Returns a dict'able tuple of lookups to ensure uniqueness of a slug.
     """
     for original_lookup_name in unique_with:
-        if '__' in original_lookup_name:
-            field_name, inner_lookup = original_lookup_name.split('__', 1)
+        if "__" in original_lookup_name:
+            field_name, inner_lookup = original_lookup_name.split("__", 1)
         else:
             field_name, inner_lookup = original_lookup_name, None
 
@@ -193,46 +192,59 @@ def get_uniqueness_lookups(field, instance, unique_with):
             if other_field.blank:
                 field_object = instance._meta.get_field(field_name)
                 if isinstance(field_object, ForeignKey):
-                    lookup = '%s__isnull' % field_name
+                    lookup = "%s__isnull" % field_name
                     yield lookup, True
                 break
-            raise ValueError('Could not check uniqueness of %s.%s with'
-                             ' respect to %s.%s because the latter is empty.'
-                             ' Please ensure that "%s" is declared *after*'
-                             ' all fields listed in unique_with.'
-                             % (instance._meta.object_name, field.name,
-                                instance._meta.object_name, field_name,
-                                field.name))
+            raise ValueError(
+                "Could not check uniqueness of %s.%s with"
+                " respect to %s.%s because the latter is empty."
+                ' Please ensure that "%s" is declared *after*'
+                " all fields listed in unique_with."
+                % (
+                    instance._meta.object_name,
+                    field.name,
+                    instance._meta.object_name,
+                    field_name,
+                    field.name,
+                )
+            )
         if isinstance(value, dt.datetime) and is_aware(value):
             value = localtime(value)
         if isinstance(other_field, DateField):  # DateTimeField is a DateField subclass
-            inner_lookup = inner_lookup or 'day'
+            inner_lookup = inner_lookup or "day"
 
-            if '__' in inner_lookup:
-                raise ValueError('The `unique_with` constraint in %s.%s'
-                                 ' is set to "%s", but AutoSlugField only'
-                                 ' accepts one level of nesting for dates'
-                                 ' (e.g. "date__month").'
-                                 % (instance._meta.object_name, field.name,
-                                    original_lookup_name))
+            if "__" in inner_lookup:
+                raise ValueError(
+                    "The `unique_with` constraint in %s.%s"
+                    ' is set to "%s", but AutoSlugField only'
+                    " accepts one level of nesting for dates"
+                    ' (e.g. "date__month").'
+                    % (instance._meta.object_name, field.name, original_lookup_name)
+                )
 
-            parts = ['year', 'month', 'day']
+            parts = ["year", "month", "day"]
             try:
                 granularity = parts.index(inner_lookup) + 1
             except ValueError:
-                raise ValueError('expected one of %s, got "%s" in "%s"'
-                                    % (parts, inner_lookup, original_lookup_name))
+                raise ValueError(
+                    'expected one of %s, got "%s" in "%s"'
+                    % (parts, inner_lookup, original_lookup_name)
+                )
             else:
                 for part in parts[:granularity]:
-                    lookup = f'{field_name}__{part}'
+                    lookup = f"{field_name}__{part}"
                     yield lookup, getattr(value, part)
         else:
             # TODO: this part should be documented as it involves recursion
             if inner_lookup:
-                if not hasattr(value, '_meta'):
-                    raise ValueError('Could not resolve lookup "%s" in `unique_with` of %s.%s'
-                                     % (original_lookup_name, instance._meta.object_name, field.name))
-                for inner_name, inner_value in get_uniqueness_lookups(field, value, [inner_lookup]):
+                if not hasattr(value, "_meta"):
+                    raise ValueError(
+                        'Could not resolve lookup "%s" in `unique_with` of %s.%s'
+                        % (original_lookup_name, instance._meta.object_name, field.name)
+                    )
+                for inner_name, inner_value in get_uniqueness_lookups(
+                    field, value, [inner_lookup]
+                ):
                     yield original_lookup_name, inner_value
             else:
                 yield field_name, value
@@ -240,7 +252,7 @@ def get_uniqueness_lookups(field, instance, unique_with):
 
 def crop_slug(field, slug):
     if field.max_length < len(slug):
-        return slug[:field.max_length]
+        return slug[: field.max_length]
     return slug
 
 
@@ -250,10 +262,11 @@ except ImportError:
     pass
 else:
     import re
+
     PUNCT_RE = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
 
     def translitcodec_slugify(codec):
-        def _slugify(value, delim='-', encoding=''):
+        def _slugify(value, delim="-", encoding=""):
             """
             Generates an ASCII-only slug.
 
@@ -269,6 +282,7 @@ else:
                 if word:
                     result.append(word.decode())
             return str(delim.join(result))
+
         return _slugify
 
     translit_long = translitcodec_slugify("translit/long")

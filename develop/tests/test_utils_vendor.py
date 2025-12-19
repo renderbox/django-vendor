@@ -20,7 +20,9 @@ def test_get_future_date_months_handles_month_rollover_and_leap_year():
 
 def test_get_future_date_days_adds_days():
     start = dt.datetime(2024, 5, 1, tzinfo=dt.timezone.utc)
-    assert get_future_date_days(start, 10) == dt.datetime(2024, 5, 11, tzinfo=dt.timezone.utc)
+    assert get_future_date_days(start, 10) == dt.datetime(
+        2024, 5, 11, tzinfo=dt.timezone.utc
+    )
 
 
 def test_force_str_if_proxy_converts_promise():

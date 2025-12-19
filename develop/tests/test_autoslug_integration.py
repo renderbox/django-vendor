@@ -1,5 +1,3 @@
-from django.test import TestCase
-
 from autoslug.models import (
     ModelWithAutoUpdateEnabled,
     ModelWithBooleanInUniqueWith,
@@ -7,15 +5,22 @@ from autoslug.models import (
     ModelWithUniqueSlugFK,
     SimpleModel,
 )
+from django.test import TestCase
 
 
 class AutoSlugFieldBehaviourTests(TestCase):
     def test_unique_with_foreign_key(self):
         base = SimpleModel.objects.create(name="owner")
-        first = ModelWithUniqueSlugFK.objects.create(name="hello world", simple_model=base)
-        second = ModelWithUniqueSlugFK.objects.create(name="hello world", simple_model=base)
+        first = ModelWithUniqueSlugFK.objects.create(
+            name="hello world", simple_model=base
+        )
+        second = ModelWithUniqueSlugFK.objects.create(
+            name="hello world", simple_model=base
+        )
         other_owner = SimpleModel.objects.create(name="other")
-        third = ModelWithUniqueSlugFK.objects.create(name="hello world", simple_model=other_owner)
+        third = ModelWithUniqueSlugFK.objects.create(
+            name="hello world", simple_model=other_owner
+        )
 
         self.assertEqual(first.slug, "hello-world")
         self.assertEqual(second.slug, "hello-world-2")
@@ -32,7 +37,9 @@ class AutoSlugFieldBehaviourTests(TestCase):
     def test_boolean_unique_with(self):
         true_obj = ModelWithBooleanInUniqueWith.objects.create(name="flag", bool=True)
         false_obj = ModelWithBooleanInUniqueWith.objects.create(name="flag", bool=False)
-        another_true = ModelWithBooleanInUniqueWith.objects.create(name="flag", bool=True)
+        another_true = ModelWithBooleanInUniqueWith.objects.create(
+            name="flag", bool=True
+        )
 
         self.assertEqual(true_obj.slug, "flag")
         self.assertEqual(false_obj.slug, "flag")

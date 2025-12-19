@@ -59,8 +59,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/renderbox/django-vendor"
+"Homepage" = "https://github.com/renderbox/django-vendor"
 "Bug Tracker" = "https://github.com/renderbox/django-vendor/issues"
+"Documentation" = "https://github.com/renderbox/django-vendor"
 
 [tool.setuptools.packages.find]
 where = ["src"]
