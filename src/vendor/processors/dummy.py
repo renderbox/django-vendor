@@ -1,6 +1,7 @@
 """
 Dummy Payment Processor for testing.
 """
+
 from .base import PaymentProcessorBase
 
 

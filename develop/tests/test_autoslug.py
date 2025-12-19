@@ -1,0 +1,337 @@
+# #  Copyright (c) 2018-present Justin Mayer
+# #  Copyright (c) 2008—2016 Andy Mikhailenko
+# #
+# #  This file is part of django-autoslug.
+# #
+# #  django-autoslug is free software under terms of the GNU Lesser
+# #  General Public License version 3 (LGPLv3) as published by the Free
+# #  Software Foundation. See the file README for copying conditions.
+# #
+
+# # python
+# import datetime
+# import sys
+# import unittest
+
+# # django
+# from django.db import IntegrityError
+# from django.test import TestCase
+# from django.test import override_settings
+# from django.utils.timezone import make_aware
+
+# # this package
+# from autoslug.models import *
+
+
+# PYPY_DATE_FUNC_SKIP_MSG = 'PyPy has troubles with Django date function + SQLite'
+
+
+# class AutoSlugFieldTestCase(TestCase):
+#     def test_simple_model(self):
+#         a = SimpleModel(name='test')
+#         a.save()
+#         assert a.slug == 'simplemodel'
+
+#     def test_unique_slug(self):
+#         greeting = 'Hello world!'
+#         a = ModelWithUniqueSlug(name=greeting)
+#         a.save()
+#         assert a.slug == 'hello-world'
+#         b = ModelWithUniqueSlug(name=greeting)
+#         b.save()
+#         assert b.slug == 'hello-world-2'
+
+#     def test_unique_slug_fk(self):
+#         sm1 = SimpleModel.objects.create(name='test')
+#         sm2 = SimpleModel.objects.create(name='test')
+#         sm3 = SimpleModel.objects.create(name='test2')
+#         greeting = 'Hello world!'
+#         a = ModelWithUniqueSlugFK.objects.create(name=greeting, simple_model=sm1)
+#         assert a.slug == 'hello-world'
+#         b = ModelWithUniqueSlugFK.objects.create(name=greeting, simple_model=sm2)
+#         assert b.slug == 'hello-world-2'
+#         c = ModelWithUniqueSlugFK.objects.create(name=greeting, simple_model=sm3)
+#         assert c.slug == 'hello-world'
+#         d = ModelWithUniqueSlugFK.objects.create(name=greeting, simple_model=sm1)
+#         assert d.slug == 'hello-world-3'
+#         sm3.name = 'test'
+#         sm3.save()
+#         assert c.slug == 'hello-world'
+#         c.save()
+#         assert c.slug == 'hello-world-4'
+
+#     def test_unique_slug_fk_null(self):
+#         "See issue #13"
+#         sm1 = SimpleModel.objects.create(name='test')
+#         a = ModelWithUniqueSlugFKNull.objects.create(name='test', simple_model=sm1)
+#         assert a.slug == 'test'
+
+#         b = ModelWithUniqueSlugFKNull.objects.create(name='test')
+#         assert b.slug == 'test'
+#         c = ModelWithUniqueSlugFKNull.objects.create(name='test', simple_model=sm1)
+#         assert c.slug == 'test-2'
+
+#     @unittest.skipIf('PyPy' in sys.version, PYPY_DATE_FUNC_SKIP_MSG)
+#     def test_unique_slug_date(self):
+#         a = ModelWithUniqueSlugDate(slug='test', date=datetime.date(2009, 9,  9))
+#         b = ModelWithUniqueSlugDate(slug='test', date=datetime.date(2009, 9,  9))
+#         c = ModelWithUniqueSlugDate(slug='test', date=datetime.date(2009, 9, 10))
+#         for m in a,b,c:
+#             m.save()
+#         assert a.slug == 'test'
+#         assert b.slug == 'test-2'
+#         assert c.slug == 'test'
+
+#     @unittest.skipIf('PyPy' in sys.version, PYPY_DATE_FUNC_SKIP_MSG)
+#     @override_settings(USE_TZ=True, DEFAULT_TIMEZONE='US/Pacific')
+#     def test_unique_slug_date_with_tz(self):
+#         try:
+#             import pytz
+#         except ImportError:
+#             raise unittest.SkipTest("pytz is not available, skipping test")
+#         same_day = make_aware(datetime.datetime(2009, 9,  9, 1), pytz.UTC)
+#         different_day = make_aware(datetime.datetime(2009, 9, 10, 1), pytz.UTC)
+#         a = ModelWithUniqueSlugDate(slug='test', date=same_day)
+#         b = ModelWithUniqueSlugDate(slug='test', date=same_day)
+#         c = ModelWithUniqueSlugDate(slug='test', date=different_day)
+#         for m in a,b,c:
+#             m.save()
+#         assert a.slug == 'test'
+#         assert b.slug == 'test-2'
+#         assert c.slug == 'test'
+
+#     @unittest.skipIf('PyPy' in sys.version, PYPY_DATE_FUNC_SKIP_MSG)
+#     def test_unique_slug_day(self):
+#         a = ModelWithUniqueSlugDay(slug='test', date=datetime.date(2009, 9,  9))
+#         b = ModelWithUniqueSlugDay(slug='test', date=datetime.date(2009, 9,  9))
+#         c = ModelWithUniqueSlugDay(slug='test', date=datetime.date(2009, 9, 10))
+#         for m in a,b,c:
+#             m.save()
+#         assert a.slug == 'test'
+#         assert b.slug == 'test-2'
+#         assert c.slug == 'test'
+
+#     @unittest.skipIf('PyPy' in sys.version, PYPY_DATE_FUNC_SKIP_MSG)
+#     def test_unique_slug_month(self):
+#         a = ModelWithUniqueSlugMonth(slug='test', date=datetime.date(2009, 9,  9))
+#         b = ModelWithUniqueSlugMonth(slug='test', date=datetime.date(2009, 9, 10))
+#         c = ModelWithUniqueSlugMonth(slug='test', date=datetime.date(2009, 10, 9))
+#         for m in a,b,c:
+#             m.save()
+#         assert a.slug == 'test'
+#         assert b.slug == 'test-2'
+#         assert c.slug == 'test'
+
+#     @unittest.skipIf('PyPy' in sys.version, PYPY_DATE_FUNC_SKIP_MSG)
+#     def test_unique_slug_year(self):
+#         a = ModelWithUniqueSlugYear(slug='test', date=datetime.date(2009, 9,  9))
+#         b = ModelWithUniqueSlugYear(slug='test', date=datetime.date(2009, 10, 9))
+#         c = ModelWithUniqueSlugYear(slug='test', date=datetime.date(2010, 9,  9))
+#         for m in a,b,c:
+#             m.save()
+#         assert a.slug == 'test'
+#         assert b.slug == 'test-2'
+#         assert c.slug == 'test'
+
+#     def test_long_name(self):
+#         long_name = 'x' * 250
+#         a = ModelWithLongName(name=long_name)
+#         a.save()
+#         assert len(a.slug) == 50    # original slug is cropped by field length
+
+#     def test_long_name_unique(self):
+#         long_name = 'x' * 250
+#         a = ModelWithLongNameUnique(name=long_name)
+#         a.save()
+#         assert len(a.slug) == 50    # original slug is cropped by field length
+#         b = ModelWithLongNameUnique(name=long_name)
+#         b.save()
+#         assert b.slug[-3:] == 'x-2'    # uniqueness is forced
+#         assert len(b.slug) == 50        # slug is cropped
+
+#     def test_nullable(self):
+#         a = ModelWithNullable.objects.create(name=None)
+#         assert a.slug is None
+
+#     def test_blank(self):
+#         a = ModelWithBlank.objects.create(name=None)
+#         assert a.slug is not None
+#         assert a.slug == ''
+
+#     def test_empty_slugify(self):
+#         a = ModelWithUniqueSlug.objects.create(name='?')
+#         assert a.slug
+
+#     def test_callable(self):
+#         a = ModelWithCallable.objects.create(name='larch')
+#         assert a.slug == 'the-larch'
+
+#     def test_callable_attr(self):
+#         a = ModelWithCallableAttr.objects.create(name='albatross')
+#         assert a.slug == 'spam-albatross-and-spam'
+
+#     def test_custom_primary_key(self):
+#         # just check if models are created without exceptions
+#         a = ModelWithCustomPrimaryKey.objects.create(custom_primary_key='a',
+#                                                      name='name used in slug')
+#         b = ModelWithCustomPrimaryKey.objects.create(custom_primary_key='b',
+#                                                      name='name used in slug')
+#         assert a.slug == 'name-used-in-slug'
+
+#     def test_custom_slugifier(self):
+#         a = ModelWithCustomSlugifier.objects.create(slug='hello world!')
+#         b = ModelWithCustomSlugifier.objects.create(slug='hello world!')
+#         assert b.slug == 'hello_world-2'
+
+#     def test_custom_separator(self):
+#         a = ModelWithCustomSeparator.objects.create(slug='hello world!')
+#         b = ModelWithCustomSeparator.objects.create(slug='hello world!')
+#         assert b.slug == 'hello-world_2'
+
+#     def test_self_reference(self):
+#         a = ModelWithReferenceToItself(slug='test')
+#         errmsg = (
+#             'Attribute ModelWithReferenceToItself.slug references itself '
+#             'in `unique_with`. Please use "unique=True" for this case.'
+#         )
+#         with self.assertRaises(ValueError, msg=errmsg):
+#             a.save()
+
+#     def test_wrong_referenced_field(self):
+#         a = ModelWithWrongReferencedField(slug='test')
+#         errmsg = (
+#             'Could not find attribute ModelWithWrongReferencedField.wrong_field '
+#             'referenced by ModelWithWrongReferencedField.slug (see constraint '
+#             '`unique_with`)'
+#         )
+#         with self.assertRaises(ValueError, msg=errmsg):
+#             a.save()
+
+#     def test_wrong_lookup_in_unique_with(self):
+#         a = ModelWithWrongLookupInUniqueWith(name='test', slug='test')
+#         errmsg = (
+#             'Could not resolve lookup "name__foo" in `unique_with`'
+#             ' of ModelWithWrongLookupInUniqueWith.slug'
+#         )
+#         with self.assertRaises(ValueError, msg=errmsg):
+#             a.save()
+
+#     def test_wrong_field_order(self):
+#         a = ModelWithWrongFieldOrder(slug='test')
+#         errmsg = (
+#             'Could not check uniqueness of ModelWithWrongFieldOrder.slug '
+#             'with respect to ModelWithWrongFieldOrder.date because the latter '
+#             'is empty. Please ensure that "slug" is declared *after* all '
+#             'fields listed in unique_with.'
+#         )
+
+#         with self.assertRaises(ValueError, msg=errmsg):
+#             a.save()
+
+#     def test_unique_with_boolean_field(self):
+#         a = ModelWithBooleanInUniqueWith.objects.create(name='test', bool=True)
+#         b = ModelWithBooleanInUniqueWith.objects.create(name='test', bool=False)
+#         c = ModelWithBooleanInUniqueWith.objects.create(name='test', bool=False)
+#         d = ModelWithBooleanInUniqueWith.objects.create(name='test', bool=True)
+
+#         self.assertEqual(a.slug, 'test')
+#         self.assertEqual(b.slug, 'test')
+#         self.assertEqual(c.slug, 'test-2')
+#         self.assertEqual(d.slug, 'test-2')
+
+#     def test_unique_with_boolean_field_false_true(self):
+#         a = ModelWithBooleanInUniqueWith.objects.create(name='test', bool=False)
+#         b = ModelWithBooleanInUniqueWith.objects.create(name='test', bool=True)
+#         c = ModelWithBooleanInUniqueWith.objects.create(name='test', bool=False)
+#         d = ModelWithBooleanInUniqueWith.objects.create(name='test', bool=True)
+
+#         self.assertEqual(a.slug, 'test')
+#         self.assertEqual(b.slug, 'test')
+#         self.assertEqual(c.slug, 'test-2')
+#         self.assertEqual(d.slug, 'test-2')
+
+#     def test_acceptable_empty_dependency(self):
+#         model = ModelWithAcceptableEmptyDependency
+#         instances = [model.objects.create(slug='hello') for x in range(0,2)]
+#         assert [x.slug for x in model.objects.all()] == ['hello', 'hello-2']
+
+#     def test_auto_update_enabled(self):
+#         a = ModelWithAutoUpdateEnabled(name='My name')
+#         a.save()
+#         assert a.slug == 'my-name'
+#         a.name = 'My new name'
+#         a.save()
+#         assert a.slug == 'my-new-name'
+
+#     @unittest.expectedFailure
+#     def test_slug_space_shared_integrity_error(self):
+#         a = ModelWithUniqueSlug(name='My name')
+#         a.save()
+#         b = ModelWithSlugSpaceSharedIntegrityError(name='My name')
+#         with self.assertRaises(IntegrityError, msg='column slug is not unique'):
+#             b.save()
+
+#     def test_shared_slug_space(self):
+#         a = SharedSlugSpace(name='My name')
+#         a.save()
+#         assert a.slug == 'my-name'
+#         b = ModelWithSlugSpaceShared(name='My name')
+#         b.save()
+#         assert b.slug == 'my-name-2'
+
+#     def test_autoslug_with_manager_name(self):
+#         a = NonDeletableModelWithUniqueSlug.objects.create(name='My name')
+#         self.assertEqual(a.slug, 'my-name')
+#         a.delete()
+#         b = NonDeletableModelWithUniqueSlug.objects.create(name='My name')
+#         self.assertEqual(b.slug, 'my-name-2')
+
+#     def test_deconstruct_with_manager(self):
+#         a = SharedSlugSpace(name='TestName')
+#         a.save()
+#         _, _, _, kwargs = a._meta.get_field('slug').deconstruct()
+#         self.assertNotIn('manager', kwargs)
+
+#     def test_crop_with_trailing_dash(self):
+#         long_name = 'xxxx ' * 20
+#         a = ModelWithLongName(name=long_name)
+#         a.save()
+#         assert len(a.slug) == 49        # slug cropped, last char removed
+#         assert a.slug[-4:] == 'xxxx'    # dash removed
+
+#         long_name = 'xxxx-' * 20
+#         a = ModelWithLongName(name=long_name)
+#         a.save()
+#         assert len(a.slug) == 49        # slug cropped, last char removed
+#         assert a.slug[-4:] == 'xxxx'    # dash removed
+
+#         long_name = 'xxxx_' * 20
+#         a = ModelWithLongName(name=long_name)
+#         a.save()
+#         assert len(a.slug) == 49        # slug cropped, last char removed
+#         assert a.slug[-4:] == 'xxxx'    # underscore removed
+
+#     def test_crop_with_trailing_dash_unique(self):
+#         long_name = 'xxxx ' * 20
+#         a = ModelWithLongNameUnique(name=long_name)
+#         a.save()
+#         assert len(a.slug) == 49        # slug cropped, last char removed
+#         assert a.slug[-4:] == 'xxxx'    # dash removed
+
+#         b = ModelWithLongNameUnique(name=long_name)
+#         b.save()
+#         assert len(b.slug) == 50         # slug cropped
+#         assert b.slug[-4:] == 'xx-2'    # unique without dash
+
+
+# class AutoSlugModelTranslationTestCase(TestCase):
+
+#     def test_regression_33(self):
+#         """
+#         https://bitbucket.org/neithere/django-autoslug/issues/33/
+
+#         Autoslug tries to populate localized AutoSlugField that is not marked
+#         as translatable by modeltranslation.
+#         """
+#         a = ModeltranslationOne(title='hello', description='foo')
+#         a.save()

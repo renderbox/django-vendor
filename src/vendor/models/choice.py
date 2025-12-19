@@ -1,6 +1,5 @@
-from django.utils.translation import gettext_lazy as _
 from django.db import models
-
+from django.utils.translation import gettext_lazy as _
 from iso4217 import Currency
 
 ###########
@@ -11,9 +10,13 @@ CURRENCY_CHOICES = [(c.name, c.value) for c in Currency]
 
 
 class InvoiceStatus(models.IntegerChoices):
-    CART     = 0, _("Cart")               # total = subtotal = sum(OrderItems.Offer.Price + Product.TaxClassifier). Avalara
-    CHECKOUT = 10, _("Checkout")      # total = subtotal + shipping + Tax against Addrr if any.
-    COMPLETE = 20, _("Complete")      # Payment Processor Completed Transaction.
+    CART = 0, _(
+        "Cart"
+    )  # total = subtotal = sum(OrderItems.Offer.Price + Product.TaxClassifier). Avalara
+    CHECKOUT = 10, _(
+        "Checkout"
+    )  # total = subtotal + shipping + Tax against Addrr if any.
+    COMPLETE = 20, _("Complete")  # Payment Processor Completed Transaction.
 
 
 class TermType(models.IntegerChoices):
@@ -27,10 +30,10 @@ class TermType(models.IntegerChoices):
 
 
 class RefundReasons(models.TextChoices):
-    DUPLICATE        = "duplicate", _("Duplicate")
-    FRAUDULENT       = "fraudulent", _("Fraudulent")
+    DUPLICATE = "duplicate", _("Duplicate")
+    FRAUDULENT = "fraudulent", _("Fraudulent")
     CUSTOMER_REQUEST = "requested_by_customer", _("Requested by Customer")
-    OTHER            = "other", _("Other")
+    OTHER = "other", _("Other")
 
 
 class PurchaseStatus(models.IntegerChoices):
@@ -43,30 +46,30 @@ class PurchaseStatus(models.IntegerChoices):
     REFUNDED = 35, _("Refunded")
     DECLINED = 40, _("Declined")
     ERROR = 45, _("Error")
-    VOID = 50, _('Void')
+    VOID = 50, _("Void")
 
 
 class SubscriptionStatus(models.IntegerChoices):
-    PAUSED = 10, _('Pause')
-    ACTIVE = 20, _('Active')
-    CANCELED = 30, _('Canceled')
-    SUSPENDED = 40, _('Suspended')
-    EXPIRED = 50, _('Expired')
+    PAUSED = 10, _("Pause")
+    ACTIVE = 20, _("Active")
+    CANCELED = 30, _("Canceled")
+    SUSPENDED = 40, _("Suspended")
+    EXPIRED = 50, _("Expired")
 
 
 class PaymentTypes(models.IntegerChoices):
-    CREDIT_CARD = 10, _('Credit Card')
-    BANK_ACCOUNT = 20, _('Bank Account')
-    PAY_PAL = 30, _('Pay Pal')
-    MOBILE = 40, _('Mobile')
+    CREDIT_CARD = 10, _("Credit Card")
+    BANK_ACCOUNT = 20, _("Bank Account")
+    PAY_PAL = 30, _("Pay Pal")
+    MOBILE = 40, _("Mobile")
 
 
 class TransactionTypes(models.IntegerChoices):
-    AUTHORIZE = 10, _('Authorize')
-    CAPTURE = 20, _('Capture')
-    SETTLE = 30, _('Settle')
-    VOID = 40, _('Void')
-    REFUND = 50, _('Refund')
+    AUTHORIZE = 10, _("Authorize")
+    CAPTURE = 20, _("Capture")
+    SETTLE = 30, _("Settle")
+    VOID = 40, _("Void")
+    REFUND = 50, _("Refund")
 
 
 class TermDetailUnits(models.IntegerChoices):
@@ -79,6 +82,7 @@ class Country(models.IntegerChoices):
     Following ISO 3166
     https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
     """
+
     AD = 20, _("Andorra")
     AE = 784, _("United Arab Emirates")
     AF = 4, _("Afghanistan")

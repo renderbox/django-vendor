@@ -2,21 +2,32 @@
 
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import migrations
-from vendor.models import Payment
+
+# from vendor.models import Payment
 
 
 def post_payment_status_change(apps, schema_editor):
-    ReceiptModel = apps.get_model('vendor', 'Receipt')
-    PaymentModel = apps.get_model('vendor', 'Payment')
+    ReceiptModel = apps.get_model("vendor", "Receipt")
+    PaymentModel = apps.get_model("vendor", "Payment")
 
     for payment in PaymentModel.objects.all():
-        try:    
-            receipt = ReceiptModel.objects.get(transaction=payment.transaction, created__year=payment.created.year, created__month=payment.created.month, created__day=payment.created.day)
+        try:
+            receipt = ReceiptModel.objects.get(
+                transaction=payment.transaction,
+                created__year=payment.created.year,
+                created__month=payment.created.month,
+                created__day=payment.created.day,
+            )
         except ObjectDoesNotExist:
             receipt = None
         except MultipleObjectsReturned:
-            receipt = ReceiptModel.objects.filter(transaction=payment.transaction, created__year=payment.created.year, created__month=payment.created.month, created__day=payment.created.day).first()
-        
+            receipt = ReceiptModel.objects.filter(
+                transaction=payment.transaction,
+                created__year=payment.created.year,
+                created__month=payment.created.month,
+                created__day=payment.created.day,
+            ).first()
+
         if receipt:
             r = ReceiptModel.objects.get(pk=receipt.pk)
             payment.status = r.status
@@ -27,10 +38,11 @@ def post_payment_status_change(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vendor', '0035_add_subscription_relation'),
+        ("vendor", "0035_add_subscription_relation"),
     ]
 
     operations = [
-        migrations.RunPython(post_payment_status_change, reverse_code=migrations.RunPython.noop),
+        migrations.RunPython(
+            post_payment_status_change, reverse_code=migrations.RunPython.noop
+        ),
     ]
-

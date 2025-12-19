@@ -6,13 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vendor', '0007_offer_list_bundle_items'),
+        ("vendor", "0007_offer_list_bundle_items"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='offer',
-            name='allow_multiple',
-            field=models.BooleanField(default=False, help_text='Confirm the user wants to buy multiples of the product where typically there is just one purchased at a time.', verbose_name='Allow Multiple Purchase'),
+            model_name="offer",
+            name="allow_multiple",
+            field=models.BooleanField(
+                default=False,
+                help_text="Confirm the user wants to buy multiples of the product where typically there is just one purchased at a time.",  # noqa: E501
+                verbose_name="Allow Multiple Purchase",
+            ),
         ),
     ]

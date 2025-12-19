@@ -6,23 +6,50 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vendor', '0039_customerprofile_meta'),
+        ("vendor", "0039_customerprofile_meta"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='payment',
-            name='provider',
-            field=models.CharField(blank=True, max_length=30, null=True, verbose_name='Payment Provider'),
+            model_name="payment",
+            name="provider",
+            field=models.CharField(
+                blank=True, max_length=30, null=True, verbose_name="Payment Provider"
+            ),
         ),
         migrations.AlterField(
-            model_name='payment',
-            name='status',
-            field=models.IntegerField(choices=[(1, 'Queued'), (2, 'Active'), (10, 'Authorized'), (15, 'Captured'), (20, 'Settled'), (30, 'Canceled'), (35, 'Refunded'), (40, 'Declined'), (45, 'Error'), (50, 'Void')], default=0, verbose_name='Status'),
+            model_name="payment",
+            name="status",
+            field=models.IntegerField(
+                choices=[
+                    (1, "Queued"),
+                    (2, "Active"),
+                    (10, "Authorized"),
+                    (15, "Captured"),
+                    (20, "Settled"),
+                    (30, "Canceled"),
+                    (35, "Refunded"),
+                    (40, "Declined"),
+                    (45, "Error"),
+                    (50, "Void"),
+                ],
+                default=0,
+                verbose_name="Status",
+            ),
         ),
         migrations.AlterField(
-            model_name='subscription',
-            name='status',
-            field=models.IntegerField(choices=[(10, 'Pause'), (20, 'Active'), (30, 'Canceled'), (40, 'Suspended'), (50, 'Expired')], default=0, verbose_name='Status'),
+            model_name="subscription",
+            name="status",
+            field=models.IntegerField(
+                choices=[
+                    (10, "Pause"),
+                    (20, "Active"),
+                    (30, "Canceled"),
+                    (40, "Suspended"),
+                    (50, "Expired"),
+                ],
+                default=0,
+                verbose_name="Status",
+            ),
         ),
     ]

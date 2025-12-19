@@ -1,5 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from integrations.models import Credential
+
 from vendor.forms import AuthorizeNetIntegrationForm, StripeIntegrationForm
 
 
@@ -11,7 +12,7 @@ class BaseIntegration(object):
 
     def __init__(self, site):
         if not self.NAME:
-            raise Exception('NAME is required for all BaseIntegration instances')
+            raise Exception("NAME is required for all BaseIntegration instances")
 
         self.site = site
         self.instance = self.get_instance()
