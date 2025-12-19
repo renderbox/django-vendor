@@ -29,4 +29,8 @@ jobs:
         run: bump2version patch
 
       - name: Push changes and tag
-        run: git push origin HEAD --follow-tags
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
+          git push origin HEAD --follow-tags
