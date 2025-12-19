@@ -25,8 +25,8 @@ User = get_user_model()
 VALID_CARD_NUMBERS = [
     "4242424242424242",  # visa
     "5555555555554444",  # mastercard
-    # "378282246310005",   # amex
-    # "6011111111111117",  # discover
+    "378282246310005",   # amex
+    "6011111111111117",  # discover
 ]
 
 # INVALID_CARD_NUMBERS (strings for form validation)
@@ -825,6 +825,7 @@ class StripeProcessorTests(TestCase):
         self.processor.stripe_delete_object(self.processor.stripe.Customer, stripe_id)
         self.assertTrue(stripe_id)
 
+    # TODO: Come back and revist these tests.
     # def test_sync_offers(self):
     #     signals.post_save.disconnect(receiver=signals.post_save, sender=CustomerProfile)
     #     now = timezone.now()
