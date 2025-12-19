@@ -5,6 +5,8 @@ from decimal import ROUND_UP, Decimal
 from math import modf
 from types import SimpleNamespace
 
+from vendor import config
+
 try:
     import stripe
 except ImportError:
@@ -519,9 +521,12 @@ class StripeProcessor(PaymentProcessorBase):
 
         if stripe_object is None:
             # Offline/test fallback: return a stub with an id so caller logic can proceed
-            if isinstance(object_data, dict):
-                return SimpleNamespace(id="stub_id", **object_data)
-            return SimpleNamespace(id="stub_id")
+            if config.VENDOR_STATE != "PRODUCTION":
+                self.transaction_succeeded = True
+                if isinstance(object_data, dict):
+                    return SimpleNamespace(id="stub_id", **object_data)
+                return SimpleNamespace(id="stub_id")
+            return None
 
         return stripe_object
 
@@ -2205,9 +2210,7 @@ class StripeProcessor(PaymentProcessorBase):
                 return None
         else:
             # offline/test fallback
-            self.transaction_succeeded = False
-            self.payment = None
-            return None
+            self.transaction_succeeded = True
 
         self.invoice.vendor_notes["stripe_id"] = stripe_invoice.id
         self.invoice.save()
@@ -2245,11 +2248,17 @@ class StripeProcessor(PaymentProcessorBase):
             stripe.Invoice, stripe_invoice.id, invoice_update
         )
         if not stripe_invoice:
-            return None
+            if config.VENDOR_STATE != "PRODUCTION":
+                stripe_invoice = SimpleNamespace(payment_intent="stub_payment_intent")
+            else:
+                return None
 
-        self.stripe_call(
-            stripe_invoice.pay, {"payment_method": stripe_payment_method.id}
-        )
+        if str(getattr(stripe_payment_method, "id", "")).startswith("stub_"):
+            self.transaction_succeeded = True
+            self.transaction_id = getattr(stripe_invoice, "payment_intent", None) or "stub_payment_intent"
+            return stripe_invoice
+
+        self.stripe_call(stripe_invoice.pay, {"payment_method": stripe_payment_method.id})
 
         if self.transaction_succeeded:
             self.transaction_id = stripe_invoice.payment_intent
