@@ -482,8 +482,8 @@ class CreditCardForm(PaymentFrom):
         expire_year = cleaned_data.get("expire_year")
 
         if not self.expiration_date_valid(expire_month, expire_year):
-            del cleaned_data["expire_month"]
-            del cleaned_data["expire_year"]
+            cleaned_data.pop("expire_month", None)
+            cleaned_data.pop("expire_year", None)
 
         return cleaned_data
 
@@ -516,6 +516,9 @@ class CreditCardForm(PaymentFrom):
         return cvv_number
 
     def expiration_date_valid(self, expire_month, expire_year):
+        if not expire_month or not expire_year:
+            return False
+
         year = int(expire_year)
         month = int(expire_month)
 

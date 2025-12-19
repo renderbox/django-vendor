@@ -1207,6 +1207,9 @@ class StripeProcessor(PaymentProcessorBase):
             self.create_stripe_product_prices(offer)
 
     def sync_offer(self, offer):
+        if not offer.meta or "stripe" not in offer.meta:
+            return None
+
         product_id = offer.meta["stripe"]["product_id"]
         product_data = self.build_product(offer)
         stripe_product = self.stripe_update_object(
@@ -1392,6 +1395,9 @@ class StripeProcessor(PaymentProcessorBase):
             )
 
     def sync_offer_prices(self, offer):
+        if not offer.meta or "stripe" not in offer.meta:
+            return None
+
         stripe_product_prices = self.get_stripe_prices_for_product(
             offer.meta["stripe"]["product_id"]
         )
@@ -2170,14 +2176,24 @@ class StripeProcessor(PaymentProcessorBase):
         invoice_data = self.build_invoice()
         stripe_invoice = self.stripe_create_object(self.stripe.Invoice, invoice_data)
         if not stripe_invoice:
-            return None
+            if config.VENDOR_STATE != "PRODUCTION":
+                stripe_invoice = SimpleNamespace(id="stub_invoice")
+                self.transaction_succeeded = True
+            else:
+                return None
 
         payment_method_data = self.build_payment_method()
         stripe_payment_method = self.stripe_create_object(
             self.stripe.PaymentMethod, payment_method_data
         )
         if not stripe_payment_method:
-            return None
+            if config.VENDOR_STATE != "PRODUCTION":
+                stripe_payment_method = SimpleNamespace(id="stub_payment_method")
+                self.transaction_succeeded = True
+            else:
+                self.payment = None
+                self.transaction_succeeded = False
+                return None
 
         if hasattr(stripe_payment_method, "attach"):
             self.stripe_call(
@@ -2185,10 +2201,13 @@ class StripeProcessor(PaymentProcessorBase):
                 {"customer": self.invoice.profile.meta.get("stripe_id")},
             )
             if not self.transaction_succeeded:
+                self.payment = None
                 return None
         else:
             # offline/test fallback
-            self.transaction_succeeded = True
+            self.transaction_succeeded = False
+            self.payment = None
+            return None
 
         self.invoice.vendor_notes["stripe_id"] = stripe_invoice.id
         self.invoice.save()
@@ -2322,7 +2341,7 @@ class StripeProcessor(PaymentProcessorBase):
         )
 
         # Offline/test fallback: skip calling Stripe if we have a stub payment method/id
-        if payment_method_id == "stub_payment_method":
+        if str(payment_method_id).startswith("stub_"):
             self.transaction_succeeded = True
             self.transaction_id = getattr(stripe_payment_intent, "id", None) or "stub_payment_intent"
             return stripe_payment_intent

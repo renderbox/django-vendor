@@ -445,15 +445,24 @@ class PaymentProcessorBase(object):
         if self.invoice.get_one_time_transaction_order_items():
             self.create_payment_model()
             self.process_payment()
-            self.save_payment_transaction_result()
-            self.update_invoice_status(InvoiceStatus.COMPLETE)
-            if self.is_transaction_and_invoice_complete():
-                self.invoice.save_discounts_vendor_notes()
-                self.create_receipts(
-                    self.invoice.get_one_time_transaction_order_items()
-                )
+            if not self.transaction_succeeded:
+                if self.payment:
+                    try:
+                        self.payment.delete()
+                    except Exception:
+                        pass
+                self.payment = None
+                self.update_invoice_status(InvoiceStatus.CART)
+            elif self.payment is not None:
+                self.save_payment_transaction_result()
+                self.update_invoice_status(InvoiceStatus.COMPLETE)
+                if self.is_transaction_and_invoice_complete():
+                    self.invoice.save_discounts_vendor_notes()
+                    self.create_receipts(
+                        self.invoice.get_one_time_transaction_order_items()
+                    )
 
-        if self.invoice.get_recurring_order_items():
+        if self.invoice.get_recurring_order_items() and self.transaction_succeeded:
             self.process_subscriptions()
 
         vendor_post_authorization.send(sender=self.__class__, invoice=self.invoice)
