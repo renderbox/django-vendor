@@ -61,19 +61,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Set up PostgreSQL
-        uses: ankane/setup-postgres@v1
-        with:
-          postgres-version: 15
-          database: test_db
-          # username: runner
-
-      - name: Set Postgres Password
-        run: |
-          psql -U runner -d test_db -c "ALTER USER runner WITH PASSWORD 'postgres';"
-        env:
-          PGPASSWORD: ""
-
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
