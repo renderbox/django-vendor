@@ -308,7 +308,7 @@ def modeltranslation_update_slugs(sender, **kwargs):
     slugs = {}
 
     for field in instance._meta.fields:
-        if type(field) != AutoSlugField:
+        if type(field) is not AutoSlugField:
             continue
         if not field.populate_from:
             continue

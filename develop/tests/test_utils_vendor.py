@@ -1,6 +1,5 @@
 import datetime as dt
 
-import pytest
 from django.utils.translation import gettext_lazy
 
 from vendor.utils import (

@@ -257,7 +257,7 @@ def crop_slug(field, slug):
 
 
 try:
-    import translitcodec
+    import translitcodec  # noqa F401
 except ImportError:
     pass
 else:

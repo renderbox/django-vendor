@@ -1,4 +1,4 @@
-from datetime import timedelta, timezone
+from datetime import timedelta
 
 from django.contrib.sites.models import Site
 from django.test import TestCase

@@ -6,7 +6,6 @@ from core.models import Product
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
-from django.db.models import Q, signals
 from django.test import Client, TestCase
 from django.utils import timezone
 from siteconfigs.models import SiteConfigModel

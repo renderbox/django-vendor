@@ -1,5 +1,3 @@
-import pytest
-
 from vendor.processors.stripe import StripeQueryBuilder
 
 
