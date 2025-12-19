@@ -13,19 +13,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0  # ensures full history for tag operations
 
       - name: Bump version and tag
         uses: renderbox/github-actions/bump-version@main
         with:
           version-part: patch
           python-version: '3.12'
-          github-pat: ${{ secrets.GH_PAT }}
 
       - name: Build Python Package
+        if: success()  # only run if bump succeeded
         uses: renderbox/github-actions/build-python-package@main
         with:
           python-version: '3.12'
 
       - name: Publish to PyPI
+        if: success()  # only run if build succeeded
         uses: renderbox/github-actions/publish-to-pypi@main
