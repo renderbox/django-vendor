@@ -72,14 +72,3 @@ profile = "black"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-
-
-[tool.bumpversion]
-current_version = "0.5.0"
-commit = true
-tag = true
-
-[[tool.bumpversion.files]]
-filename = "pyproject.toml"
-search = 'version = "{current_version}"'
-replace = 'version = "{new_version}"'
