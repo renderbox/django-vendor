@@ -1,56 +1,31 @@
-# .github/workflows/release.yml
-name: Build and Release
+name: Build, Bump, and Release
 
 on:
   push:
     branches: ["master"]
 
 jobs:
-  bumpversion:
+  release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PAT }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Bump version and tag
+        uses: renderbox/github-actions/bump-version@main
         with:
-          python-version: "3.11"
+          version-part: patch
+          python-version: '3.12'
+          github-pat: ${{ secrets.GH_PAT }}
 
-      - name: Install bump2version
-        run: pip install bump2version
-
-      - name: Configure Git identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Bump version
-        run: bump2version patch
-
-      - name: Push changes and tag
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
-          git push origin HEAD --follow-tags
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       - name: Build Python Package
         uses: renderbox/github-actions/build-python-package@main
         with:
           python-version: '3.12'
 
-  publish:
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      contents: read
-      id-token: write  # Needed for OIDC
-    steps:
       - name: Publish to PyPI
         uses: renderbox/github-actions/publish-to-pypi@main
