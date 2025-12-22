@@ -2,8 +2,8 @@
 
 ## Contents
 
-- [About](modules/about.md)
-- [Installation](modules/installation.md)
+- [About](about.md)
+- [Installation](installation.md)
 - [Models](modules/models.md)
 - [Views](modules/views.md)
 
