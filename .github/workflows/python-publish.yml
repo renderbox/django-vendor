@@ -27,6 +27,13 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Publish to PyPI
-        if: success()  # only run if build succeeded
-        uses: renderbox/github-actions/publish-to-pypi@main
+      - name: Download built package artifacts
+        if: success()
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish to PyPI (OIDC)
+        if: success()
+        uses: pypa/gh-action-pypi-publish@release/v1
