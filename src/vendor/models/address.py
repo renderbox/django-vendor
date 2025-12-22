@@ -4,12 +4,11 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from .choice import Country
+from .choice import Country, get_country_default_value
 from .profile import CustomerProfile
 
-# Can be overridden in the settings.py with a differnt IntegerChoices object
-# It should still maintain the ISO-3166 codes for the country numbers and Enumerated keys
-COUNTRY_DEFAULT = getattr(settings, "VENDOR_COUNTRY_DEFAULT", Country.US)
+# Can be overridden in settings.py with ISO-3166 country code values.
+COUNTRY_DEFAULT_VALUE = get_country_default_value()
 
 
 #####################
@@ -64,7 +63,7 @@ class Address(models.Model):
     country = models.IntegerField(
         _("Country/Region"),
         choices=Country.choices,
-        default=Country[COUNTRY_DEFAULT].value,
+        default=COUNTRY_DEFAULT_VALUE,
     )
     postal_code = models.CharField(_("Postal Code"), max_length=16, blank=True)
 

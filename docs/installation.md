@@ -76,6 +76,9 @@ VENDOR_COUNTRY_CHOICE = ["US", "CA"]
 VENDOR_COUNTRY_DEFAULT = "US"
 ```
 
+Note: `VENDOR_COUNTRY_DEFAULT` must be a string country code (for example `"US"`),
+not a `Country` enum value.
+
 ## URLs
 
 Wire up the user, admin, and API endpoints (examples shown):

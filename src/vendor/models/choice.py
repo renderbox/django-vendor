@@ -1,3 +1,6 @@
+import warnings
+
+from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from iso4217 import Currency
@@ -138,6 +141,32 @@ class Country(models.IntegerChoices):
     CZ = 203, _("Czech Republic")
     DE = 276, _("Germany")
     DJ = 262, _("Djibouti")
+
+
+def get_country_default_value():
+    """
+    Normalize VENDOR_COUNTRY_DEFAULT to a Country enum value.
+    """
+    value = getattr(settings, "VENDOR_COUNTRY_DEFAULT", "US")
+
+    if isinstance(value, Country):
+        return value.value
+
+    if isinstance(value, int):
+        try:
+            return Country(value).value
+        except ValueError:
+            pass
+
+    if isinstance(value, str):
+        if value in Country.__members__:
+            return Country[value].value
+
+    warnings.warn(
+        'VENDOR_COUNTRY_DEFAULT is invalid or missing. Set VENDOR_COUNTRY_DEFAULT = "US".',
+        RuntimeWarning,
+    )
+    return Country.US.value
     DK = 208, _("Denmark")
     DM = 212, _("Dominica")
     DO = 214, _("Dominican Republic")
