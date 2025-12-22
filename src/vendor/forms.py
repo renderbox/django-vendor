@@ -27,13 +27,14 @@ from vendor.models.choice import (
     SubscriptionStatus,
     TermType,
     USAStateChoices,
+    get_country_default_value,
 )
 from vendor.utils import get_site_from_request
 
 Product = apps.get_model(VENDOR_PRODUCT_MODEL)
 
 COUNTRY_CHOICE = getattr(settings, "VENDOR_COUNTRY_CHOICE", Country)
-COUNTRY_DEFAULT = getattr(settings, "VENDOR_COUNTRY_DEFAULT", Country.US)
+COUNTRY_DEFAULT_VALUE = get_country_default_value()
 
 
 def get_available_country_choices():
@@ -186,7 +187,7 @@ class AddressForm(forms.ModelForm):
         if "instance" in kwargs:
             self.initial["country"] = kwargs["instance"].country
         else:
-            self.initial["country"] = Country[COUNTRY_DEFAULT].value
+            self.initial["country"] = COUNTRY_DEFAULT_VALUE
 
 
 class AccountInformationForm(AddressForm):

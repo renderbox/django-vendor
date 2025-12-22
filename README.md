@@ -14,6 +14,11 @@ Goals of the project:
 - Handle everything from the point of starting a purchase, until payment is complete.
 - BYOPM, Bring Your Own Product Model. Subclass your Product Model off of our base model and add whatever you want. You are responsible for things like Catalogs and Presenting products to the user, we handle the purchasing of the products and generate a receipt you can look for.
 
+## Docs
+
+The docs can be found here: [Documentation](docs/index.md)
+
+
 ## For Developers
 
 _NOTE: It is reconmended that you first setup a virtual environment._

@@ -6,6 +6,11 @@ from django.db import migrations
 def rename_stripe_processor_site_settings(apps, schema_editor):
     SiteConfigModel = apps.get_model("siteconfigs", "SiteConfigModel")
 
+    # Check if any records exist in the table
+    if not SiteConfigModel.objects.exists():
+        print("No records found in SiteConfigModel. Skipping migration.")
+        return
+
     for site_setting in SiteConfigModel.objects.filter(
         key="vendor.config.PaymentProcessorSiteConfig",
         value__payment_processor="stripe_processor.StripeProcessor",
@@ -19,6 +24,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("vendor", "0043_invoice_global_discount"),
+        ("siteconfigs", "0001_initial"),  # makes sure that siteconfigs app is loaded
     ]
 
     operations = [
