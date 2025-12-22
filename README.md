@@ -1,6 +1,6 @@
 [![Python Tests](https://github.com/renderbox/django-vendor/actions/workflows/python-test.yml/badge.svg)](https://github.com/renderbox/django-vendor/actions/workflows/python-test.yml)
 
-[![Django Vendor Develop](https://github.com/renderbox/django-vendor/actions/workflows/vendor_develop.yml/badge.svg)](https://github.com/renderbox/django-vendor/actions/workflows/vendor_develop.yml)
+[![Build, Bump, and Release](https://github.com/renderbox/django-vendor/actions/workflows/python-publish.yml/badge.svg)](https://github.com/renderbox/django-vendor/actions/workflows/python-publish.yml)
 
 # Django Vendor
 
