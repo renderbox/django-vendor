@@ -1,6 +1,6 @@
 [![Python Tests](https://github.com/renderbox/django-vendor/actions/workflows/python-test.yml/badge.svg)](https://github.com/renderbox/django-vendor/actions/workflows/python-test.yml)
 
-[![Django Vendor Develop](https://github.com/renderbox/django-vendor/actions/workflows/vendor_develop.yml/badge.svg)](https://github.com/renderbox/django-vendor/actions/workflows/vendor_develop.yml)
+[![Build, Bump, and Release](https://github.com/renderbox/django-vendor/actions/workflows/python-publish.yml/badge.svg)](https://github.com/renderbox/django-vendor/actions/workflows/python-publish.yml)
 
 # Django Vendor
 
@@ -13,6 +13,11 @@ Goals of the project:
 - Drop in to existing Django Sites without requiring changes to how Django works (flow, not fight)
 - Handle everything from the point of starting a purchase, until payment is complete.
 - BYOPM, Bring Your Own Product Model. Subclass your Product Model off of our base model and add whatever you want. You are responsible for things like Catalogs and Presenting products to the user, we handle the purchasing of the products and generate a receipt you can look for.
+
+## Docs
+
+The docs can be found here: [Documentation](docs/index.md)
+
 
 ## For Developers
 

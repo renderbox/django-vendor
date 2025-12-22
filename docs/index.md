@@ -2,13 +2,9 @@
 
 ## Contents
 
-- [About](modules/about.md)
-- [Installation](modules/installation.md)
+- [About](about.md)
+- [Installation](installation.md)
+- [REST API](restapi.md)
 - [Models](modules/models.md)
 - [Views](modules/views.md)
-
-## Indices and Tables
-
-- General Index
-- Module Index
-- Search
+- [REST API](modules/restapi.md)
