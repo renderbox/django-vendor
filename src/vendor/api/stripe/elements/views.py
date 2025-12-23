@@ -60,102 +60,6 @@ class StripeEvents(TextChoices):
     CHARGE_DISPUTE_CLOSED = "charge.dispute.closed", _("Charge Dispute Closed")
 
 
-def process_stripe_invoice_line_items_payment_succeded(stripe_invoice, site):
-    processor = StripeProcessor(site)
-
-    customer_profile, stripe_customer = (
-        processor.get_customer_profile_and_stripe_customer(stripe_invoice.customer)
-    )
-
-    stripe_charge = processor.stripe_get_object(
-        processor.stripe.Charge, stripe_invoice.charge
-    )
-    stripe_payment_method = processor.stripe_get_object(
-        processor.stripe.PaymentMethod, stripe_charge.payment_method
-    )
-
-    offers = processor.get_offers_from_invoice_line_items(stripe_invoice.lines["data"])
-
-    for offer in offers:
-        processor.invoice, created = (
-            processor.get_or_create_invoice_from_stripe_invoice(
-                stripe_invoice, offer, customer_profile
-            )
-        )
-
-    payment = processor.get_or_create_payment_from_stripe_payment_and_charge(
-        processor.invoice, stripe_payment_method, stripe_charge
-    )
-
-    if payment.status == PurchaseStatus.SETTLED:
-        processor.create_single_purchase_receipts(
-            processor.invoice, payment, stripe_charge
-        )
-
-
-def process_stripe_invoice_subscription_payment_succeded(stripe_invoice, site):
-    processor = StripeProcessor(site)
-
-    paid_date = timezone.datetime.fromtimestamp(
-        stripe_invoice.status_transitions.paid_at, tz=timezone.utc
-    )
-    payment_status = PurchaseStatus.SETTLED
-
-    if stripe_invoice.charge:
-        stripe_charge = processor.stripe_get_object(
-            processor.stripe.Charge, stripe_invoice.charge
-        )
-        payment_status = processor.get_payment_status(
-            stripe_charge.status, stripe_charge.refunded
-        )
-
-    stripe_subscription = processor.stripe_get_object(
-        processor.stripe.Subscription, stripe_invoice.subscription
-    )
-    subscription = processor.get_subscription(stripe_subscription)
-
-    if not subscription:
-        msg = f"Stripe Subscription Invoice was not processed: stripe_invoice: {stripe_invoice}"
-        logger.error(msg)
-        return HttpResponse(status=200, content=msg)
-
-    stripe_product = processor.stripe_get_object(
-        processor.stripe.Product, stripe_subscription.plan.product
-    )
-    offer = processor.get_offer_from_stripe_product(stripe_product)
-
-    customer_profile, stripe_customer = (
-        processor.get_customer_profile_and_stripe_customer(stripe_invoice.customer)
-    )
-
-    if not offer or not customer_profile:
-        msg = f"Stripe Subscription Invoice was not processed, stripe_invoice: {stripe_invoice.id} offer: {offer}, customer_profile: {customer_profile} stripe_customer: {stripe_customer}"  # noqa: E501
-        logger.error(msg)
-        return HttpResponse(status=200, content=msg)
-
-    processor.invoice, created = processor.get_or_create_invoice_from_stripe_invoice(
-        stripe_invoice, offer, customer_profile
-    )
-    processor.renew_subscription(
-        subscription,
-        stripe_invoice.charge,
-        payment_status,
-        payment_success=True,
-        submitted_date=paid_date,
-    )
-
-    # Remove any lingering payments.
-    for payment in processor.invoice.payments.filter(transaction__in=[None, ""]):
-        if receipt := payment.get_receipt():
-            receipt.delete()
-        payment.delete()
-
-    return HttpResponse(
-        status=200,
-        content=f"Subscription: {stripe_subscription.id} renewed invoice: {processor.invoice.pk}",
-    )
-
-
 class StripeBaseAPI(View):
     """Base webhook view that validates Stripe signatures and parses events."""
 
@@ -218,9 +122,10 @@ class StripeWebhookEventHandler(StripeBaseAPI):
     """
 
     def post(self, request, *args, **kwargs):
-        site = get_site_from_request(self.request)
+        self.site = get_site_from_request(self.request)
+        self.processor = StripeProcessor(self.site)
 
-        if not self.is_valid_post(site):
+        if not self.is_valid_post(self.site):
             logger.error("StripeWebhookEventHandler error: invalid post")
             return HttpResponse(
                 status=200, content="StripeWebhookEventHandler error: invalid post"
@@ -232,7 +137,7 @@ class StripeWebhookEventHandler(StripeBaseAPI):
             logger.info(f"StripeWebhookEventHandler: unhandled event {event_type}")
             return HttpResponse(status=200)
 
-        return handler(site)
+        return handler()
 
     def get_event_handler(self, event_type):
         handlers = {
@@ -258,24 +163,130 @@ class StripeWebhookEventHandler(StripeBaseAPI):
         }
         return handlers.get(event_type)
 
-    def event_invoice_payment_succeeded(self, site):
+    def event_invoice_payment_succeeded(self):
+        """Handle invoice.payment_succeeded event from Stripe."""
         stripe_invoice = self.event.data.object
 
+        # Single Payment for One-Time Purchase (No Subscription) Success
         if "subscription" not in stripe_invoice or not stripe_invoice["subscription"]:
-            return process_stripe_invoice_line_items_payment_succeded(
-                stripe_invoice, site
+            return self._process_stripe_invoice_line_items_payment_succeded(
+                stripe_invoice
             )
 
-        return process_stripe_invoice_subscription_payment_succeded(
-            stripe_invoice, site
+        # Subscription Payment Success
+        return self._process_stripe_invoice_subscription_payment_succeded(
+            stripe_invoice
         )
 
-    def event_invoice_upcoming(self, site):
-        processor = StripeProcessor(site)
+    def _process_stripe_invoice_line_items_payment_succeded(self, stripe_invoice):
+
+        customer_profile, stripe_customer = (
+            self.processor.get_customer_profile_and_stripe_customer(
+                stripe_invoice.customer
+            )
+        )
+
+        stripe_charge = self.processor.stripe_get_object(
+            self.processor.stripe.Charge, stripe_invoice.charge
+        )
+        stripe_payment_method = self.processor.stripe_get_object(
+            self.processor.stripe.PaymentMethod, stripe_charge.payment_method
+        )
+
+        offers = self.processor.get_offers_from_invoice_line_items(
+            stripe_invoice.lines["data"]
+        )
+
+        for offer in offers:
+            self.processor.invoice, created = (
+                self.processor.get_or_create_invoice_from_stripe_invoice(
+                    stripe_invoice, offer, customer_profile
+                )
+            )
+
+        payment = self.processor.get_or_create_payment_from_stripe_payment_and_charge(
+            self.processor.invoice, stripe_payment_method, stripe_charge
+        )
+
+        if payment.status == PurchaseStatus.SETTLED:
+            self.processor.create_single_purchase_receipts(
+                self.processor.invoice, payment, stripe_charge
+            )
+
+    def _process_stripe_invoice_subscription_payment_succeded(self, stripe_invoice):
+        paid_date = timezone.datetime.fromtimestamp(
+            stripe_invoice.status_transitions.paid_at, tz=timezone.utc
+        )
+        payment_status = PurchaseStatus.SETTLED
+
+        if stripe_invoice.charge:
+            stripe_charge = self.processor.stripe_get_object(
+                self.processor.stripe.Charge, stripe_invoice.charge
+            )
+            payment_status = self.processor.get_payment_status(
+                stripe_charge.status, stripe_charge.refunded
+            )
+
+        stripe_subscription = self.processor.stripe_get_object(
+            self.processor.stripe.Subscription, stripe_invoice.subscription
+        )
+        subscription = self.processor.get_subscription(stripe_subscription)
+
+        if not subscription:
+            msg = f"Stripe Subscription Invoice was not processed: stripe_invoice: {stripe_invoice}"
+            logger.error(msg)
+            return HttpResponse(status=200, content=msg)
+
+        stripe_product = self.processor.stripe_get_object(
+            self.processor.stripe.Product, stripe_subscription.plan.product
+        )
+        offer = self.processor.get_offer_from_stripe_product(stripe_product)
+
+        customer_profile, stripe_customer = (
+            self.processor.get_customer_profile_and_stripe_customer(
+                stripe_invoice.customer
+            )
+        )
+
+        if not offer or not customer_profile:
+            msg = f"Stripe Subscription Invoice was not processed, stripe_invoice: {stripe_invoice.id} offer: {offer}, customer_profile: {customer_profile} stripe_customer: {stripe_customer}"  # noqa: E501
+            logger.error(msg)
+            return HttpResponse(status=200, content=msg)
+
+        self.processor.invoice, created = (
+            self.processor.get_or_create_invoice_from_stripe_invoice(
+                stripe_invoice, offer, customer_profile
+            )
+        )
+        self.processor.renew_subscription(
+            subscription,
+            stripe_invoice.charge,
+            payment_status,
+            payment_success=True,
+            submitted_date=paid_date,
+        )
+
+        # Remove any lingering payments.
+        for payment in self.processor.invoice.payments.filter(
+            transaction__in=[None, ""]
+        ):
+            if receipt := payment.get_receipt():
+                receipt.delete()
+            payment.delete()
+
+        return HttpResponse(
+            status=200,
+            content=f"Subscription: {stripe_subscription.id} renewed invoice: {self.processor.invoice.pk}",
+        )
+
+    def event_invoice_upcoming(self):
+        """Handle invoice.upcoming event from Stripe."""
         stripe_invoice = self.event.data.object
 
         customer_profile, stripe_customer = (
-            processor.get_customer_profile_and_stripe_customer(stripe_invoice.customer)
+            self.processor.get_customer_profile_and_stripe_customer(
+                stripe_invoice.customer
+            )
         )
         if not customer_profile or not stripe_customer:
             logger.error(
@@ -292,15 +303,16 @@ class StripeWebhookEventHandler(StripeBaseAPI):
         )
         return HttpResponse(status=200)
 
-    def event_invoice_payment_failed(self, site):
+    def event_invoice_payment_failed(self):
         stripe_invoice = self.event.data.object
         paid_date = timezone.datetime.fromtimestamp(
             stripe_invoice.effective_at, tz=timezone.utc
         )
-        processor = StripeProcessor(site)
 
         customer_profile, stripe_customer = (
-            processor.get_customer_profile_and_stripe_customer(stripe_invoice.customer)
+            self.processor.get_customer_profile_and_stripe_customer(
+                stripe_invoice.customer
+            )
         )
         if not customer_profile:
             logger.error(
@@ -337,12 +349,12 @@ class StripeWebhookEventHandler(StripeBaseAPI):
         invoice.vendor_notes = {}
         invoice.vendor_notes["stripe_id"] = stripe_invoice.stripe_id
         invoice.save()
-        processor.invoice = invoice
-        processor.subscription_payment_failed(subscription, stripe_invoice.charge)
+        self.processor.invoice = invoice
+        self.processor.subscription_payment_failed(subscription, stripe_invoice.charge)
 
         return HttpResponse(status=200)
 
-    def event_source_expired(self, site):
+    def event_source_expired(self):
         stripe_card = self.event.data.object
         stripe_customer_id = stripe_card["customer"]
         if not stripe_customer_id:
@@ -360,55 +372,53 @@ class StripeWebhookEventHandler(StripeBaseAPI):
 
         email = customer_profile.user.email
         logger.info(
-            f"StripeWebhookEventHandler: sending customer_source_expiring signal for site {site} and email {email}"
+            f"StripeWebhookEventHandler: sending customer_source_expiring signal for site {self.site} and email {email}"  # noqa: E501
         )
 
-        processor = StripeProcessor(site)
-        processor.customer_card_expired(site, email)
+        self.processor.customer_card_expired(self.site, email)
 
         return HttpResponse(status=200)
 
-    def event_payment_intent_succeeded(self, site):
+    def event_payment_intent_succeeded(self):
         logger.info(
             f"StripeWebhookEventHandler: payment_intent.succeeded {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
-    def event_payment_intent_failed(self, site):
+    def event_payment_intent_failed(self):
         logger.info(
             f"StripeWebhookEventHandler: payment_intent.payment_failed {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
-    def event_charge_succeeded(self, site):
+    def event_charge_succeeded(self):
         logger.info(
             f"StripeWebhookEventHandler: charge.succeeded {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
-    def event_charge_refunded(self, site):
+    def event_charge_refunded(self):
         logger.info(
             f"StripeWebhookEventHandler: charge.refunded {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
-    def event_charge_refund_updated(self, site):
+    def event_charge_refund_updated(self):
         refund = self.event.data.object
         logger.info(f"StripeWebhookEventHandler: charge.refund.updated {refund.id}")
         return HttpResponse(status=200)
 
-    def event_customer_updated(self, site):
+    def event_customer_updated(self):
         logger.info(
             f"StripeWebhookEventHandler: customer.updated {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
-    def event_subscription_created(self, site):
+    def event_subscription_created(self):
         stripe_subscription = self.event.data.object
-        processor = StripeProcessor(site)
 
         customer_profile, _stripe_customer = (
-            processor.get_customer_profile_and_stripe_customer(
+            self.processor.get_customer_profile_and_stripe_customer(
                 stripe_subscription.customer
             )
         )
@@ -418,17 +428,16 @@ class StripeWebhookEventHandler(StripeBaseAPI):
             )
             return HttpResponse(status=200)
 
-        processor.get_or_create_subscription_from_stripe_subscription(
+        self.processor.get_or_create_subscription_from_stripe_subscription(
             customer_profile, stripe_subscription
         )
         return HttpResponse(status=200)
 
-    def event_subscription_updated(self, site):
+    def event_subscription_updated(self):
         stripe_subscription = self.event.data.object
-        processor = StripeProcessor(site)
 
         customer_profile, _stripe_customer = (
-            processor.get_customer_profile_and_stripe_customer(
+            self.processor.get_customer_profile_and_stripe_customer(
                 stripe_subscription.customer
             )
         )
@@ -439,66 +448,65 @@ class StripeWebhookEventHandler(StripeBaseAPI):
             return HttpResponse(status=200)
 
         subscription, _created = (
-            processor.get_or_create_subscription_from_stripe_subscription(
+            self.processor.get_or_create_subscription_from_stripe_subscription(
                 customer_profile, stripe_subscription
             )
         )
         if subscription:
-            subscription.status = processor.get_subscription_status(
+            subscription.status = self.processor.get_subscription_status(
                 stripe_subscription.status
             )
             subscription.save()
 
         return HttpResponse(status=200)
 
-    def event_subscription_deleted(self, site):
+    def event_subscription_deleted(self):
         stripe_subscription = self.event.data.object
-        processor = StripeProcessor(site)
 
-        subscription = processor.get_subscription(stripe_subscription)
+        subscription = self.processor.get_subscription(stripe_subscription)
         if not subscription:
             logger.error(
                 f"StripeWebhookEventHandler: subscription not found {stripe_subscription.id}"
             )
             return HttpResponse(status=200)
 
-        subscription.status = processor.get_subscription_status("canceled")
+        subscription.status = self.processor.get_subscription_status("canceled")
         subscription.save()
 
         return HttpResponse(status=200)
 
-    def event_invoice_finalized(self, site):
+    def event_invoice_finalized(self):
         logger.info(
             f"StripeWebhookEventHandler: invoice.finalized {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
-    def event_invoice_payment_action_required(self, site):
+    def event_invoice_payment_action_required(self):
         logger.info(
             f"StripeWebhookEventHandler: invoice.payment_action_required {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
-    def event_subscription_trial_will_end(self, site):
+    def event_subscription_trial_will_end(self):
         stripe_subscription = self.event.data.object
         logger.info(
             f"StripeWebhookEventHandler: trial will end for subscription {stripe_subscription.id}"
         )
         return HttpResponse(status=200)
 
-    def event_setup_intent_succeeded(self, site):
+    def event_setup_intent_succeeded(self):
         logger.info(
             f"StripeWebhookEventHandler: setup_intent.succeeded {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
-    def event_charge_dispute_created(self, site):
+    def event_charge_dispute_created(self):
         logger.info(
             f"StripeWebhookEventHandler: charge.dispute.created {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
-    def event_charge_dispute_closed(self, site):
+    def event_charge_dispute_closed(self):
         logger.info(
             f"StripeWebhookEventHandler: charge.dispute.closed {self.event.data.object.id}"
         )

@@ -967,6 +967,27 @@ class StripeProcessor(PaymentProcessorBase):
 
         return customer_profile
 
+    def get_provider_customer(self, stripe_customer_id):
+        """Gets CustomerProfile and Stripe Customer using Stripe Customer ID
+
+        Args:
+            stripe_customer_id: Stripe Customer ID
+
+        Returns:
+            CustomerProfile Instance or None
+            Stripe Customer Object or None
+        """
+        provider_customer = None
+
+        provider_customer = self.stripe_get_object(
+            self.stripe.Customer, stripe_customer_id
+        )
+        if not provider_customer:
+            logger.info(f"Stripe Customer was not found: {stripe_customer_id}")
+            return provider_customer
+
+        return provider_customer
+
     def get_customer_profile_and_stripe_customer(self, stripe_customer_id):
         """Gets CustomerProfile and Stripe Customer using Stripe Customer ID
 
@@ -977,14 +998,10 @@ class StripeProcessor(PaymentProcessorBase):
             CustomerProfile Instance or None
             Stripe Customer Object or None
         """
-        stripe_customer = None
+        stripe_customer = self.get_provider_customer(stripe_customer_id)
         customer_profile = None
 
-        stripe_customer = self.stripe_get_object(
-            self.stripe.Customer, stripe_customer_id
-        )
         if not stripe_customer:
-            logger.info(f"Stripe Customer was not found: {stripe_customer_id}")
             return customer_profile, stripe_customer
 
         customer_profile = self.get_customer_profile(stripe_customer)
