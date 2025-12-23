@@ -9,7 +9,7 @@ from django.test import RequestFactory
 
 stripe = pytest.importorskip("stripe")
 
-from vendor.api.v1.stripe.views.elements import (  # noqa: E402
+from vendor.api.v1.stripe.elements.views import (  # noqa: E402
     StripeCreatePaymentIntent,
     StripeEvents,
     StripeWebhookEventHandler,
@@ -73,9 +73,15 @@ def test_stripe_create_payment_intent_success(db_with_fixtures, monkeypatch):
         )
 
     monkeypatch.setattr(StripeProcessor, "processor_setup", noop_processor_setup)
-    monkeypatch.setattr(StripeProcessor, "validate_invoice_customer_in_stripe", lambda self: None)
-    monkeypatch.setattr(StripeProcessor, "validate_invoice_offer_in_stripe", lambda self: None)
-    monkeypatch.setattr(StripeProcessor, "create_payment_intent", stub_create_payment_intent)
+    monkeypatch.setattr(
+        StripeProcessor, "validate_invoice_customer_in_stripe", lambda self: None
+    )
+    monkeypatch.setattr(
+        StripeProcessor, "validate_invoice_offer_in_stripe", lambda self: None
+    )
+    monkeypatch.setattr(
+        StripeProcessor, "create_payment_intent", stub_create_payment_intent
+    )
 
     request = request_factory.post(
         "/stripe/payment-intent/",
