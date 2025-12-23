@@ -205,9 +205,9 @@ class BaseProcessorTests(TestCase):
         self.existing_invoice.update_totals()
         self.assertEqual(self.existing_invoice.total, self.base_processor.amount())
 
-    def test_to_stripe_valid_unit(self):
-        self.assertEqual(self.base_processor.to_stripe_valid_unit(0), 0)
-        self.assertEqual(self.base_processor.to_stripe_valid_unit(10), 1000)
+    def test_float_to_hundreds(self):
+        self.assertEqual(self.base_processor.float_to_hundreds(0), 0)
+        self.assertEqual(self.base_processor.float_to_hundreds(10), 1000)
 
     def test_amount_without_subscriptions_success(self):
         self.base_processor.invoice.add_offer(self.subscription_offer)
