@@ -118,7 +118,11 @@ class StripeBaseAPI(View):
 
 class StripeWebhookEventHandler(StripeBaseAPI):
     """
-    Single Stripe webhook handler that routes events to specific handlers.
+    A single Stripe webhook handler that routes events to specific handlers.
+
+    NOTE: Many of the handlers are stubs that log the event for future extension.
+    The key implemented handlers reconcile invoice payments for one-time purchases
+    and subscription renewals, as well as handling failed subscription payments.
     """
 
     def post(self, request, *args, **kwargs):
@@ -164,7 +168,12 @@ class StripeWebhookEventHandler(StripeBaseAPI):
         return handlers.get(event_type)
 
     def event_invoice_payment_succeeded(self):
-        """Handle invoice.payment_succeeded event from Stripe."""
+        """
+        Reconcile successful invoice payments into local records.
+
+        Stripe sends this when an invoice is paid. We either create receipts for
+        one-time purchases or renew subscriptions tied to the invoice.
+        """
         stripe_invoice = self.event.data.object
 
         # Single Payment for One-Time Purchase (No Subscription) Success
@@ -280,7 +289,14 @@ class StripeWebhookEventHandler(StripeBaseAPI):
         )
 
     def event_invoice_upcoming(self):
-        """Handle invoice.upcoming event from Stripe."""
+        """
+        Respond to Stripe's heads-up that a charge is about to happen.
+
+        Stripe sends invoice.upcoming shortly before attempting to bill a
+        subscription. We use it to resolve the customer profile and emit the
+        `stripe_invoice_upcoming` signal so downstream code can notify the user
+        or run pre-billing checks.
+        """
         stripe_invoice = self.event.data.object
 
         customer_profile, stripe_customer = (
@@ -304,6 +320,13 @@ class StripeWebhookEventHandler(StripeBaseAPI):
         return HttpResponse(status=200)
 
     def event_invoice_payment_failed(self):
+        """
+        Handle a failed subscription billing attempts from Stripe.
+
+        Stripe sends invoice.payment_failed when a recurring charge cannot be
+        collected. We create a local invoice tied to the offer so support or
+        automated flows can detect the failure and follow up with the customer.
+        """
         stripe_invoice = self.event.data.object
         paid_date = timezone.datetime.fromtimestamp(
             stripe_invoice.effective_at, tz=timezone.utc
@@ -355,6 +378,13 @@ class StripeWebhookEventHandler(StripeBaseAPI):
         return HttpResponse(status=200)
 
     def event_source_expired(self):
+        """
+        Handle expiring customer payment sources.
+
+        Stripe emits customer.source.expired when a saved card is expiring or
+        removed. We use it to find the local customer and trigger the processor
+        hook that can notify them to update payment details.
+        """
         stripe_card = self.event.data.object
         stripe_customer_id = stripe_card["customer"]
         if not stripe_customer_id:
@@ -380,41 +410,81 @@ class StripeWebhookEventHandler(StripeBaseAPI):
         return HttpResponse(status=200)
 
     def event_payment_intent_succeeded(self):
+        """
+        Acknowledge a completed PaymentIntent for one-off payments.
+
+        This confirms Stripe captured funds successfully. We currently log the
+        outcome and can extend it to reconcile local payments.
+        """
         logger.info(
             f"StripeWebhookEventHandler: payment_intent.succeeded {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
     def event_payment_intent_failed(self):
+        """
+        Capture failed PaymentIntent attempts for follow-up.
+
+        Indicates the payment method failed. We log it and can later trigger a
+        retry or customer notification flow.
+        """
         logger.info(
             f"StripeWebhookEventHandler: payment_intent.payment_failed {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
     def event_charge_succeeded(self):
+        """
+        Record successful charges outside invoice-driven flows.
+
+        Useful for legacy or custom charge paths; we log and can reconcile later.
+        """
         logger.info(
             f"StripeWebhookEventHandler: charge.succeeded {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
     def event_charge_refunded(self):
+        """
+        Observe refunds to keep local records aligned.
+
+        Stripe emits this on full or partial refunds. We log and can later
+        update payment and access records.
+        """
         logger.info(
             f"StripeWebhookEventHandler: charge.refunded {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
     def event_charge_refund_updated(self):
+        """
+        Track updates to an existing refund.
+
+        Used for refund status changes (partial or failed) and future syncing.
+        """
         refund = self.event.data.object
         logger.info(f"StripeWebhookEventHandler: charge.refund.updated {refund.id}")
         return HttpResponse(status=200)
 
     def event_customer_updated(self):
+        """
+        Observe customer record changes from Stripe.
+
+        This lets us sync email or metadata changes if needed. Currently we
+        log for visibility and can extend to persist updates.
+        """
         logger.info(
             f"StripeWebhookEventHandler: customer.updated {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
     def event_subscription_created(self):
+        """
+        Create or sync a subscription when Stripe provisions it.
+
+        Stripe emits this when a subscription is first created. We ensure a
+        matching local Subscription exists so renewals and access tracking work.
+        """
         stripe_subscription = self.event.data.object
 
         customer_profile, _stripe_customer = (
@@ -434,6 +504,12 @@ class StripeWebhookEventHandler(StripeBaseAPI):
         return HttpResponse(status=200)
 
     def event_subscription_updated(self):
+        """
+        Sync subscription status changes from Stripe.
+
+        This covers state transitions like trialing, past_due, or paused so the
+        local subscription remains accurate for access control.
+        """
         stripe_subscription = self.event.data.object
 
         customer_profile, _stripe_customer = (
@@ -461,6 +537,11 @@ class StripeWebhookEventHandler(StripeBaseAPI):
         return HttpResponse(status=200)
 
     def event_subscription_deleted(self):
+        """
+        Mark local subscriptions as canceled when Stripe removes them.
+
+        Keeps local status aligned with Stripe-initiated cancellations.
+        """
         stripe_subscription = self.event.data.object
 
         subscription = self.processor.get_subscription(stripe_subscription)
@@ -476,18 +557,33 @@ class StripeWebhookEventHandler(StripeBaseAPI):
         return HttpResponse(status=200)
 
     def event_invoice_finalized(self):
+        """
+        Note when Stripe finalizes an invoice.
+
+        This indicates invoice totals are locked; useful for audits or alerts.
+        """
         logger.info(
             f"StripeWebhookEventHandler: invoice.finalized {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
     def event_invoice_payment_action_required(self):
+        """
+        Note when Stripe requires customer action to complete payment.
+
+        Typically indicates SCA/3DS is needed; useful for prompting the user.
+        """
         logger.info(
             f"StripeWebhookEventHandler: invoice.payment_action_required {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
     def event_subscription_trial_will_end(self):
+        """
+        Warn that a subscription trial is nearing completion.
+
+        Used to trigger reminders or upgrade prompts before billing begins.
+        """
         stripe_subscription = self.event.data.object
         logger.info(
             f"StripeWebhookEventHandler: trial will end for subscription {stripe_subscription.id}"
@@ -495,18 +591,34 @@ class StripeWebhookEventHandler(StripeBaseAPI):
         return HttpResponse(status=200)
 
     def event_setup_intent_succeeded(self):
+        """
+        Confirm a payment method was saved for future use.
+
+        Stripe emits this after a successful SetupIntent; useful for onboarding
+        or enabling subscription starts.
+        """
         logger.info(
             f"StripeWebhookEventHandler: setup_intent.succeeded {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
     def event_charge_dispute_created(self):
+        """
+        Record that a chargeback/dispute was opened.
+
+        Useful for alerting staff or restricting access pending resolution.
+        """
         logger.info(
             f"StripeWebhookEventHandler: charge.dispute.created {self.event.data.object.id}"
         )
         return HttpResponse(status=200)
 
     def event_charge_dispute_closed(self):
+        """
+        Record dispute resolution.
+
+        Used to clear alerts or restore access once resolved.
+        """
         logger.info(
             f"StripeWebhookEventHandler: charge.dispute.closed {self.event.data.object.id}"
         )
