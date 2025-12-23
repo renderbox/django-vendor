@@ -1,5 +1,5 @@
 """
-Base Payment processor used by all derived processors.
+Shared payment processor behaviors used by all vendor payment backends.
 """
 
 import logging
@@ -36,7 +36,10 @@ vendor_customer_card_expiring = django.dispatch.Signal()
 # BASE CLASS
 class PaymentProcessorBase(object):
     """
-    Setup the core functionality for all processors.
+    Base class for payment processors.
+
+    Provides common lifecycle hooks, transaction tracking, and helpers for
+    creating payments, receipts, and subscriptions.
     """
 
     API_ENDPOINT = None
@@ -60,7 +63,10 @@ class PaymentProcessorBase(object):
 
     def __init__(self, site, invoice=None):
         """
-        This should not be overriden.  Override one of the methods it calls if you need to.
+        Initialize processor state and run setup hooks.
+
+        Subclasses should override `processor_setup` or other hooks rather than
+        this initializer.
         """
         if invoice:
             self.set_invoice(invoice)
@@ -71,9 +77,10 @@ class PaymentProcessorBase(object):
 
     def set_api_endpoint(self):
         """
-        Sets the API endpoint for debugging or production.It is dependent on the VENDOR_STATE
-        enviornment variable. Default value is DEBUG for the VENDOR_STATE this function
-        should be overwrote upon necesity of each Payment Processor
+        Set the provider API endpoint based on environment state.
+
+        Subclasses can override this to set different endpoints for debug vs
+        production modes.
         """
         if config.VENDOR_STATE == "DEBUG":
             self.API_ENDPOINT = None
@@ -82,8 +89,10 @@ class PaymentProcessorBase(object):
 
     def processor_setup(self, site):
         """
-        This is for setting up any of the settings needed for the payment processing.
-        For example, here you would set the
+        Configure provider-specific settings for the given site.
+
+        This is the main customization hook for subclasses (API keys, client
+        setup, etc.).
         """
         pass
 
@@ -95,7 +104,9 @@ class PaymentProcessorBase(object):
 
     def create_payment_model(self, amount=None):
         """
-        Create payment instance with base information to track payment submissions
+        Create a Payment model for the current transaction attempt.
+
+        This captures billing details and initial status before a gateway call.
         """
         if not amount:
             amount = self.invoice.total
@@ -134,7 +145,7 @@ class PaymentProcessorBase(object):
 
     def save_payment_transaction_result(self):
         """
-        Saves the result output of any transaction.
+        Persist transaction results onto the Payment model.
         """
         self.payment.success = self.transaction_succeeded
         self.payment.transaction = self.transaction_id
@@ -143,9 +154,10 @@ class PaymentProcessorBase(object):
 
     def get_payment_info(self, account_number=None, full_name=None):
         """
-        Each processor should implement their own method, but they should
-        all return at least the account_number and full_name as a dictionary.
-        eg:
+        Return normalized payment info for storage/logging.
+
+        Subclasses should override to return gateway-specific data, but must
+        include at least account_number and full_name.
         """
         return {"account_number": account_number, "full_name": full_name}
 
@@ -163,7 +175,7 @@ class PaymentProcessorBase(object):
 
     def save_subscription_transaction_result(self):
         """
-        Saves the result output of any transaction.
+        Persist subscription transaction results and status.
         """
         if self.transaction_succeeded:
             self.subscription.status = SubscriptionStatus.ACTIVE
@@ -176,9 +188,9 @@ class PaymentProcessorBase(object):
 
     def update_invoice_status(self, new_status):
         """
-        Updates the Invoice status if the transaction was submitted.
-        Otherwise it returns the invoice to the Cart. The error is saved in
-        the payment for the transaction.
+        Update the invoice status based on transaction success.
+
+        Failed payments reset the invoice back to Cart.
         """
         if self.transaction_succeeded:
             self.invoice.status = new_status
@@ -189,8 +201,7 @@ class PaymentProcessorBase(object):
 
     def is_transaction_and_invoice_complete(self):
         """
-        If payment was successful and invoice status is complete returns True. Otherwise
-        false and no receipts should be created.
+        Return True when a successful transaction finalized the invoice.
         """
         if self.transaction_succeeded and self.invoice.status == InvoiceStatus.COMPLETE:
             return True

@@ -1,3 +1,7 @@
+"""
+Stripe payment processor implementation and Stripe-specific helpers.
+"""
+
 import json
 import logging
 import warnings
@@ -249,8 +253,10 @@ class StripeQueryBuilder:
 
 class StripeProcessor(PaymentProcessorBase):
     """
-    Implementation of Stripe SDK
-    https://self.stripe.com/docs/api/authentication?lang=python
+    Stripe implementation of the vendor payment processor interface.
+
+    Handles customer/offer sync, invoice processing, and subscriptions using
+    the Stripe SDK and site-specific credentials.
     """
 
     TRANSACTION_SUCCESS_MESSAGE = "message"
