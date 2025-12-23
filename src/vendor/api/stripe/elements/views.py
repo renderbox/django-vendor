@@ -165,7 +165,18 @@ class StripeWebhookEventHandler(StripeBaseAPI):
             StripeEvents.CHARGE_DISPUTE_CREATED: self.event_charge_dispute_created,
             StripeEvents.CHARGE_DISPUTE_CLOSED: self.event_charge_dispute_closed,
         }
-        return handlers.get(event_type)
+
+        return handlers.get(event_type, self.event_unhandled)
+
+    def event_unhandled(self):
+        event_type = getattr(self.event, "type", None)
+        event_id = getattr(self.event, "id", None)
+        logger.info(
+            "StripeWebhookEventHandler: unhandled event %s id=%s",
+            event_type,
+            event_id,
+        )
+        return HttpResponse(status=200)
 
     def event_invoice_payment_succeeded(self):
         """
