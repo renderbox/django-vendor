@@ -126,6 +126,8 @@ class RemoveFromCartView(View):
     """
 
     def post(self, request, *args, **kwargs):
+        # TODO: The slug or uuid should come in a POST body instead of URL
+        # TODO: Add and Remove from cart should use CRUD handling properly
         offer = get_object_or_404(
             Offer, site=get_site_from_request(request), slug=self.kwargs["slug"]
         )
@@ -158,6 +160,7 @@ class RemoveFromCartView(View):
 
 
 class PaymentGatewaySubscriptionCancelView(LoginRequiredMixin, View):
+    # TODO: this should ideally be a DELETE request after confirmation, a POST will request a confirmation of deletion
     success_url = reverse_lazy("vendor:customer-subscriptions")
 
     def post(self, request, *args, **kwargs):

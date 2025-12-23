@@ -7,10 +7,10 @@ app_name = "vendor_api"
 urlpatterns = [
     # Shared API Endpoints
     path(
-        "cart/add/<slug:slug>/", api_views.AddToCartView.as_view(), name="add-to-cart"
+        "cart/<slug:slug>/add/", api_views.AddToCartView.as_view(), name="add-to-cart"
     ),
     path(
-        "cart/remove/<slug:slug>/",
+        "cart/<slug:slug>/remove/",
         api_views.RemoveFromCartView.as_view(),
         name="remove-from-cart",
     ),
