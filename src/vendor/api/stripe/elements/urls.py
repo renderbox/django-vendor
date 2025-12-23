@@ -1,6 +1,6 @@
 from django.urls import path
 
-from vendor.api.v1.stripe.elements.views import (
+from vendor.api.stripe.elements.views import (
     StripeCreatePaymentIntent,
     StripeWebhookEventHandler,
 )

@@ -9,7 +9,7 @@ from django.test import RequestFactory
 
 stripe = pytest.importorskip("stripe")
 
-from vendor.api.v1.stripe.elements.views import (  # noqa: E402
+from vendor.api.stripe.elements.views import (  # noqa: E402
     StripeCreatePaymentIntent,
     StripeEvents,
     StripeWebhookEventHandler,
