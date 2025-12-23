@@ -409,7 +409,8 @@ class PaymentProcessorBase(object):
         # TODO: Need to check currency to determin decimal places.
         return Decimal(number).quantize(Decimal(".00"))
 
-    def to_stripe_valid_unit(self, number):
+    def float_to_hundreds(self, number):
+        """Takes a float number and converts it to an integer in hundreds (x * 100)."""
         if number > 0:
             return int(number) * 100
         return 0

@@ -2195,7 +2195,7 @@ class StripeProcessor(PaymentProcessorBase):
 
     def create_charge(self):
         charge_data = {
-            "amount": self.to_stripe_valid_unit(
+            "amount": self.float_to_hundreds(
                 self.invoice.get_one_time_transaction_total()
             ),
             "currency": self.invoice.currency,
