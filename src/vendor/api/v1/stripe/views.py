@@ -34,14 +34,31 @@ class StripeEvents(TextChoices):
     )
     INVOICE_UPCOMING = "invoice.upcoming", _("Upcoming Invoice")
     PAYMENT_INTENT_SUCCEDED = "payment_intent.succeeded", _("Payment Succeeded")
+    PAYMENT_INTENT_PAYMENT_FAILED = "payment_intent.payment_failed", _(
+        "Payment Intent Failed"
+    )
     CHARGE_SUCCEEDED = "charge.succeeded", _("Charge Succeeded")
+    CHARGE_REFUNDED = "charge.refunded", _("Charge Refunded")
+    CHARGE_REFUND_UPDATED = "charge.refund.updated", _("Charge Refund Updated")
     SOURCE_EXPIRED = "customer.source.expired", _("Source Expired")
+    CUSTOMER_UPDATED = "customer.updated", _("Customer Updated")
+    SUBSCRIPTION_UPDATED = "customer.subscription.updated", _("Subscription Updated")
+    SUBSCRIPTION_CREATED = "customer.subscription.created", _("Subscription Created")
+    SUBSCRIPTION_DELETED = "customer.subscription.deleted", _("Subscription Deleted")
     SUBSCRIPTION_TRIAL_END = "customer.subscription.trial_will_end", _(
         "Trial Period Will End"
     )
+    INVOICE_FINALIZED = "invoice.finalized", _("Invoice Finalized")
+    INVOICE_PAYMENT_ACTION_REQUIRED = "invoice.payment_action_required", _(
+        "Invoice Payment Action Required"
+    )
+    SETUP_INTENT_SUCCEEDED = "setup_intent.succeeded", _("Setup Intent Succeeded")
+    CHARGE_DISPUTE_CREATED = "charge.dispute.created", _("Charge Dispute Created")
+    CHARGE_DISPUTE_CLOSED = "charge.dispute.closed", _("Charge Dispute Closed")
 
 
 class StripeBaseAPI(View):
+    """Base webhook view that validates Stripe signatures and parses events."""
 
     def __init__(self, **kwargs):
         self.stripe_event = None  # Variable used to store the webhooks event data.
@@ -93,8 +110,12 @@ class StripeBaseAPI(View):
         return True
 
 
+# ### Legacy Stripe APIs ### #
+
+
 # Warning StripeSubscriptionInvoicePaid will removed in favor of StripeInvoicePaymentSuccededEvent
 class StripeSubscriptionInvoicePaid(StripeBaseAPI):
+    """Handle legacy subscription invoice.paid events and renew subscriptions."""
 
     def post(self, request, *args, **kwargs):
         stripe_invoice = self.event.data.object
@@ -188,6 +209,7 @@ class StripeSubscriptionInvoicePaid(StripeBaseAPI):
 
 
 class StripeSubscriptionPaymentFailed(StripeBaseAPI):
+    """Handle subscription invoice.payment_failed events and mark payment failure."""
 
     def post(self, request, *args, **kwargs):
         site = get_site_from_request(request)
@@ -271,6 +293,7 @@ class StripeSubscriptionPaymentFailed(StripeBaseAPI):
 
 # Warning StripeInvoicePaid will removed in favor of StripeInvoicePaymentSuccededEvent
 class StripeInvoicePaid(StripeBaseAPI):
+    """Handle legacy invoice.payment_succeeded events for subscriptions."""
 
     def post(self, request, *args, **kwargs):
         site = get_site_from_request(self.request)
@@ -356,6 +379,7 @@ class StripeInvoicePaid(StripeBaseAPI):
 
 
 class StripeCardExpiring(StripeBaseAPI):
+    """Handle customer.source.expired events and notify via processor hooks."""
 
     def post(self, request, *args, **kwargs):
         site = get_site_from_request(self.request)
@@ -402,6 +426,7 @@ class StripeCardExpiring(StripeBaseAPI):
 
 
 class StripeSyncObjects(View):
+    """Trigger a manual sync of Stripe objects into vendor models."""
 
     def get(self, request, *args, **kwargs):
         site = get_site_from_request(request)
@@ -511,6 +536,8 @@ def process_stripe_invoice_subscription_payment_succeded(stripe_invoice, site):
 
 
 class StripeInvoicePaymentSuccededEvent(StripeBaseAPI):
+    """Handle invoice.payment_succeeded events for line items and subscriptions."""
+
     def post(self, request, *args, **kwargs):
         site = get_site_from_request(self.request)
 
@@ -544,6 +571,8 @@ class StripeInvoicePaymentSuccededEvent(StripeBaseAPI):
 
 
 class StripeInvoiceUpcomingEvent(StripeBaseAPI):
+    """Handle invoice.upcoming events and emit the invoice upcoming signal."""
+
     def post(self, request, *args, **kwargs):
         site = get_site_from_request(request)
         processor = StripeProcessor(site)
