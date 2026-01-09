@@ -55,32 +55,32 @@ class ModelOfferTests(TestCase):
     def test_get_current_price_is_msrp(self):
         offer = Offer.objects.get(pk=4)
         price = offer.current_price("mxn")
-        self.assertEqual(price, 21.12)
+        self.assertEqual(price, 2112)
 
     def test_get_current_price_is_msrp_default(self):
         offer = Offer.objects.get(pk=4)
         price = offer.current_price()
-        self.assertEqual(price, 25.2)
+        self.assertEqual(price, 2520)
 
     def test_get_current_price_has_only_start_date(self):
         offer = Offer.objects.get(pk=2)
-        self.assertEqual(offer.current_price(), 75.0)
+        self.assertEqual(offer.current_price(), 7500)
 
     def test_get_current_price_is_between_start_end_date(self):
         offer = Offer.objects.get(pk=3)
-        self.assertEqual(offer.current_price(), 25.2)
+        self.assertEqual(offer.current_price(), 2520)
 
     def test_get_current_price_acording_to_priority(self):
         offer = Offer.objects.get(pk=3)
-        self.assertEqual(offer.current_price(), 25.2)
+        self.assertEqual(offer.current_price(), 2520)
 
     def test_offer_negative_discount(self):
         offer = Offer.objects.get(pk=3)
-        self.assertEqual(get_display_decimal(offer.discount()), 0.00)
+        self.assertEqual(get_display_decimal(offer.discount()), 0)
 
     def test_offer_discount(self):
         offer = Offer.objects.get(pk=1)
-        self.assertEqual(get_display_decimal(offer.discount()), 10.00)
+        self.assertEqual(get_display_decimal(offer.discount()), 999)
 
     def test_offer_description_from_product(self):
         offer = Offer.objects.get(pk=3)

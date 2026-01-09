@@ -325,7 +325,7 @@ class BaseProcessorTests(TestCase):
         subscription = Subscription.objects.get(pk=1)
         offer = Offer.objects.get(pk=4)
         price = Price.objects.create(
-            offer=offer, cost=89.99, currency="usd", start_date=timezone.now()
+            offer=offer, cost=8999, currency="usd", start_date=timezone.now()
         )
         offer.prices.add(price)
 

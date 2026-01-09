@@ -6,7 +6,6 @@ import json
 import logging
 import warnings
 from decimal import ROUND_UP, Decimal
-from math import modf
 from types import SimpleNamespace
 
 from vendor import config
@@ -437,18 +436,12 @@ class StripeProcessor(PaymentProcessorBase):
         if decimal == 0:
             return 0
 
-        fraction_part, whole_part = modf(decimal)
-        rounded_fraction = round(fraction_part, 2)
+        dec_value = Decimal(str(decimal))
+        if dec_value == dec_value.to_integral_value():
+            return int(dec_value)
 
-        whole_str = str(whole_part).split(".")[0]
-        fraction_str = str(rounded_fraction).split(".")[1][:2]
-
-        if len(fraction_str) < 2:
-            fraction_str = fraction_str + "0"
-
-        stripe_amount = int("".join([whole_str, fraction_str]))
-
-        return stripe_amount
+        quantized = dec_value.quantize(Decimal("0.01"), rounding=ROUND_UP)
+        return int((quantized * 100).to_integral_value())
 
     def convert_integer_to_decimal(self, integer):
         if not integer:

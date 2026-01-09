@@ -44,15 +44,23 @@ def offer_term_details_default():
 
 class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
     """
-    Offer attaches to a record from the designated VENDOR_PRODUCT_MODEL.
+    Offer attaches to a Product Model from the designated VENDOR_PRODUCT_MODEL.
     This is so more than one offer can be made per product, with different
     priorities.  It also allows for the bundling of several products into
-    a single Offer on the site.
+    a single Offer on the site (a bundle/package/collection of goods).
     """
 
     uuid = models.UUIDField(
         default=uuid.uuid4, editable=False, unique=True
     )  # Used to track the product
+
+    # TODO: This does not need to be unique and should use the Product's slug instead (set on save).
+    #       This is because if you have multiple offers for the same product, they will have the same slug
+    #       which is what we want since the slug is what is used in the URL and we want all offers for the
+    #       same product to be accessible from the same URL.  The priority field can be used to determine
+    #       which offer is shown as the default on the product page.  The slug should be a copy of the
+    #       product's slug and should be set on save if it is not provided.
+    #       Update to use the standard Django slug field.
     slug = AutoSlugField(
         populate_from="name", unique_with="site__id", editable=True
     )  # SEO friendly
@@ -129,6 +137,13 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
             "You can mark this offer as promotional to help identify it between normal priced and discount priced offers."  # noqa: E501
         ),
     )
+    priority = models.IntegerField(
+        _("Priority"),
+        help_text=_("Higher number takes priority"),
+        blank=True,
+        null=True,
+        default=0,
+    )
     meta = models.JSONField(_("Meta"), default=dict, blank=True, null=True)
 
     objects = models.Manager()
@@ -164,9 +179,9 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
         else:
             return 0
 
-    def current_price(self, currency=DEFAULT_CURRENCY):
+    def get_current_price_object(self, currency=DEFAULT_CURRENCY):
         """
-        Finds the highest priority active price and returns that, otherwise returns msrp total.
+        Gets the current price object based on the offer's prices and the current date.
         """
         now = timezone.now()
         price = (
@@ -178,6 +193,14 @@ class Offer(SoftDeleteModelBase, CreateUpdateModelBase):
             .order_by("-priority")
             .first()
         )  # first()/last() returns the model object or None
+
+        return price
+
+    def current_price(self, currency=DEFAULT_CURRENCY):
+        """
+        Finds the highest priority active price and returns that, otherwise returns msrp total.
+        """
+        price = self.get_current_price_object(currency)
 
         if price is None:
             # If there is no price for the offer, all MSRPs should be summed up for the "price".

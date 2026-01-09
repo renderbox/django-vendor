@@ -1228,14 +1228,8 @@ class StripeBuildObjectTests(TestCase):
 
         self.assertIsNotNone(stripe_coupon.id)
         self.assertEqual(
-            "".join(
-                [
-                    str(stripe_coupon.amount_off)[:-2],
-                    ".",
-                    str(stripe_coupon.amount_off)[-2:],
-                ]
-            ),
-            str((offer.get_msrp() - price.cost)),
+            stripe_coupon.amount_off,
+            (offer.get_msrp() - price.cost),
         )
 
     def test_build_subscription_success(self):

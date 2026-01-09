@@ -356,7 +356,7 @@ class ModelInvoiceTests(TestCase):
     def test_invoice_global_discount_no_less_than_zero(self):
         month_offer = Offer.objects.get(pk=6)
         self.new_invoice.add_offer(month_offer)
-        self.new_invoice.global_discount = 101
+        self.new_invoice.global_discount = month_offer.current_price() + 1
         self.new_invoice.update_totals()
         self.new_invoice.save()
         self.assertEqual(self.new_invoice.total, 0)
@@ -478,22 +478,24 @@ class CartViewTests(TestCase):
     def test_view_cart_updates_on_adding_items(self):
         response = self.client.get(self.cart_url)
         self.assertContains(
-            response, f'<span class="text-primary">${self.invoice.total}</span>'
+            response, f'<span class="text-primary">${self.invoice.total:.2f}</span>'
         )
 
         add_mug_url = reverse(
             "vendor_api:add-to-cart", kwargs={"slug": self.mug_offer.slug}
         )
         self.client.post(add_mug_url)
+        self.invoice.refresh_from_db()
+        response = self.client.get(self.cart_url)
         self.assertContains(
-            response, f'<span class="text-primary">${self.invoice.total}</span>'
+            response, f'<span class="text-primary">${self.invoice.total:.2f}</span>'
         )
 
         remove_shirt_url = reverse(  # noqa F841
             "vendor_api:remove-from-cart", kwargs={"slug": self.shirt_offer.slug}
         )
         self.assertContains(
-            response, f'<span class="text-primary">${self.invoice.total}</span>'
+            response, f'<span class="text-primary">${self.invoice.total:.2f}</span>'
         )
 
     # def test_view_displays_login_instead_checkout(self):
