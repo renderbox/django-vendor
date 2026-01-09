@@ -75,7 +75,7 @@ class VendorAPITest(TestCase):
         url = reverse("vendor_api:refund-payment-api", kwargs={"uuid": payment.uuid})
 
         form_data = {
-            "refund_amount": 9000,
+            "refund_amount": 90000,
             "reason": "duplicate",
         }
 
