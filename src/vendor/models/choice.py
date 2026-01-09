@@ -12,6 +12,7 @@ from iso4217 import Currency
 # CHOICES
 ###########
 
+# TODO: Maybe move this into the system config?
 CURRENCY_CHOICES = [(c.name, c.value) for c in Currency]
 
 

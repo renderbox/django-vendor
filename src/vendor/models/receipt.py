@@ -34,6 +34,17 @@ class Receipt(SoftDeleteModelBase, CreateUpdateModelBase):
         on_delete=models.CASCADE,
         related_name="receipts",
     )
+    invoice = models.ForeignKey(
+        "vendor.Invoice",
+        verbose_name=_("Invoice"),
+        on_delete=models.CASCADE,
+        related_name="receipts",
+        blank=True,
+        null=True,
+        help_text=_(
+            "The invoice associated with this receipt. This is set automatically on save based on the order item."
+        ),
+    )
     start_date = models.DateTimeField(_("Start Date"), blank=True, null=True)
     end_date = models.DateTimeField(_("End Date"), blank=True, null=True)
     vendor_notes = models.JSONField(
@@ -69,3 +80,13 @@ class Receipt(SoftDeleteModelBase, CreateUpdateModelBase):
             return True
 
         return False
+
+    def save(self, *args, **kwargs):
+        if not self.uuid:
+            self.uuid = uuid.uuid4()
+        # Set the invoice from the order item each time the receipt is saved to ensure it is always up to date.
+        # This allows for the order item to be created before the invoice and still have the correct invoice
+        # associated with the receipt. It also allows for the order item to be updated to a different invoice
+        # and have that change reflected on the receipt.
+        self.invoice = self.order_item.invoice
+        super().save(*args, **kwargs)

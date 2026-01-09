@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.sites.managers import CurrentSiteManager
 from django.contrib.sites.models import Site
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -122,6 +123,10 @@ class ProductModelBase(CreateUpdateModelBase):
     classification = models.ManyToManyField(
         "vendor.TaxClassifier", blank=True
     )  # What taxes can apply to this item
+
+    # NOTE: These are defined here since this is a base class and we want to be able to query
+    #       these relationships consistently across products.  If they were defined on the
+    #       child classes, querying would be inconsistent.
     offers = models.ManyToManyField("vendor.Offer", blank=True, related_name="products")
     receipts = models.ManyToManyField(
         "vendor.Receipt", blank=True, related_name="products"
@@ -204,6 +209,23 @@ class ProductModelBase(CreateUpdateModelBase):
                 if receipt.profile not in owners
             ]
         )
+
+    def get_current_offer(self):
+        """Returns the current offer for the product, if an active one exists. # noqa: E501"""
+        now = timezone.now()
+        return (
+            self.offers.filter(
+                available=True,
+                start_date__lte=now,
+            )
+            .filter(Q(end_date__isnull=True) | Q(end_date__gte=now))
+            .first()
+        )
+
+    def get_current_price(self, currency=DEFAULT_CURRENCY):
+        """Returns the current price for the product, if an active one exists. # noqa: E501"""
+        offer = self.get_current_offer()
+        return offer.current_price(currency) if offer else None
 
     def save(self, *args, **kwargs):
         if not self.sku:

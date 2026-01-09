@@ -1,9 +1,11 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from iso4217 import Currency
 
 from vendor.config import DEFAULT_CURRENCY
 
 from .choice import CURRENCY_CHOICES
+from .utils import get_conversion_factor
 
 
 #########
@@ -16,7 +18,9 @@ class Price(models.Model):
         on_delete=models.CASCADE,
         related_name="prices",
     )
-    cost = models.FloatField(_("Cost"), blank=True, null=True)
+    # TODO: Change to an integer field and store in cents to avoid floating point issues.  Create necessary
+    #       migrations and update all code that interacts with this field to convert to/from cents.
+    cost = models.IntegerField(_("Cost"), blank=True, null=True)
     currency = models.CharField(
         _("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY
     )
@@ -34,7 +38,21 @@ class Price(models.Model):
         help_text=_("Higher number takes priority"),
         blank=True,
         null=True,
+        default=0,
     )
+
+    # Convert the price into the appropriate display format based on the currency. For example, if the currency is USD, divide by 100 to convert from cents to dollars. # noqa: E501
+    def display_cost(self):
+        if self.cost is None:
+            return None
+        conversion_factor = get_conversion_factor(self.currency)
+        decimals = 0 if conversion_factor == 1 else len(str(int(conversion_factor))) - 1
+        amount = self.cost / conversion_factor
+        try:
+            symbol = Currency(self.currency.upper()).symbol or self.currency.upper()
+        except (KeyError, ValueError, AttributeError):
+            symbol = self.currency.upper()
+        return "{}{:.{}f}".format(symbol, amount, decimals)
 
     def save(self, *args, **kwargs):
         if not self.priority:
@@ -49,6 +67,9 @@ class Price(models.Model):
         verbose_name_plural = "Prices"
 
     def __str__(self):
-        return "{} for {}:{}".format(
-            self.offer.name, dict(CURRENCY_CHOICES)[self.currency], self.cost
+        return "{} for {} ({}) -> ({})".format(
+            self.offer.name,
+            self.display_cost(),
+            dict(CURRENCY_CHOICES)[self.currency],
+            self.cost,
         )

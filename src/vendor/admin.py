@@ -155,7 +155,7 @@ class AddressAdmin(admin.ModelAdmin):
 
 
 class CustomerProfileAdmin(admin.ModelAdmin):
-    readonly_fields = ("uuid", "user")
+    readonly_fields = ("uuid",)
     list_display = ("pk", "user", "email", "site", "currency", "created")
     search_fields = ("user__username", "user__email")
     list_filter = ("site__domain",)

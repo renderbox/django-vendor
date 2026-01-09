@@ -38,7 +38,7 @@
         "description": {
             "description": "Powerful T-Shirt"
         },
-        "meta": { "msrp": { "default": "usd", "usd": 9.99 }},
+        "meta": { "msrp": { "default": "usd", "usd": 999 }},
         "classification": [],
         "offers": [
             1
@@ -61,7 +61,7 @@
         "description": {
             "description": "This is a food item"
         },
-        "meta": {"msrp": {"default": "usd", "usd": 75.00, "jpy": 75.00}},
+        "meta": {"msrp": {"default": "usd", "usd": 7500, "jpy": 75}},
         "classification": [],
         "offers": [
             2
@@ -84,7 +84,7 @@
         "description": {
             "description": ""
         },
-        "meta": {"msrp": {"default": "usd", "usd": 25.00 }},
+        "meta": {"msrp": {"default": "usd", "usd": 2500 }},
         "classification": [],
         "offers": [
             3
@@ -107,7 +107,7 @@
         "description": {
             "description": ""
         },
-        "meta": {"msrp": {"default": "mxn", "usd": 25.2, "mxn": 21.12}},
+        "meta": {"msrp": {"default": "mxn", "usd": 2520, "mxn": 2112}},
         "classification": [],
         "offers": [
             4,
@@ -159,10 +159,10 @@
             }
         },
         "ordered_date": null,
-        "subtotal": 345.18,
+        "subtotal": 34518,
         "tax": 0,
         "shipping": 0,
-        "total": 332.18,
+        "total": 33218,
         "currency": "usd",
         "shipping_address": null,
         "deleted": false
@@ -329,7 +329,7 @@
             "payment_occurrences": 12,
             "term_units": 20,
             "trial_occurrences": 1,
-            "trial_amount": 25.1
+            "trial_amount": 2510
         },
         "term_start_date": null,
         "available": true,
@@ -356,7 +356,7 @@
             "payment_occurrences": 3,
             "term_units": 20,
             "trial_occurrences": 1,
-            "trial_amount": 25.2
+            "trial_amount": 2520
         },
         "term_start_date": null,
         "available": true,
@@ -456,7 +456,7 @@
         "submitted_date": "2020-06-30T01:20:01.616Z",
         "transaction": "1-1-1",
         "provider": "AuthorizeNetProcessor",
-        "amount": 408.43,
+        "amount": 40843,
         "profile": 1,
         "billing_address": 1,
         "result": {"msg": "Payment Complete", "trans_id": 40053987215, "response_code": 1, "code": 1, "message": "This transaction has been approved.", "responseCode": 1, "authCode": "A3YXNW", "avsResultCode": "Y", "cvvResultCode": "P", "cavvResultCode": 2, "transId": 40053987215, "refTransID": "1234567890", "transHash": "", "testRequest": 0, "accountNumber": "XXXX0015", "accountType": "MasterCard", "transHashSha2": "", "networkTransId": "LAHTAFS7B44MPV2SMDCBB85"},
@@ -477,7 +477,7 @@
         "submitted_date": "2020-06-30T01:20:01.616Z",
         "transaction": "1-1-2",
         "provider": "AuthorizeNetProcessor",
-        "amount": 408.43,
+        "amount": 40843,
         "profile": 1,
         "billing_address": 1,
         "result": {"msg": "Payment Complete", "trans_id": 40053987215, "response_code": 1, "code": 1, "message": "This transaction has been approved.", "responseCode": 1, "authCode": "A3YXNW", "avsResultCode": "Y", "cvvResultCode": "P", "cavvResultCode": 2, "transId": 40053987215, "refTransID": "1234567890", "transHash": "", "testRequest": 0, "accountNumber": "XXXX0015", "accountType": "MasterCard", "transHashSha2": "", "networkTransId": "LAHTAFS7B44MPV2SMDCBB85"},
@@ -505,7 +505,7 @@
     "pk": 2,
     "fields": {
         "offer": 2,
-        "cost": 75.0,
+        "cost": 75,
         "currency": "jpy",
         "start_date": "2020-06-30T02:34:56Z",
         "end_date": null,
@@ -517,7 +517,7 @@
     "pk": 3,
     "fields": {
         "offer": 3,
-        "cost": 25.0,
+        "cost": 2500,
         "currency": "usd",
         "start_date": "2020-06-30T02:38:30Z",
         "end_date": null,
@@ -529,7 +529,7 @@
     "pk": 4,
     "fields": {
         "offer": 3,
-        "cost": 25.1,
+        "cost": 2510,
         "currency": "usd",
         "start_date": "2000-06-30T02:38:30Z",
         "end_date": "2120-06-30T02:38:30Z",
@@ -541,7 +541,7 @@
     "pk": 5,
     "fields": {
         "offer": 3,
-        "cost": 25.2,
+        "cost": 2520,
         "currency": "usd",
         "start_date": "2000-06-30T02:38:30Z",
         "end_date": "2120-06-30T02:38:30Z",
@@ -565,7 +565,7 @@
     "pk": 7,
     "fields": {
         "offer": 6,
-        "cost": 10,
+        "cost": 1000,
         "currency": "usd",
         "start_date": "2000-06-30T02:38:30Z",
         "end_date": "2120-06-30T02:38:30Z",
@@ -577,7 +577,7 @@
     "pk": 8,
     "fields": {
         "offer": 7,
-        "cost": 10,
+        "cost": 1000,
         "currency": "usd",
         "start_date": "2000-06-30T02:38:30Z",
         "end_date": "2120-06-30T02:38:30Z",
@@ -682,7 +682,7 @@
         "submitted_date": "2020-06-30T01:20:01.616Z",
         "transaction": null,
         "provider": "AuthorizeNetProcessor",
-        "amount": 408.43,
+        "amount": 40843,
         "profile": 1,
         "billing_address": 1,
         "result": null,

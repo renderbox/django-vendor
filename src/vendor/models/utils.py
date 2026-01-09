@@ -3,6 +3,7 @@ import string
 
 from django.contrib.sites.models import Site
 from django.utils.module_loading import import_string
+from iso4217 import Currency
 
 from vendor.config import AVAILABLE_CURRENCIES, VENDOR_DATA_ENCODER
 
@@ -47,3 +48,34 @@ def is_currency_available(msrp_currencies, currency=None):
         return False
 
     return True
+
+
+def get_conversion_factor(currency_code):
+    """Will look at the currency code and return the appropriate conversion factor to convert to cents.
+    For example, USD has 2 decimal places, so the factor would be 100.
+    JPY has 0 decimal places, so the factor would be 1.
+    """
+    try:
+        currency = Currency(currency_code.upper())
+        exp = getattr(currency, "exp", None)
+        if exp is None:
+            exp = getattr(currency, "exponent", None)
+        if exp is None:
+            exp = getattr(currency, "minor_unit", None)
+        try:
+            exp = int(exp)
+        except (TypeError, ValueError):
+            return 1
+        return 10**exp if exp > 0 else 1
+    except (KeyError, ValueError, AttributeError):
+        return 1
+
+
+def convert_to_minor_units(amount, currency_code):
+    factor = get_conversion_factor(currency_code)
+    return int(amount * factor)
+
+
+def revert_to_major_units(amount, currency_code):
+    factor = get_conversion_factor(currency_code)
+    return amount / factor
