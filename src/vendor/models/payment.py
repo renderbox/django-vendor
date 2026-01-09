@@ -219,6 +219,9 @@ class Payment(SoftDeleteModelBase):
         _("Payment Provider"), max_length=30, blank=True, null=True
     )
     amount = models.FloatField(_("Amount"))
+    # currency = models.CharField(
+    #     _("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY
+    # )
     profile = models.ForeignKey(
         "vendor.CustomerProfile",
         verbose_name=_("Purchase Profile"),
@@ -248,6 +251,7 @@ class Payment(SoftDeleteModelBase):
         default=None,
     )
 
+    objects = models.Manager()  # make sure the default manager is available
     reports = PaymentReportModelManager()
 
     def __str__(self):

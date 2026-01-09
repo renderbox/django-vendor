@@ -55,10 +55,10 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
     ordered_date = models.DateTimeField(
         _("Ordered Date"), blank=True, null=True
     )  # When was the purchase made?
-    subtotal = models.FloatField(default=0.0)
-    tax = models.FloatField(blank=True, null=True)  # Set on checkout
-    shipping = models.FloatField(blank=True, null=True)  # Set on checkout
-    total = models.FloatField(blank=True, null=True)  # Set on purchase
+    subtotal = models.IntegerField(default=0)
+    tax = models.IntegerField(blank=True, null=True)  # Set on checkout
+    shipping = models.IntegerField(blank=True, null=True)  # Set on checkout
+    total = models.IntegerField(blank=True, null=True)  # Set on purchase
     currency = models.CharField(
         _("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY
     )  # User's default currency
@@ -69,7 +69,7 @@ class Invoice(SoftDeleteModelBase, CreateUpdateModelBase):
         blank=True,
         null=True,
     )
-    global_discount = models.FloatField(
+    global_discount = models.IntegerField(
         _("Global Discount"), blank=True, null=True, default=0
     )  # Any value that is set in this field will be subtracted
 

@@ -11,8 +11,6 @@ from django.utils import timezone
 from vendor.forms import DateTimeRangeForm
 from vendor.models import Offer, Payment, Price, Subscription
 
-# from vendor.utils import force_str_if_proxy
-
 User = get_user_model()
 
 
@@ -29,7 +27,10 @@ class VendorAPITest(TestCase):
         subscription = Subscription.objects.get(pk=1)
         offer = Offer.objects.get(pk=4)
         price = Price.objects.create(
-            offer=offer, cost=89.99, currency="usd", start_date=timezone.now()
+            offer=offer,
+            cost=89.99,
+            currency="usd",  # TODO: should use the ISO4217 for this instead of hardcoding "usd"
+            start_date=timezone.now(),
         )
         offer.prices.add(price)
 

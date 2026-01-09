@@ -10,7 +10,7 @@ JPY has 0 decimal places, so the factor would be 1.
 
 
 def convert_prices_to_integers(apps, schema_editor):
-    from vendor.utils import convert_to_minor_units
+    from vendor.models.utils import convert_to_minor_units
 
     Price = apps.get_model("vendor", "Price")
     Invoice = apps.get_model("vendor", "Invoice")
@@ -35,11 +35,18 @@ def convert_prices_to_integers(apps, schema_editor):
         if invoice.total is not None:
             invoice.total = convert_to_minor_units(invoice.total, invoice.currency)
 
-        invoice.save(update_fields=["subtotal", "tax", "shipping", "total"])
+        if invoice.global_discount is not None:
+            invoice.global_discount = convert_to_minor_units(
+                invoice.global_discount, invoice.currency
+            )
+
+        invoice.save(
+            update_fields=["subtotal", "tax", "shipping", "total", "global_discount"]
+        )
 
 
 def revert_prices_to_decimals(apps, schema_editor):
-    from vendor.utils import revert_to_major_units
+    from vendor.models.utils import revert_to_major_units
 
     Price = apps.get_model("vendor", "Price")
     Invoice = apps.get_model("vendor", "Invoice")
@@ -62,7 +69,13 @@ def revert_prices_to_decimals(apps, schema_editor):
         if invoice.total is not None:
             invoice.total = revert_to_major_units(invoice.total, invoice.currency)
 
-        invoice.save(update_fields=["subtotal", "tax", "shipping", "total"])
+        if invoice.global_discount is not None:
+            invoice.global_discount = revert_to_major_units(
+                invoice.global_discount, invoice.currency
+            )
+        invoice.save(
+            update_fields=["subtotal", "tax", "shipping", "total", "global_discount"]
+        )
 
 
 class Migration(migrations.Migration):
