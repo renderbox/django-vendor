@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             name="invoice",
             field=models.ForeignKey(
                 blank=True,
-                help_text="The invoice associated with this receipt. This is set automatically on save based on the order item.",
+                help_text="The invoice associated with this receipt. This is set automatically on save based on the order item.",  # noqa: E501
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name="receipts",

@@ -41,7 +41,7 @@ class Price(models.Model):
         default=0,
     )
 
-    # Convert the price into the appropriate display format based on the currency. For example, if the currency is USD, divide by 100 to convert from cents to dollars.
+    # Convert the price into the appropriate display format based on the currency. For example, if the currency is USD, divide by 100 to convert from cents to dollars. # noqa: E501
     def display_cost(self):
         if self.cost is None:
             return None

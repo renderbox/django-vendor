@@ -6,7 +6,6 @@ import json
 import logging
 import warnings
 from decimal import ROUND_UP, Decimal
-from math import modf
 from types import SimpleNamespace
 
 from vendor import config
