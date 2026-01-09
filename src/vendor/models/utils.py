@@ -56,9 +56,18 @@ def get_conversion_factor(currency_code):
     JPY has 0 decimal places, so the factor would be 1.
     """
     try:
-        exp = Currency(currency_code.upper()).exp
+        currency = Currency(currency_code.upper())
+        exp = getattr(currency, "exp", None)
+        if exp is None:
+            exp = getattr(currency, "exponent", None)
+        if exp is None:
+            exp = getattr(currency, "minor_unit", None)
+        try:
+            exp = int(exp)
+        except (TypeError, ValueError):
+            return 1
         return 10**exp if exp > 0 else 1
-    except (KeyError, ValueError):
+    except (KeyError, ValueError, AttributeError):
         return 1
 
 
