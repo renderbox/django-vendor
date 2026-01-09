@@ -109,14 +109,14 @@ class VendorAPITest(TestCase):
         url = reverse("vendor_api:refund-payment-api", kwargs={"uuid": payment.uuid})
 
         form_data = {
-            "refund_amount": 200,
+            "refund_amount": 20000,  # in cents, so $200, which exceeds the original amount of $408.43
             "reason": "duplicate",
         }
 
         response = self.client.post(url, form_data)
         self.assertEqual(json.loads(response.content)["message"], "Payment Refunded")
 
-        form_data["refund_amount"] = 900
+        form_data["refund_amount"] = 90000
         response = self.client.post(url, form_data)
         self.assertIn("refund_amount", json.loads(response.content)["error"])
 
