@@ -169,9 +169,9 @@ VENDOR_STATE = os.getenv("VENDOR_STATE", "DEBUG")
 VENDOR_CHARGE_VALIDATION_PRICE = os.getenv("VENDOR_CHARGE_VALIDATION_PRICE", 1)
 DEFAULT_CURRENCY = Currency.usd.name
 AVAILABLE_CURRENCIES = {
-    "usd": _("USD Dollars"),
-    "mxn": _("Mexican peso"),
-    "jpy": _("Japanese yen"),
+    Currency.usd.name: _(Currency.usd.currency_name),
+    Currency.mxn.name: _(Currency.mxn.currency_name),
+    Currency.jpy.name: _(Currency.jpy.currency_name),
 }
 
 # Authorize.Net Settings:

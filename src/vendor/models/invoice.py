@@ -487,6 +487,8 @@ class OrderItem(CreateUpdateModelBase):
     A link for each item to a user after it's been purchased
     """
 
+    # add the UUID so the invoice item can be edited more cleanly.
+    # uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
     invoice = models.ForeignKey(
         "vendor.Invoice",
         verbose_name=_("Invoice"),

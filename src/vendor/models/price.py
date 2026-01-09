@@ -16,6 +16,8 @@ class Price(models.Model):
         on_delete=models.CASCADE,
         related_name="prices",
     )
+    # TODO: Change to an integer field and store in cents to avoid floating point issues.  Create necessary
+    #       migrations and update all code that interacts with this field to convert to/from cents.
     cost = models.FloatField(_("Cost"), blank=True, null=True)
     currency = models.CharField(
         _("Currency"), max_length=4, choices=CURRENCY_CHOICES, default=DEFAULT_CURRENCY
@@ -34,6 +36,7 @@ class Price(models.Model):
         help_text=_("Higher number takes priority"),
         blank=True,
         null=True,
+        default=0,
     )
 
     def save(self, *args, **kwargs):
