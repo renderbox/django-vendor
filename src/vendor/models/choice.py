@@ -24,6 +24,7 @@ class InvoiceStatus(models.IntegerChoices):
         "Checkout"
     )  # total = subtotal + shipping + Tax against Addrr if any.
     COMPLETE = 20, _("Complete")  # Payment Processor Completed Transaction.
+    CONFIRMED = 30, _("Confirmed")  # Confirmed after webhook call.
 
 
 class TermType(models.IntegerChoices):
