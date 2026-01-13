@@ -154,23 +154,20 @@ class CustomerProfile(CreateUpdateModelBase):
         returns the list of receipts that the user has a receipt for filtered by the products provided.
         """
         now = timezone.now()
+        base_qs = self.receipts.filter(
+            Q(deleted=False),
+            Q(start_date__lte=now) | Q(start_date__isnull=True),
+            Q(end_date__gte=now) | Q(end_date__isnull=True),
+        )
 
         # Queryset or List of model records
-        if isinstance(products, QuerySet) or isinstance(products, list):
-            return self.receipts.filter(
-                Q(products__in=products),
-                Q(deleted=False),
-                Q(start_date__lte=now) | Q(start_date=None),
-                Q(end_date__gte=now) | Q(end_date=None),
-            )
+        if isinstance(products, QuerySet):
+            return base_qs.filter(products__in=products.values("pk"))
+        if isinstance(products, (list, tuple, set)):
+            return base_qs.filter(products__in=products)
 
         # Single model record
-        return self.receipts.filter(
-            Q(products=products),
-            Q(deleted=False),
-            Q(start_date__lte=now) | Q(start_date=None),
-            Q(end_date__gte=now) | Q(end_date=None),
-        )
+        return base_qs.filter(products=products)
 
     def has_product(self, products):
         """
