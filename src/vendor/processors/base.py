@@ -11,7 +11,7 @@ from django.utils import timezone
 
 from vendor import config
 from vendor.forms import BillingAddressForm, CreditCardForm
-from vendor.models import Payment, Receipt, Subscription
+from vendor.models import Invoice, Payment, Receipt, Subscription
 from vendor.models.choice import (
     InvoiceStatus,
     PaymentTypes,
@@ -60,20 +60,48 @@ class PaymentProcessorBase(object):
     transaction_succeeded = False
     transaction_info = {}
     transaction_response = None
+    _request = None
 
-    def __init__(self, site, invoice=None):
+    def __init__(self, site, invoice=None, request=None):
         """
         Initialize processor state and run setup hooks.
 
         Subclasses should override `processor_setup` or other hooks rather than
         this initializer.
         """
-        if invoice:
+        self.set_request(request)  # Save the request if provided
+
+        # TODO: If the invoice is of type Invoice, then set it.
+        if invoice is not None:
             self.set_invoice(invoice)
+        elif self._request is not None:
+            self.set_invoice(self.get_cart_from_request(self._request))
 
         self.provider = self.__class__.__name__
         self.processor_setup(site)
         self.set_api_endpoint()
+
+    def set_request(self, request):
+        self._request = request
+
+    def get_cart_from_request(self, request):
+        """
+        Attempt to find an active cart (invoice) for the user and site from the request.
+        """
+        if request and request.user.is_authenticated:
+            try:
+                return (
+                    Invoice.objects.filter(
+                        profile__user=request.user,
+                        site=request.site,
+                        status=InvoiceStatus.CART,
+                    )
+                    .order_by("-created")
+                    .first()
+                )
+            except Invoice.DoesNotExist:
+                return None
+        return None
 
     def set_api_endpoint(self):
         """
