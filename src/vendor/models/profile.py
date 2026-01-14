@@ -1,4 +1,5 @@
 import uuid
+import warnings
 
 from django.conf import settings
 from django.contrib.sites.managers import CurrentSiteManager
@@ -77,14 +78,18 @@ class CustomerProfile(CreateUpdateModelBase):
         cart.save()
 
     def get_cart(self):
-        if self.has_invoice_in_checkout():
-            self.revert_invoice_to_cart()
+        """Returns the user's current cart. If there is an invoice in checkout status, it will be reverted to cart status and returned.  # noqa: E501"""
 
-        cart, created = self.invoices.get_or_create(status=InvoiceStatus.CART)
+        cart, created = self.invoices.get_or_create(
+            status__in=[InvoiceStatus.CART, InvoiceStatus.CHECKOUT], deleted=False
+        )
+        cart.status = InvoiceStatus.CART
         return cart
 
     def get_checkout_cart(self):
-        return self.invoices.filter(status=InvoiceStatus.CHECKOUT).first()
+        return self.invoices.filter(
+            status=InvoiceStatus.CHECKOUT, deleted=False
+        ).first()
 
     def get_cart_or_checkout_cart(self):
         checkout_status = (
@@ -129,30 +134,40 @@ class CustomerProfile(CreateUpdateModelBase):
         return self.invoices.filter(status=InvoiceStatus.CART, deleted=False).first()
 
     def has_invoice_in_checkout(self):
-        return bool(self.invoices.filter(status=InvoiceStatus.CHECKOUT).count())
+        warnings.warn(
+            "CustomerProfile.has_invoice_in_checkout is deprecated.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.invoices.filter(status=InvoiceStatus.CHECKOUT).exists()
 
     def filter_products(self, products):
+        warnings.warn(
+            "CustomerProfile.filter_products is deprecated; use filter_product_receipts.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.filter_product_receipts(products)
+
+    def filter_product_receipts(self, products):
         """
         returns the list of receipts that the user has a receipt for filtered by the products provided.
         """
         now = timezone.now()
+        base_qs = self.receipts.filter(
+            Q(deleted=False),
+            Q(start_date__lte=now) | Q(start_date__isnull=True),
+            Q(end_date__gte=now) | Q(end_date__isnull=True),
+        )
 
         # Queryset or List of model records
-        if isinstance(products, QuerySet) or isinstance(products, list):
-            return self.receipts.filter(
-                Q(products__in=products),
-                Q(deleted=False),
-                Q(start_date__lte=now) | Q(start_date=None),
-                Q(end_date__gte=now) | Q(end_date=None),
-            )
+        if isinstance(products, QuerySet):
+            return base_qs.filter(products__in=products.values("pk"))
+        if isinstance(products, (list, tuple, set)):
+            return base_qs.filter(products__in=products)
 
         # Single model record
-        return self.receipts.filter(
-            Q(products=products),
-            Q(deleted=False),
-            Q(start_date__lte=now) | Q(start_date=None),
-            Q(end_date__gte=now) | Q(end_date=None),
-        )
+        return base_qs.filter(products=products)
 
     def has_product(self, products):
         """
