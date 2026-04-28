@@ -17,15 +17,20 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Intended Audience :: Developers",
+    "Framework :: Django",
+    "Framework :: Django :: 5.2",
+    "Framework :: Django :: 6.0",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12"
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14"
 ]
 dependencies = [
-    "django>=5.2,<6.0",
-    "django-site-configs (>=0.4.0,<0.5.0)",
-    "django-integrations (>=0.4.0,<0.5.0)",
+    "django>=5.2,<6.1",
+    "django-site-configs (>=0.5.0,<0.6.0)",
+    "django-integrations (>=0.5.0,<0.6.0)",
     "iso4217<1.12.0"
 ]
 

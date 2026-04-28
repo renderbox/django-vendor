@@ -2,8 +2,8 @@
 
 ## Requirements
 
-- Python 3.10+
-- Django 5.2+
+- Python 3.10+ for Django 5.2, or Python 3.12+ for Django 6.0
+- Django 5.2 or 6.0
 - `django-site-configs` (site-scoped configuration)
 - `django-integrations` (stores payment processor credentials)
 - Django sites framework enabled (`django.contrib.sites`)
