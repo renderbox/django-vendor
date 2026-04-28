@@ -53,6 +53,20 @@ from vendor.processors.base import PaymentProcessorBase
 logger = logging.getLogger(__name__)
 
 
+def _json_safe_stripe_value(value):
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if hasattr(value, "to_dict_recursive"):
+        return _json_safe_stripe_value(value.to_dict_recursive())
+    if isinstance(value, dict):
+        return {key: _json_safe_stripe_value(val) for key, val in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe_stripe_value(item) for item in value]
+    if isinstance(value, SimpleNamespace):
+        return _json_safe_stripe_value(vars(value))
+    return str(value)
+
+
 class StripeStub(SimpleNamespace):
     """Minimal object that works with both attribute and dict-style access."""
 
@@ -422,7 +436,10 @@ class StripeProcessor(PaymentProcessorBase):
 
         self.transaction_succeeded = True
         self.transaction_info = self.get_transaction_info(
-            raw=f"{func} - {func_args} {json.dumps(self.transaction_response)}",
+            raw=(
+                f"{func} - {func_args} "
+                f"{json.dumps(_json_safe_stripe_value(self.transaction_response))}"
+            ),
             data=(
                 self.transaction_response.data
                 if "data" in self.transaction_response
