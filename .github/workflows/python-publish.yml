@@ -19,13 +19,13 @@ jobs:
         uses: renderbox/github-actions/bump-version@main
         with:
           version-part: patch
-          python-version: '3.12'
+          python-version: '3.14'
 
       - name: Build Python Package
         if: success()  # only run if bump succeeded
         uses: renderbox/github-actions/build-python-package@main
         with:
-          python-version: '3.12'
+          python-version: '3.14'
 
       - name: Download built package artifacts
         if: success()
