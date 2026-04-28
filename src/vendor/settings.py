@@ -57,6 +57,7 @@ Django settings that affect django-autoslug:
 .. _modeltranslation: http://django-modeltranslation.readthedocs.org
 
 """
+
 from django.conf import settings
 from django.utils.module_loading import import_string
 
